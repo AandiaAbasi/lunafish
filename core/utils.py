@@ -1,10 +1,10 @@
 import os
 import uuid
-from .models import About, Article, Banner
-from account.models import User
 
 
 def upload_to_dynamic(instance, filename):
+    from .models import About, Article, Banner
+    from account.models import User
     """Dynamic upload path for user images"""
     name, ext = os.path.splitext(filename)
     filename = f"{uuid.uuid4().hex}{ext}"
