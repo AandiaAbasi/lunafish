@@ -1,0 +1,248 @@
+"""Unified serializers for role-based User with social auth"""
+from rest_framework import serializers
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils.translation import gettext_lazy as _
+from rest_framework_simplejwt.tokens import RefreshToken
+from .models import User
+from . import services
+
+def convert_persian_to_english_digits(text):
+    """Convert Persian/Arabic digits to English digits"""
+    persian_digits = '۰۱۲۳۴۵۶۷۸۹'
+    arabic_digits = '٠١٢٣٤٥٦٧٨٩'
+    english_digits = '0123456789'
+    
+    translation_table = str.maketrans(
+        persian_digits + arabic_digits,
+        english_digits + english_digits
+    )
+    return text.translate(translation_table)
+
+# Username Check
+class CheckUsernameSerializer(serializers.Serializer):
+    username = serializers.CharField(min_length=3, max_length=150)
+
+# Authentication
+class SendOTPSerializer(serializers.Serializer):
+    identifier = serializers.CharField(required=False)
+    phone_number = serializers.CharField(required=False)
+    phone = serializers.CharField(required=False)
+    purpose = serializers.CharField(required=False, allow_blank=True)
+    
+    def validate(self, data):
+        # Accept identifier, phone_number, or phone
+        identifier = data.get('identifier') or data.get('phone_number') or data.get('phone')
+        if not identifier:
+            raise serializers.ValidationError({"phone": _("Phone number or email is required")})
+        
+        # Convert Persian/Arabic digits to English
+        identifier = convert_persian_to_english_digits(identifier)
+        data['identifier'] = identifier
+        
+        # Normalize and validate purpose
+        purpose = data.get('purpose', 'login') or 'login'
+        if purpose == 'register':
+            purpose = 'registration'
+        
+        valid_purposes = ['registration', 'login', 'phone_verification', 'email_verification', 'password_reset']
+        if purpose not in valid_purposes:
+            raise serializers.ValidationError({"purpose": _("Invalid purpose. Must be one of: {valid_purposes}").format(valid_purposes=', '.join(valid_purposes))})
+        
+        data['purpose'] = purpose
+        
+        return data
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+    identifier = serializers.CharField(required=False)
+    phone_number = serializers.CharField(required=False)
+    phone = serializers.CharField(required=False)
+    code = serializers.CharField(min_length=6, max_length=6)
+    purpose = serializers.CharField(required=False, allow_blank=True)
+    
+    def validate(self, data):
+        # Accept identifier, phone_number, or phone
+        identifier = data.get('identifier') or data.get('phone_number') or data.get('phone')
+        if not identifier:
+            raise serializers.ValidationError({"phone": _("Phone number or email is required")})
+        
+        # Convert Persian/Arabic digits to English
+        identifier = convert_persian_to_english_digits(identifier)
+        data['identifier'] = identifier
+        
+        # Validate and convert code
+        code = data.get('code', '')
+        if not code:
+            raise serializers.ValidationError({"code": _("Verification code is required")})
+        
+        code = convert_persian_to_english_digits(code)
+        if not code.isdigit():
+            raise serializers.ValidationError({"code": _("Code must be numeric")})
+        
+        if len(code) != 6:
+            raise serializers.ValidationError({"code": _("Code must be 6 digits")})
+        
+        data['code'] = code
+        
+        # Normalize and validate purpose
+        purpose = data.get('purpose', 'login') or 'login'
+        if purpose == 'register':
+            purpose = 'registration'
+        
+        valid_purposes = ['registration', 'login', 'phone_verification', 'email_verification', 'password_reset']
+        if purpose not in valid_purposes:
+            raise serializers.ValidationError({"purpose": _("Invalid purpose. Must be one of: {valid_purposes}").format(valid_purposes=', '.join(valid_purposes))})
+        
+        data['purpose'] = purpose
+        
+        return data
+
+
+class CompleteRegistrationSerializer(serializers.Serializer):
+    verification_token = serializers.CharField()
+    username = serializers.CharField(min_length=3, max_length=150)
+    password = serializers.CharField(min_length=6, write_only=True)
+    
+    # Optional fields
+    name = serializers.CharField(max_length=300, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    expo_push_token = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(_("This username is already taken"))
+        return value
+    
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(required=False)
+    confirm_password = serializers.CharField(required=False)
+    
+    # Alternative field names for mobile app compatibility
+    password = serializers.CharField(required=False, write_only=True)
+    password_confirmation = serializers.CharField(required=False, write_only=True)
+    
+    def validate(self, attrs):
+        new_password = attrs.get('new_password') or attrs.get('password')
+        confirm_password = attrs.get('confirm_password') or attrs.get('password_confirmation')
+        
+        if not new_password:
+            raise serializers.ValidationError({'new_password': _('New password is required')})
+        if not confirm_password:
+            raise serializers.ValidationError({'confirm_password': _('Password confirmation is required')})
+        if new_password != confirm_password:
+            raise serializers.ValidationError({'confirm_password': _('Passwords do not match')})
+        
+        try:
+            validate_password(new_password)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({'new_password': list(e.messages)})
+        
+        attrs['new_password'] = new_password
+        attrs['confirm_password'] = confirm_password
+        return attrs
+
+
+# Profile
+class UserProfileSerializer(serializers.ModelSerializer):
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    is_teacher = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id','username','name','email','phone','profile_photo_path','bio','gender','birth_date','role','role_display','is_teacher','is_teacher_verified','date_joined','settings']
+        read_only_fields = ['id','username','role','is_teacher_verified','date_joined']
+    
+    def get_is_teacher(self,obj):
+        return obj.role == 'teacher'
+
+
+class EditUserProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=False, min_length=3, max_length=150)
+    
+    class Meta:
+        model = User
+        fields = ['username','name','bio','gender','birth_date','profile_photo_path']
+        extra_kwargs = {'profile_photo_path':{'required':False}}
+    
+    def validate_username(self, value):
+        """Validate username format and uniqueness"""
+        if not value:
+            return value
+        
+        value = value.strip()
+        
+        # Validate format: only letters, numbers, and underscores
+        import re
+        if not re.match(r'^[a-zA-Z0-9_]+$', value):
+            raise serializers.ValidationError(_("Username can only contain letters, numbers, and underscores."))
+        
+        # Check minimum length
+        if len(value) < 3:
+            raise serializers.ValidationError(_("Username must be at least 3 characters long."))
+        
+        # Check if username is taken by another user
+        if self.instance and value != self.instance.username:
+            if User.objects.filter(username=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError(_("This username is already taken. Please choose another one."))
+        
+        return value
+
+
+class EditTeacherProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(required=False, min_length=3, max_length=150)
+    
+    class Meta:
+        model = User
+        fields = ['username','name','bio','profile_photo_path']
+        extra_kwargs = {'profile_photo_path': {'required': False}}
+    
+    def validate_username(self, value):
+        """Validate username format and uniqueness"""
+        if not value:
+            return value
+        
+        value = value.strip()
+        
+        # Validate format: only letters, numbers, and underscores
+        import re
+        if not re.match(r'^[a-zA-Z0-9_]+$', value):
+            raise serializers.ValidationError(_("Username can only contain letters, numbers, and underscores."))
+        
+        # Check minimum length
+        if len(value) < 3:
+            raise serializers.ValidationError(_("Username must be at least 3 characters long."))
+        
+        # Check if username is taken by another user
+        if self.instance and value != self.instance.username:
+            if User.objects.filter(username=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError(_("This username is already taken. Please choose another one."))
+        
+        return value
+    
+    def validate(self, attrs):
+        if self.instance and self.instance.role != 'teacher':
+            raise serializers.ValidationError({'non_field_errors': [_('User is not a teacher')]})
+        return attrs
+    
+
+class PromoteToTeacherSerializer(serializers.Serializer):
+    bio = serializers.CharField(required=False)
+
+
+# Admin
+class UserListSerializer(serializers.ModelSerializer):
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    class Meta:
+        model = User
+        fields = ['id','username','email','phone','role','role_display','is_teacher_verified','is_active','date_joined']
+        read_only_fields = fields
