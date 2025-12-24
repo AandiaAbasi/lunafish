@@ -89,9 +89,9 @@ class Article(BaseModel):
     short_description = models.TextField(null=True, blank=True, verbose_name=_("Short description"))
     content = RichTextField(verbose_name=_("Content"))
     
-    def created_at_jalali(self):
+    def created_at_display(self):
         return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y-%m-%d')
-    created_at_jalali.short_description = _("Created at")
+    created_at_display.short_description = _("Created at")
     def __str__(self):
         return self.title
 

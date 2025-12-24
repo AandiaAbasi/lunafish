@@ -53,19 +53,19 @@ class RegularUserAdmin(BaseUserAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
     
-    def created_at_jalali(self, obj):
+    def created_at_display(self, obj):
         if obj.created_at:
             jalali = jdatetime.datetime.fromgregorian(datetime=obj.created_at)
             return jalali.strftime('%Y/%m/%d %H:%M')
         return '-'
-    created_at_jalali.short_description = _('Registration Date')
+    created_at_display.short_description = _('Registration Date')
     
-    def updated_at_jalali(self, obj):
+    def updated_at_display(self, obj):
         if obj.updated_at:
             jalali = jdatetime.datetime.fromgregorian(datetime=obj.updated_at)
             return jalali.strftime('%Y/%m/%d %H:%M')
         return '-'
-    updated_at_jalali.short_description = _('Last Update')
+    updated_at_display.short_description = _('Last Update')
     
     def last_login_jalali(self, obj):
         if obj.last_login:
@@ -82,7 +82,7 @@ class RegularUserAdmin(BaseUserAdmin):
         )
     admin_actions.short_description = _('Actions')
     
-    list_display = ['username', 'email', 'phone', 'is_active', 'created_at_jalali', 'admin_actions']
+    list_display = ['username', 'email', 'phone', 'is_active', 'created_at_display', 'admin_actions']
     list_filter = ['is_active', 'is_staff']
     search_fields = ['username', 'email', 'phone']
     ordering = ['-created_at']
@@ -91,13 +91,13 @@ class RegularUserAdmin(BaseUserAdmin):
         (_('Main Info'), {'fields': ('username', 'email', 'phone', 'role')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         (_('Personal Info'), {'fields': ('profile_photo_path', 'bio')}),
-        (_('Dates'), {'fields': ('last_login_jalali', 'created_at_jalali', 'updated_at_jalali'), 'classes': ('collapse',)}),
+        (_('Dates'), {'fields': ('last_login_jalali', 'created_at_display', 'updated_at_display'), 'classes': ('collapse',)}),
     )
     
     readonly_fields = [
         'username', 'email', 'phone',
         'profile_photo_path', 'bio',
-        'created_at_jalali', 'updated_at_jalali', 'last_login_jalali'
+        'created_at_display', 'updated_at_display', 'last_login_jalali'
     ]
     
     def save_model(self, request, obj, form, change):
@@ -114,17 +114,17 @@ class TeacherUserAdmin(BaseUserAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
     
-    def created_at_jalali(self, obj):
+    def created_at_display(self, obj):
         if obj.created_at:
             return jdatetime.datetime.fromgregorian(datetime=obj.created_at).strftime('%Y/%m/%d %H:%M')
         return '-'
-    created_at_jalali.short_description = _('Registration Date')
+    created_at_display.short_description = _('Registration Date')
     
-    def updated_at_jalali(self, obj):
+    def updated_at_display(self, obj):
         if obj.updated_at:
             return jdatetime.datetime.fromgregorian(datetime=obj.updated_at).strftime('%Y/%m/%d %H:%M')
         return '-'
-    updated_at_jalali.short_description = _('Last Update')
+    updated_at_display.short_description = _('Last Update')
     
     def last_login_jalali(self, obj):
         if obj.last_login:
@@ -146,7 +146,7 @@ class TeacherUserAdmin(BaseUserAdmin):
         )
     admin_actions.short_description = _('Actions')
     
-    list_display = ['username', 'email', 'phone', 'is_teacher_verified', 'is_active', 'created_at_jalali', 'admin_actions']
+    list_display = ['username', 'email', 'phone', 'is_teacher_verified', 'is_active', 'created_at_display', 'admin_actions']
     list_filter = ['is_teacher_verified', 'is_active', 'is_staff']
     search_fields = ['username', 'email', 'phone']
     ordering = ['-created_at']
@@ -157,14 +157,14 @@ class TeacherUserAdmin(BaseUserAdmin):
         (_('Financial Settings'), {'fields': ('commission_rate_override',), 'description': _('Custom commission rate for this teacher. If empty, default rate applies.')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         (_('Personal Info'), {'fields': ('profile_photo_path', 'bio')}),
-        (_('Dates'), {'fields': ('last_login_jalali', 'created_at_jalali', 'updated_at_jalali'), 'classes': ('collapse',)}),
+        (_('Dates'), {'fields': ('last_login_jalali', 'created_at_display', 'updated_at_display'), 'classes': ('collapse',)}),
     )
     
     readonly_fields = [
         'name', 'username', 'email', 'phone',
         'teacher_verification_requested_at_jalali',
         'profile_photo_path','bio',
-        'created_at_jalali', 'updated_at_jalali', 'last_login_jalali'
+        'created_at_display', 'updated_at_display', 'last_login_jalali'
     ]
     
     add_fieldsets = (

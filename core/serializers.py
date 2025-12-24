@@ -9,13 +9,13 @@ from .models import Article, FAQ, About, Term, Privacy, Contact, Banner
 
 class ArticleListSerializer(serializers.ModelSerializer):
     """Serializer for article list"""
-    created_at_jalali = serializers.SerializerMethodField()
+    created_at_display = serializers.SerializerMethodField()
     
     class Meta:
         model = Article
-        fields = ['id', 'title', 'image', 'short_description', 'created_at', 'created_at_jalali']
+        fields = ['id', 'title', 'image', 'short_description', 'created_at', 'created_at_display']
     
-    def get_created_at_jalali(self, obj):
+    def get_created_at_display(self, obj):
         lang = get_language()
         if lang == 'fa':
             # Persian: Jalali (Shamsi) date
@@ -27,13 +27,13 @@ class ArticleListSerializer(serializers.ModelSerializer):
 
 class ArticleDetailSerializer(serializers.ModelSerializer):
     """Serializer for article detail"""
-    created_at_jalali = serializers.SerializerMethodField()
+    created_at_display = serializers.SerializerMethodField()
     
     class Meta:
         model = Article
-        fields = ['id', 'title', 'image', 'short_description', 'content', 'created_at', 'created_at_jalali']
+        fields = ['id', 'title', 'image', 'short_description', 'content', 'created_at', 'created_at_display']
     
-    def get_created_at_jalali(self, obj):
+    def get_created_at_display(self, obj):
         lang = get_language()
         if lang == 'fa':
             # Persian: Jalali (Shamsi) date

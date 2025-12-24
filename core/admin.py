@@ -30,7 +30,7 @@ admin.site.index = custom_index
 
 @admin.register(About)
 class AboutAdmin(admin.ModelAdmin):
-    list_display = ("title", "image_tag", "created_at_jalali", "updated_at_jalali", "admin_actions")
+    list_display = ("title", "image_tag", "created_at_display", "updated_at_display", "admin_actions")
     search_fields = ("title", "content", "title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
     
@@ -64,7 +64,7 @@ class AboutAdmin(admin.ModelAdmin):
 
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
-    list_display = ("title", "created_at_jalali", "updated_at_jalali", "admin_actions")
+    list_display = ("title", "created_at_display", "updated_at_display", "admin_actions")
     search_fields = ("title", "content", "title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
     fieldsets = (
@@ -86,7 +86,7 @@ class TermAdmin(admin.ModelAdmin):
 
 @admin.register(Privacy)
 class PrivacyAdmin(admin.ModelAdmin):
-    list_display = ("title", "created_at_jalali", "updated_at_jalali", "admin_actions")
+    list_display = ("title", "created_at_display", "updated_at_display", "admin_actions")
     search_fields = ("title", "content", "title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
     fieldsets = (
@@ -108,7 +108,7 @@ class PrivacyAdmin(admin.ModelAdmin):
 
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
-    list_display = ("title", "type", "value", "link", "created_at_jalali", "admin_actions")
+    list_display = ("title", "type", "value", "link", "created_at_display", "admin_actions")
     list_filter = ["type"]
     search_fields = ("title", "value", "title_fa", "value_fa", "title_en", "value_en")
     ordering = ("-created_at",)
@@ -130,7 +130,7 @@ class ContactAdmin(admin.ModelAdmin):
 
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
-    list_display = ("name", "phone", "subject", "message", "created_at_jalali", "view_details")
+    list_display = ("name", "phone", "subject", "message", "created_at_display", "view_details")
     readonly_fields = ("name", "phone", "subject", "message")
     search_fields = ("name", "phone", "subject")
     actions = None
@@ -157,7 +157,7 @@ class ContactMessageAdmin(admin.ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ("title", "image_tag", "created_at_jalali", "updated_at_jalali", "admin_actions")
+    list_display = ("title", "image_tag", "created_at_display", "updated_at_display", "admin_actions")
     search_fields = ("title", "content", "title_fa", "content_fa", "title_en", "content_en")
     list_filter = ("created_at", "updated_at")
     ordering = ("-created_at",)
@@ -187,7 +187,7 @@ class ArticleAdmin(admin.ModelAdmin):
 
 @admin.register(FAQ)
 class FAQAdmin(admin.ModelAdmin):
-    list_display = ("question", "is_active", "updated_at_jalali", "admin_actions")
+    list_display = ("question", "is_active", "updated_at_display", "admin_actions")
     search_fields = ("question", "answer", "question_fa", "answer_fa", "question_en", "answer_en")
     list_filter = ("is_active", "created_at")
     ordering = ("-created_at",)
@@ -216,14 +216,14 @@ class BannerAdmin(admin.ModelAdmin):
         "image_tag", 
         "is_active_display",
         "sort", 
-        "created_at_jalali", 
+        "created_at_display", 
         "admin_actions"
     )
     search_fields = ("title", "sub_title", "link", "title_fa", "sub_title_fa", "title_en", "sub_title_en")
     list_filter = ("placement", "is_active", "created_at")
     ordering = ("placement", "sort", "-created_at")
     list_editable = ("sort",)
-    readonly_fields = ("created_at_jalali", "updated_at_jalali")
+    readonly_fields = ("created_at_display", "updated_at_display")
     
     fieldsets = (
         (_("Main Information"), {
@@ -236,7 +236,7 @@ class BannerAdmin(admin.ModelAdmin):
             "fields": ("is_active", "sort")
         }),
         (_("History"), {
-            "fields": ("created_at_jalali", "updated_at_jalali"),
+            "fields": ("created_at_display", "updated_at_display"),
             "classes": ("collapse",)
         }),
     )
