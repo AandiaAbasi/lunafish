@@ -6,7 +6,7 @@ import jdatetime
 
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True,verbose_name=_("Created at"))
-    updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name=_("Updated at"), null=True, verbose_name=_("Updated at"))
+    updated_at = models.DateTimeField(auto_now=True, null=True, verbose_name=_("Updated at"))
 
     class Meta:
         abstract = True
