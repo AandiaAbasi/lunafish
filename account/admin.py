@@ -10,6 +10,7 @@ from .utils import send_sms, format_phone_display, send_sms_general
 import random
 import string
 import jdatetime
+from django.utils.translation import gettext_lazy as _
 
 
 class TeacherCreationForm(forms.ModelForm):
