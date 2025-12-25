@@ -161,11 +161,19 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'fa-ir'
+LANGUAGE_CODE = 'fa'
 TIME_ZONE = 'Asia/Tehran'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
+
+LANGUAGES = [
+    ('fa', _('Persian')),
+    ('en', _('English')),
+]
+
+MODELTRANSLATION_LANGUAGES = ('fa', 'en')
+MODELTRANSLATION_DEFAULT_LANGUAGE = 'fa'
 
 AUTH_USER_MODEL = 'account.User'
 # Static files (CSS, JavaScript, Images)
