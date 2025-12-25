@@ -16,7 +16,7 @@ class Service(BaseModel):
     
     # Basic Info
     title = models.CharField(
-        max_length=128,
+        max_length=100,
         verbose_name=_('Service Title'),
         help_text=_('Service title (max 128 characters)')
     )
@@ -95,15 +95,15 @@ class Room(BaseModel):
     
     # Basic Info
     name = models.CharField(
-        max_length=128,
+        max_length=100,
         unique=True,
         verbose_name=_('Room Name'),
-        help_text=_('Room name in Latin (max 128 characters)')
+        help_text=_('Room name in Latin (max 100 characters)')
     )
     title = models.CharField(
-        max_length=128,
+        max_length=100,
         verbose_name=_('Room Title'),
-        help_text=_('Room display title (max 128 characters)')
+        help_text=_('Room display title (max 100 characters)')
     )
     description = models.TextField(
         blank=True,
@@ -202,39 +202,39 @@ class SkyroomUser(BaseModel):
         help_text=_('Username in Latin (max 32 characters)')
     )
     nickname = models.CharField(
-        max_length=128,
+        max_length=100,
         verbose_name=_('Nickname'),
-        help_text=_('Display name (max 128 characters)')
+        help_text=_('Display name (max 100 characters)')
     )
     password = models.CharField(
-        max_length=255,
+        max_length=190,
         verbose_name=_('Password Hash'),
         help_text=_('Password hash (max 24 characters original)')
     )
     
     # Contact Info
     email = models.EmailField(
-        max_length=128,
+        max_length=100,
         blank=True,
         null=True,
         verbose_name=_('Email'),
-        help_text=_('Email address (max 128 characters)')
+        help_text=_('Email address (max 100 characters)')
     )
     
     # Personal Info
     fname = models.CharField(
-        max_length=128,
+        max_length=100,
         blank=True,
         null=True,
         verbose_name=_('First Name'),
-        help_text=_('First name (max 128 characters)')
+        help_text=_('First name (max 100 characters)')
     )
     lname = models.CharField(
-        max_length=128,
+        max_length=100,
         blank=True,
         null=True,
         verbose_name=_('Last Name'),
-        help_text=_('Last name (max 128 characters)')
+        help_text=_('Last name (max 100 characters)')
     )
     gender = models.IntegerField(
         choices=GENDER_CHOICES,
@@ -348,13 +348,13 @@ class LoginUrl(BaseModel):
     
     # User identifier can be a number or string
     user_id = models.CharField(
-        max_length=255,
+        max_length=190,
         verbose_name=_('User ID'),
         help_text=_('User identifier (number or string)')
     )
     
     nickname = models.CharField(
-        max_length=128,
+        max_length=100,
         blank=True,
         null=True,
         verbose_name=_('Nickname'),
