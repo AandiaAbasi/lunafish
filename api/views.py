@@ -646,6 +646,160 @@ class TeacherVerifyEmailOTPAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# ========== Teacher Registration APIs ==========
+
+class TeacherSendOTPRegistrationAPIView(APIView):
+    """API: Send OTP for teacher registration"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = TeacherSendOTPSerializer(data=request.data)
+        if serializer.is_valid():
+            identifier = serializer.validated_data['identifier']
+            
+            # Check if phone/email already belongs to a fully registered user (teacher or regular)
+            import phonenumbers
+            check_identifier = identifier
+            if identifier.startswith('09'):
+                try:
+                    phone_obj = phonenumbers.parse(identifier, "IR")
+                    check_identifier = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
+                except:
+                    pass
+            
+            # Check if already registered
+            if '@' not in identifier:
+                existing_user = User.objects.filter(phone=check_identifier).first() or User.objects.filter(phone=identifier).first()
+                if existing_user and existing_user.username and not existing_user.username.startswith('user_'):
+                    return Response({
+                        "success": False,
+                        "message": _("This phone number is already registered. Please log in.")
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                existing_user = User.objects.filter(email=identifier).first()
+                if existing_user and existing_user.username and not existing_user.username.startswith('user_'):
+                    return Response({
+                        "success": False,
+                        "message": _("This email is already registered. Please log in.")
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check cooldown
+            recent_otp = OTP.objects.filter(
+                phone=identifier if '@' not in str(identifier) else None,
+                email=identifier if '@' in str(identifier) else None,
+                is_used=False,
+                purpose='registration'
+            ).order_by('-created_at').first()
+            
+            if recent_otp and (timezone.now() - recent_otp.created_at).seconds < 120:
+                return Response({
+                    "success": False,
+                    "message": _("Please wait 2 minutes before requesting another code.")
+                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+            
+            # Generate and send OTP for teacher registration
+            try:
+                generate_and_send_otp(identifier, purpose='registration', is_teacher=True)
+                return Response({
+                    "success": True,
+                    "message": _("Verification code sent.")
+                }, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({
+                    "success": False,
+                    "message": _(f"Error sending code: {str(e)}")
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        return Response({
+            "success": False,
+            "message": _("Invalid data provided"),
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TeacherVerifyOTPRegistrationAPIView(APIView):
+    """API: Verify OTP for teacher registration"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = TeacherVerifyOTPSerializer(data=request.data)
+        if serializer.is_valid():
+            identifier = serializer.validated_data['identifier']
+            code = serializer.validated_data['code']
+            
+            ok, result = validate_otp(identifier, code, purpose='registration')
+            
+            if ok:
+                # If registration verification successful, return verification token
+                if isinstance(result, dict):
+                    return Response({
+                        "success": True,
+                        "message": _("Verification code is correct. Please complete teacher registration"),
+                        "data": {
+                            "verification_token": result['verification_token'],
+                            "phone": result.get('phone'),
+                            "email": result.get('email')
+                        }
+                    }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "success": False,
+                    "message": result
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({
+            "success": False,
+            "message": _("Invalid data provided"),
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CompleteTeacherRegistrationAPIView(APIView):
+    """API: Complete teacher registration with username and password"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = CompleteTeacherRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            verification_token = serializer.validated_data['verification_token']
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+            name = serializer.validated_data.get('name', '')
+            bio = serializer.validated_data.get('bio', '')
+            expo_push_token = serializer.validated_data.get('expo_push_token', '')
+            
+            ok, result = complete_teacher_registration(
+                verification_token=verification_token,
+                name=name,
+                username=username,
+                password=password,
+                bio=bio,
+                expo_push_token=expo_push_token
+            )
+            
+            if ok:
+                user = result
+                # Note: Teacher is created but NOT verified yet
+                # Admin must verify them through admin panel or verify endpoint
+                
+                return Response({
+                    "success": True,
+                    "message": _("Teacher registration completed! Please wait for admin verification."),
+                    "user": UserProfileSerializer(user).data
+                }, status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    "success": False,
+                    "message": result
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({
+            "success": False,
+            "message": _("Invalid data"),
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
 class CheckUsernameAPIView(APIView):
     """API: Check if username is available"""
     permission_classes = [AllowAny]
@@ -809,6 +963,79 @@ class PromoteToTeacherAPIView(APIView):
             "message": _("Invalid data provided"),
             "errors": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyTeacherAPIView(APIView):
+    """API: Admin endpoint to verify/approve a teacher registration"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, teacher_id):
+        """Verify a teacher (admin only)"""
+        # Check if requester is admin
+        if request.user.role != 'admin':
+            return Response({
+                "success": False,
+                "message": _("Only administrators can verify teachers")
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get teacher
+        teacher = get_object_or_404(User, id=teacher_id)
+        
+        # Check if user is actually a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                "success": False,
+                "message": _("User is not a teacher")
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verify teacher
+        ok, message = verify_teacher(teacher, verified=True)
+        
+        if ok:
+            return Response({
+                "success": True,
+                "message": message,
+                "user": UserProfileSerializer(teacher).data
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                "success": False,
+                "message": message
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, teacher_id):
+        """Reject/revoke teacher verification (admin only)"""
+        # Check if requester is admin
+        if request.user.role != 'admin':
+            return Response({
+                "success": False,
+                "message": _("Only administrators can manage teacher verification")
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get teacher
+        teacher = get_object_or_404(User, id=teacher_id)
+        
+        # Check if user is actually a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                "success": False,
+                "message": _("User is not a teacher")
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Revoke teacher verification
+        ok, message = verify_teacher(teacher, verified=False)
+        
+        if ok:
+            return Response({
+                "success": True,
+                "message": message,
+                "user": UserProfileSerializer(teacher).data
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                "success": False,
+                "message": message
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ========== Password & Settings APIs ==========

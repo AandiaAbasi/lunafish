@@ -22,6 +22,11 @@ urlpatterns = [
     path('teacher/send-otp/', views.TeacherSendOTPAPIView.as_view(), name='teacher_send_otp'),
     path('teacher/verify-otp/', views.TeacherVerifyOTPAPIView.as_view(), name='teacher_verify_otp'),
     
+    # ========== Teacher Registration ==========
+    path('teacher/send-otp-registration/', views.TeacherSendOTPRegistrationAPIView.as_view(), name='teacher_send_otp_registration'),
+    path('teacher/verify-otp-registration/', views.TeacherVerifyOTPRegistrationAPIView.as_view(), name='teacher_verify_otp_registration'),
+    path('teacher/complete-registration/', views.CompleteTeacherRegistrationAPIView.as_view(), name='complete_teacher_registration'),
+    
     # ========== Email-Based Authentication ==========
     path('user/send-email-otp/', views.UserSendEmailOTPAPIView.as_view(), name='user_send_email_otp'),
     path('user/verify-email-otp/', views.UserVerifyEmailOTPAPIView.as_view(), name='user_verify_email_otp'),
@@ -34,6 +39,7 @@ urlpatterns = [
     # Legacy endpoint for backward compatibility
     path('teacher-profile/', views.UserProfileAPIView.as_view(), name='teacher_profile'),
     path('promote-to-teacher/', views.PromoteToTeacherAPIView.as_view(), name='promote_to_teacher'),
+    path('admin/teacher/<int:teacher_id>/verify/', views.VerifyTeacherAPIView.as_view(), name='verify_teacher'),
     
     # ========== Settings & Security ==========
     path('change-password/', views.ChangePasswordAPIView.as_view(), name='change_password'),
@@ -49,3 +55,4 @@ urlpatterns = [
     path('contact/', views.ContactListAPIView.as_view(), name='contact'),
     path('contact/phone/', views.ContactPhoneAPIView.as_view(), name='contact_phone'),
 ]
+

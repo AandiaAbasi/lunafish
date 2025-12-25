@@ -239,6 +239,74 @@ class PromoteToTeacherSerializer(serializers.Serializer):
     bio = serializers.CharField(required=False)
 
 
+# Teacher Registration
+class TeacherSendOTPSerializer(serializers.Serializer):
+    """Send OTP for teacher registration"""
+    identifier = serializers.CharField(required=False)
+    phone_number = serializers.CharField(required=False)
+    phone = serializers.CharField(required=False)
+    
+    def validate(self, data):
+        identifier = data.get('identifier') or data.get('phone_number') or data.get('phone')
+        if not identifier:
+            raise serializers.ValidationError({"phone": _("Phone number or email is required")})
+        
+        identifier = convert_persian_to_english_digits(identifier)
+        data['identifier'] = identifier
+        
+        return data
+
+
+class TeacherVerifyOTPSerializer(serializers.Serializer):
+    """Verify OTP for teacher registration"""
+    identifier = serializers.CharField(required=False)
+    phone_number = serializers.CharField(required=False)
+    phone = serializers.CharField(required=False)
+    code = serializers.CharField(min_length=6, max_length=6)
+    
+    def validate(self, data):
+        identifier = data.get('identifier') or data.get('phone_number') or data.get('phone')
+        if not identifier:
+            raise serializers.ValidationError({"phone": _("Phone number or email is required")})
+        
+        identifier = convert_persian_to_english_digits(identifier)
+        code = convert_persian_to_english_digits(data.get('code', ''))
+        
+        if not code.isdigit():
+            raise serializers.ValidationError({"code": _("Code must be numeric")})
+        if len(code) != 6:
+            raise serializers.ValidationError({"code": _("Code must be 6 digits")})
+        
+        data['identifier'] = identifier
+        data['code'] = code
+        
+        return data
+
+
+class CompleteTeacherRegistrationSerializer(serializers.Serializer):
+    """Complete teacher registration"""
+    verification_token = serializers.CharField()
+    username = serializers.CharField(min_length=3, max_length=150)
+    password = serializers.CharField(min_length=6, write_only=True)
+    
+    # Optional fields
+    name = serializers.CharField(max_length=300, required=False, allow_blank=True)
+    bio = serializers.CharField(required=False, allow_blank=True)
+    expo_push_token = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(_("This username is already taken"))
+        return value
+    
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
+
+
 # Admin
 class UserListSerializer(serializers.ModelSerializer):
     role_display = serializers.CharField(source='get_role_display', read_only=True)
