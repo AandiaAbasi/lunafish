@@ -42,7 +42,7 @@ class User(AbstractUser, BaseModel):
     
     # Add name field as alias for username
     name = models.CharField(
-        max_length=100,
+        max_length=150,
         blank=True,
         null=True,
         verbose_name=_("Display name"),
@@ -56,19 +56,19 @@ class User(AbstractUser, BaseModel):
     ]
     
     GENDER_CHOICES = [
-        ('M', _('Male')),
-        ('F', _('Female')),
-        ('O', _('Other')),
+        ('male', _('Male')),
+        ('female', _('Female')),
+        ('custom', _('Custom')),
+        ('prefer_not_to_say', _('Prefer not to say')),
     ]
     
     # Role System
     role = models.CharField(
-        max_length=10,
+        max_length=20,
         choices=ROLE_CHOICES,
         default='user',
         verbose_name=_("User role"),
-        help_text=_("User: Regular user, Teacher: Teacher, Admin: Administrator"),
-        db_index=True
+        help_text=_("User: Regular user, Teacher: Teacher, Admin: Administrator")
     )
     
     # Override email to make it optional
@@ -81,12 +81,11 @@ class User(AbstractUser, BaseModel):
     
     # Contact Information
     phone = models.CharField(
-        max_length=15,
+        max_length=20,
         unique=True,
         null=True,
         blank=True,
-        verbose_name=_("Phone number"),
-        db_index=True
+        verbose_name=_("Phone number")
     )
     phone_verified_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Phone verified at"))
     email_verified_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Email verified at"))
@@ -105,7 +104,7 @@ class User(AbstractUser, BaseModel):
         verbose_name=_("Bio")
     )
     gender = models.CharField(
-        max_length=1,
+        max_length=20,
         choices=GENDER_CHOICES,
         null=True,
         blank=True,
@@ -121,8 +120,7 @@ class User(AbstractUser, BaseModel):
     is_teacher_verified = models.BooleanField(
         default=False,
         verbose_name=_("Teacher verified"),
-        help_text=_("Whether this teacher is verified by admin"),
-        db_index=True
+        help_text=_("Whether this teacher is verified by admin")
     )
     teacher_verification_requested_at = models.DateTimeField(
         null=True,
@@ -158,14 +156,6 @@ class User(AbstractUser, BaseModel):
         default=False,
         verbose_name=_("Is online"),
         help_text=_("Online status")
-    )
-    
-    # Settings
-    settings = models.JSONField(
-        default=dict,
-        blank=True,
-        verbose_name=_("Settings"),
-        help_text=_("User preferences and settings")
     )
     
     # Use username as USERNAME_FIELD instead of phone
