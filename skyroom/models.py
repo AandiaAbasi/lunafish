@@ -207,7 +207,7 @@ class SkyroomUser(BaseModel):
         help_text=_('Display name (max 100 characters)')
     )
     password = models.CharField(
-        max_length=190,
+        max_length=100,
         verbose_name=_('Password Hash'),
         help_text=_('Password hash (max 24 characters original)')
     )
@@ -346,11 +346,12 @@ class LoginUrl(BaseModel):
         verbose_name=_('Room')
     )
     
-    # User identifier can be a number or string
-    user_id = models.CharField(
-        max_length=190,
-        verbose_name=_('User ID'),
-        help_text=_('User identifier (number or string)')
+    user = models.ForeignKey(
+        SkyroomUser,
+        on_delete=models.CASCADE,
+        related_name='login_urls',
+        verbose_name=_('User'),
+        help_text=_('Associated Skyroom user')
     )
     
     nickname = models.CharField(
@@ -396,7 +397,7 @@ class LoginUrl(BaseModel):
         verbose_name_plural = _('Login URLs')
     
     def __str__(self):
-        return f"{self.room.name} - {self.user_id} (Expires: {self.expires_at})"
+        return f"{self.room.name} - {self.user.username} (Expires: {self.expires_at})"
     
     def is_expired(self):
         """Check if login URL has expired"""
