@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 class About(BaseModel):
-    title = models.CharField(max_length=255, verbose_name=_("Title"))
+    title = models.CharField(max_length=200, verbose_name=_("Title"))
     image = models.ImageField(upload_to=upload_to_dynamic, null=True, blank=True, verbose_name=_("Image"))
     content = RichTextField(verbose_name=_("Content"))
 
@@ -21,7 +21,7 @@ class About(BaseModel):
 
 
 class Term(BaseModel):
-    title = models.CharField(max_length=255, verbose_name=_("Title"))
+    title = models.CharField(max_length=200, verbose_name=_("Title"))
     content = RichTextField(verbose_name=_("Content"))
 
     def __str__(self):
@@ -33,7 +33,7 @@ class Term(BaseModel):
 
 
 class Privacy(BaseModel):
-    title = models.CharField(max_length=255, verbose_name=_("Title"))
+    title = models.CharField(max_length=200, verbose_name=_("Title"))
     content = RichTextField(verbose_name=_("Content"))
 
     def __str__(self):
@@ -56,10 +56,10 @@ class Contact(BaseModel):
         ('spotify', _("Spotify")),
     ]
     
-    title = models.CharField(max_length=255, verbose_name=_("Title"))
+    title = models.CharField(max_length=100, verbose_name=_("Title"))
     link = models.CharField(null=True, blank=True, max_length=500, verbose_name=_("Link"))
-    value = models.CharField(max_length=255, verbose_name=_("Value"))
-    type = models.CharField(max_length=255, choices=CHOICES, default="phone", verbose_name=_("Type"))
+    value = models.CharField(max_length=200, verbose_name=_("Value"))
+    type = models.CharField(max_length=20, choices=CHOICES, default="phone", verbose_name=_("Type"), db_index=True)
 
     def __str__(self): 
         return self.title 
@@ -70,9 +70,9 @@ class Contact(BaseModel):
 
 
 class ContactMessage(BaseModel):
-    name = models.CharField(max_length=255, verbose_name=_("Name"))
+    name = models.CharField(max_length=200, verbose_name=_("Name"))
     phone = PhoneNumberField(region="IR", verbose_name=_("Phone number"))
-    subject = models.CharField(max_length=255, verbose_name=_("Subject"))
+    subject = models.CharField(max_length=200, verbose_name=_("Subject"))
     message = models.TextField(verbose_name=_("Message"))
 
     def __str__(self):
@@ -84,7 +84,7 @@ class ContactMessage(BaseModel):
 
 
 class Article(BaseModel):
-    title = models.CharField(max_length=255, verbose_name=_("Title"))
+    title = models.CharField(max_length=200, verbose_name=_("Title"), db_index=True)
     image = models.ImageField(upload_to=upload_to_dynamic, verbose_name=_("Image"))
     short_description = models.TextField(null=True, blank=True, verbose_name=_("Short description"))
     content = RichTextField(verbose_name=_("Content"))
@@ -92,18 +92,20 @@ class Article(BaseModel):
     def created_at_display(self):
         return jdatetime.datetime.fromgregorian(datetime=self.created_at).strftime('%Y-%m-%d')
     created_at_display.short_description = _("Created at")
+    
     def __str__(self):
         return self.title
 
     class Meta:
         verbose_name = _("Article")
         verbose_name_plural = _("Articles")
+        ordering = ['-created_at']
 
 
 class FAQ(BaseModel):
-    question = models.CharField(max_length=500, verbose_name=_("Question"))
+    question = models.CharField(max_length=400, verbose_name=_("Question"), db_index=True)
     answer = models.TextField(verbose_name=_("Answer"))
-    is_active = models.BooleanField(default=True, verbose_name=_("Display status"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Display status"), db_index=True)
 
     def __str__(self):
         return self.question
@@ -120,13 +122,13 @@ class Banner(BaseModel):
         ('app_home', _("App home")),
     ]
 
-    title = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Title"))
-    sub_title = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Subtitle"))
+    title = models.CharField(max_length=150, null=True, blank=True, verbose_name=_("Title"))
+    sub_title = models.CharField(max_length=150, null=True, blank=True, verbose_name=_("Subtitle"))
     image = models.ImageField(upload_to=upload_to_dynamic, verbose_name=_("Image"))
     link = models.CharField(max_length=500, null=True, blank=True, verbose_name=_("Link"), help_text=_("Example: https://example.com"))
-    placement = models.CharField(max_length=50, choices=PLACEMENT_CHOICES, default='home', verbose_name=_("Placement"))
+    placement = models.CharField(max_length=20, choices=PLACEMENT_CHOICES, default='home', verbose_name=_("Placement"), db_index=True)
     sort = models.IntegerField(default=0, verbose_name=_("Display order"))
-    is_active = models.BooleanField(default=True, verbose_name=_("Active"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Active"), db_index=True)
 
     def __str__(self):
         return f"{self.title}"
