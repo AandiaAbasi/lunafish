@@ -42,7 +42,7 @@ class User(AbstractUser, BaseModel):
     
     # Add name field as alias for username
     name = models.CharField(
-        max_length=150,
+        max_length=100,
         blank=True,
         null=True,
         verbose_name=_("Display name"),
