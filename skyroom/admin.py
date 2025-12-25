@@ -4,10 +4,10 @@ from .models import Service, Room, SkyroomUser, RoomUserAccess, LoginUrl
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ['title', 'skyroom_id', 'status', 'user_limit', 'video_limit', 'updated_at_display']
-    list_filter = ['status', 'updated_at_display']
+    list_display = ['title', 'skyroom_id', 'status', 'user_limit', 'video_limit', 'updated_at']
+    list_filter = ['status', 'updated_at']
     search_fields = ['title', 'skyroom_id']
-    readonly_fields = ['created_at_display', 'updated_at_display']
+    readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
         ('Basic Information', {
@@ -20,7 +20,7 @@ class ServiceAdmin(admin.ModelAdmin):
             'fields': ('time_usage',)
         }),
         ('Timestamps', {
-            'fields': ('start_time', 'stop_time', 'created_at_display', 'updated_at_display'),
+            'fields': ('start_time', 'stop_time', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
@@ -28,10 +28,10 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ['title', 'name', 'skyroom_id', 'service', 'status', 'max_users', 'updated_at_display']
-    list_filter = ['status', 'service', 'guest_login', 'op_login_first', 'updated_at_display']
+    list_display = ['title', 'name', 'skyroom_id', 'service', 'status', 'max_users', 'updated_at']
+    list_filter = ['status', 'service', 'guest_login', 'op_login_first', 'updated_at']
     search_fields = ['title', 'name', 'skyroom_id']
-    readonly_fields = ['created_at_display', 'updated_at_display']
+    readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
         ('Basic Information', {
@@ -47,7 +47,7 @@ class RoomAdmin(admin.ModelAdmin):
             'fields': ('time_usage', 'time_total')
         }),
         ('Timestamps', {
-            'fields': ('created_at_display', 'updated_at_display'),
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
@@ -55,10 +55,10 @@ class RoomAdmin(admin.ModelAdmin):
 
 @admin.register(SkyroomUser)
 class SkyroomUserAdmin(admin.ModelAdmin):
-    list_display = ['nickname', 'username', 'skyroom_id', 'status', 'is_public', 'updated_at_display']
-    list_filter = ['status', 'is_public', 'gender', 'updated_at_display']
+    list_display = ['nickname', 'username', 'skyroom_id', 'status', 'is_public', 'updated_at']
+    list_filter = ['status', 'is_public', 'gender', 'updated_at']
     search_fields = ['username', 'nickname', 'email', 'skyroom_id']
-    readonly_fields = ['created_at_display', 'updated_at_display']
+    readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
         ('Credentials', {
@@ -74,7 +74,7 @@ class SkyroomUserAdmin(admin.ModelAdmin):
             'fields': ('time_limit', 'time_usage', 'time_total', 'expiry_date')
         }),
         ('Timestamps', {
-            'fields': ('created_at_display', 'updated_at_display'),
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
@@ -82,17 +82,17 @@ class SkyroomUserAdmin(admin.ModelAdmin):
 
 @admin.register(RoomUserAccess)
 class RoomUserAccessAdmin(admin.ModelAdmin):
-    list_display = ['user', 'room', 'access', 'created_at_display', 'updated_at_display']
-    list_filter = ['access', 'created_at_display', 'room']
+    list_display = ['user', 'room', 'access', 'created_at', 'updated_at']
+    list_filter = ['access', 'created_at', 'room']
     search_fields = ['user__username', 'room__name']
-    readonly_fields = ['created_at_display', 'updated_at_display']
+    readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
         ('Access Information', {
             'fields': ('room', 'user', 'access')
         }),
         ('Timestamps', {
-            'fields': ('created_at_display', 'updated_at_display'),
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
@@ -101,9 +101,9 @@ class RoomUserAccessAdmin(admin.ModelAdmin):
 @admin.register(LoginUrl)
 class LoginUrlAdmin(admin.ModelAdmin):
     list_display = ['room', 'user_id', 'nickname', 'access', 'is_active', 'expires_at']
-    list_filter = ['is_active', 'access', 'created_at_display', 'room']
+    list_filter = ['is_active', 'access', 'created_at', 'room']
     search_fields = ['user_id', 'room__name', 'nickname']
-    readonly_fields = ['created_at_display', 'updated_at_display', 'url']
+    readonly_fields = ['created_at', 'updated_at', 'url']
     
     fieldsets = (
         ('Room & User', {
@@ -120,7 +120,7 @@ class LoginUrlAdmin(admin.ModelAdmin):
             'fields': ('expires_at',)
         }),
         ('Timestamps', {
-            'fields': ('created_at_display', 'updated_at_display'),
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
