@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # Local apps
     'core',
     'account',
+    'skyroom',
 ]
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
