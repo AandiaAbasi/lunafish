@@ -70,9 +70,9 @@ class Contact(BaseModel):
 
 
 class ContactMessage(BaseModel):
-    name = models.CharField(max_length=191, verbose_name=_("Name"))
+    name = models.CharField(max_length=100, verbose_name=_("Name"))
     phone = PhoneNumberField(region="IR", verbose_name=_("Phone number"))
-    subject = models.CharField(max_length=191, verbose_name=_("Subject"))
+    subject = models.CharField(max_length=100, verbose_name=_("Subject"))
     message = models.TextField(verbose_name=_("Message"))
 
     def __str__(self):
@@ -101,7 +101,7 @@ class Article(BaseModel):
 
 
 class FAQ(BaseModel):
-    question = models.CharField(max_length=191, verbose_name=_("Question"))
+    question = models.CharField(max_length=100, verbose_name=_("Question"))
     answer = models.TextField(verbose_name=_("Answer"))
     is_active = models.BooleanField(default=True, verbose_name=_("Display status"))
 

@@ -217,7 +217,7 @@ class OTP(BaseModel):
         verbose_name=_("User")
     )
     code = models.CharField(
-        max_length=150,
+        max_length=100,
         verbose_name=_("Hashed code"),
         help_text=_("Hashed OTP code")
     )
