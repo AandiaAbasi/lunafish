@@ -123,6 +123,32 @@ class CompleteRegistrationSerializer(serializers.Serializer):
         return value
 
 
+class CompleteTeacherRegistrationSerializer(serializers.Serializer):
+    """Serializer for completing teacher registration"""
+    verification_token = serializers.CharField()
+    username = serializers.CharField(min_length=3, max_length=150)
+    password = serializers.CharField(min_length=6, write_only=True)
+    
+    # Optional fields
+    name = serializers.CharField(max_length=300, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    bio = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    expo_push_token = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(_("This username is already taken"))
+        return value
+    
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
+
+
 class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=False)
     confirm_password = serializers.CharField(required=False)

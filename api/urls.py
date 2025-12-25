@@ -21,6 +21,7 @@ urlpatterns = [
     path('teacher/login-password/', views.TeacherLoginPasswordAPIView.as_view(), name='teacher_login_password'),
     path('teacher/send-otp/', views.TeacherSendOTPAPIView.as_view(), name='teacher_send_otp'),
     path('teacher/verify-otp/', views.TeacherVerifyOTPAPIView.as_view(), name='teacher_verify_otp'),
+    path('teacher/complete-registration/', views.TeacherCompleteRegistrationAPIView.as_view(), name='teacher_complete_registration'),
     
     # ========== Email-Based Authentication ==========
     path('user/send-email-otp/', views.UserSendEmailOTPAPIView.as_view(), name='user_send_email_otp'),

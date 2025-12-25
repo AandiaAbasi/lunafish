@@ -353,6 +353,58 @@ def complete_registration(verification_token: str, username: str, password: str,
         return False, f"Registration error: {str(e)}"
 
 
+def complete_teacher_registration(verification_token: str, username: str, password: str, 
+                                  name: str = None, bio: str = None, expo_push_token: str = None):
+    """Complete teacher registration with username/password"""
+    import phonenumbers
+    
+    token = VerificationToken.objects.filter(token=verification_token, is_used=False).first()
+    
+    if not token:
+        return False, _("Invalid token")
+    
+    if token.expires_at < timezone.now():
+        token.delete()
+        return False, _("Token expired. Please register again.")
+    
+    if User.objects.filter(username=username).exists():
+        return False, _("Username already exists")
+    
+    try:
+        # Normalize phone to +98 format if needed
+        stored_phone = token.phone
+        if stored_phone and stored_phone.startswith('09'):
+            try:
+                phone_obj = phonenumbers.parse(stored_phone, "IR")
+                stored_phone = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
+            except Exception as e:
+                logger.error(f"Phone normalization error: {e}")
+        
+        user = User.objects.create(
+            username=username,
+            phone=stored_phone,
+            email=token.email,
+            role='teacher',
+            name=name or username,  # Use provided name or fallback to username
+            bio=bio or ""  # Add bio for teacher profile
+        )
+        user.set_password(password)
+        user.phone_verified_at = timezone.now() if stored_phone else None
+        user.email_verified_at = timezone.now() if token.email else None
+        user.save()
+    
+        if expo_push_token:
+            pass  # handle push token if needed
+        
+        token.is_used = True
+        token.save()
+        
+        return True, user
+    except Exception as e:
+        logger.error(f"Teacher registration error: {e}")
+        return False, f"Teacher registration error: {str(e)}"
+
+
 def update_user_profile(user, data, files=None):
     """Update user profile"""
     if 'bio' in data:

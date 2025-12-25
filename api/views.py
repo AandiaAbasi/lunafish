@@ -440,6 +440,55 @@ class TeacherVerifyOTPAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+class TeacherCompleteRegistrationAPIView(APIView):
+    """API: Complete teacher registration with username and password"""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = CompleteTeacherRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            verification_token = serializer.validated_data['verification_token']
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+            name = serializer.validated_data.get('name', '')
+            bio = serializer.validated_data.get('bio', '')
+            
+            # Get expo_push_token if provided
+            expo_push_token = serializer.validated_data.get('expo_push_token', '')
+            
+            ok, result = complete_teacher_registration(
+                verification_token=verification_token,
+                name=name,
+                username=username,
+                password=password,
+                bio=bio,
+                expo_push_token=expo_push_token
+            )
+            
+            if ok:
+                user = result
+                tokens = get_tokens_for_user(user)
+                user_data = UserProfileSerializer(user).data
+                
+                return Response({
+                    "success": True,
+                    "message": _("Teacher registration completed successfully"),
+                    "user": user_data,
+                    "tokens": tokens
+                }, status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    "success": False,
+                    "message": result
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({
+            "success": False,
+            "message": _("Invalid data"),
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
 # ========== Email-Based Authentication APIs ==========
 
 class UserSendEmailOTPAPIView(APIView):
