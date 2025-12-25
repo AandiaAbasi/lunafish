@@ -80,12 +80,6 @@ class User(AbstractUser, BaseModel):
     )
     
     # Contact Information
-    country_code = models.CharField(
-        max_length=5,
-        default="+98",
-        verbose_name=_("Country code"),
-        help_text=_("Country code (e.g., +98 for Iran)")
-    )
     phone = models.CharField(
         max_length=20,
         unique=True,
