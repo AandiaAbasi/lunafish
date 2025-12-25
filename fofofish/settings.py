@@ -26,9 +26,9 @@ BASE_URL = 'https://fofofish.app/'
 SECRET_KEY = 'django-insecure-s%3ursx!kyqj!t_q6a+=g8p(%rz5(+z^)477=1hg$79(oh-+v+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app', 'localhost', '127.0.0.1', '*']
 CSRF_TRUSTED_ORIGINS = ["https://fofofish.app", "https://www.fofofish.app"]
 
 # Application definition
@@ -57,7 +57,13 @@ INSTALLED_APPS = [
 ]
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
-
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+    },
+}
 
 JALALI_DATE_DEFAULTS = {
     'Strftime': {
@@ -127,7 +133,8 @@ DATABASES = {
         'HOST': '127.0.0.1', 
         'PORT': '3306', 
         'OPTIONS': {
-            'charset': 'utf8mb4', 
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }
@@ -169,10 +176,14 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+STATICFILES_IGNORE_PATTERNS = ['.gitignore', '.git', '.svn']
 
 # Media files (User uploaded files)
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# CKEditor settings
+CKEDITOR_RESTRICT_BY_DATE = True
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
