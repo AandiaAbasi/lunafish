@@ -217,7 +217,7 @@ class OTP(BaseModel):
         verbose_name=_("User")
     )
     code = models.CharField(
-        max_length=255,
+        max_length=191,
         verbose_name=_("Hashed code"),
         help_text=_("Hashed OTP code")
     )
@@ -268,7 +268,7 @@ class VerificationToken(BaseModel):
     """
     Temporary verification token for completing registration
     """
-    token = models.CharField(max_length=255, unique=True, verbose_name=_("Token"))
+    token = models.CharField(max_length=191, unique=True, verbose_name=_("Token"))
     phone = models.CharField(max_length=20, null=True, blank=True, verbose_name=_("Phone number"))
     email = models.EmailField(null=True, blank=True, verbose_name=_("Email"))
     expires_at = models.DateTimeField(verbose_name=_("Expires at"))
