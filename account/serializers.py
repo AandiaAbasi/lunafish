@@ -187,7 +187,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id','username','name','email','phone','profile_photo_path','bio','gender','birth_date','role','role_display','is_teacher','is_teacher_verified','date_joined','settings']
+        fields = ['id','username','name','email','phone','profile_photo_path','bio','gender','birth_date','role','role_display','is_teacher','is_teacher_verified','date_joined']
         read_only_fields = ['id','username','role','is_teacher_verified','date_joined']
     
     def get_is_teacher(self,obj):
