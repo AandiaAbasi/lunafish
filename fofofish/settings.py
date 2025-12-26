@@ -14,6 +14,14 @@ from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 from decouple import config
 
+# Load .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(Path(__file__).resolve().parent.parent, '.env'))
+except ImportError:
+    # If python-dotenv is not installed, config will try to read from environment
+    pass
+
 SHOP_NAME = _("Nozima")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
