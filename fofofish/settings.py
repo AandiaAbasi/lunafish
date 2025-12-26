@@ -34,15 +34,16 @@ CSRF_TRUSTED_ORIGINS = ["https://fofofish.app", "https://www.fofofish.app"]
 # Application definition
 
 INSTALLED_APPS = [
-    'admin_interface',
-    'colorfield',
-    'django.contrib.humanize',
+    # Django default
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
+
+    # Third-party
     'rest_framework',
     'rest_framework.authtoken',
     'modeltranslation',
@@ -50,8 +51,10 @@ INSTALLED_APPS = [
     'phonenumber_field',
     'ckeditor',
     'ckeditor_uploader',
-    "safedelete",
-    'rest_framework',
+    'safedelete',
+    'admin_interface',
+    'colorfield',
+
     # Local apps
     'core',
     'account',
@@ -95,9 +98,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # API Middlewares
-    'fofofish.middleware.api_middleware.APIAuthenticationMiddleware',
-    'fofofish.middleware.api_middleware.APIErrorHandlingMiddleware',
-    'fofofish.middleware.api_middleware.APICORSMiddleware',
+    'fofofish.middleware.auth_middleware.APIAuthenticationMiddleware',
+    'fofofish.middleware.auth_middleware.APIErrorHandlingMiddleware',
+    'fofofish.middleware.auth_middleware.APICORSMiddleware',
     # Web Middleware
     'fofofish.middleware.auth_middleware.LoginRequiredMiddleware',
 ]
