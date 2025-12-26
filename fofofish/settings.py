@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
     'modeltranslation',
     'django_jalali',
     'phonenumber_field',
@@ -92,6 +94,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # API Middlewares
+    'fofofish.middleware.api_middleware.APIAuthenticationMiddleware',
+    'fofofish.middleware.api_middleware.APIErrorHandlingMiddleware',
+    'fofofish.middleware.api_middleware.APICORSMiddleware',
+    # Web Middleware
     'fofofish.middleware.auth_middleware.LoginRequiredMiddleware',
 ]
 
@@ -193,6 +200,23 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # CKEditor settings
 CKEDITOR_RESTRICT_BY_DATE = True
+
+# REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
