@@ -197,8 +197,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'fa'
 TIME_ZONE = 'Asia/Tehran'
-# Use NullTranslations to avoid loading corrupted MO files
-USE_I18N = True
+# Disable i18n temporarily to avoid translation file errors
+USE_I18N = False
 USE_L10N = True
 USE_TZ = True
 
