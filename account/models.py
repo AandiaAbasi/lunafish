@@ -98,6 +98,16 @@ class User(AbstractUser, BaseModel):
         blank=True,
         verbose_name=_("Profile photo")
     )
+    
+    # Avatar Template Selection
+    selected_avatar = models.ForeignKey(
+        'AvatarTemplate',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Selected avatar"),
+        help_text=_("Avatar template selected by user")
+    )
     bio = models.TextField(
         null=True,
         blank=True,
@@ -282,4 +292,24 @@ class VerificationToken(BaseModel):
     
     def __str__(self):
         return f"Token for {self.phone or self.email}"
+
+
+class AvatarTemplate(BaseModel):
+    """
+    Avatar template images that users can choose as their profile photo
+    """
+    image = models.ImageField(
+        upload_to='avatars/templates/',
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])],
+        verbose_name=_("Avatar image")
+    )
+    
+    class Meta:
+        db_table = 'avatar_templates'
+        verbose_name = _("Avatar Template")
+        verbose_name_plural = _("Avatar Templates")
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Avatar {self.id}"
     

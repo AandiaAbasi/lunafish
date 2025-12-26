@@ -5,7 +5,7 @@ from django.utils.html import format_html
 from django.shortcuts import redirect
 from django.contrib import messages
 from django import forms
-from .models import User, OTP, VerificationToken
+from .models import User, OTP, VerificationToken, AvatarTemplate
 from .utils import send_sms, format_phone_display, send_sms_general
 import random
 import string
@@ -258,4 +258,34 @@ try:
     admin.site.unregister(TokenProxy)
 except Exception:
     pass
+
+
+# ========== Avatar Templates ==========
+@admin.register(AvatarTemplate)
+class AvatarTemplateAdmin(admin.ModelAdmin):
+    """Admin interface for avatar templates"""
+    list_display = ['id', 'display_image', 'created_at']
+    ordering = ['-created_at']
+    readonly_fields = ['id', 'created_at', 'updated_at', 'display_image']
+    
+    fieldsets = (
+        (_("Avatar Image"), {
+            'fields': ('image', 'display_image')
+        }),
+        (_("Metadata"), {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def display_image(self, obj):
+        """Display image preview"""
+        if obj.image:
+            return format_html(
+                '<img src="{}" width="150" height="150" style="border-radius: 10px;" />',
+                obj.image.url
+            )
+        return "-"
+    display_image.short_description = _("Preview")
+
 

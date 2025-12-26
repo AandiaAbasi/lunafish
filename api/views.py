@@ -818,6 +818,61 @@ class UserProfileAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# ========== Avatar Templates APIs ==========
+
+class AvatarTemplateListAPIView(generics.ListAPIView):
+    """API: List all available avatar templates for selection"""
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        """Get all avatar templates"""
+        from account.models import AvatarTemplate
+        return AvatarTemplate.objects.all().order_by('-created_at')
+    
+    def get_serializer_class(self):
+        from account.serializers import AvatarTemplateSerializer
+        return AvatarTemplateSerializer
+
+
+class SelectAvatarAPIView(APIView):
+    """API: Select an avatar template as profile photo"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """Select an avatar as profile photo"""
+        from account.models import AvatarTemplate
+        from account.serializers import SelectAvatarSerializer
+        
+        serializer = SelectAvatarSerializer(data=request.data)
+        if serializer.is_valid():
+            avatar_id = serializer.validated_data['avatar_template_id']
+            
+            try:
+                avatar = AvatarTemplate.objects.get(id=avatar_id)
+                
+                # Set the selected avatar for user
+                request.user.selected_avatar = avatar
+                request.user.save()
+                
+                return Response({
+                    "success": True,
+                    "message": _("Avatar selected successfully"),
+                    "user": UserProfileSerializer(request.user).data
+                }, status=status.HTTP_200_OK)
+                
+            except AvatarTemplate.DoesNotExist:
+                return Response({
+                    "success": False,
+                    "message": _("Selected avatar does not exist")
+                }, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response({
+            "success": False,
+            "message": _("Invalid data provided"),
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 

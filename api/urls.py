@@ -36,6 +36,10 @@ urlpatterns = [
     path('teacher-profile/', views.UserProfileAPIView.as_view(), name='teacher_profile'),
     path('promote-to-teacher/', views.PromoteToTeacherAPIView.as_view(), name='promote_to_teacher'),
     
+    # ========== Avatar Templates ==========
+    path('avatars/', views.AvatarTemplateListAPIView.as_view(), name='avatar_list'),
+    path('select-avatar/', views.SelectAvatarAPIView.as_view(), name='select_avatar'),
+    
     # ========== Settings & Security ==========
     path('change-password/', views.ChangePasswordAPIView.as_view(), name='change_password'),
     path('logout/', views.LogoutAPIView.as_view(), name='logout'),

@@ -4,7 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User
+from .models import User, AvatarTemplate
 from . import services
 
 def convert_persian_to_english_digits(text):
@@ -184,11 +184,13 @@ class ChangePasswordSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     role_display = serializers.CharField(source='get_role_display', read_only=True)
     is_teacher = serializers.SerializerMethodField()
+    selected_avatar_id = serializers.IntegerField(source='selected_avatar.id', read_only=True, allow_null=True)
+    selected_avatar_image = serializers.ImageField(source='selected_avatar.image', read_only=True, allow_null=True)
     
     class Meta:
         model = User
-        fields = ['id','username','name','email','phone','profile_photo_path','bio','gender','birth_date','role','role_display','is_teacher','is_teacher_verified','date_joined']
-        read_only_fields = ['id','username','role','is_teacher_verified','date_joined']
+        fields = ['id','username','name','email','phone','profile_photo_path','bio','gender','birth_date','role','role_display','is_teacher','is_teacher_verified','selected_avatar_id','selected_avatar_image','date_joined']
+        read_only_fields = ['id','username','role','is_teacher_verified','date_joined','selected_avatar_id','selected_avatar_image']
     
     def get_is_teacher(self,obj):
         return obj.role == 'teacher'
@@ -274,3 +276,24 @@ class UserListSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id','username','email','phone','role','role_display','is_teacher_verified','is_active','date_joined']
         read_only_fields = fields
+
+
+# ========== Avatar Templates ==========
+class AvatarTemplateSerializer(serializers.ModelSerializer):
+    """Serializer for avatar templates"""
+    class Meta:
+        model = AvatarTemplate
+        fields = ['id', 'image']
+
+
+class SelectAvatarSerializer(serializers.Serializer):
+    """Serializer for selecting an avatar as profile photo"""
+    avatar_template_id = serializers.IntegerField(required=True)
+    
+    def validate_avatar_template_id(self, value):
+        """Validate that avatar exists"""
+        try:
+            AvatarTemplate.objects.get(id=value)
+            return value
+        except AvatarTemplate.DoesNotExist:
+            raise serializers.ValidationError(_("Selected avatar does not exist"))
