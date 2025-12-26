@@ -24,11 +24,35 @@ msgstr "نام نمایشی"
 msgid "User display name (default: username)"
 msgstr "نام نمایشی کاربر (پیش فرض: نام کاربری)"
 
+msgid "User"
+msgstr "کاربر"
+
+msgid "Teacher"
+msgstr "معلم"
+
+msgid "Admin"
+msgstr "مدیر"
+
+msgid "Male"
+msgstr "مرد"
+
+msgid "Female"
+msgstr "زن"
+
+msgid "Custom"
+msgstr "سفارشی"
+
+msgid "Prefer not to say"
+msgstr "ترجیح می‌دهم نگویم"
+
 msgid "User role"
 msgstr "نقش کاربر"
 
 msgid "User: Regular user, Teacher: Teacher, Admin: Administrator"
 msgstr "کاربر: کاربر عادی، معلم: معلم، مدیر: مدیر سیستم"
+
+msgid "email address"
+msgstr "آدرس ایمیل"
 
 msgid "Phone number"
 msgstr "شماره تلفن"
@@ -41,6 +65,18 @@ msgstr "تأیید ایمیل در"
 
 msgid "Profile photo"
 msgstr "عکس پروفایل"
+
+msgid "Selected avatar"
+msgstr "آواتار انتخاب شده"
+
+msgid "Avatar template selected by user"
+msgstr "قالب آواتار انتخاب شده توسط کاربر"
+
+msgid "Bio"
+msgstr "بیوگرافی"
+
+msgid "Gender"
+msgstr "جنسیت"
 
 #: account/serializers.py
 msgid "Phone number or email is required"
@@ -58,7 +94,81 @@ msgstr "کد باید عددی باشد"
 msgid "Code must be 6 digits"
 msgstr "کد باید ۶ رقم باشد"
 
+#: account/services.py
+msgid "The Username field must be set"
+msgstr "فیلد نام کاربری باید تنظیم شود"
+
+msgid "OTP has already been sent. Please try again in a few minutes."
+msgstr "کد OTP قبلاً ارسال شده است. لطفاً چند دقیقه دیگر تلاش کنید."
+
+msgid "Phone number or email cannot be empty"
+msgstr "شماره تلفن یا ایمیل نمی‌تواند خالی باشد"
+
+msgid "No OTP found for this phone/email."
+msgstr "کد OTP برای این شماره تلفن/ایمیل یافت نشد."
+
+msgid "OTP has expired. Please request a new one."
+msgstr "کد OTP منقضی شده است. لطفاً کد جدید درخواست کنید."
+
+msgid "OTP code is incorrect."
+msgstr "کد OTP نادرست است."
+
+msgid "Invalid token"
+msgstr "توکن نامعتبر است"
+
+msgid "Token expired. Please register again."
+msgstr "توکن منقضی شده است. لطفاً دوباره ثبت نام کنید."
+
+msgid "Username already exists"
+msgstr "این نام کاربری قبلاً استفاده شده است"
+
+msgid "User is already a teacher"
+msgstr "این کاربر قبلاً معلم است"
+
+msgid "Teacher promotion request submitted and awaiting approval"
+msgstr "درخواست ارتقاء معلم ارسال شد و در انتظار تأیید است"
+
+msgid "User is not a teacher"
+msgstr "این کاربر معلم نیست"
+
+msgid "Teacher verified"
+msgstr "معلم تأیید شد"
+
+msgid "Teacher verification revoked"
+msgstr "تأیید معلم لغو شد"
+
+#: account/templatetags/commission_tags.py
+msgid "Error getting commission rate: %s"
+msgstr "خطا در دریافت نرخ کمیسیون: %s"
+
+msgid "N/A"
+msgstr "در دسترس نیست"
+
 #: api/views.py
+msgid "This phone number is already registered. Please log in."
+msgstr "این شماره تلفن قبلاً ثبت نام شده است. لطفاً وارد شوید."
+
+msgid "This email is already registered. Please log in."
+msgstr "این ایمیل قبلاً ثبت نام شده است. لطفاً وارد شوید."
+
+msgid "Please wait 2 minutes."
+msgstr "لطفاً 2 دقیقه صبر کنید."
+
+msgid "Email authentication is not configured on this server"
+msgstr "احراز هویت ایمیل در این سرور پیکربندی نشده است"
+
+msgid "Verification code sent."
+msgstr "کد تأیید ارسال شد."
+
+msgid "Verification code is correct. Please complete registration"
+msgstr "کد تأیید صحیح است. لطفاً ثبت نام را تکمیل کنید"
+
+msgid "Login successful"
+msgstr "ورود موفق"
+
+msgid "Invalid data"
+msgstr "داده نامعتبر"
+
 msgid "Registration completed successfully"
 msgstr "ثبت نام با موفقیت انجام شد"
 
@@ -71,11 +181,555 @@ msgstr "پروفایل معلم با موفقیت به روز شد"
 msgid "Invalid data provided"
 msgstr "داده نامعتبر ارسال شد"
 
-msgid "User not found"
-msgstr "کاربر پیدا نشد"
+msgid "Username and password are required"
+msgstr "نام کاربری و رمز عبور ضروری است"
 
-msgid "Invalid credentials"
-msgstr "اطلاعات ورود نادرست"
+msgid "Username or password is incorrect"
+msgstr "نام کاربری یا رمز عبور نادرست است"
 
-msgid "The Username field must be set"
-msgstr "فیلد نام کاربری باید تنظیم شود"
+msgid "This account is not for a teacher"
+msgstr "این حساب برای معلم نیست"
+
+msgid "This account is not for teachers"
+msgstr "این حساب برای معلمان نیست"
+
+msgid "Teacher registration completed successfully"
+msgstr "ثبت نام معلم با موفقیت انجام شد"
+
+msgid "Sending OTP to email is currently not supported"
+msgstr "ارسال OTP به ایمیل در حال حاضر پشتیبانی نمی‌شود"
+
+msgid "Please provide a valid email address"
+msgstr "لطفاً آدرس ایمیل معتبر وارد کنید"
+
+msgid "This email is registered as a teacher account. Please use teacher login."
+msgstr "این ایمیل به عنوان حساب معلم ثبت شده است. لطفاً از ورود معلم استفاده کنید."
+
+msgid "Verification code has been sent to your email"
+msgstr "کد تأیید به ایمیل شما ارسال شد"
+
+msgid "Email and verification code are required"
+msgstr "ایمیل و کد تأیید ضروری است"
+
+msgid "Invalid verification code format"
+msgstr "فرمت کد تأیید نامعتبر است"
+
+msgid "This email is registered as a regular user account. Please use regular user login."
+msgstr "این ایمیل به عنوان حساب کاربر عادی ثبت شده است. لطفاً از ورود کاربر عادی استفاده کنید."
+
+msgid "Username is required"
+msgstr "نام کاربری ضروری است"
+
+msgid "Username must be at least 3 characters"
+msgstr "نام کاربری باید حداقل 3 کاراکتر باشد"
+
+msgid "This username has already been taken."
+msgstr "این نام کاربری قبلاً استفاده شده است."
+
+msgid "This username is available."
+msgstr "این نام کاربری در دسترس است."
+
+msgid "Username is invalid"
+msgstr "نام کاربری نامعتبر است"
+
+msgid "Avatar selected successfully"
+msgstr "آواتار با موفقیت انتخاب شد"
+
+msgid "Selected avatar does not exist"
+msgstr "آواتار انتخاب شده وجود ندارد"
+
+msgid "You are already a teacher"
+msgstr "شما قبلاً معلم هستید"
+
+msgid "Password changed successfully"
+msgstr "رمز عبور با موفقیت تغییر کرد"
+
+msgid "Refresh token not provided"
+msgstr "توکن تازه‌سازی ارائه نشده است"
+
+msgid "Logout successful"
+msgstr "خروج موفق"
+
+msgid "Logout successful (token not expired)"
+msgstr "خروج موفق (توکن منقضی نشده است)"
+
+msgid "About us content not found"
+msgstr "محتوای درباره ما یافت نشد"
+
+msgid "No phone contact found"
+msgstr "هیچ تماس تلفنی یافت نشد"
+
+msgid "Phone contact retrieved successfully"
+msgstr "تماس تلفنی با موفقیت بازیابی شد"
+
+msgid "Home page data retrieved successfully"
+msgstr "داده‌های صفحه اصلی با موفقیت بازیابی شدند"
+
+#: api/bilingual.py
+msgid "Operation successful"
+msgstr "عملیات موفق"
+
+msgid "An error occurred"
+msgstr "خطایی رخ داد"
+
+#: api/apps.py
+msgid "API Endpoints"
+msgstr "نقاط پایانی API"
+#: core/models.py
+msgid "Title"
+msgstr "عنوان"
+
+msgid "Image"
+msgstr "تصویر"
+
+msgid "Content"
+msgstr "محتوا"
+
+msgid "About us"
+msgstr "درباره ما"
+
+msgid "Terms & Conditions"
+msgstr "شرایط و ضوابط"
+
+msgid "Privacy Policy"
+msgstr "سیاست حریم خصوصی"
+
+msgid "Email"
+msgstr "ایمیل"
+
+msgid "Phone"
+msgstr "تلفن"
+
+msgid "Notification number"
+msgstr "شماره اطلاع‌رسانی"
+
+msgid "Address"
+msgstr "آدرس"
+
+msgid "Instagram"
+msgstr "اینستاگرام"
+
+msgid "Telegram"
+msgstr "تلگرام"
+
+msgid "YouTube"
+msgstr "یوتیوب"
+
+msgid "Spotify"
+msgstr "اسپاتیفای"
+
+msgid "Link"
+msgstr "لینک"
+
+msgid "Type"
+msgstr "نوع"
+
+msgid "Contact Method"
+msgstr "روش تماس"
+
+msgid "Contact Methods"
+msgstr "روش‌های تماس"
+
+msgid "Name"
+msgstr "نام"
+
+msgid "Subject"
+msgstr "موضوع"
+
+msgid "Message"
+msgstr "پیام"
+
+msgid "Contact message"
+msgstr "پیام تماس"
+
+msgid "Contact messages"
+msgstr "پیام‌های تماس"
+
+msgid "Short description"
+msgstr "توضیح مختصر"
+
+msgid "Created at"
+msgstr "ایجاد شده در"
+
+msgid "Article"
+msgstr "مقاله"
+
+msgid "Articles"
+msgstr "مقالات"
+
+msgid "Question"
+msgstr "سؤال"
+
+msgid "Answer"
+msgstr "پاسخ"
+
+msgid "Display status"
+msgstr "وضعیت نمایش"
+
+msgid "FAQ"
+msgstr "سوال‌های متداول"
+
+msgid "FAQs"
+msgstr "سوال‌های متداول"
+
+msgid "Home page"
+msgstr "صفحه اصلی"
+
+msgid "App home"
+msgstr "صفحه اول برنامه"
+
+msgid "Subtitle"
+msgstr "عنوان فرعی"
+
+msgid "Example: https://example.com"
+msgstr "مثال: https://example.com"
+
+msgid "Placement"
+msgstr "محل قرارگیری"
+
+msgid "Display order"
+msgstr "ترتیب نمایش"
+
+msgid "Active"
+msgstr "فعال"
+
+msgid "Banner"
+msgstr "بنر"
+
+msgid "Banners"
+msgstr "بنرها"
+
+#: core/forms.py
+msgid "Enter your name"
+msgstr "نام خود را وارد کنید"
+
+msgid "09xxxxxxxxx"
+msgstr "09xxxxxxxxx"
+
+msgid "Subject of your message"
+msgstr "موضوع پیام خود"
+
+msgid "Write your message here"
+msgstr "پیام خود را اینجا بنویسید"
+
+#: core/views.py
+msgid "Your message has been sent successfully."
+msgstr "پیام شما با موفقیت ارسال شد."
+
+msgid "Please correct the errors in the form."
+msgstr "لطفاً خطاهای فرم را برطرف کنید."
+
+#: core/apps.py
+msgid "Site pages"
+msgstr "صفحات سایت"
+
+#: core/admin.py
+msgid "Edit"
+msgstr "ویرایش"
+
+msgid "Delete"
+msgstr "حذف"
+
+msgid "No image"
+msgstr "بدون تصویر"
+
+msgid "Image preview"
+msgstr "پیش‌نمایش تصویر"
+
+msgid "Actions"
+msgstr "عملیات"
+
+msgid "Title"
+msgstr "عنوان"
+
+msgid "Media"
+msgstr "رسانه"
+
+msgid "Contact Information"
+msgstr "اطلاعات تماس"
+
+msgid "Message Details"
+msgstr "جزئیات پیام"
+
+msgid "Main Information"
+msgstr "اطلاعات اصلی"
+
+msgid "View details"
+msgstr "مشاهده جزئیات"
+
+#: fofofish/settings.py
+msgid "Nozima"
+msgstr "نوزیما"
+
+msgid "Persian"
+msgstr "فارسی"
+
+msgid "English"
+msgstr "انگلیسی"
+
+#: fofofish/middleware/auth_middleware.py
+msgid "Invalid JSON format"
+msgstr "فرمت JSON نامعتبر است"
+
+msgid "An unexpected error occurred"
+msgstr "خطای غیرمنتظره‌ای رخ داد"
+
+#: skyroom/models.py
+msgid "Inactive"
+msgstr "غیرفعال"
+
+msgid "Active"
+msgstr "فعال"
+
+msgid "Skyroom Service ID"
+msgstr "شناسه سرویس اسکایروم"
+
+msgid "Service Title"
+msgstr "عنوان سرویس"
+
+msgid "Service title (max 128 characters)"
+msgstr "عنوان سرویس (حداکثر 128 کاراکتر)"
+
+msgid "User Limit"
+msgstr "حد کاربر"
+
+msgid "Maximum concurrent users"
+msgstr "حداکثر کاربران همزمان"
+
+msgid "Video Limit"
+msgstr "حد ویدئو"
+
+msgid "Maximum concurrent videos per room"
+msgstr "حداکثر ویدئوهای همزمان در هر اتاق"
+
+msgid "Time Limit (seconds)"
+msgstr "حد زمان (ثانیه)"
+
+msgid "Person-second time limit"
+msgstr "حد زمان بر حسب فرد-ثانیه"
+
+msgid "Time Usage (seconds)"
+msgstr "زمان مصرف شده (ثانیه)"
+
+msgid "Person-second time used"
+msgstr "زمان مصرف بر حسب فرد-ثانیه"
+
+msgid "Start Time"
+msgstr "زمان شروع"
+
+msgid "Service start time (Unix timestamp)"
+msgstr "زمان شروع سرویس (Unix timestamp)"
+
+msgid "Stop Time"
+msgstr "زمان خاتمه"
+
+msgid "Service stop time (Unix timestamp)"
+msgstr "زمان خاتمه سرویس (Unix timestamp)"
+
+msgid "Service"
+msgstr "سرویس"
+
+msgid "Services"
+msgstr "سرویس‌ها"
+
+msgid "0: Inactive, 1: Active"
+msgstr "0: غیرفعال, 1: فعال"
+
+msgid "Skyroom Room ID"
+msgstr "شناسه اتاق اسکایروم"
+
+msgid "Service this room belongs to"
+msgstr "سرویسی که این اتاق به آن تعلق دارد"
+
+msgid "Room Name"
+msgstr "نام اتاق"
+
+msgid "Room name in Latin (max 100 characters)"
+msgstr "نام اتاق به لاتین (حداکثر 100 کاراکتر)"
+
+msgid "Room Title"
+msgstr "عنوان اتاق"
+
+msgid "Room display title (max 100 characters)"
+msgstr "عنوان نمایش اتاق (حداکثر 100 کاراکتر)"
+
+msgid "Description"
+msgstr "توضیح"
+
+msgid "Room description (max 512 characters)"
+msgstr "قضغقرانی اتاق (حداکثر 512 کاراکتر)"
+
+msgid "Allow Guest Login"
+msgstr "اجازه ورود مهمان"
+
+msgid "Allow guest login"
+msgstr "اجازه ورود به عنوان مهمان"
+
+msgid "Guest Limit"
+msgstr "حد مهمان"
+
+msgid "Maximum guests (0 = unlimited)"
+msgstr "حداکثر مهمانان (0 = بی حد)"
+
+msgid "Operator Login First"
+msgstr "ورود اپراتور اول"
+
+msgid "Require operator to login first"
+msgstr "الزام به ورود اپراتور ابتدا"
+
+msgid "Max Users"
+msgstr "حداکثر کاربران"
+
+msgid "Session Duration (seconds)"
+msgstr "مدت نشست (ثانیه)"
+
+msgid "Maximum session duration in seconds"
+msgstr "حداکثر مدت نشست بر ثانیه"
+
+msgid "Person-second time used in current session"
+msgstr "زمان مصرف شده بر حسب فرد-ثانیه در نشست فعلی"
+
+msgid "Total Time Usage (seconds)"
+msgstr "کل زمان مصرف شده (ثانیه)"
+
+msgid "Total person-second time used"
+msgstr "کل زمان مصرف شده بر حسب فرد-ثانیه"
+
+msgid "Room"
+msgstr "اتاق"
+
+msgid "Rooms"
+msgstr "اتاقها"
+
+msgid "Unknown"
+msgstr "نامعلوم"
+
+msgid "Male"
+msgstr "مرد"
+
+msgid "Female"
+msgstr "زن"
+
+msgid "Skyroom User ID"
+msgstr "شناسه کاربر اسکایروم"
+
+msgid "Username"
+msgstr "نام کاربری"
+
+msgid "Username in Latin (max 32 characters)"
+msgstr "نام کاربری به لاتین (حداکثر 32 کاراکتر)"
+
+msgid "Nickname"
+msgstr "نام مستعار"
+
+msgid "Display name (max 100 characters)"
+msgstr "نام نمایش (حداکثر 100 کاراکتر)"
+
+msgid "Password Hash"
+msgstr "هش رمز عبور"
+
+msgid "Password hash (max 24 characters original)"
+msgstr "هش رمز عبور (حداکثر 24 کاراکتر اصلی)"
+
+msgid "Email address (max 100 characters)"
+msgstr "آدرس ایمیل (حداکثر 100 کاراکتر)"
+
+msgid "First Name"
+msgstr "نام"
+
+msgid "First name (max 100 characters)"
+msgstr "نام (حداکثر 100 کاراکتر)"
+
+msgid "Last Name"
+msgstr "نام خانوادگی"
+
+msgid "Last name (max 100 characters)"
+msgstr "نام خانوادگی (حداکثر 100 کاراکتر)"
+
+msgid "0: Unknown, 1: Male, 2: Female"
+msgstr "0: نامعلوم, 1: مرد, 2: زن"
+
+msgid "Is Public"
+msgstr "عمومی"
+
+msgid "Is this a public/shared account"
+msgstr "آیا این حساب عمومی/رایگان است"
+
+msgid "Concurrent Limit"
+msgstr "حد رز زمانی"
+
+msgid "Concurrent usage limit (0 = unlimited)"
+msgstr "حد استفاده همزمان (0 = بی حد)"
+
+msgid "Maximum time allowed (seconds)"
+msgstr "حداکثر زمان مجاز (ثانیه)"
+
+msgid "Current time used (seconds)"
+msgstr "زمان مصرف فعلی (ثانیه)"
+
+msgid "Total time used across all sessions (seconds)"
+msgstr "کل زمان مصرف در تمام نشست‌ها (ثانیه)"
+
+msgid "Expiry Date"
+msgstr "تاریخ انقضاء"
+
+msgid "Account expiry date (Unix timestamp)"
+msgstr "تاریخ انقضاء حساب (Unix timestamp)"
+
+msgid "Skyroom User"
+msgstr "کاربر اسکایروم"
+
+msgid "Skyroom Users"
+msgstr "کاربران اسکایروم"
+
+msgid "Normal User"
+msgstr "کاربر عادی"
+
+msgid "Presenter"
+msgstr "ارائه دهنده"
+
+msgid "Operator"
+msgstr "اپراتور"
+
+msgid "Access Level"
+msgstr "سطح دسترسی"
+
+msgid "1: Normal User, 2: Presenter, 3: Operator"
+msgstr "1: کاربر عادی, 2: ارائه دهنده, 3: اپراتور"
+
+msgid "Room User Access"
+msgstr "دسترسی کاربر به اتاق"
+
+msgid "Room User Accesses"
+msgstr "دسترسی‌های کاربر به اتاقها"
+
+msgid "Associated Skyroom user"
+msgstr "کاربر اسکایروم ترتبطه"
+
+msgid "Display name for this login"
+msgstr "نام نمایش برای این ورود"
+
+msgid "Number of concurrent users allowed"
+msgstr "تعداد کاربران همزمان مجاز"
+
+msgid "Login URL"
+msgstr "URL ورود"
+
+msgid "TTL (seconds)"
+msgstr "TTL (ثانیه)"
+
+msgid "Time to live for this login URL"
+msgstr "زمان زنده برای این URL ورود"
+
+msgid "Is Active"
+msgstr "فعال است"
+
+msgid "Expires At"
+msgstr "منقضی شده در"
+
+msgid "When this login URL expires"
+msgstr "زمان انقضاء این URL ورود"
+
+msgid "Login URLs"
+msgstr "URLهای ورود"
+

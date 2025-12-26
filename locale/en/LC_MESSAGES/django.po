@@ -23,11 +23,35 @@ msgstr "Display name"
 msgid "User display name (default: username)"
 msgstr "User display name (default: username)"
 
+msgid "User"
+msgstr "User"
+
+msgid "Teacher"
+msgstr "Teacher"
+
+msgid "Admin"
+msgstr "Admin"
+
+msgid "Male"
+msgstr "Male"
+
+msgid "Female"
+msgstr "Female"
+
+msgid "Custom"
+msgstr "Custom"
+
+msgid "Prefer not to say"
+msgstr "Prefer not to say"
+
 msgid "User role"
 msgstr "User role"
 
 msgid "User: Regular user, Teacher: Teacher, Admin: Administrator"
 msgstr "User: Regular user, Teacher: Teacher, Admin: Administrator"
+
+msgid "email address"
+msgstr "email address"
 
 msgid "Phone number"
 msgstr "Phone number"
@@ -40,6 +64,18 @@ msgstr "Email verified at"
 
 msgid "Profile photo"
 msgstr "Profile photo"
+
+msgid "Selected avatar"
+msgstr "Selected avatar"
+
+msgid "Avatar template selected by user"
+msgstr "Avatar template selected by user"
+
+msgid "Bio"
+msgstr "Bio"
+
+msgid "Gender"
+msgstr "Gender"
 
 #: account/serializers.py
 msgid "Phone number or email is required"
@@ -57,7 +93,81 @@ msgstr "Code must be numeric"
 msgid "Code must be 6 digits"
 msgstr "Code must be 6 digits"
 
+#: account/services.py
+msgid "The Username field must be set"
+msgstr "The Username field must be set"
+
+msgid "OTP has already been sent. Please try again in a few minutes."
+msgstr "OTP has already been sent. Please try again in a few minutes."
+
+msgid "Phone number or email cannot be empty"
+msgstr "Phone number or email cannot be empty"
+
+msgid "No OTP found for this phone/email."
+msgstr "No OTP found for this phone/email."
+
+msgid "OTP has expired. Please request a new one."
+msgstr "OTP has expired. Please request a new one."
+
+msgid "OTP code is incorrect."
+msgstr "OTP code is incorrect."
+
+msgid "Invalid token"
+msgstr "Invalid token"
+
+msgid "Token expired. Please register again."
+msgstr "Token expired. Please register again."
+
+msgid "Username already exists"
+msgstr "Username already exists"
+
+msgid "User is already a teacher"
+msgstr "User is already a teacher"
+
+msgid "Teacher promotion request submitted and awaiting approval"
+msgstr "Teacher promotion request submitted and awaiting approval"
+
+msgid "User is not a teacher"
+msgstr "User is not a teacher"
+
+msgid "Teacher verified"
+msgstr "Teacher verified"
+
+msgid "Teacher verification revoked"
+msgstr "Teacher verification revoked"
+
+#: account/templatetags/commission_tags.py
+msgid "Error getting commission rate: %s"
+msgstr "Error getting commission rate: %s"
+
+msgid "N/A"
+msgstr "N/A"
+
 #: api/views.py
+msgid "This phone number is already registered. Please log in."
+msgstr "This phone number is already registered. Please log in."
+
+msgid "This email is already registered. Please log in."
+msgstr "This email is already registered. Please log in."
+
+msgid "Please wait 2 minutes."
+msgstr "Please wait 2 minutes."
+
+msgid "Email authentication is not configured on this server"
+msgstr "Email authentication is not configured on this server"
+
+msgid "Verification code sent."
+msgstr "Verification code sent."
+
+msgid "Verification code is correct. Please complete registration"
+msgstr "Verification code is correct. Please complete registration"
+
+msgid "Login successful"
+msgstr "Login successful"
+
+msgid "Invalid data"
+msgstr "Invalid data"
+
 msgid "Registration completed successfully"
 msgstr "Registration completed successfully"
 
@@ -70,11 +180,555 @@ msgstr "Teacher profile updated successfully"
 msgid "Invalid data provided"
 msgstr "Invalid data provided"
 
-msgid "User not found"
-msgstr "User not found"
+msgid "Username and password are required"
+msgstr "Username and password are required"
 
-msgid "Invalid credentials"
-msgstr "Invalid credentials"
+msgid "Username or password is incorrect"
+msgstr "Username or password is incorrect"
 
-msgid "The Username field must be set"
-msgstr "The Username field must be set"
+msgid "This account is not for a teacher"
+msgstr "This account is not for a teacher"
+
+msgid "This account is not for teachers"
+msgstr "This account is not for teachers"
+
+msgid "Teacher registration completed successfully"
+msgstr "Teacher registration completed successfully"
+
+msgid "Sending OTP to email is currently not supported"
+msgstr "Sending OTP to email is currently not supported"
+
+msgid "Please provide a valid email address"
+msgstr "Please provide a valid email address"
+
+msgid "This email is registered as a teacher account. Please use teacher login."
+msgstr "This email is registered as a teacher account. Please use teacher login."
+
+msgid "Verification code has been sent to your email"
+msgstr "Verification code has been sent to your email"
+
+msgid "Email and verification code are required"
+msgstr "Email and verification code are required"
+
+msgid "Invalid verification code format"
+msgstr "Invalid verification code format"
+
+msgid "This email is registered as a regular user account. Please use regular user login."
+msgstr "This email is registered as a regular user account. Please use regular user login."
+
+msgid "Username is required"
+msgstr "Username is required"
+
+msgid "Username must be at least 3 characters"
+msgstr "Username must be at least 3 characters"
+
+msgid "This username has already been taken."
+msgstr "This username has already been taken."
+
+msgid "This username is available."
+msgstr "This username is available."
+
+msgid "Username is invalid"
+msgstr "Username is invalid"
+
+msgid "Avatar selected successfully"
+msgstr "Avatar selected successfully"
+
+msgid "Selected avatar does not exist"
+msgstr "Selected avatar does not exist"
+
+msgid "You are already a teacher"
+msgstr "You are already a teacher"
+
+msgid "Password changed successfully"
+msgstr "Password changed successfully"
+
+msgid "Refresh token not provided"
+msgstr "Refresh token not provided"
+
+msgid "Logout successful"
+msgstr "Logout successful"
+
+msgid "Logout successful (token not expired)"
+msgstr "Logout successful (token not expired)"
+
+msgid "About us content not found"
+msgstr "About us content not found"
+
+msgid "No phone contact found"
+msgstr "No phone contact found"
+
+msgid "Phone contact retrieved successfully"
+msgstr "Phone contact retrieved successfully"
+
+msgid "Home page data retrieved successfully"
+msgstr "Home page data retrieved successfully"
+
+#: api/bilingual.py
+msgid "Operation successful"
+msgstr "Operation successful"
+
+msgid "An error occurred"
+msgstr "An error occurred"
+
+#: api/apps.py
+msgid "API Endpoints"
+msgstr "API Endpoints"
+#: core/models.py
+msgid "Title"
+msgstr "Title"
+
+msgid "Image"
+msgstr "Image"
+
+msgid "Content"
+msgstr "Content"
+
+msgid "About us"
+msgstr "About us"
+
+msgid "Terms & Conditions"
+msgstr "Terms & Conditions"
+
+msgid "Privacy Policy"
+msgstr "Privacy Policy"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Phone"
+msgstr "Phone"
+
+msgid "Notification number"
+msgstr "Notification number"
+
+msgid "Address"
+msgstr "Address"
+
+msgid "Instagram"
+msgstr "Instagram"
+
+msgid "Telegram"
+msgstr "Telegram"
+
+msgid "YouTube"
+msgstr "YouTube"
+
+msgid "Spotify"
+msgstr "Spotify"
+
+msgid "Link"
+msgstr "Link"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Contact Method"
+msgstr "Contact Method"
+
+msgid "Contact Methods"
+msgstr "Contact Methods"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Subject"
+msgstr "Subject"
+
+msgid "Message"
+msgstr "Message"
+
+msgid "Contact message"
+msgstr "Contact message"
+
+msgid "Contact messages"
+msgstr "Contact messages"
+
+msgid "Short description"
+msgstr "Short description"
+
+msgid "Created at"
+msgstr "Created at"
+
+msgid "Article"
+msgstr "Article"
+
+msgid "Articles"
+msgstr "Articles"
+
+msgid "Question"
+msgstr "Question"
+
+msgid "Answer"
+msgstr "Answer"
+
+msgid "Display status"
+msgstr "Display status"
+
+msgid "FAQ"
+msgstr "FAQ"
+
+msgid "FAQs"
+msgstr "FAQs"
+
+msgid "Home page"
+msgstr "Home page"
+
+msgid "App home"
+msgstr "App home"
+
+msgid "Subtitle"
+msgstr "Subtitle"
+
+msgid "Example: https://example.com"
+msgstr "Example: https://example.com"
+
+msgid "Placement"
+msgstr "Placement"
+
+msgid "Display order"
+msgstr "Display order"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "Banner"
+msgstr "Banner"
+
+msgid "Banners"
+msgstr "Banners"
+
+#: core/forms.py
+msgid "Enter your name"
+msgstr "Enter your name"
+
+msgid "09xxxxxxxxx"
+msgstr "09xxxxxxxxx"
+
+msgid "Subject of your message"
+msgstr "Subject of your message"
+
+msgid "Write your message here"
+msgstr "Write your message here"
+
+#: core/views.py
+msgid "Your message has been sent successfully."
+msgstr "Your message has been sent successfully."
+
+msgid "Please correct the errors in the form."
+msgstr "Please correct the errors in the form."
+
+#: core/apps.py
+msgid "Site pages"
+msgstr "Site pages"
+
+#: core/admin.py
+msgid "Edit"
+msgstr "Edit"
+
+msgid "Delete"
+msgstr "Delete"
+
+msgid "No image"
+msgstr "No image"
+
+msgid "Image preview"
+msgstr "Image preview"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Title"
+msgstr "Title"
+
+msgid "Media"
+msgstr "Media"
+
+msgid "Contact Information"
+msgstr "Contact Information"
+
+msgid "Message Details"
+msgstr "Message Details"
+
+msgid "Main Information"
+msgstr "Main Information"
+
+msgid "View details"
+msgstr "View details"
+
+#: fofofish/settings.py
+msgid "Nozima"
+msgstr "Nozima"
+
+msgid "Persian"
+msgstr "Persian"
+
+msgid "English"
+msgstr "English"
+
+#: fofofish/middleware/auth_middleware.py
+msgid "Invalid JSON format"
+msgstr "Invalid JSON format"
+
+msgid "An unexpected error occurred"
+msgstr "An unexpected error occurred"
+
+#: skyroom/models.py
+msgid "Inactive"
+msgstr "Inactive"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "Skyroom Service ID"
+msgstr "Skyroom Service ID"
+
+msgid "Service Title"
+msgstr "Service Title"
+
+msgid "Service title (max 128 characters)"
+msgstr "Service title (max 128 characters)"
+
+msgid "User Limit"
+msgstr "User Limit"
+
+msgid "Maximum concurrent users"
+msgstr "Maximum concurrent users"
+
+msgid "Video Limit"
+msgstr "Video Limit"
+
+msgid "Maximum concurrent videos per room"
+msgstr "Maximum concurrent videos per room"
+
+msgid "Time Limit (seconds)"
+msgstr "Time Limit (seconds)"
+
+msgid "Person-second time limit"
+msgstr "Person-second time limit"
+
+msgid "Time Usage (seconds)"
+msgstr "Time Usage (seconds)"
+
+msgid "Person-second time used"
+msgstr "Person-second time used"
+
+msgid "Start Time"
+msgstr "Start Time"
+
+msgid "Service start time (Unix timestamp)"
+msgstr "Service start time (Unix timestamp)"
+
+msgid "Stop Time"
+msgstr "Stop Time"
+
+msgid "Service stop time (Unix timestamp)"
+msgstr "Service stop time (Unix timestamp)"
+
+msgid "Service"
+msgstr "Service"
+
+msgid "Services"
+msgstr "Services"
+
+msgid "0: Inactive, 1: Active"
+msgstr "0: Inactive, 1: Active"
+
+msgid "Skyroom Room ID"
+msgstr "Skyroom Room ID"
+
+msgid "Service this room belongs to"
+msgstr "Service this room belongs to"
+
+msgid "Room Name"
+msgstr "Room Name"
+
+msgid "Room name in Latin (max 100 characters)"
+msgstr "Room name in Latin (max 100 characters)"
+
+msgid "Room Title"
+msgstr "Room Title"
+
+msgid "Room display title (max 100 characters)"
+msgstr "Room display title (max 100 characters)"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Room description (max 512 characters)"
+msgstr "Room description (max 512 characters)"
+
+msgid "Allow Guest Login"
+msgstr "Allow Guest Login"
+
+msgid "Allow guest login"
+msgstr "Allow guest login"
+
+msgid "Guest Limit"
+msgstr "Guest Limit"
+
+msgid "Maximum guests (0 = unlimited)"
+msgstr "Maximum guests (0 = unlimited)"
+
+msgid "Operator Login First"
+msgstr "Operator Login First"
+
+msgid "Require operator to login first"
+msgstr "Require operator to login first"
+
+msgid "Max Users"
+msgstr "Max Users"
+
+msgid "Session Duration (seconds)"
+msgstr "Session Duration (seconds)"
+
+msgid "Maximum session duration in seconds"
+msgstr "Maximum session duration in seconds"
+
+msgid "Person-second time used in current session"
+msgstr "Person-second time used in current session"
+
+msgid "Total Time Usage (seconds)"
+msgstr "Total Time Usage (seconds)"
+
+msgid "Total person-second time used"
+msgstr "Total person-second time used"
+
+msgid "Room"
+msgstr "Room"
+
+msgid "Rooms"
+msgstr "Rooms"
+
+msgid "Unknown"
+msgstr "Unknown"
+
+msgid "Male"
+msgstr "Male"
+
+msgid "Female"
+msgstr "Female"
+
+msgid "Skyroom User ID"
+msgstr "Skyroom User ID"
+
+msgid "Username"
+msgstr "Username"
+
+msgid "Username in Latin (max 32 characters)"
+msgstr "Username in Latin (max 32 characters)"
+
+msgid "Nickname"
+msgstr "Nickname"
+
+msgid "Display name (max 100 characters)"
+msgstr "Display name (max 100 characters)"
+
+msgid "Password Hash"
+msgstr "Password Hash"
+
+msgid "Password hash (max 24 characters original)"
+msgstr "Password hash (max 24 characters original)"
+
+msgid "Email address (max 100 characters)"
+msgstr "Email address (max 100 characters)"
+
+msgid "First Name"
+msgstr "First Name"
+
+msgid "First name (max 100 characters)"
+msgstr "First name (max 100 characters)"
+
+msgid "Last Name"
+msgstr "Last Name"
+
+msgid "Last name (max 100 characters)"
+msgstr "Last name (max 100 characters)"
+
+msgid "0: Unknown, 1: Male, 2: Female"
+msgstr "0: Unknown, 1: Male, 2: Female"
+
+msgid "Is Public"
+msgstr "Is Public"
+
+msgid "Is this a public/shared account"
+msgstr "Is this a public/shared account"
+
+msgid "Concurrent Limit"
+msgstr "Concurrent Limit"
+
+msgid "Concurrent usage limit (0 = unlimited)"
+msgstr "Concurrent usage limit (0 = unlimited)"
+
+msgid "Maximum time allowed (seconds)"
+msgstr "Maximum time allowed (seconds)"
+
+msgid "Current time used (seconds)"
+msgstr "Current time used (seconds)"
+
+msgid "Total time used across all sessions (seconds)"
+msgstr "Total time used across all sessions (seconds)"
+
+msgid "Expiry Date"
+msgstr "Expiry Date"
+
+msgid "Account expiry date (Unix timestamp)"
+msgstr "Account expiry date (Unix timestamp)"
+
+msgid "Skyroom User"
+msgstr "Skyroom User"
+
+msgid "Skyroom Users"
+msgstr "Skyroom Users"
+
+msgid "Normal User"
+msgstr "Normal User"
+
+msgid "Presenter"
+msgstr "Presenter"
+
+msgid "Operator"
+msgstr "Operator"
+
+msgid "Access Level"
+msgstr "Access Level"
+
+msgid "1: Normal User, 2: Presenter, 3: Operator"
+msgstr "1: Normal User, 2: Presenter, 3: Operator"
+
+msgid "Room User Access"
+msgstr "Room User Access"
+
+msgid "Room User Accesses"
+msgstr "Room User Accesses"
+
+msgid "Associated Skyroom user"
+msgstr "Associated Skyroom user"
+
+msgid "Display name for this login"
+msgstr "Display name for this login"
+
+msgid "Number of concurrent users allowed"
+msgstr "Number of concurrent users allowed"
+
+msgid "Login URL"
+msgstr "Login URL"
+
+msgid "TTL (seconds)"
+msgstr "TTL (seconds)"
+
+msgid "Time to live for this login URL"
+msgstr "Time to live for this login URL"
+
+msgid "Is Active"
+msgstr "Is Active"
+
+msgid "Expires At"
+msgstr "Expires At"
+
+msgid "When this login URL expires"
+msgstr "When this login URL expires"
+
+msgid "Login URLs"
+msgstr "Login URLs"
+
