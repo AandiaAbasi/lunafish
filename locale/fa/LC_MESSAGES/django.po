@@ -1,0 +1,81 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Fofofish\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-12-26 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: fa\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: account/models.py
+msgid "Display name"
+msgstr "نام نمایشی"
+
+msgid "User display name (default: username)"
+msgstr "نام نمایشی کاربر (پیش فرض: نام کاربری)"
+
+msgid "User role"
+msgstr "نقش کاربر"
+
+msgid "User: Regular user, Teacher: Teacher, Admin: Administrator"
+msgstr "کاربر: کاربر عادی، معلم: معلم، مدیر: مدیر سیستم"
+
+msgid "Phone number"
+msgstr "شماره تلفن"
+
+msgid "Phone verified at"
+msgstr "تأیید تلفن در"
+
+msgid "Email verified at"
+msgstr "تأیید ایمیل در"
+
+msgid "Profile photo"
+msgstr "عکس پروفایل"
+
+#: account/serializers.py
+msgid "Phone number or email is required"
+msgstr "شماره تلفن یا ایمیل ضروری است"
+
+msgid "Invalid purpose. Must be one of: registration, login, phone_verification, email_verification, password_reset"
+msgstr "هدف نامعتبر است"
+
+msgid "Verification code is required"
+msgstr "کد تأیید ضروری است"
+
+msgid "Code must be numeric"
+msgstr "کد باید عددی باشد"
+
+msgid "Code must be 6 digits"
+msgstr "کد باید ۶ رقم باشد"
+
+#: api/views.py
+msgid "Registration completed successfully"
+msgstr "ثبت نام با موفقیت انجام شد"
+
+msgid "Profile updated successfully"
+msgstr "پروفایل با موفقیت به روز شد"
+
+msgid "Teacher profile updated successfully"
+msgstr "پروفایل معلم با موفقیت به روز شد"
+
+msgid "Invalid data provided"
+msgstr "داده نامعتبر ارسال شد"
+
+msgid "User not found"
+msgstr "کاربر پیدا نشد"
+
+msgid "Invalid credentials"
+msgstr "اطلاعات ورود نادرست"
+
+msgid "The Username field must be set"
+msgstr "فیلد نام کاربری باید تنظیم شود"
