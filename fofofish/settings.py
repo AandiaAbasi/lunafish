@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
+    'drf_spectacular',
     'modeltranslation',
     'django_jalali',
     'phonenumber_field',
@@ -220,6 +221,7 @@ CKEDITOR_RESTRICT_BY_DATE = True
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'fofofish.authentication.BearerJWTAuthentication',
+        'core.api_auth.APIKeyAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -231,6 +233,64 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# drf-spectacular Swagger/OpenAPI Configuration
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Fofofish API',
+    'DESCRIPTION': 'API for Fofofish - Educational Platform with Skyroom Integration',
+    'VERSION': '1.0.0',
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SERVERS': [
+        {
+            'url': 'https://fofofish.app',
+            'description': 'Production server',
+        },
+        {
+            'url': 'http://localhost:8000',
+            'description': 'Development server',
+        },
+    ],
+    'AUTHENTICATION_FLOWS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'X-API-Key',
+            'description': 'API Key Authentication',
+        }
+    },
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'X-API-Key',
+        }
+    },
+    'COMPONENTS': {
+        'securitySchemes': {
+            'apiKey': {
+                'type': 'apiKey',
+                'in': 'header',
+                'name': 'X-API-Key',
+            },
+            'Bearer': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
+    'SECURITY': [
+        {
+            'apiKey': [],
+        }
+    ],
+}
+
+# Valid API Keys
+VALID_API_KEYS = {
+    'apikey-39974696-1-e570445f94a95d2573d9922d04583008': 'skyroom_integration_key',
 }
 
 # JWT Configuration (SimpleJWT)

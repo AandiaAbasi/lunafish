@@ -21,7 +21,29 @@ from .serializers import (
 # ========== Service ViewSet ==========
 
 class ServiceViewSet(viewsets.ModelViewSet):
-    """Service ViewSet"""
+    """
+    Service Management API
+    
+    Manages Skyroom service plans with user and video limits.
+    
+    list:
+        Get all available services with filtering and search capabilities.
+        
+    retrieve:
+        Get detailed information about a specific service.
+        
+    create:
+        Create a new service plan.
+        
+    update:
+        Update an existing service plan.
+        
+    partial_update:
+        Partially update a service plan.
+        
+    destroy:
+        Delete a service plan.
+    """
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
     permission_classes = [permissions.IsAdminUser]
@@ -39,7 +61,41 @@ class ServiceViewSet(viewsets.ModelViewSet):
 # ========== Room ViewSet ==========
 
 class RoomViewSet(viewsets.ModelViewSet):
-    """Room ViewSet"""
+    """
+    Room Management API
+    
+    Manages virtual meeting rooms with access control, guest settings, and time limits.
+    Supports room user access management through custom actions.
+    
+    list:
+        Get all rooms with filtering by service, status, and guest login settings.
+        
+    retrieve:
+        Get detailed information about a specific room.
+        
+    create:
+        Create a new virtual room.
+        
+    update:
+        Update an existing room's settings.
+        
+    partial_update:
+        Partially update a room's settings.
+        
+    destroy:
+        Delete a room and all associated data.
+        
+    users:
+        Get all users who have access to this room with their access levels.
+        
+    add_users:
+        Add one or more users to a room with specific access levels.
+        Expects: {"users": [{"user_id": 1, "access": 1}]}
+        
+    remove_users:
+        Remove users from a room.
+        Expects: {"users": [1, 2, 3]}
+    """
     queryset = Room.objects.select_related('service').all()
     serializer_class = RoomSerializer
     permission_classes = [permissions.IsAdminUser]
@@ -110,7 +166,41 @@ class RoomViewSet(viewsets.ModelViewSet):
 # ========== SkyroomUser ViewSet ==========
 
 class SkyroomUserViewSet(viewsets.ModelViewSet):
-    """SkyroomUser ViewSet"""
+    """
+    Skyroom User Management API
+    
+    Manages Skyroom user accounts with credentials, personal info, and room access.
+    Supports user-room access management through custom actions.
+    
+    list:
+        Get all Skyroom users with filtering by status, public flag, and gender.
+        
+    retrieve:
+        Get detailed information about a specific user including credentials and usage stats.
+        
+    create:
+        Create a new Skyroom user account.
+        
+    update:
+        Update an existing user's information.
+        
+    partial_update:
+        Partially update a user's information.
+        
+    destroy:
+        Delete a user account.
+        
+    rooms:
+        Get all rooms that this user has access to with their access levels.
+        
+    add_rooms:
+        Add user to one or more rooms with specific access levels.
+        Expects: {"rooms": [{"room_id": 1, "access": 2}]}
+        
+    remove_rooms:
+        Remove user from specific rooms.
+        Expects: {"rooms": [1, 2, 3]}
+    """
     queryset = SkyroomUser.objects.all()
     serializer_class = SkyroomUserSerializer
     permission_classes = [permissions.IsAdminUser]
@@ -181,7 +271,30 @@ class SkyroomUserViewSet(viewsets.ModelViewSet):
 # ========== RoomUserAccess ViewSet ==========
 
 class RoomUserAccessViewSet(viewsets.ModelViewSet):
-    """RoomUserAccess ViewSet"""
+    """
+    Room User Access Management API
+    
+    Manages access permissions between rooms and users.
+    Allows setting and modifying user access levels (1=Normal, 2=Presenter, 3=Operator).
+    
+    list:
+        Get all room-user access records with filtering by room, user, or access level.
+        
+    retrieve:
+        Get detailed access information for a specific room-user relationship.
+        
+    create:
+        Create a new room-user access record.
+        
+    update:
+        Update a user's access level to a room.
+        
+    partial_update:
+        Partially update access information.
+        
+    destroy:
+        Remove a user's access to a room.
+    """
     queryset = RoomUserAccess.objects.select_related('room', 'user').all()
     serializer_class = RoomUserAccessSerializer
     permission_classes = [permissions.IsAdminUser]
@@ -200,7 +313,40 @@ class RoomUserAccessViewSet(viewsets.ModelViewSet):
 # ========== LoginUrl ViewSet ==========
 
 class LoginUrlViewSet(viewsets.ModelViewSet):
-    """LoginUrl ViewSet"""
+    """
+    Login URL Management API
+    
+    Generates and manages direct login URLs for quick access to rooms without credentials.
+    URLs can be configured with TTL (time to live), access levels, and concurrent user limits.
+    
+    list:
+        Get all generated login URLs with filtering by room and active status.
+        
+    retrieve:
+        Get detailed information about a specific login URL.
+        
+    create:
+        Generate a new login URL for a room with optional TTL and access parameters.
+        
+    update:
+        Update login URL settings.
+        
+    partial_update:
+        Partially update login URL configuration.
+        
+    destroy:
+        Delete a login URL permanently.
+        
+    expired:
+        Get all expired login URLs (past expiry time).
+        
+    active:
+        Get all active and valid login URLs.
+        
+    revoke:
+        Immediately revoke and deactivate a login URL.
+        Prevents future use even if TTL hasn't expired.
+    """
     queryset = LoginUrl.objects.select_related('room').all()
     serializer_class = LoginUrlSerializer
     permission_classes = [permissions.IsAdminUser]
