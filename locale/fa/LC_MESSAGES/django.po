@@ -137,12 +137,214 @@ msgstr "معلم تأیید شد"
 msgid "Teacher verification revoked"
 msgstr "تأیید معلم لغو شد"
 
+#: account/models.py
+msgid "Birth date"
+msgstr "تاریخ تولد"
+
+msgid "Teacher verified"
+msgstr "معلم تأييد شده"
+
+msgid "Whether this teacher is verified by admin"
+msgstr "آيا اين معلم توسط مدير تأييد شده است"
+
+msgid "Teacher verification requested at"
+msgstr "تاریخ درخواست تأييد معلم"
+
+msgid "Special commission rate"
+msgstr "نرخ کمیسیون ویژه"
+
+msgid "Special commission rate for this teacher (if empty, default rate is used). Number between 0 and 100"
+msgstr "نرخ کمیسیون ویژه برای اين معلم (اگر خالی باشد نرخ با لا استفاده میشود). عددی بين 0 و 100"
+
+msgid "Push notification token"
+msgstr "توکن اعلان فشاری"
+
+msgid "Last seen"
+msgstr "آخرين بار رويال"
+
+msgid "Last online time"
+msgstr "آخرين بار براز به اينترنت"
+
+msgid "Is online"
+msgstr "براز به اينترنت"
+
+msgid "Online status"
+msgstr "وضعيت براز به اينترنت"
+
+msgid "Users"
+msgstr "کاربران"
+
+msgid "Registration"
+msgstr "ثبت نام"
+
+msgid "Phone Verification"
+msgstr "تأييد لالکترونيکی"
+
+msgid "Email Verification"
+msgstr "تأييد ايميل"
+
+msgid "Password Reset"
+msgstr "بازنشاني رمز عبور"
+
+msgid "Login"
+msgstr "ورود"
+
+msgid "Hashed code"
+msgstr "کامل رمزگذاریشده"
+
+msgid "Hashed OTP code"
+msgstr "كامل رمزگذاری شده OTP"
+
+msgid "Expires at"
+msgstr "منقضی شده در"
+
+msgid "Is used"
+msgstr "استفاده شده است"
+
+msgid "Purpose"
+msgstr "هدف"
+
+msgid "OTP Code"
+msgstr "کامل OTP"
+
+msgid "OTP Codes"
+msgstr "كامل‌های OTP"
+
+msgid "Token"
+msgstr "توکن"
+
+msgid "Verification Token"
+msgstr "توکن تأييد"
+
+msgid "Verification Tokens"
+msgstr "توکن‌های تأييد"
+
+msgid "Avatar image"
+msgstr "تصوير آواتار"
+
+msgid "Avatar Template"
+msgstr "قالب آواتار"
+
+msgid "Avatar Templates"
+msgstr "قالب‌های آواتار"
+
+#: account/admin.py
+msgid "Email is required."
+msgstr "ايميل ضروری است."
+
+msgid "Phone number is required."
+msgstr "شماره تلفن ضروری است."
+
+msgid "Invalid phone number."
+msgstr "شماره تلفن نامعتبر."
+
+msgid "Registration Date"
+msgstr "تاریخ ثبت نام"
+
+msgid "Last Update"
+msgstr "آخرين بهروزرسانی"
+
+msgid "Last Login"
+msgstr "آخرين ورود"
+
+msgid "Edit"
+msgstr "ويرايش"
+
+msgid "Actions"
+msgstr "عمليات"
+
+msgid "Main Info"
+msgstr "اطلاعات اصلی"
+
+msgid "Permissions"
+msgstr "مجوزه‌ها"
+
+msgid "Personal Info"
+msgstr "اطلاعات شخصی"
+
+msgid "Dates"
+msgstr "تاریخ‌ها"
+
+msgid "Teacher Info"
+msgstr "اطلاعات معلم"
+
+msgid "Financial Settings"
+msgstr "تنظيمات مالی"
+
+msgid "Custom commission rate for this teacher. If empty, default rate applies."
+msgstr "نرخ ويژه برای اين معلم. اگر خالی باشد نرخ با لا استفاده میشود."
+
+msgid "Add New Teacher"
+msgstr "افزودن معلم جديد"
+
+msgid "Password will be auto-generated and sent to the teacher via SMS."
+msgstr "رمز عبور بهطور خودکار توليد و ازطريق امس به معلم ارسال میشود."
+
+msgid "Phone conversion error: %s"
+msgstr "خطا در تبديل تلفن: %s"
+
+msgid "Teacher successfully created. Password {password} sent to {phone}."
+msgstr "معلم با موفقيت ايجاد شد. رمز عبور {password} به {phone} ارسال شد."
+
+msgid "Teacher created but SMS failed. Password: {password}"
+msgstr "معلم ايجاد شد اما امس ناموفق بود. رمز عبور: {password}"
+
+msgid "User Management"
+msgstr "مديريت کاربران"
+
+msgid "Teacher Management"
+msgstr "مديريت معلمان"
+
+msgid "Avatar Image"
+msgstr "تصوير آواتار"
+
+msgid "Metadata"
+msgstr "اطلاعات فراشروحی"
+
+msgid "Preview"
+msgstr "پيش‌نمايش"
+
+msgid "Delete"
+msgstr "حذف"
+
+#: account/serializers.py
+msgid "This username is already taken"
+msgstr "اين نام کاربری قبلا استفاده شده است"
+
+msgid "New password is required"
+msgstr "رمز عبور جديد ضروری است"
+
+msgid "Password confirmation is required"
+msgstr "تاييد رمز عبور ضروری است"
+
+msgid "Passwords do not match"
+msgstr "رمز عبور مطابقت نداره"
+
+msgid "Username can only contain letters, numbers, and underscores."
+msgstr "نام کاربری بايد تنها حاوی حروف هجدهبا حروف كوچک اعداد و زه باشد."
+
+msgid "Username must be at least 3 characters long."
+msgstr "نام کاربری بايد حداقل 3 کاراکتر باشد."
+
+msgid "This username is already taken. Please choose another one."
+msgstr "اين نام کاربری قبلا استفاده شده است. لطفا یک واردی ديگر انتخاب کنيد."
+
+msgid "User is not a teacher"
+msgstr "اين کاربر معلم نيست"
+
+msgid "Selected avatar does not exist"
+msgstr "آواتار انتخاب شده وجود ندارد"
+
 #: account/templatetags/commission_tags.py
 msgid "Error getting commission rate: %s"
-msgstr "خطا در دریافت نرخ کمیسیون: %s"
+msgstr "خطا در دريافت نرخ کمیسیون: %s"
 
 msgid "N/A"
-msgstr "در دسترس نیست"
+msgstr "در دسترس نيست"
+
+#: account/apps.py
+msgid "User Account Management"
+msgstr "مديريت حساب کاربر"
 
 #: api/views.py
 msgid "This phone number is already registered. Please log in."

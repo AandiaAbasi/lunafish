@@ -136,12 +136,214 @@ msgstr "Teacher verified"
 msgid "Teacher verification revoked"
 msgstr "Teacher verification revoked"
 
+#: account/models.py
+msgid "Birth date"
+msgstr "Birth date"
+
+msgid "Teacher verified"
+msgstr "Teacher verified"
+
+msgid "Whether this teacher is verified by admin"
+msgstr "Whether this teacher is verified by admin"
+
+msgid "Teacher verification requested at"
+msgstr "Teacher verification requested at"
+
+msgid "Special commission rate"
+msgstr "Special commission rate"
+
+msgid "Special commission rate for this teacher (if empty, default rate is used). Number between 0 and 100"
+msgstr "Special commission rate for this teacher (if empty, default rate is used). Number between 0 and 100"
+
+msgid "Push notification token"
+msgstr "Push notification token"
+
+msgid "Last seen"
+msgstr "Last seen"
+
+msgid "Last online time"
+msgstr "Last online time"
+
+msgid "Is online"
+msgstr "Is online"
+
+msgid "Online status"
+msgstr "Online status"
+
+msgid "Users"
+msgstr "Users"
+
+msgid "Registration"
+msgstr "Registration"
+
+msgid "Phone Verification"
+msgstr "Phone Verification"
+
+msgid "Email Verification"
+msgstr "Email Verification"
+
+msgid "Password Reset"
+msgstr "Password Reset"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Hashed code"
+msgstr "Hashed code"
+
+msgid "Hashed OTP code"
+msgstr "Hashed OTP code"
+
+msgid "Expires at"
+msgstr "Expires at"
+
+msgid "Is used"
+msgstr "Is used"
+
+msgid "Purpose"
+msgstr "Purpose"
+
+msgid "OTP Code"
+msgstr "OTP Code"
+
+msgid "OTP Codes"
+msgstr "OTP Codes"
+
+msgid "Token"
+msgstr "Token"
+
+msgid "Verification Token"
+msgstr "Verification Token"
+
+msgid "Verification Tokens"
+msgstr "Verification Tokens"
+
+msgid "Avatar image"
+msgstr "Avatar image"
+
+msgid "Avatar Template"
+msgstr "Avatar Template"
+
+msgid "Avatar Templates"
+msgstr "Avatar Templates"
+
+#: account/admin.py
+msgid "Email is required."
+msgstr "Email is required."
+
+msgid "Phone number is required."
+msgstr "Phone number is required."
+
+msgid "Invalid phone number."
+msgstr "Invalid phone number."
+
+msgid "Registration Date"
+msgstr "Registration Date"
+
+msgid "Last Update"
+msgstr "Last Update"
+
+msgid "Last Login"
+msgstr "Last Login"
+
+msgid "Edit"
+msgstr "Edit"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Main Info"
+msgstr "Main Info"
+
+msgid "Permissions"
+msgstr "Permissions"
+
+msgid "Personal Info"
+msgstr "Personal Info"
+
+msgid "Dates"
+msgstr "Dates"
+
+msgid "Teacher Info"
+msgstr "Teacher Info"
+
+msgid "Financial Settings"
+msgstr "Financial Settings"
+
+msgid "Custom commission rate for this teacher. If empty, default rate applies."
+msgstr "Custom commission rate for this teacher. If empty, default rate applies."
+
+msgid "Add New Teacher"
+msgstr "Add New Teacher"
+
+msgid "Password will be auto-generated and sent to the teacher via SMS."
+msgstr "Password will be auto-generated and sent to the teacher via SMS."
+
+msgid "Phone conversion error: %s"
+msgstr "Phone conversion error: %s"
+
+msgid "Teacher successfully created. Password {password} sent to {phone}."
+msgstr "Teacher successfully created. Password {password} sent to {phone}."
+
+msgid "Teacher created but SMS failed. Password: {password}"
+msgstr "Teacher created but SMS failed. Password: {password}"
+
+msgid "User Management"
+msgstr "User Management"
+
+msgid "Teacher Management"
+msgstr "Teacher Management"
+
+msgid "Avatar Image"
+msgstr "Avatar Image"
+
+msgid "Metadata"
+msgstr "Metadata"
+
+msgid "Preview"
+msgstr "Preview"
+
+msgid "Delete"
+msgstr "Delete"
+
+#: account/serializers.py
+msgid "This username is already taken"
+msgstr "This username is already taken"
+
+msgid "New password is required"
+msgstr "New password is required"
+
+msgid "Password confirmation is required"
+msgstr "Password confirmation is required"
+
+msgid "Passwords do not match"
+msgstr "Passwords do not match"
+
+msgid "Username can only contain letters, numbers, and underscores."
+msgstr "Username can only contain letters, numbers, and underscores."
+
+msgid "Username must be at least 3 characters long."
+msgstr "Username must be at least 3 characters long."
+
+msgid "This username is already taken. Please choose another one."
+msgstr "This username is already taken. Please choose another one."
+
+msgid "User is not a teacher"
+msgstr "User is not a teacher"
+
+msgid "Selected avatar does not exist"
+msgstr "Selected avatar does not exist"
+
 #: account/templatetags/commission_tags.py
 msgid "Error getting commission rate: %s"
 msgstr "Error getting commission rate: %s"
 
 msgid "N/A"
 msgstr "N/A"
+
+#: account/apps.py
+msgid "User Account Management"
+msgstr "User Account Management"
 
 #: api/views.py
 msgid "This phone number is already registered. Please log in."
