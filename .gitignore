@@ -106,3 +106,5 @@ site/
 .idea/
 *.sublime-workspace
 *.sublime-project
+
+/sedamix
