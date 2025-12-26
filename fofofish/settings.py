@@ -20,11 +20,6 @@ SHOP_NAME = _("Nozima")
 BASE_DIR = Path(__file__).resolve().parent.parent
 BASE_URL = 'https://fofofish.app/'
 
-# Load environment variables from .env file
-if os.path.isfile(os.path.join(BASE_DIR, '.env')):
-    from decouple import load_dotenv
-    load_dotenv(os.path.join(BASE_DIR, '.env'))
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
