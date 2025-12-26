@@ -219,6 +219,25 @@ REST_FRAMEWORK = {
     ],
 }
 
+# ============ SMS Configuration ============
+# SMS.ir API
+SMSIR_API_KEY = os.getenv('SMSIR_API_KEY', '1bgmoHozWp24K790ITlVh2fX784NePfnfaEn2Z76L4BQruk78Gh5PmIfS3qrsHrR')
+SMSIR_SENDER_LINE = os.getenv('SMSIR_SENDER_LINE', '30007732011016')
+
+# OTP Settings
+OTP_EXPIRY_TIME = 5 * 60  # 5 minutes in seconds
+OTP_MAX_ATTEMPTS = 5
+OTP_LENGTH = 6
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'mail.fofofish.app')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'info@fofofish.app')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '!Z@5^tYBChhqqh9W')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'info@fofofish.app')
+SERVER_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'info@fofofish.app')
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
