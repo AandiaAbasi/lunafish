@@ -26,7 +26,7 @@ BASE_URL = 'https://fofofish.app/'
 SECRET_KEY = 'django-insecure-s%3ursx!kyqj!t_q6a+=g8p(%rz5(+z^)477=1hg$79(oh-+v+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app', 'localhost', '127.0.0.1', '*']
 CSRF_TRUSTED_ORIGINS = ["https://fofofish.app", "https://www.fofofish.app"]
@@ -183,6 +183,11 @@ LANGUAGES = [
 
 MODELTRANSLATION_LANGUAGES = ('fa', 'en')
 MODELTRANSLATION_DEFAULT_LANGUAGE = 'fa'
+
+# Locale paths for translation files
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 AUTH_USER_MODEL = 'account.User'
 # Static files (CSS, JavaScript, Images)

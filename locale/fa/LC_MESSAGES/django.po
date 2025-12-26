@@ -1,0 +1,167 @@
+# Persian translations for fofofish project
+# Copyright (C) 2025
+# This file is distributed under the same license as the fofofish package.
+msgid ""
+msgstr ""
+"Project-Id-Version: fofofish 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-26 00:00+0000\n"
+"PO-Revision-Date: 2025-12-26 00:00+0000\n"
+"Last-Translator: Admin\n"
+"Language: fa\n"
+"Language-Code: fa\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# Common messages
+msgid "Login"
+msgstr "ورود"
+
+msgid "Logout"
+msgstr "خروج"
+
+msgid "Sign Up"
+msgstr "ثبت نام"
+
+msgid "Email"
+msgstr "ایمیل"
+
+msgid "Password"
+msgstr "رمز عبور"
+
+msgid "Phone Number"
+msgstr "شماره تلفن"
+
+msgid "Submit"
+msgstr "ارسال"
+
+msgid "Cancel"
+msgstr "لغو"
+
+msgid "Save"
+msgstr "ذخیره"
+
+msgid "Delete"
+msgstr "حذف"
+
+msgid "Edit"
+msgstr "ویرایش"
+
+msgid "Success"
+msgstr "موفق"
+
+msgid "Error"
+msgstr "خطا"
+
+msgid "Warning"
+msgstr "هشدار"
+
+msgid "Information"
+msgstr "اطلاعات"
+
+msgid "Verification Code"
+msgstr "کد تأیید"
+
+msgid "Verify"
+msgstr "تأیید"
+
+msgid "Send OTP"
+msgstr "ارسال کد"
+
+msgid "Username"
+msgstr "نام کاربری"
+
+msgid "Name"
+msgstr "نام"
+
+msgid "Bio"
+msgstr "درباره"
+
+msgid "Profile"
+msgstr "پروفایل"
+
+msgid "Settings"
+msgstr "تنظیمات"
+
+msgid "Language"
+msgstr "زبان"
+
+msgid "About"
+msgstr "درباره ما"
+
+msgid "Terms"
+msgstr "شرایط"
+
+msgid "Privacy"
+msgstr "حریم خصوصی"
+
+msgid "Contact"
+msgstr "تماس با ما"
+
+msgid "Articles"
+msgstr "مقالات"
+
+msgid "FAQ"
+msgstr "سوالات متکرر"
+
+msgid "Home"
+msgstr "خانه"
+
+msgid "Search"
+msgstr "جستجو"
+
+msgid "No results found"
+msgstr "نتیجه‌ای یافت نشد"
+
+msgid "Loading..."
+msgstr "در حال بارگزاری..."
+
+msgid "Invalid email"
+msgstr "ایمیل نامعتبر"
+
+msgid "Invalid password"
+msgstr "رمز عبور نامعتبر"
+
+msgid "Passwords do not match"
+msgstr "رمزهای عبور مطابقت ندارند"
+
+msgid "User already exists"
+msgstr "کاربر قبلاً وجود دارد"
+
+msgid "Invalid credentials"
+msgstr "اطلاعات نادرست"
+
+msgid "Unauthorized"
+msgstr "عدم اجازه"
+
+msgid "Forbidden"
+msgstr "ممنوع"
+
+msgid "Not found"
+msgstr "یافت نشد"
+
+msgid "Server error"
+msgstr "خطای سرور"
+
+msgid "Connection error"
+msgstr "خطای اتصال"
+
+msgid "Please verify your email"
+msgstr "لطفاً ایمیل خود را تأیید کنید"
+
+msgid "Your account has been created successfully"
+msgstr "حساب شما با موفقیت ایجاد شد"
+
+msgid "Your account has been updated successfully"
+msgstr "حساب شما با موفقیت بروزرسانی شد"
+
+msgid "Nozima"
+msgstr "نوزیما"
+
+msgid "Persian"
+msgstr "فارسی"
+
+msgid "English"
+msgstr "انگلیسی"
