@@ -218,7 +218,7 @@ CKEDITOR_RESTRICT_BY_DATE = True
 # REST Framework Configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'fofofish.authentication.BearerTokenAuthentication',
+        'fofofish.authentication.BearerJWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
