@@ -90,13 +90,13 @@ class RegularUserAdmin(BaseUserAdmin):
     fieldsets = (
         (_('Main Info'), {'fields': ('username', 'email', 'phone', 'role')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        (_('Personal Info'), {'fields': ('profile_photo_path', 'bio')}),
+        (_('Personal Info'), {'fields': ('profile_photo_path', 'bio_en', 'bio_fa')}),
         (_('Dates'), {'fields': ('last_login_jalali', 'created_at_display', 'updated_at_display'), 'classes': ('collapse',)}),
     )
     
     readonly_fields = [
         'username', 'email', 'phone',
-        'profile_photo_path', 'bio',
+        'profile_photo_path',
         'created_at_display', 'updated_at_display', 'last_login_jalali'
     ]
     
@@ -152,18 +152,18 @@ class TeacherUserAdmin(BaseUserAdmin):
     ordering = ['-created_at']
     
     fieldsets = (
-        (_('Main Info'), {'fields': ('name', 'username', 'email', 'phone', 'role')}),
+        (_('Main Info'), {'fields': ('name_en', 'name_fa', 'username', 'email', 'phone', 'role')}),
         (_('Teacher Info'), {'fields': ('is_teacher_verified', 'teacher_verification_requested_at_jalali')}),
         (_('Financial Settings'), {'fields': ('commission_rate_override',), 'description': _('Custom commission rate for this teacher. If empty, default rate applies.')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        (_('Personal Info'), {'fields': ('profile_photo_path', 'bio')}),
+        (_('Personal Info'), {'fields': ('profile_photo_path', 'bio_en', 'bio_fa')}),
         (_('Dates'), {'fields': ('last_login_jalali', 'created_at_display', 'updated_at_display'), 'classes': ('collapse',)}),
     )
     
     readonly_fields = [
-        'name', 'username', 'email', 'phone',
+        'username', 'email', 'phone',
         'teacher_verification_requested_at_jalali',
-        'profile_photo_path','bio',
+        'profile_photo_path',
         'created_at_display', 'updated_at_display', 'last_login_jalali'
     ]
     

@@ -31,13 +31,13 @@ admin.site.index = custom_index
 @admin.register(About)
 class AboutAdmin(admin.ModelAdmin):
     list_display = ("title", "image_tag", "created_at_display", "updated_at_display", "admin_actions")
-    search_fields = ("title", "content", "title_fa", "content_fa", "title_en", "content_en")
+    search_fields = ("title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
     
     fieldsets = (
-        (_("Title"), {"fields": ("title", "title_en", "title_fa")}),
+        (_("Title"), {"fields": ("title_en", "title_fa")}),
         (_("Media"), {"fields": ("image",)}), 
-        (_("Content"), {"fields": ("content", "content_en", "content_fa")}),
+        (_("Content"), {"fields": ("content_en", "content_fa")}),
     )
 
     def image_tag(self, obj):
@@ -65,11 +65,11 @@ class AboutAdmin(admin.ModelAdmin):
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
     list_display = ("title", "created_at_display", "updated_at_display", "admin_actions")
-    search_fields = ("title", "content", "title_fa", "content_fa", "title_en", "content_en")
+    search_fields = ("title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
     fieldsets = (
-        (_("Title"), {"fields": ("title", "title_en", "title_fa")}),
-        (_("Content"), {"fields": ("content", "content_en", "content_fa")}),
+        (_("Title"), {"fields": ("title_en", "title_fa")}),
+        (_("Content"), {"fields": ("content_en", "content_fa")}),
     )
 
     def admin_actions(self, obj):
@@ -87,11 +87,11 @@ class TermAdmin(admin.ModelAdmin):
 @admin.register(Privacy)
 class PrivacyAdmin(admin.ModelAdmin):
     list_display = ("title", "created_at_display", "updated_at_display", "admin_actions")
-    search_fields = ("title", "content", "title_fa", "content_fa", "title_en", "content_en")
+    search_fields = ("title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
     fieldsets = (
-        (_("Title"), {"fields": ("title", "title_en", "title_fa")}),
-        (_("Content"), {"fields": ("content", "content_en", "content_fa")}),
+        (_("Title"), {"fields": ("title_en", "title_fa")}),
+        (_("Content"), {"fields": ("content_en", "content_fa")}),
     )
 
     def admin_actions(self, obj):
@@ -110,10 +110,10 @@ class PrivacyAdmin(admin.ModelAdmin):
 class ContactAdmin(admin.ModelAdmin):
     list_display = ("title", "type", "value", "link", "created_at_display", "admin_actions")
     list_filter = ["type"]
-    search_fields = ("title", "value", "title_fa", "value_fa", "title_en", "value_en")
+    search_fields = ("title_fa", "value_fa", "title_en", "value_en")
     ordering = ("-created_at",)
     fieldsets = (
-        (_("Contact Details"), {"fields": ("title", "title_en", "title_fa", "link", "value", "value_en", "value_fa", "type")}),
+        (_("Contact Details"), {"fields": ("title_en", "title_fa", "link", "value_en", "value_fa", "type")}),
     )
 
     def admin_actions(self, obj):
@@ -158,12 +158,12 @@ class ContactMessageAdmin(admin.ModelAdmin):
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
     list_display = ("title", "image_tag", "created_at_display", "updated_at_display", "admin_actions")
-    search_fields = ("title", "content", "title_fa", "content_fa", "title_en", "content_en")
+    search_fields = ("title_fa", "content_fa", "short_description_fa", "title_en", "content_en", "short_description_en")
     list_filter = ("created_at", "updated_at")
     ordering = ("-created_at",)
     readonly_fields = ("image_tag",)
     fieldsets = (
-        (_("Main Information"), {"fields": ("title", "title_en", "title_fa", "short_description", "short_description_en", "short_description_fa", "content", "content_en", "content_fa")}),
+        (_("Main Information"), {"fields": ("title_en", "title_fa", "short_description_en", "short_description_fa", "content_en", "content_fa")}),
         (_("Media"), {"fields": ("image", "image_tag")}),
     )
 
@@ -188,12 +188,12 @@ class ArticleAdmin(admin.ModelAdmin):
 @admin.register(FAQ)
 class FAQAdmin(admin.ModelAdmin):
     list_display = ("question", "is_active", "updated_at_display", "admin_actions")
-    search_fields = ("question", "answer", "question_fa", "answer_fa", "question_en", "answer_en")
+    search_fields = ("question_fa", "answer_fa", "question_en", "answer_en")
     list_filter = ("is_active", "created_at")
     ordering = ("-created_at",)
     fieldsets = (
-        (_("Question"), {"fields": ("question", "question_en", "question_fa")}),
-        (_("Answer"), {"fields": ("answer", "answer_en", "answer_fa", "is_active")}),
+        (_("Question"), {"fields": ("question_en", "question_fa")}),
+        (_("Answer"), {"fields": ("answer_en", "answer_fa", "is_active")}),
     )
         
     def admin_actions(self, obj):
@@ -219,7 +219,7 @@ class BannerAdmin(admin.ModelAdmin):
         "created_at_display", 
         "admin_actions"
     )
-    search_fields = ("title", "sub_title", "link", "title_fa", "sub_title_fa", "title_en", "sub_title_en")
+    search_fields = ("title_fa", "sub_title_fa", "link", "title_en", "sub_title_en")
     list_filter = ("placement", "is_active", "created_at")
     ordering = ("placement", "sort", "-created_at")
     list_editable = ("sort",)
@@ -227,7 +227,7 @@ class BannerAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (_("Main Information"), {
-            "fields": ("title", "title_en", "title_fa", "sub_title", "sub_title_en", "sub_title_fa", "placement", "link")
+            "fields": ("title_en", "title_fa", "sub_title_en", "sub_title_fa", "placement", "link")
         }),
         (_("Media"), {
             "fields": ("image",)
