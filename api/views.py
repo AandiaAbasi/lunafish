@@ -18,6 +18,8 @@ from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponseRedirect
 from django.contrib import messages
+from drf_spectacular.decorators import extend_schema
+from drf_spectacular.types import OpenApiTypes
 from django.db import models
 from django.http import StreamingHttpResponse, HttpResponse
 import boto3
@@ -1003,37 +1005,89 @@ class UserProfileAPIView(APIView):
     
     Manage user and teacher profile information including personal details,
     avatar, and role-specific settings.
-    
-    post:
-        Update the current user's profile information.
-        Supports both regular users and teachers with role-specific fields.
-        
-        Request body parameters for regular users:
-            - first_name: string (optional) - User's first name
-            - last_name: string (optional) - User's last name  
-            - email: string (optional) - Email address
-            - phone: string (optional) - Phone number
-            - bio: string (optional) - User biography
-            - avatar_url: string (optional) - Avatar URL
-            
-        Request body parameters for teachers:
-            - first_name: string (optional) - Teacher's first name
-            - last_name: string (optional) - Teacher's last name
-            - email: string (optional) - Email address
-            - phone: string (optional) - Phone number
-            - bio: string (optional) - Biography
-            - specialization: string (optional) - Area of specialization
-            - experience_years: integer (optional) - Years of teaching experience
-            - qualifications: string (optional) - Professional qualifications
-        
-        Returns:
-            200 OK - Updated user/teacher profile data with all profile fields
-            400 Bad Request - Invalid data provided
-            401 Unauthorized - User not authenticated
     """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     
+    @extend_schema(
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'first_name': {
+                        'type': 'string',
+                        'description': "User's or Teacher's first name"
+                    },
+                    'last_name': {
+                        'type': 'string',
+                        'description': "User's or Teacher's last name"
+                    },
+                    'email': {
+                        'type': 'string',
+                        'format': 'email',
+                        'description': 'Email address'
+                    },
+                    'phone': {
+                        'type': 'string',
+                        'description': 'Phone number'
+                    },
+                    'bio': {
+                        'type': 'string',
+                        'description': 'User biography or description'
+                    },
+                    'avatar_url': {
+                        'type': 'string',
+                        'description': 'Avatar URL (for regular users)'
+                    },
+                    'specialization': {
+                        'type': 'string',
+                        'description': 'Area of specialization (for teachers)'
+                    },
+                    'experience_years': {
+                        'type': 'integer',
+                        'description': 'Years of teaching experience (for teachers)'
+                    },
+                    'qualifications': {
+                        'type': 'string',
+                        'description': 'Professional qualifications (for teachers)'
+                    }
+                },
+                'example': {
+                    'first_name': 'John',
+                    'last_name': 'Doe',
+                    'email': 'john@example.com',
+                    'phone': '+989123456789',
+                    'bio': 'Software developer'
+                }
+            }
+        },
+        responses={
+            200: {
+                'description': 'Profile updated successfully',
+                'content': {
+                    'application/json': {
+                        'example': {
+                            'success': True,
+                            'message': 'Profile updated successfully',
+                            'user': {
+                                'id': 1,
+                                'username': 'john_doe',
+                                'email': 'john@example.com',
+                                'phone': '+989123456789',
+                                'first_name': 'John',
+                                'last_name': 'Doe',
+                                'bio': 'Software developer',
+                                'role': 'user'
+                            }
+                        }
+                    }
+                }
+            },
+            400: {'description': 'Invalid data provided'},
+            401: {'description': 'User not authenticated'}
+        },
+        tags=['profile']
+    )
     def post(self, request):
         """Update user profile via POST"""
         # Use appropriate serializer based on role
