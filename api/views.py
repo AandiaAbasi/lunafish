@@ -11,6 +11,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from drf_spectacular.openapi import OpenApiResponse
 from django.contrib.auth import authenticate, get_user_model
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -82,6 +84,15 @@ class SendOTPAPIView(APIView):
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        request=SendOTPSerializer,
+        responses={
+            200: OpenApiResponse(description="Verification code sent successfully"),
+            400: OpenApiResponse(description="Invalid data or phone already registered"),
+            429: OpenApiResponse(description="Rate limit exceeded"),
+            503: OpenApiResponse(description="Email service not configured"),
+        }
+    )
     def post(self, request):
         serializer = SendOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -299,6 +310,14 @@ class CompleteRegistrationAPIView(APIView):
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        request=CompleteRegistrationSerializer,
+        responses={
+            201: OpenApiResponse(description="Registration completed successfully"),
+            400: OpenApiResponse(description="Invalid or expired token, username exists, or weak password"),
+            401: OpenApiResponse(description="Invalid token"),
+        }
+    )
     def post(self, request):
         serializer = CompleteRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -374,6 +393,23 @@ class UserLoginPasswordAPIView(APIView):
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'username': {'type': 'string', 'description': 'User registered username'},
+                    'password': {'type': 'string', 'description': 'User account password'}
+                },
+                'required': ['username', 'password']
+            }
+        },
+        responses={
+            200: OpenApiResponse(description="Login successful, returns user profile and tokens"),
+            400: OpenApiResponse(description="Invalid credentials or missing fields"),
+            401: OpenApiResponse(description="Invalid username/password combination"),
+        }
+    )
     def post(self, request):
         username = request.data.get('username', '').strip()
         password = request.data.get('password', '').strip()
@@ -932,6 +968,21 @@ class CheckUsernameAPIView(APIView):
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='username',
+                description='Username to check (minimum 3 characters)',
+                required=True,
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY
+            )
+        ],
+        responses={
+            200: OpenApiResponse(description="Username availability check result"),
+            400: OpenApiResponse(description="Invalid username format"),
+        }
+    )
     def get(self, request):
         """GET method - username in query params"""
         username = request.GET.get('username', '').strip()
@@ -964,6 +1015,21 @@ class CheckUsernameAPIView(APIView):
                 "message": _("This username is available.")
             }, status=status.HTTP_200_OK)
     
+    @extend_schema(
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'username': {'type': 'string', 'description': 'Username to check (minimum 3 characters)'}
+                },
+                'required': ['username']
+            }
+        },
+        responses={
+            200: OpenApiResponse(description="Username availability check result"),
+            400: OpenApiResponse(description="Invalid username format"),
+        }
+    )
     def post(self, request):
         """POST method - username in body or query params"""
         # Try to get from query params first (for flexibility)
@@ -1089,6 +1155,14 @@ class UserProfileAPIView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     
+    @extend_schema(
+        request=EditUserProfileSerializer,
+        responses={
+            200: OpenApiResponse(description="Profile updated successfully"),
+            400: OpenApiResponse(description="Invalid data or duplicate email/phone"),
+            401: OpenApiResponse(description="User not authenticated"),
+        }
+    )
     def post(self, request):
         """Update user profile via POST"""
         # Use appropriate serializer based on role
@@ -1161,6 +1235,23 @@ class SelectAvatarAPIView(APIView):
     """
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'avatar_template_id': {'type': 'integer', 'description': 'ID of avatar template'}
+                },
+                'required': ['avatar_template_id']
+            }
+        },
+        responses={
+            200: OpenApiResponse(description="Avatar selected successfully"),
+            400: OpenApiResponse(description="Invalid data or missing avatar_template_id"),
+            401: OpenApiResponse(description="User not authenticated"),
+            404: OpenApiResponse(description="Avatar template not found"),
+        }
+    )
     def post(self, request):
         """Select an avatar as profile photo"""
         from account.models import AvatarTemplate
@@ -1231,6 +1322,15 @@ class PromoteToTeacherAPIView(APIView):
     """
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        request=PromoteToTeacherSerializer,
+        responses={
+            200: OpenApiResponse(description="Promoted to teacher successfully"),
+            400: OpenApiResponse(description="Invalid data, already a teacher, or insufficient qualifications"),
+            401: OpenApiResponse(description="User not authenticated"),
+            403: OpenApiResponse(description="User already has teacher role"),
+        }
+    )
     def post(self, request):
         if request.user.role == 'teacher':
             return Response({
@@ -1299,6 +1399,14 @@ class ChangePasswordAPIView(APIView):
     """
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        request=ChangePasswordSerializer,
+        responses={
+            200: OpenApiResponse(description="Password changed successfully"),
+            400: OpenApiResponse(description="Invalid data, incorrect old password, or passwords do not match"),
+            401: OpenApiResponse(description="User not authenticated"),
+        }
+    )
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():
@@ -1354,6 +1462,27 @@ class LogoutAPIView(APIView):
     """
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'refresh_token': {'type': 'string', 'description': 'Refresh token from login'},
+                    'refresh': {'type': 'string', 'description': 'Alternative parameter name for refresh token'}
+                },
+                'anyOf': [
+                    {'required': ['refresh_token']},
+                    {'required': ['refresh']}
+                ]
+            }
+        },
+        responses={
+            200: OpenApiResponse(description="Logout successful"),
+            400: OpenApiResponse(description="Refresh token not provided or invalid format"),
+            401: OpenApiResponse(description="User not authenticated"),
+            500: OpenApiResponse(description="Invalid refresh token"),
+        }
+    )
     def post(self, request):
         try:
             refresh_token = request.data.get('refresh_token') or request.data.get('refresh')
