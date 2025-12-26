@@ -54,7 +54,21 @@ def get_tokens_for_user(user):
 # ========== OTP Authentication APIs ==========
 
 class SendOTPAPIView(APIView):
-    """API: Send OTP to phone or email"""
+    """
+    Send OTP (One-Time Password) API
+    
+    Send OTP to user's phone or email for authentication.
+    Supports both login and registration purposes.
+    
+    post:
+        Send OTP to specified phone number or email.
+        
+        Request parameters:
+        - identifier: Phone number or email address (required)
+        - purpose: 'login' or 'registration' (optional, default: 'login')
+        
+        Returns: Success message with OTP details
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -165,7 +179,24 @@ class SendOTPAPIView(APIView):
 
 
 class VerifyOTPAPIView(APIView):
-    """API: Verify OTP and login/register user"""
+    """
+    Verify OTP API
+    
+    Verify one-time password for login or registration.
+    Returns JWT tokens for login or verification token for registration.
+    
+    post:
+        Verify OTP code sent to phone/email.
+        
+        Request parameters:
+        - identifier: Phone number or email (required)
+        - code: OTP code received (required)
+        - purpose: 'login' or 'registration' (optional, default: 'login')
+        
+        Returns:
+            For login: user profile + JWT tokens
+            For registration: verification token
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -224,7 +255,23 @@ class VerifyOTPAPIView(APIView):
 
 
 class CompleteRegistrationAPIView(APIView):
-    """API: Complete registration with username and password"""
+    """
+    Complete User Registration API
+    
+    Finalize user registration by setting username and password.
+    Must be called after OTP verification.
+    
+    post:
+        Complete user registration process.
+        
+        Request parameters:
+        - verification_token: Token from OTP verification (required)
+        - username: Desired username (required, unique)
+        - password: Account password (required)
+        - name: User's full name (required)
+        
+        Returns: Newly created user profile + JWT tokens
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -273,7 +320,21 @@ class CompleteRegistrationAPIView(APIView):
 # ========== Teacher Authentication APIs ==========
 
 class UserLoginPasswordAPIView(APIView):
-    """API: User login with username/password"""
+    """
+    User Login with Username/Password API
+    
+    Authenticate user using username and password credentials.
+    Returns JWT tokens and user profile information.
+    
+    post:
+        Login a user with username and password.
+        
+        Request parameters:
+        - username: User's username (required)
+        - password: User's password (required)
+        
+        Returns: JWT tokens + user profile data
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -308,7 +369,21 @@ class UserLoginPasswordAPIView(APIView):
 
 
 class TeacherLoginPasswordAPIView(APIView):
-    """API: Teacher login with username/password"""
+    """
+    Teacher Login with Username/Password API
+    
+    Authenticate teacher using username and password credentials.
+    Returns JWT tokens and teacher profile with specialization info.
+    
+    post:
+        Login a teacher with username and password.
+        
+        Request parameters:
+        - username: Teacher's username (required)
+        - password: Teacher's password (required)
+        
+        Returns: JWT tokens + teacher profile with specialization
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -441,7 +516,28 @@ class TeacherVerifyOTPAPIView(APIView):
 
 
 class TeacherCompleteRegistrationAPIView(APIView):
-    """API: Complete teacher registration with username and password"""
+    """
+    Complete Teacher Registration API (Duplicate)
+    
+    Finalize teacher registration by setting username and password.
+    Must be called after OTP verification with teacher-specific fields.
+    
+    post:
+        Complete teacher registration process.
+        
+        Request body:
+        - verification_token: Token from OTP verification (required)
+        - username: Desired username (required, unique)
+        - password: Account password (required)
+        - name: Teacher's full name (required)
+        - specialization: Area of specialization (required)
+        - experience_years: Years of teaching experience (required)
+        
+        Returns:
+            - success: Boolean
+            - user: Newly created teacher profile
+            - tokens: {access, refresh} JWT tokens
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -492,7 +588,21 @@ class TeacherCompleteRegistrationAPIView(APIView):
 # ========== Email-Based Authentication APIs ==========
 
 class UserSendEmailOTPAPIView(APIView):
-    """API: Send OTP to user email"""
+    """
+    Send Email OTP for User API
+    
+    Send OTP to user's email for authentication.
+    Used in email-based login and registration.
+    
+    post:
+        Send OTP to specified email address for user login.
+        
+        Request parameters:
+        - email: Email address (required)
+        - purpose: 'login' or 'registration' (optional)
+        
+        Returns: Email confirmation + OTP status
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -541,7 +651,21 @@ class UserSendEmailOTPAPIView(APIView):
 
 
 class UserVerifyEmailOTPAPIView(APIView):
-    """API: Verify OTP and login user via email"""
+    """
+    Verify Email OTP for User API
+    
+    Verify OTP sent to user's email for login.
+    Marks email as verified and returns authentication tokens.
+    
+    post:
+        Verify OTP code sent to user email.
+        
+        Request parameters:
+        - email: Email address (required)
+        - code: 6-digit OTP code (required)
+        
+        Returns: JWT tokens + user profile data
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -594,7 +718,24 @@ class UserVerifyEmailOTPAPIView(APIView):
 
 
 class TeacherSendEmailOTPAPIView(APIView):
-    """API: Send OTP to teacher email"""
+    """
+    Send OTP to Email for Teacher API
+    
+    Send OTP to teacher's email for authentication.
+    Used in email-based teacher login and registration.
+    
+    post:
+        Send OTP to specified email address for teacher login.
+        
+        Request body:
+        - email: Email address (required)
+        - purpose: 'login' or 'registration' (optional, default: 'login')
+        
+        Returns:
+            - success: Boolean
+            - message: Status message
+            - email: Confirmed email address
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -643,7 +784,25 @@ class TeacherSendEmailOTPAPIView(APIView):
 
 
 class TeacherVerifyEmailOTPAPIView(APIView):
-    """API: Verify OTP and login teacher via email"""
+    """
+    Verify Email OTP for Teacher API
+    
+    Verify OTP sent to teacher's email for login.
+    Marks email as verified and returns authentication tokens.
+    
+    post:
+        Verify OTP code sent to teacher email.
+        
+        Request body:
+        - email: Email address (required)
+        - code: 6-digit OTP code (required)
+        
+        Returns:
+            - success: Boolean
+            - user: Teacher profile data with specialization and experience
+            - tokens: {access, refresh} JWT tokens
+            - message: Status message
+    """
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -696,7 +855,34 @@ class TeacherVerifyEmailOTPAPIView(APIView):
 
 
 class CheckUsernameAPIView(APIView):
-    """API: Check if username is available"""
+    """
+    Check Username Availability API (Duplicate)
+    
+    Verify if a username is available for registration.
+    Accepts both GET and POST requests.
+    
+    get:
+        Check if username is available (query parameter).
+        
+        Query parameters:
+        - username: Username to check (required, minimum 3 characters)
+        
+        Returns:
+            - success: Boolean
+            - available: Boolean (true if available)
+            - message: Status message
+    
+    post:
+        Check if username is available (body parameter).
+        
+        Request body:
+        - username: Username to check (required, minimum 3 characters)
+        
+        Returns:
+            - success: Boolean
+            - available: Boolean (true if available)
+            - message: Status message
+    """
     permission_classes = [AllowAny]
     
     def get(self, request):
@@ -788,7 +974,36 @@ class FetchUserAPIView(APIView):
 
 
 class UserProfileAPIView(APIView):
-    """API: Update user profile (both user and teacher)"""
+    """
+    User Profile Management API
+    
+    Manage user and teacher profile information including personal details,
+    avatar, and role-specific settings.
+    
+    post:
+        Update the current user's profile information.
+        Supports both regular users and teachers with role-specific fields.
+        
+        Request body (User):
+        - first_name: User's first name
+        - last_name: User's last name
+        - email: Email address
+        - phone: Phone number
+        - bio: User biography
+        - avatar_url: Avatar URL
+        
+        Request body (Teacher):
+        - first_name: Teacher's first name
+        - last_name: Teacher's last name
+        - email: Email address
+        - phone: Phone number
+        - bio: Biography
+        - specialization: Area of specialization
+        - experience_years: Years of teaching experience
+        - qualifications: Professional qualifications
+        
+        Returns: Updated user/teacher profile data
+    """
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
@@ -918,7 +1133,24 @@ class PromoteToTeacherAPIView(APIView):
 # ========== Password & Settings APIs ==========
 
 class ChangePasswordAPIView(APIView):
-    """API: Change user password"""
+    """
+    Change User Password API (Duplicate)
+    
+    Allow authenticated users to change their account password.
+    Requires old password verification.
+    
+    post:
+        Change the authenticated user's password.
+        
+        Request body:
+        - old_password: Current password (required)
+        - new_password: New password (required)
+        - confirm_password: Confirm new password (required)
+        
+        Returns:
+            - success: Boolean
+            - message: Success or error message
+    """
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
@@ -1007,14 +1239,35 @@ class ArticleDetailAPIView(APIView):
 
 
 class FAQListAPIView(generics.ListAPIView):
-    """API: List all FAQs"""
+    """
+    List FAQs API
+    
+    Retrieve all active frequently asked questions.
+    
+    get:
+        List all active FAQs with pagination support.
+        
+        Returns:
+            - List of FAQ objects with id, question, answer, created_at
+    """
     permission_classes = [AllowAny]
     queryset = FAQ.objects.filter(is_active=True).order_by('-created_at')
     serializer_class = FAQSerializer
 
 
 class AboutAPIView(APIView):
-    """API: Get about page content"""
+    """
+    Get About Page API (Duplicate)
+    
+    Retrieve content for the about/company information page.
+    
+    get:
+        Get about page content.
+        
+        Returns:
+            - success: Boolean
+            - data: About page object with id, title, description, contact_info, created_at
+    """
     permission_classes = [AllowAny]
     
     def get(self, request):
@@ -1032,28 +1285,80 @@ class AboutAPIView(APIView):
 
 
 class TermListAPIView(generics.ListAPIView):
-    """API: List all terms"""
+    """
+    List Terms and Conditions API (Duplicate)
+    
+    Retrieve all terms and conditions documents.
+    
+    get:
+        List all terms ordered by creation date.
+        
+        Returns:
+            - List of term objects with id, title, content, version, created_at
+    """
     permission_classes = [AllowAny]
     queryset = Term.objects.all().order_by('-created_at')
     serializer_class = TermSerializer
 
 
 class PrivacyListAPIView(generics.ListAPIView):
-    """API: List all privacy policies"""
+    """
+    List Privacy Policies API (Duplicate)
+    
+    Retrieve all privacy policy documents.
+    
+    get:
+        List all privacy policies ordered by creation date.
+       
+    List Contact Information API (Duplicate)
+    
+    Retrieve all contact information records.
+    
+    get:
+        List all contact records ordered by type.
+        
+        Returns:
+            - List of contact objects with id, type, value (phone/email/address), created_at
+    
+        Returns:
+            - List of privacy objects with id, title, content, version, created_at
+    """
     permission_classes = [AllowAny]
     queryset = Privacy.objects.all().order_by('-created_at')
     serializer_class = PrivacySerializer
 
 
 class ContactListAPIView(generics.ListAPIView):
-    """API: List all contact information"""
+    """
+    List Contact Information API
+    
+    Retrieve all contact information records.
+    
+    get:
+        List all contact records ordered by type.
+        
+        Returns:
+            - List of contact objects with id, type, value (phone/email/address), created_at
+    """
     permission_classes = [AllowAny]
     queryset = Contact.objects.all().order_by('type')
     serializer_class = ContactSerializer
 
 
 class ContactPhoneAPIView(APIView):
-    """API: Get first phone contact"""
+    """
+    Get Phone Contact API
+    
+    Retrieve the primary phone contact information.
+    
+    get:
+        Get the first phone contact record from the database.
+        
+        Returns:
+            - status: 'success' or 'error'
+            - data: Contact object with type='phone' and value (phone number)
+            - message: Status message
+    """
     permission_classes = [AllowAny]
     
     def get(self, request):
