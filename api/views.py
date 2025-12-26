@@ -60,19 +60,50 @@ class SendOTPAPIView(APIView):
     Send OTP (One-Time Password) API
     
     Send OTP to user's phone or email for authentication.
-    Supports both login and registration purposes.
-    
-    post:
-        Send OTP to specified phone number or email.
-        
-        Request parameters:
-        - identifier: Phone number or email address (required)
-        - purpose: 'login' or 'registration' (optional, default: 'login')
-        
-        Returns: Success message with OTP details
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        request={
+            'application/json': {
+                'type': 'object',
+                'required': ['identifier'],
+                'properties': {
+                    'identifier': {
+                        'type': 'string',
+                        'description': 'Phone number or email address for OTP'
+                    },
+                    'purpose': {
+                        'type': 'string',
+                        'enum': ['login', 'registration'],
+                        'default': 'login',
+                        'description': 'Purpose of OTP: login or registration'
+                    }
+                },
+                'example': {
+                    'identifier': '+989123456789',
+                    'purpose': 'login'
+                }
+            }
+        },
+        responses={
+            200: {
+                'description': 'OTP sent successfully',
+                'content': {
+                    'application/json': {
+                        'example': {
+                            'success': True,
+                            'message': 'OTP sent to your phone number',
+                            'identifier': '+989123456789'
+                        }
+                    }
+                }
+            },
+            400: {'description': 'Invalid identifier or too many requests'},
+            429: {'description': 'Rate limit exceeded - please wait before requesting another OTP'}
+        },
+        tags=['authentication']
+    )
     def post(self, request):
         serializer = SendOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -185,22 +216,64 @@ class VerifyOTPAPIView(APIView):
     Verify OTP API
     
     Verify one-time password for login or registration.
-    Returns JWT tokens for login or verification token for registration.
-    
-    post:
-        Verify OTP code sent to phone/email.
-        
-        Request parameters:
-        - identifier: Phone number or email (required)
-        - code: OTP code received (required)
-        - purpose: 'login' or 'registration' (optional, default: 'login')
-        
-        Returns:
-            For login: user profile + JWT tokens
-            For registration: verification token
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        request={
+            'application/json': {
+                'type': 'object',
+                'required': ['identifier', 'code'],
+                'properties': {
+                    'identifier': {
+                        'type': 'string',
+                        'description': 'Phone number or email address that received the OTP'
+                    },
+                    'code': {
+                        'type': 'string',
+                        'description': '6-digit OTP code'
+                    },
+                    'purpose': {
+                        'type': 'string',
+                        'enum': ['login', 'registration'],
+                        'default': 'login',
+                        'description': 'Purpose of OTP verification'
+                    }
+                },
+                'example': {
+                    'identifier': '+989123456789',
+                    'code': '123456',
+                    'purpose': 'login'
+                }
+            }
+        },
+        responses={
+            200: {
+                'description': 'OTP verified successfully',
+                'content': {
+                    'application/json': {
+                        'example': {
+                            'success': True,
+                            'message': 'Login successful',
+                            'user': {
+                                'id': 1,
+                                'username': 'user123',
+                                'email': 'user@example.com',
+                                'first_name': 'John',
+                                'last_name': 'Doe'
+                            },
+                            'tokens': {
+                                'access': 'eyJ0eXAiOiJKV1QiLCJhbGc...',
+                                'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGc...'
+                            }
+                        }
+                    }
+                }
+            },
+            400: {'description': 'Invalid OTP code or identifier'}
+        },
+        tags=['authentication']
+    )
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -261,21 +334,51 @@ class CompleteRegistrationAPIView(APIView):
     Complete User Registration API
     
     Finalize user registration by setting username and password.
-    Must be called after OTP verification.
-    
-    post:
-        Complete user registration process.
-        
-        Request parameters:
-        - verification_token: Token from OTP verification (required)
-        - username: Desired username (required, unique)
-        - password: Account password (required)
-        - name: User's full name (required)
-        
-        Returns: Newly created user profile + JWT tokens
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        request={
+            'application/json': {
+                'type': 'object',
+                'required': ['verification_token', 'username', 'password', 'name'],
+                'properties': {
+                    'verification_token': {
+                        'type': 'string',
+                        'description': 'Token received from OTP verification'
+                    },
+                    'username': {
+                        'type': 'string',
+                        'description': 'Desired username (must be unique)'
+                    },
+                    'password': {
+                        'type': 'string',
+                        'format': 'password',
+                        'description': 'Account password'
+                    },
+                    'name': {
+                        'type': 'string',
+                        'description': "User's full name"
+                    },
+                    'expo_push_token': {
+                        'type': 'string',
+                        'description': 'Expo push notification token (optional)'
+                    }
+                },
+                'example': {
+                    'verification_token': 'abc123def456...',
+                    'username': 'john_doe',
+                    'password': 'SecurePass123!',
+                    'name': 'John Doe'
+                }
+            }
+        },
+        responses={
+            201: {'description': 'User registered successfully with JWT tokens'},
+            400: {'description': 'Invalid verification token or registration failed'}
+        },
+        tags=['authentication']
+    )
     def post(self, request):
         serializer = CompleteRegistrationSerializer(data=request.data)
         if serializer.is_valid():
