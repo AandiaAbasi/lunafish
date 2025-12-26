@@ -228,6 +228,50 @@ class EditUserProfileSerializer(serializers.ModelSerializer):
         return value
 
 
+class CompleteStudentProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for completing student profile with basic information.
+    Students can set: name, age (birth_date), gender, and select an avatar.
+    """
+    selected_avatar_id = serializers.IntegerField(
+        required=False,
+        write_only=True,
+        help_text=_("ID of the avatar template to select")
+    )
+    
+    class Meta:
+        model = User
+        fields = ['name', 'birth_date', 'gender', 'selected_avatar_id']
+        extra_kwargs = {
+            'name': {'required': False},
+            'birth_date': {'required': False},
+            'gender': {'required': False},
+        }
+    
+    def validate_selected_avatar_id(self, value):
+        """Validate that avatar exists"""
+        if value:
+            if not AvatarTemplate.objects.filter(id=value).exists():
+                raise serializers.ValidationError(_("Selected avatar does not exist"))
+        return value
+    
+    def create(self, validated_data):
+        avatar_id = validated_data.pop('selected_avatar_id', None)
+        instance = super().create(validated_data)
+        if avatar_id:
+            instance.selected_avatar_id = avatar_id
+            instance.save()
+        return instance
+    
+    def update(self, instance, validated_data):
+        avatar_id = validated_data.pop('selected_avatar_id', None)
+        instance = super().update(instance, validated_data)
+        if avatar_id:
+            instance.selected_avatar_id = avatar_id
+            instance.save()
+        return instance
+
+
 class EditTeacherProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False, min_length=3, max_length=150)
     
@@ -257,6 +301,68 @@ class EditTeacherProfileSerializer(serializers.ModelSerializer):
             if User.objects.filter(username=value).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError(_("This username is already taken. Please choose another one."))
         
+        return value
+    
+    def validate(self, attrs):
+        if self.instance and self.instance.role != 'teacher':
+            raise serializers.ValidationError({'non_field_errors': [_('User is not a teacher')]})
+        return attrs
+
+
+class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for completing teacher profile with professional information.
+    Teachers can set: name, qualifications, languages, introduction video, 
+    resume summary, hourly rate, and available times.
+    """
+    
+    class Meta:
+        model = User
+        fields = [
+            'name',
+            'qualifications',
+            'languages_taught',
+            'specialization',
+            'resume_summary',
+            'introduction_video',
+            'hourly_rate',
+            'available_times',
+            'experience_years',
+            'profile_photo_path'
+        ]
+        extra_kwargs = {
+            'name': {'required': False},
+            'qualifications': {'required': False},
+            'languages_taught': {'required': False},
+            'specialization': {'required': False},
+            'resume_summary': {'required': False},
+            'introduction_video': {'required': False},
+            'hourly_rate': {'required': False},
+            'available_times': {'required': False},
+            'experience_years': {'required': False},
+            'profile_photo_path': {'required': False},
+        }
+    
+    def validate_hourly_rate(self, value):
+        """Validate hourly rate is positive"""
+        if value is not None and value <= 0:
+            raise serializers.ValidationError(_("Hourly rate must be greater than zero"))
+        return value
+    
+    def validate_experience_years(self, value):
+        """Validate experience years is non-negative"""
+        if value is not None and value < 0:
+            raise serializers.ValidationError(_("Experience years cannot be negative"))
+        return value
+    
+    def validate_introduction_video(self, value):
+        """Validate introduction video URL"""
+        if value:
+            # Basic URL validation
+            if not value.startswith(('http://', 'https://')):
+                raise serializers.ValidationError(_("Introduction video must be a valid URL"))
+            if len(value) > 500:
+                raise serializers.ValidationError(_("Introduction video URL is too long"))
         return value
     
     def validate(self, attrs):

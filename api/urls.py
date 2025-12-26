@@ -34,6 +34,11 @@ urlpatterns = [
     path('profile/', views.UserProfileAPIView.as_view(), name='profile'),
     # Legacy endpoint for backward compatibility
     path('teacher-profile/', views.UserProfileAPIView.as_view(), name='teacher_profile'),
+    
+    # ========== Complete Profile ==========
+    path('complete-student-profile/', views.CompleteStudentProfileAPIView.as_view(), name='complete_student_profile'),
+    path('complete-teacher-profile/', views.CompleteTeacherProfileAPIView.as_view(), name='complete_teacher_profile'),
+    
     path('promote-to-teacher/', views.PromoteToTeacherAPIView.as_view(), name='promote_to_teacher'),
     
     # ========== Avatar Templates ==========

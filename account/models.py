@@ -148,6 +148,72 @@ class User(AbstractUser, BaseModel):
         help_text=_("Special commission rate for this teacher (if empty, default rate is used). Number between 0 and 100")
     )
     
+    # ========== Teacher Profile Fields ==========
+    # Academic Information
+    qualifications = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("Educational qualifications"),
+        help_text=_("Degrees, certifications, and professional qualifications")
+    )
+    
+    # Teaching Information
+    languages_taught = models.CharField(
+        max_length=500,
+        null=True,
+        blank=True,
+        verbose_name=_("Languages taught"),
+        help_text=_("Languages that can be taught (comma-separated or JSON)")
+    )
+    
+    specialization = models.CharField(
+        max_length=500,
+        null=True,
+        blank=True,
+        verbose_name=_("Specialization"),
+        help_text=_("Area of specialization or expertise")
+    )
+    
+    resume_summary = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("Resume summary"),
+        help_text=_("Brief summary of professional experience and background")
+    )
+    
+    # Introduction & Media
+    introduction_video = models.URLField(
+        null=True,
+        blank=True,
+        verbose_name=_("Introduction video URL"),
+        help_text=_("YouTube or video URL for teacher introduction")
+    )
+    
+    # Pricing Information
+    hourly_rate = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Hourly rate"),
+        help_text=_("Suggested hourly teaching rate in default currency")
+    )
+    
+    # Availability
+    available_times = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name=_("Available times"),
+        help_text=_("JSON object with available teaching times")
+    )
+    
+    experience_years = models.IntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Years of experience"),
+        help_text=_("Number of years of teaching experience")
+    )
+    
     # Device & Notifications
     push_token = models.TextField(
         null=True,

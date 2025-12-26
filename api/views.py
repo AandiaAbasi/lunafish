@@ -1190,6 +1190,150 @@ class UserProfileAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# ========== Complete Profile APIs ==========
+
+class CompleteStudentProfileAPIView(APIView):
+    """
+    Complete Student Profile API
+    
+    Allow students to complete their profile with basic information.
+    Students can set their name, birth date, gender, and select an avatar.
+    Requires authentication.
+    
+    post:
+        Complete student profile information.
+        
+        Request body parameters:
+            - name: string (optional) - Student's full name
+            - birth_date: string (optional) - Birth date in YYYY-MM-DD format
+            - gender: string (optional) - Gender: 'male', 'female', 'custom', 'prefer_not_to_say'
+            - selected_avatar_id: integer (optional) - ID of avatar template to select
+        
+        Returns:
+            200 OK:
+                - success: boolean (true)
+                - message: string - "Profile completed successfully"
+                - user: object - Updated student profile data
+                
+            400 Bad Request:
+                - Invalid data provided
+                - Invalid avatar ID
+                - Invalid date format
+                
+            401 Unauthorized - User not authenticated
+            403 Forbidden - User is not a student
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
+    
+    @extend_schema(
+        request=CompleteStudentProfileSerializer,
+        responses={
+            200: OpenApiResponse(description="Student profile completed successfully"),
+            400: OpenApiResponse(description="Invalid data or invalid avatar"),
+            401: OpenApiResponse(description="User not authenticated"),
+            403: OpenApiResponse(description="User is not a student"),
+        }
+    )
+    def post(self, request):
+        # Check if user is a student (regular user)
+        if request.user.role != 'user':
+            return Response({
+                "success": False,
+                "message": _("Only students can use this endpoint")
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = CompleteStudentProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "message": _("Profile completed successfully"),
+                "user": UserProfileSerializer(request.user).data
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            "success": False,
+            "message": _("Invalid data provided"),
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CompleteTeacherProfileAPIView(APIView):
+    """
+    Complete Teacher Profile API
+    
+    Allow teachers to complete their professional profile with detailed information.
+    Teachers can set: name, qualifications, languages taught, introduction video,
+    resume summary, hourly rate, and available teaching times.
+    Requires authentication and teacher role.
+    
+    post:
+        Complete teacher profile with professional information.
+        
+        Request body parameters:
+            - name: string (optional) - Teacher's full name
+            - qualifications: string (optional) - Educational qualifications and certifications
+            - languages_taught: string (optional) - Languages that can be taught (comma-separated)
+            - specialization: string (optional) - Area of specialization/expertise
+            - resume_summary: string (optional) - Brief professional background summary
+            - introduction_video: string (optional) - YouTube/video URL for introduction
+            - hourly_rate: decimal (optional) - Suggested hourly teaching rate
+            - available_times: object (optional) - JSON object with available teaching times
+            - experience_years: integer (optional) - Years of teaching experience
+            - profile_photo_path: file (optional) - Teacher profile photo/picture
+        
+        Returns:
+            200 OK:
+                - success: boolean (true)
+                - message: string - "Teacher profile completed successfully"
+                - user: object - Updated teacher profile data
+                
+            400 Bad Request:
+                - Invalid data provided
+                - Invalid hourly rate (must be positive)
+                - Invalid experience years (cannot be negative)
+                - Invalid video URL
+                
+            401 Unauthorized - User not authenticated
+            403 Forbidden - User is not a teacher
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
+    
+    @extend_schema(
+        request=CompleteTeacherProfileSerializer,
+        responses={
+            200: OpenApiResponse(description="Teacher profile completed successfully"),
+            400: OpenApiResponse(description="Invalid data or validation error"),
+            401: OpenApiResponse(description="User not authenticated"),
+            403: OpenApiResponse(description="User is not a teacher"),
+        }
+    )
+    def post(self, request):
+        # Check if user is a teacher
+        if request.user.role != 'teacher':
+            return Response({
+                "success": False,
+                "message": _("Only teachers can use this endpoint")
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = CompleteTeacherProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "success": True,
+                "message": _("Teacher profile completed successfully"),
+                "user": UserProfileSerializer(request.user).data
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            "success": False,
+            "message": _("Invalid data provided"),
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
 # ========== Avatar Templates APIs ==========
 
 class AvatarTemplateListAPIView(generics.ListAPIView):
