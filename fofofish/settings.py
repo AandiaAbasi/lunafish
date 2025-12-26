@@ -34,6 +34,8 @@ CSRF_TRUSTED_ORIGINS = ["https://fofofish.app", "https://www.fofofish.app"]
 # Application definition
 
 INSTALLED_APPS = [
+    'admin_interface',
+    'colorfield',
     # Django default
     'django.contrib.admin',
     'django.contrib.auth',
@@ -52,8 +54,6 @@ INSTALLED_APPS = [
     'ckeditor',
     'ckeditor_uploader',
     'safedelete',
-    'admin_interface',
-    'colorfield',
 
     # Local apps
     'core',
