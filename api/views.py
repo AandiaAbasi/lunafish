@@ -24,7 +24,7 @@ import boto3
 import re
 from account.serializers import *
 from account.services import *
-from account.models import OTP, UserSettings, VerificationToken
+from account.models import OTP, VerificationToken
 
 # Import email function with fallback
 try:
