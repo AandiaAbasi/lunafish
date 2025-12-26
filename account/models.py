@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 import os
 import uuid
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator, RegexValidator
 from django.core.exceptions import ValidationError
 import hashlib
 import jdatetime
@@ -120,10 +120,19 @@ class User(AbstractUser, BaseModel):
         blank=True,
         verbose_name=_("Gender")
     )
-    birth_date = models.DateField(
+    birth_date = models.CharField(
+        max_length=10,
         null=True,
         blank=True,
-        verbose_name=_("Birth date")
+        verbose_name=_("Birth date"),
+        help_text=_("Birth date in Jalali calendar format (YYYY-MM-DD), e.g., 1403-05-24"),
+        validators=[
+            RegexValidator(
+                regex=r'^\d{4}-\d{2}-\d{2}$',
+                message=_("Birth date must be in YYYY-MM-DD format (Jalali calendar)"),
+                code='invalid_jalali_date'
+            )
+        ]
     )
     
     # Teacher-specific fields (only used when role='teacher')

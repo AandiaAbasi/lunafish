@@ -994,3 +994,111 @@ msgstr "Rooms added successfully"
 msgid "Rooms removed successfully"
 msgstr "Rooms removed successfully"
 
+#: account/models.py
+msgid "Birth date in Jalali calendar format (YYYY-MM-DD)"
+msgstr "Birth date in Jalali calendar format (YYYY-MM-DD)"
+
+msgid "Birth date must be in YYYY-MM-DD format (Jalali calendar)"
+msgstr "Birth date must be in YYYY-MM-DD format (Jalali calendar)"
+
+msgid "invalid_jalali_date"
+msgstr "Invalid Jalali date"
+
+#: account/models.py (Teacher Profile Fields)
+msgid "Educational qualifications"
+msgstr "Educational qualifications"
+
+msgid "Degrees, certifications, and professional qualifications"
+msgstr "Degrees, certifications, and professional qualifications"
+
+msgid "Languages taught"
+msgstr "Languages taught"
+
+msgid "Languages that can be taught (comma-separated or JSON)"
+msgstr "Languages that can be taught (comma-separated or JSON)"
+
+msgid "Specialization"
+msgstr "Specialization"
+
+msgid "Area of specialization or expertise"
+msgstr "Area of specialization or expertise"
+
+msgid "Resume summary"
+msgstr "Resume summary"
+
+msgid "Brief summary of professional experience and background"
+msgstr "Brief summary of professional experience and background"
+
+msgid "Introduction video URL"
+msgstr "Introduction video URL"
+
+msgid "YouTube or video URL for teacher introduction"
+msgstr "YouTube or video URL for teacher introduction"
+
+msgid "Hourly rate"
+msgstr "Hourly rate"
+
+msgid "Suggested hourly teaching rate in default currency"
+msgstr "Suggested hourly teaching rate in default currency"
+
+msgid "Available times"
+msgstr "Available times"
+
+msgid "JSON object with available teaching times"
+msgstr "JSON object with available teaching times"
+
+msgid "Years of experience"
+msgstr "Years of experience"
+
+msgid "Number of years of teaching experience"
+msgstr "Number of years of teaching experience"
+
+#: account/serializers.py
+msgid "Birth date in Jalali format (YYYY-MM-DD), e.g., 1403-05-24"
+msgstr "Birth date in Jalali format (YYYY-MM-DD), e.g., 1403-05-24"
+
+msgid "ID of the avatar template to select"
+msgstr "ID of the avatar template to select"
+
+msgid "Selected avatar does not exist"
+msgstr "Selected avatar does not exist"
+
+msgid "Profile completed successfully"
+msgstr "Profile completed successfully"
+
+msgid "Teacher profile completed successfully"
+msgstr "Teacher profile completed successfully"
+
+msgid "Only students can use this endpoint"
+msgstr "Only students can use this endpoint"
+
+msgid "Only teachers can use this endpoint"
+msgstr "Only teachers can use this endpoint"
+
+msgid "Invalid data or invalid avatar"
+msgstr "Invalid data or invalid avatar"
+
+msgid "Invalid data or validation error"
+msgstr "Invalid data or validation error"
+
+#: api/views.py
+msgid "Complete student profile information"
+msgstr "Complete student profile information"
+
+msgid "Complete teacher profile with professional information"
+msgstr "Complete teacher profile with professional information"
+
+msgid "Hourly rate must be greater than zero"
+msgstr "Hourly rate must be greater than zero"
+
+msgid "Experience years cannot be negative"
+msgstr "Experience years cannot be negative"
+
+msgid "Introduction video must be a valid URL"
+msgstr "Introduction video must be a valid URL"
+
+msgid "Introduction video URL is too long"
+msgstr "Introduction video URL is too long"
+
+msgid "User is not a teacher"
+msgstr "User is not a teacher"

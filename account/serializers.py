@@ -198,11 +198,27 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class EditUserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False, min_length=3, max_length=150)
+    birth_date = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=10,
+        help_text=_("Birth date in Jalali format (YYYY-MM-DD), e.g., 1403-05-24")
+    )
     
     class Meta:
         model = User
         fields = ['username','name','bio','gender','birth_date','profile_photo_path']
         extra_kwargs = {'profile_photo_path':{'required':False}}
+    
+    def validate_birth_date(self, value):
+        """Validate birth date format"""
+        if value:
+            import re
+            if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
+                raise serializers.ValidationError(
+                    _("Birth date must be in YYYY-MM-DD format (Jalali calendar), e.g., 1403-05-24")
+                )
+        return value
     
     def validate_username(self, value):
         """Validate username format and uniqueness"""
@@ -232,7 +248,14 @@ class CompleteStudentProfileSerializer(serializers.ModelSerializer):
     """
     Serializer for completing student profile with basic information.
     Students can set: name, age (birth_date), gender, and select an avatar.
+    Birth date should be in Jalali calendar format (YYYY-MM-DD).
     """
+    birth_date = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=10,
+        help_text=_("Birth date in Jalali format (YYYY-MM-DD), e.g., 1403-05-24")
+    )
     selected_avatar_id = serializers.IntegerField(
         required=False,
         write_only=True,
@@ -247,6 +270,16 @@ class CompleteStudentProfileSerializer(serializers.ModelSerializer):
             'birth_date': {'required': False},
             'gender': {'required': False},
         }
+    
+    def validate_birth_date(self, value):
+        """Validate birth date format"""
+        if value:
+            import re
+            if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
+                raise serializers.ValidationError(
+                    _("Birth date must be in YYYY-MM-DD format (Jalali calendar), e.g., 1403-05-24")
+                )
+        return value
     
     def validate_selected_avatar_id(self, value):
         """Validate that avatar exists"""

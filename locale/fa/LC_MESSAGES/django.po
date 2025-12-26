@@ -995,3 +995,113 @@ msgstr "اتاق‌ها با موفقیت افزوده شدند"
 msgid "Rooms removed successfully"
 msgstr "اتاق‌ها با موفقیت حذف شدند"
 
+#: account/models.py
+msgid "Birth date in Jalali calendar format (YYYY-MM-DD)"
+msgstr "تاریخ تولد در فرمت تقویم جلالی (YYYY-MM-DD)"
+
+msgid "Birth date must be in YYYY-MM-DD format (Jalali calendar)"
+msgstr "تاریخ تولد باید به فرمت YYYY-MM-DD (تقویم جلالی) باشد"
+
+msgid "invalid_jalali_date"
+msgstr "تاریخ جلالی نامعتبر"
+
+#: account/models.py (Teacher Profile Fields)
+msgid "Educational qualifications"
+msgstr "مدرک تحصیلی"
+
+msgid "Degrees, certifications, and professional qualifications"
+msgstr "درجات تحصیلی، گواهینامه‌ها و مدارک حرفه‌ای"
+
+msgid "Languages taught"
+msgstr "زبان‌های تدریس‌شده"
+
+msgid "Languages that can be taught (comma-separated or JSON)"
+msgstr "زبان‌هایی که می‌توان تدریس کرد (جدا شده با کاما یا JSON)"
+
+msgid "Specialization"
+msgstr "تخصص"
+
+msgid "Area of specialization or expertise"
+msgstr "زمینه تخصص یا تخصص"
+
+msgid "Resume summary"
+msgstr "خلاصه رزومه"
+
+msgid "Brief summary of professional experience and background"
+msgstr "خلاصه مختصر تجربیات حرفه‌ای و سابقه"
+
+msgid "Introduction video URL"
+msgstr "آدرس ویدئو معرفی"
+
+msgid "YouTube or video URL for teacher introduction"
+msgstr "آدرس یوتیوب یا ویدئو برای معرفی معلم"
+
+msgid "Hourly rate"
+msgstr "قیمت ساعتی"
+
+msgid "Suggested hourly teaching rate in default currency"
+msgstr "قیمت ساعتی پیشنهادی تدریس در ارز پیش فرض"
+
+msgid "Available times"
+msgstr "زمان‌های در دسترس"
+
+msgid "JSON object with available teaching times"
+msgstr "شی JSON با زمان‌های تدریس در دسترس"
+
+msgid "Years of experience"
+msgstr "سال‌های تجربه"
+
+msgid "Number of years of teaching experience"
+msgstr "تعداد سال‌های تجربه تدریس"
+
+#: account/serializers.py
+msgid "Birth date in Jalali format (YYYY-MM-DD), e.g., 1403-05-24"
+msgstr "تاریخ تولد به فرمت جلالی (YYYY-MM-DD)، مثلاً 1403-05-24"
+
+msgid "ID of the avatar template to select"
+msgstr "شناسه الگوی آواتار برای انتخاب"
+
+msgid "Selected avatar does not exist"
+msgstr "آواتار انتخاب‌شده موجود نیست"
+
+msgid "Profile completed successfully"
+msgstr "پروفایل با موفقیت تکمیل شد"
+
+msgid "Teacher profile completed successfully"
+msgstr "پروفایل معلم با موفقیت تکمیل شد"
+
+msgid "Only students can use this endpoint"
+msgstr "فقط دانش‌آموزان می‌توانند از این نقطه پایانی استفاده کنند"
+
+msgid "Only teachers can use this endpoint"
+msgstr "فقط معلمان می‌توانند از این نقطه پایانی استفاده کنند"
+
+msgid "Invalid data or invalid avatar"
+msgstr "داده نامعتبر یا آواتار نامعتبر"
+
+msgid "Invalid data or validation error"
+msgstr "داده نامعتبر یا خطای اعتبارسنجی"
+
+#: api/views.py
+msgid "Complete student profile information"
+msgstr "تکمیل اطلاعات پروفایل دانش‌آموز"
+
+msgid "Complete teacher profile with professional information"
+msgstr "تکمیل پروفایل معلم با اطلاعات حرفه‌ای"
+
+msgid "Hourly rate must be greater than zero"
+msgstr "قیمت ساعتی باید بیشتر از صفر باشد"
+
+msgid "Experience years cannot be negative"
+msgstr "سال‌های تجربه نمی‌تواند منفی باشد"
+
+msgid "Introduction video must be a valid URL"
+msgstr "ویدئو معرفی باید یک آدرس معتبر باشد"
+
+msgid "Introduction video URL is too long"
+msgstr "آدرس ویدئو معرفی خیلی طولانی است"
+
+msgid "User is not a teacher"
+msgstr "کاربر معلم نیست"
+
+
