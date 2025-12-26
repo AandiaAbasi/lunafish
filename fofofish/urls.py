@@ -21,4 +21,5 @@ from core.views import custom_set_language
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
+    path('api/', include('api.urls')),
 ]
