@@ -22,8 +22,16 @@ _original_translation = gettext_module.translation
 def translation_fallback(domain, localedir=None, languages=None, class_=None, fallback=True, codeset=None):
     """Custom translation function with better fallback handling"""
     try:
-        return _original_translation(domain, localedir, languages, class_, fallback, codeset)
-    except (FileNotFoundError, struct.error, EOFError):
+        # Call with keyword arguments to avoid signature issues
+        return _original_translation(
+            domain=domain,
+            localedir=localedir, 
+            languages=languages,
+            class_=class_,
+            fallback=fallback,
+            codeset=codeset
+        )
+    except (FileNotFoundError, struct.error, EOFError, TypeError):
         # If translation file is corrupted or missing, return null translations
         return NullTranslations()
 
