@@ -302,7 +302,7 @@ def validate_otp(phone_or_email: str, raw_code: str, purpose='login'):
 
 
 @transaction.atomic
-def complete_registration(verification_token: str, username: str, password: str, 
+def complete_registration(verification_token: str, username: str = None, password: str = None, 
                          name: str = None, expo_push_token: str = None):
     """Complete registration with username/password"""
     import phonenumbers
@@ -316,7 +316,16 @@ def complete_registration(verification_token: str, username: str, password: str,
         token.delete()
         return False, _("Token expired. Please register again.")
     
-    if User.objects.filter(username=username).exists():
+    # Auto-generate username if not provided
+    if not username:
+        # Generate from phone number
+        base_username = token.phone.replace('+', '').replace('-', '')[-10:] if token.phone else f"user{secrets.token_hex(4)}"
+        username = f"user_{base_username}"
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"user_{base_username}_{counter}"
+            counter += 1
+    elif User.objects.filter(username=username).exists():
         return False, _("Username already exists")
     
     try:
@@ -353,7 +362,7 @@ def complete_registration(verification_token: str, username: str, password: str,
         return False, f"Registration error: {str(e)}"
 
 
-def complete_teacher_registration(verification_token: str, username: str, password: str, 
+def complete_teacher_registration(verification_token: str, username: str = None, password: str = None, 
                                   name: str = None, bio: str = None, expo_push_token: str = None):
     """Complete teacher registration with username/password"""
     import phonenumbers
@@ -367,7 +376,16 @@ def complete_teacher_registration(verification_token: str, username: str, passwo
         token.delete()
         return False, _("Token expired. Please register again.")
     
-    if User.objects.filter(username=username).exists():
+    # Auto-generate username if not provided
+    if not username:
+        # Generate from phone number
+        base_username = token.phone.replace('+', '').replace('-', '')[-10:] if token.phone else f"teacher{secrets.token_hex(4)}"
+        username = f"teacher_{base_username}"
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"teacher_{base_username}_{counter}"
+            counter += 1
+    elif User.objects.filter(username=username).exists():
         return False, _("Username already exists")
     
     try:

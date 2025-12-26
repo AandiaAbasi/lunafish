@@ -101,7 +101,7 @@ class VerifyOTPSerializer(serializers.Serializer):
 
 class CompleteRegistrationSerializer(serializers.Serializer):
     verification_token = serializers.CharField()
-    username = serializers.CharField(min_length=3, max_length=150)
+    username = serializers.CharField(min_length=3, max_length=150, required=False, allow_blank=True)
     password = serializers.CharField(min_length=6, write_only=True)
     
     # Optional fields
@@ -111,7 +111,8 @@ class CompleteRegistrationSerializer(serializers.Serializer):
     expo_push_token = serializers.CharField(max_length=500, required=False, allow_blank=True)
     
     def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
+        # If username is not provided, it will be auto-generated from phone number
+        if value and User.objects.filter(username=value).exists():
             raise serializers.ValidationError(_("This username is already taken"))
         return value
     
@@ -126,7 +127,7 @@ class CompleteRegistrationSerializer(serializers.Serializer):
 class CompleteTeacherRegistrationSerializer(serializers.Serializer):
     """Serializer for completing teacher registration"""
     verification_token = serializers.CharField()
-    username = serializers.CharField(min_length=3, max_length=150)
+    username = serializers.CharField(min_length=3, max_length=150, required=False, allow_blank=True)
     password = serializers.CharField(min_length=6, write_only=True)
     
     # Optional fields
@@ -137,7 +138,8 @@ class CompleteTeacherRegistrationSerializer(serializers.Serializer):
     expo_push_token = serializers.CharField(max_length=500, required=False, allow_blank=True)
     
     def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
+        # If username is not provided, it will be auto-generated from phone number
+        if value and User.objects.filter(username=value).exists():
             raise serializers.ValidationError(_("This username is already taken"))
         return value
     
