@@ -264,7 +264,7 @@ except Exception:
 @admin.register(AvatarTemplate)
 class AvatarTemplateAdmin(admin.ModelAdmin):
     """Admin interface for avatar templates"""
-    list_display = ['id', 'display_image', 'created_at']
+    list_display = ['id', 'display_image', 'created_at', 'admin_actions']
     ordering = ['-created_at']
     readonly_fields = ['id', 'created_at', 'updated_at', 'display_image']
     
@@ -288,4 +288,14 @@ class AvatarTemplateAdmin(admin.ModelAdmin):
         return "-"
     display_image.short_description = _("Preview")
 
+    def admin_actions(self, obj):
+        edit_url = reverse('admin:account_avatartemplate_change', args=[obj.id])
+        delete_url = reverse('admin:account_avatartemplate_delete', args=[obj.id])
+        
+        return format_html(
+            '<a href="{}" class="button" style="margin-right:10px; padding:5px;">✏️ {}</a>'
+            '<a href="{}" class="button" style="margin-right: 5px; padding:5px; background-color: #ba2121;">🗑 {}</a>',
+            edit_url, _("Edit"), delete_url, _("Delete")
+        )
+    admin_actions.short_description = _("Actions")
 
