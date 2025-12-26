@@ -30,7 +30,7 @@ admin.site.index = custom_index
 
 @admin.register(About)
 class AboutAdmin(admin.ModelAdmin):
-    list_display = ("title", "image_tag", "created_at_display", "updated_at_display", "admin_actions")
+    list_display = ("title_fa", "image_tag", "created_at_display", "updated_at_display", "admin_actions")
     search_fields = ("title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
     
@@ -64,7 +64,7 @@ class AboutAdmin(admin.ModelAdmin):
 
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
-    list_display = ("title", "created_at_display", "updated_at_display", "admin_actions")
+    list_display = ("title_fa", "created_at_display", "updated_at_display", "admin_actions")
     search_fields = ("title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
     fieldsets = (
@@ -86,7 +86,7 @@ class TermAdmin(admin.ModelAdmin):
 
 @admin.register(Privacy)
 class PrivacyAdmin(admin.ModelAdmin):
-    list_display = ("title", "created_at_display", "updated_at_display", "admin_actions")
+    list_display = ("title_fa", "created_at_display", "updated_at_display", "admin_actions")
     search_fields = ("title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
     fieldsets = (
@@ -108,7 +108,7 @@ class PrivacyAdmin(admin.ModelAdmin):
 
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
-    list_display = ("title", "type", "value", "link", "created_at_display", "admin_actions")
+    list_display = ("title_fa", "type", "value", "link", "created_at_display", "admin_actions")
     list_filter = ["type"]
     search_fields = ("title_fa", "value_fa", "title_en", "value_en")
     ordering = ("-created_at",)
@@ -157,7 +157,7 @@ class ContactMessageAdmin(admin.ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ("title", "image_tag", "created_at_display", "updated_at_display", "admin_actions")
+    list_display = ("title_fa", "image_tag", "created_at_display", "updated_at_display", "admin_actions")
     search_fields = ("title_fa", "content_fa", "short_description_fa", "title_en", "content_en", "short_description_en")
     list_filter = ("created_at", "updated_at")
     ordering = ("-created_at",)
@@ -211,7 +211,7 @@ class FAQAdmin(admin.ModelAdmin):
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
     list_display = (
-        "title", 
+        "title_fa", 
         "placement_display", 
         "image_tag", 
         "is_active_display",
