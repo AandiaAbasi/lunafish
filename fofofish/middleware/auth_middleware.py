@@ -7,6 +7,7 @@ from django.urls import resolve, Resolver404
 from django.http import JsonResponse
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import AuthenticationFailed
 
 
 
@@ -48,39 +49,13 @@ class APIAuthenticationMiddleware:
     def __call__(self, request):
         # Only process API requests
         if request.path.startswith('/api/'):
-            self._process_api_auth(request)
+            # Check if endpoint is public - if not, let DRF handle authentication
+            if not self._is_public_endpoint(request.path):
+                # Protected endpoint - let DRF authentication classes handle it
+                pass
+            # Public endpoints don't need authentication
         
         return self.get_response(request)
-    
-    def _process_api_auth(self, request):
-        """
-        Process authentication for API requests
-        """
-        # Check if endpoint is public
-        if self._is_public_endpoint(request.path):
-            return
-        
-        # Get token from header
-        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-        
-        if not auth_header:
-            # No token provided for protected endpoint
-            request.user = AnonymousUser()
-            return
-        
-        try:
-            # Expected format: "Bearer <token>"
-            parts = auth_header.split()
-            if len(parts) == 2 and parts[0].lower() == 'bearer':
-                token_key = parts[1]
-                token = Token.objects.select_related('user').get(key=token_key)
-                request.user = token.user
-                return
-        except Token.DoesNotExist:
-            pass
-        
-        # Invalid token
-        request.user = AnonymousUser()
     
     def _is_public_endpoint(self, path):
         """
