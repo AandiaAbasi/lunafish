@@ -18,8 +18,6 @@ from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponseRedirect
 from django.contrib import messages
-from drf_spectacular.decorators import extend_schema
-from drf_spectacular.types import OpenApiTypes
 from django.db import models
 from django.http import StreamingHttpResponse, HttpResponse
 import boto3
@@ -60,50 +58,19 @@ class SendOTPAPIView(APIView):
     Send OTP (One-Time Password) API
     
     Send OTP to user's phone or email for authentication.
+    Supports both login and registration purposes.
+    
+    post:
+        Send OTP to specified phone number or email.
+        
+        Request parameters:
+        - identifier: Phone number or email address (required)
+        - purpose: 'login' or 'registration' (optional, default: 'login')
+        
+        Returns: Success message with OTP details
     """
     permission_classes = [AllowAny]
     
-    @extend_schema(
-        request={
-            'application/json': {
-                'type': 'object',
-                'required': ['identifier'],
-                'properties': {
-                    'identifier': {
-                        'type': 'string',
-                        'description': 'Phone number or email address for OTP'
-                    },
-                    'purpose': {
-                        'type': 'string',
-                        'enum': ['login', 'registration'],
-                        'default': 'login',
-                        'description': 'Purpose of OTP: login or registration'
-                    }
-                },
-                'example': {
-                    'identifier': '+989123456789',
-                    'purpose': 'login'
-                }
-            }
-        },
-        responses={
-            200: {
-                'description': 'OTP sent successfully',
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'success': True,
-                            'message': 'OTP sent to your phone number',
-                            'identifier': '+989123456789'
-                        }
-                    }
-                }
-            },
-            400: {'description': 'Invalid identifier or too many requests'},
-            429: {'description': 'Rate limit exceeded - please wait before requesting another OTP'}
-        },
-        tags=['authentication']
-    )
     def post(self, request):
         serializer = SendOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -216,64 +183,22 @@ class VerifyOTPAPIView(APIView):
     Verify OTP API
     
     Verify one-time password for login or registration.
+    Returns JWT tokens for login or verification token for registration.
+    
+    post:
+        Verify OTP code sent to phone/email.
+        
+        Request parameters:
+        - identifier: Phone number or email (required)
+        - code: OTP code received (required)
+        - purpose: 'login' or 'registration' (optional, default: 'login')
+        
+        Returns:
+            For login: user profile + JWT tokens
+            For registration: verification token
     """
     permission_classes = [AllowAny]
     
-    @extend_schema(
-        request={
-            'application/json': {
-                'type': 'object',
-                'required': ['identifier', 'code'],
-                'properties': {
-                    'identifier': {
-                        'type': 'string',
-                        'description': 'Phone number or email address that received the OTP'
-                    },
-                    'code': {
-                        'type': 'string',
-                        'description': '6-digit OTP code'
-                    },
-                    'purpose': {
-                        'type': 'string',
-                        'enum': ['login', 'registration'],
-                        'default': 'login',
-                        'description': 'Purpose of OTP verification'
-                    }
-                },
-                'example': {
-                    'identifier': '+989123456789',
-                    'code': '123456',
-                    'purpose': 'login'
-                }
-            }
-        },
-        responses={
-            200: {
-                'description': 'OTP verified successfully',
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'success': True,
-                            'message': 'Login successful',
-                            'user': {
-                                'id': 1,
-                                'username': 'user123',
-                                'email': 'user@example.com',
-                                'first_name': 'John',
-                                'last_name': 'Doe'
-                            },
-                            'tokens': {
-                                'access': 'eyJ0eXAiOiJKV1QiLCJhbGc...',
-                                'refresh': 'eyJ0eXAiOiJKV1QiLCJhbGc...'
-                            }
-                        }
-                    }
-                }
-            },
-            400: {'description': 'Invalid OTP code or identifier'}
-        },
-        tags=['authentication']
-    )
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -334,51 +259,21 @@ class CompleteRegistrationAPIView(APIView):
     Complete User Registration API
     
     Finalize user registration by setting username and password.
+    Must be called after OTP verification.
+    
+    post:
+        Complete user registration process.
+        
+        Request parameters:
+        - verification_token: Token from OTP verification (required)
+        - username: Desired username (required, unique)
+        - password: Account password (required)
+        - name: User's full name (required)
+        
+        Returns: Newly created user profile + JWT tokens
     """
     permission_classes = [AllowAny]
     
-    @extend_schema(
-        request={
-            'application/json': {
-                'type': 'object',
-                'required': ['verification_token', 'username', 'password', 'name'],
-                'properties': {
-                    'verification_token': {
-                        'type': 'string',
-                        'description': 'Token received from OTP verification'
-                    },
-                    'username': {
-                        'type': 'string',
-                        'description': 'Desired username (must be unique)'
-                    },
-                    'password': {
-                        'type': 'string',
-                        'format': 'password',
-                        'description': 'Account password'
-                    },
-                    'name': {
-                        'type': 'string',
-                        'description': "User's full name"
-                    },
-                    'expo_push_token': {
-                        'type': 'string',
-                        'description': 'Expo push notification token (optional)'
-                    }
-                },
-                'example': {
-                    'verification_token': 'abc123def456...',
-                    'username': 'john_doe',
-                    'password': 'SecurePass123!',
-                    'name': 'John Doe'
-                }
-            }
-        },
-        responses={
-            201: {'description': 'User registered successfully with JWT tokens'},
-            400: {'description': 'Invalid verification token or registration failed'}
-        },
-        tags=['authentication']
-    )
     def post(self, request):
         serializer = CompleteRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -1108,89 +1003,37 @@ class UserProfileAPIView(APIView):
     
     Manage user and teacher profile information including personal details,
     avatar, and role-specific settings.
+    
+    post:
+        Update the current user's profile information.
+        Supports both regular users and teachers with role-specific fields.
+        
+        Request body parameters for regular users:
+            - first_name: string (optional) - User's first name
+            - last_name: string (optional) - User's last name  
+            - email: string (optional) - Email address
+            - phone: string (optional) - Phone number
+            - bio: string (optional) - User biography
+            - avatar_url: string (optional) - Avatar URL
+            
+        Request body parameters for teachers:
+            - first_name: string (optional) - Teacher's first name
+            - last_name: string (optional) - Teacher's last name
+            - email: string (optional) - Email address
+            - phone: string (optional) - Phone number
+            - bio: string (optional) - Biography
+            - specialization: string (optional) - Area of specialization
+            - experience_years: integer (optional) - Years of teaching experience
+            - qualifications: string (optional) - Professional qualifications
+        
+        Returns:
+            200 OK - Updated user/teacher profile data with all profile fields
+            400 Bad Request - Invalid data provided
+            401 Unauthorized - User not authenticated
     """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     
-    @extend_schema(
-        request={
-            'application/json': {
-                'type': 'object',
-                'properties': {
-                    'first_name': {
-                        'type': 'string',
-                        'description': "User's or Teacher's first name"
-                    },
-                    'last_name': {
-                        'type': 'string',
-                        'description': "User's or Teacher's last name"
-                    },
-                    'email': {
-                        'type': 'string',
-                        'format': 'email',
-                        'description': 'Email address'
-                    },
-                    'phone': {
-                        'type': 'string',
-                        'description': 'Phone number'
-                    },
-                    'bio': {
-                        'type': 'string',
-                        'description': 'User biography or description'
-                    },
-                    'avatar_url': {
-                        'type': 'string',
-                        'description': 'Avatar URL (for regular users)'
-                    },
-                    'specialization': {
-                        'type': 'string',
-                        'description': 'Area of specialization (for teachers)'
-                    },
-                    'experience_years': {
-                        'type': 'integer',
-                        'description': 'Years of teaching experience (for teachers)'
-                    },
-                    'qualifications': {
-                        'type': 'string',
-                        'description': 'Professional qualifications (for teachers)'
-                    }
-                },
-                'example': {
-                    'first_name': 'John',
-                    'last_name': 'Doe',
-                    'email': 'john@example.com',
-                    'phone': '+989123456789',
-                    'bio': 'Software developer'
-                }
-            }
-        },
-        responses={
-            200: {
-                'description': 'Profile updated successfully',
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'success': True,
-                            'message': 'Profile updated successfully',
-                            'user': {
-                                'id': 1,
-                                'username': 'john_doe',
-                                'email': 'john@example.com',
-                                'phone': '+989123456789',
-                                'first_name': 'John',
-                                'last_name': 'Doe',
-                                'bio': 'Software developer',
-                                'role': 'user'
-                            }
-                        }
-                    }
-                }
-            },
-            400: {'description': 'Invalid data provided'},
-            401: {'description': 'User not authenticated'}
-        },
-        tags=['profile']
-    )
     def post(self, request):
         """Update user profile via POST"""
         # Use appropriate serializer based on role
