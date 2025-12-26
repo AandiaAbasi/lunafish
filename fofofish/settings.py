@@ -37,8 +37,8 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-s%3ursx!kyqj!t_q6a+=g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app', 'localhost', '127.0.0.1', '*']
-CSRF_TRUSTED_ORIGINS = ["https://fofofish.app", "https://www.fofofish.app"]
+ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app', 'lunafish.app', 'www.lunafish.app', 'localhost', '127.0.0.1', '*']
+CSRF_TRUSTED_ORIGINS = ["https://fofofish.app", "https://www.fofofish.app", "https://lunafish.app", "https://www.lunafish.app"]
 
 # Application definition
 
