@@ -63,11 +63,22 @@ class SendOTPAPIView(APIView):
     post:
         Send OTP to specified phone number or email.
         
-        Request parameters:
-        - identifier: Phone number or email address (required)
-        - purpose: 'login' or 'registration' (optional, default: 'login')
+        Request body parameters:
+        - identifier: string (required) - Phone number (09xx format) or email address
+        - purpose: string (optional) - Purpose of OTP: 'login' or 'registration'. Default: 'login'
         
-        Returns: Success message with OTP details
+        Returns:
+            200 OK:
+                - success: boolean (true)
+                - message: string - "Verification code sent."
+                
+            400 Bad Request:
+                - Phone number already registered (for registration)
+                - OTP cooldown (must wait 2 minutes between requests)
+                - Invalid identifier format
+                
+            429 Too Many Requests - Rate limit exceeded, try again later
+            503 Service Unavailable - Email service not configured
     """
     permission_classes = [AllowAny]
     
@@ -259,18 +270,32 @@ class CompleteRegistrationAPIView(APIView):
     Complete User Registration API
     
     Finalize user registration by setting username and password.
-    Must be called after OTP verification.
+    Must be called after OTP verification (verify-otp endpoint).
     
     post:
         Complete user registration process.
         
-        Request parameters:
-        - verification_token: Token from OTP verification (required)
-        - username: Desired username (required, unique)
-        - password: Account password (required)
-        - name: User's full name (required)
+        Request body parameters:
+        - verification_token: string (required) - Token returned from verify-otp endpoint
+        - username: string (required, 3-150 chars) - Unique username for login
+        - password: string (required, min 8 chars) - Account password
+        - name: string (required) - User's full name
+        - expo_push_token: string (optional) - Push notification token for mobile app
         
-        Returns: Newly created user profile + JWT tokens
+        Returns:
+            201 Created:
+                - success: boolean (true)
+                - message: string - "Registration completed successfully"
+                - user: object - User profile with id, username, name, phone, email, role
+                - tokens: object - JWT tokens {access, refresh}
+                
+            400 Bad Request:
+                - Invalid or expired verification token
+                - Username already exists
+                - Password too weak
+                - Missing required fields
+                
+            401 Unauthorized - Invalid token
     """
     permission_classes = [AllowAny]
     
@@ -329,11 +354,23 @@ class UserLoginPasswordAPIView(APIView):
     post:
         Login a user with username and password.
         
-        Request parameters:
-        - username: User's username (required)
-        - password: User's password (required)
+        Request body parameters:
+        - username: string (required) - User's registered username
+        - password: string (required) - User's account password
         
-        Returns: JWT tokens + user profile data
+        Returns:
+            200 OK:
+                - success: boolean (true)
+                - message: string - "Login successful"
+                - user: object - User profile data
+                - tokens: object - JWT tokens {access: string, refresh: string}
+                
+            400 Bad Request:
+                - Invalid credentials
+                - User account not found
+                - Missing username or password
+                
+            401 Unauthorized - Invalid username/password combination
     """
     permission_classes = [AllowAny]
     
@@ -856,7 +893,7 @@ class TeacherVerifyEmailOTPAPIView(APIView):
 
 class CheckUsernameAPIView(APIView):
     """
-    Check Username Availability API (Duplicate)
+    Check Username Availability API
     
     Verify if a username is available for registration.
     Accepts both GET and POST requests.
@@ -865,23 +902,33 @@ class CheckUsernameAPIView(APIView):
         Check if username is available (query parameter).
         
         Query parameters:
-        - username: Username to check (required, minimum 3 characters)
+        - username: string (required, min 3 characters) - Username to check
         
         Returns:
-            - success: Boolean
-            - available: Boolean (true if available)
-            - message: Status message
+            200 OK:
+                - success: boolean
+                - available: boolean (true if available)
+                - message: string - "This username is available." or "This username has already been taken."
+                
+            400 Bad Request:
+                - Username is empty
+                - Username less than 3 characters
     
     post:
         Check if username is available (body parameter).
         
-        Request body:
-        - username: Username to check (required, minimum 3 characters)
+        Request body parameters:
+        - username: string (required, min 3 characters) - Username to check
         
         Returns:
-            - success: Boolean
-            - available: Boolean (true if available)
-            - message: Status message
+            200 OK:
+                - success: boolean
+                - available: boolean (true if available)
+                - message: string - "This username is available." or "This username has already been taken."
+                
+            400 Bad Request:
+                - Username is empty
+                - Username less than 3 characters
     """
     permission_classes = [AllowAny]
     
@@ -1002,7 +1049,7 @@ class UserProfileAPIView(APIView):
     User Profile Management API
     
     Manage user and teacher profile information including personal details,
-    avatar, and role-specific settings.
+    avatar, and role-specific settings. Requires authentication.
     
     post:
         Update the current user's profile information.
@@ -1011,24 +1058,32 @@ class UserProfileAPIView(APIView):
         Request body parameters for regular users:
             - first_name: string (optional) - User's first name
             - last_name: string (optional) - User's last name  
-            - email: string (optional) - Email address
-            - phone: string (optional) - Phone number
+            - email: string (optional, unique) - Email address
+            - phone: string (optional, unique) - Phone number
             - bio: string (optional) - User biography
             - avatar_url: string (optional) - Avatar URL
             
         Request body parameters for teachers:
             - first_name: string (optional) - Teacher's first name
             - last_name: string (optional) - Teacher's last name
-            - email: string (optional) - Email address
-            - phone: string (optional) - Phone number
+            - email: string (optional, unique) - Email address
+            - phone: string (optional, unique) - Phone number
             - bio: string (optional) - Biography
-            - specialization: string (optional) - Area of specialization
+            - specialization: string (optional) - Area of specialization (e.g., "Mathematics", "English")
             - experience_years: integer (optional) - Years of teaching experience
-            - qualifications: string (optional) - Professional qualifications
+            - qualifications: string (optional) - Professional qualifications and certifications
         
         Returns:
-            200 OK - Updated user/teacher profile data with all profile fields
-            400 Bad Request - Invalid data provided
+            200 OK:
+                - success: boolean (true)
+                - message: string - "Profile updated successfully" or "Teacher profile updated successfully"
+                - user or teacher: object - Updated profile data
+                
+            400 Bad Request:
+                - Invalid data provided
+                - Email already in use
+                - Phone already in use
+                
             401 Unauthorized - User not authenticated
     """
     permission_classes = [IsAuthenticated]
@@ -1082,21 +1137,27 @@ class SelectAvatarAPIView(APIView):
     Select Avatar Template API
     
     Select and set an avatar template as the user's profile photo.
+    Requires authentication.
     
     post:
         Set an avatar as the user's profile picture.
         
         Request body parameters:
-            - avatar_template_id: integer (required) - ID of avatar template to select
+            - avatar_template_id: integer (required) - ID of avatar template to select (from /api/avatars/)
         
         Returns:
             200 OK:
                 - success: boolean (true)
-                - message: string - Success message
-                - user: object - Updated user profile with selected avatar
+                - message: string - "Avatar selected successfully"
+                - user: object - Updated user profile with selected_avatar field
                 
-            404 Not Found - Avatar template does not exist
-            400 Bad Request - Invalid data provided
+            400 Bad Request:
+                - Invalid data provided
+                - avatar_template_id is not an integer
+                - Missing avatar_template_id
+                
+            401 Unauthorized - User not authenticated
+            404 Not Found - Avatar template with given ID does not exist
     """
     permission_classes = [IsAuthenticated]
     
@@ -1144,25 +1205,29 @@ class PromoteToTeacherAPIView(APIView):
     
     Upgrade a regular user account to teacher role.
     User must provide professional qualifications and experience details.
+    Requires authentication.
     
     post:
         Promote authenticated user to teacher role.
         
         Request body parameters:
-            - specialization: string (required) - Area of expertise (e.g., "Mathematics", "English")
-            - experience_years: integer (required) - Years of teaching experience
-            - qualifications: string (required) - Professional qualifications and certifications
+            - specialization: string (required) - Area of expertise (e.g., "Mathematics", "English", "Computer Science")
+            - experience_years: integer (required) - Years of teaching experience (minimum 0)
+            - qualifications: string (required) - Professional qualifications and certifications (min 10 characters)
         
         Returns:
             200 OK:
                 - success: boolean (true)
-                - message: string - Promotion confirmation
-                - user: object - Updated user profile with teacher role
+                - message: string - "Promoted to teacher successfully"
+                - user: object - Updated user profile with role="teacher"
                 
             400 Bad Request:
                 - User is already a teacher
                 - Invalid or missing required fields
+                - Insufficient qualifications length
+                
             401 Unauthorized - User not authenticated
+            403 Forbidden - User already has teacher role
     """
     permission_classes = [IsAuthenticated]
     
@@ -1205,22 +1270,32 @@ class PromoteToTeacherAPIView(APIView):
 
 class ChangePasswordAPIView(APIView):
     """
-    Change User Password API (Duplicate)
+    Change User Password API
     
     Allow authenticated users to change their account password.
-    Requires old password verification.
+    Requires old password verification for security.
+    Requires authentication.
     
     post:
         Change the authenticated user's password.
         
-        Request body:
-        - old_password: Current password (required)
-        - new_password: New password (required)
-        - confirm_password: Confirm new password (required)
+        Request body parameters:
+        - old_password: string (required) - Current password for verification
+        - new_password: string (required, min 8 chars) - New password
+        - confirm_password: string (required) - Confirmation of new password (must match new_password)
         
         Returns:
-            - success: Boolean
-            - message: Success or error message
+            200 OK:
+                - success: boolean (true)
+                - message: string - "Password changed successfully"
+                
+            400 Bad Request:
+                - Old password is incorrect
+                - New password and confirm password do not match
+                - Password too weak (less than 8 characters)
+                - Missing required fields
+                
+            401 Unauthorized - User not authenticated
     """
     permission_classes = [IsAuthenticated]
     
@@ -1255,24 +1330,27 @@ class LogoutAPIView(APIView):
     
     Logout authenticated user by blacklisting their refresh token.
     Prevents token reuse for enhanced security.
+    Requires authentication.
     
     post:
         Logout the authenticated user and invalidate their refresh token.
         
         Request body parameters:
-            - refresh_token: string (required) - Refresh token to blacklist
+            - refresh_token: string (required) - Refresh token received at login (from tokens.refresh)
             OR
             - refresh: string (required) - Alternative parameter name for refresh token
         
         Returns:
             200 OK:
                 - success: boolean (true)
-                - message: string - "Logout successful"
+                - message: string - "Logout successful" or "Logout successful (token not expired)"
                 
             400 Bad Request:
                 - Refresh token not provided
                 - Invalid token format
+                
             401 Unauthorized - User not authenticated
+            500 Internal Server Error - Invalid refresh token
     """
     permission_classes = [IsAuthenticated]
     
