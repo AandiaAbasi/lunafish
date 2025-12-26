@@ -169,7 +169,7 @@ class ArticleAdmin(admin.ModelAdmin):
 
     def image_tag(self, obj):
         if obj.image:
-            return format_html('<img src="{}" width="100" style="border-radius: 10px;"/>'.format(obj.image.url))
+            return format_html('<img src="{}" width="100" style="border-radius: 10px;"/>', obj.image.url)
         return _("No image")
     image_tag.short_description = _("Image preview")
         
