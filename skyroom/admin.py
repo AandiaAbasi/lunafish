@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 from .models import Service, Room, SkyroomUser, RoomUserAccess, LoginUrl
 
 
@@ -10,16 +11,16 @@ class ServiceAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
-        ('Basic Information', {
+        (_('Basic Information'), {
             'fields': ('skyroom_id', 'title', 'status')
         }),
-        ('Limits', {
+        (_('Limits'), {
             'fields': ('user_limit', 'video_limit', 'time_limit')
         }),
-        ('Usage', {
+        (_('Usage'), {
             'fields': ('time_usage',)
         }),
-        ('Timestamps', {
+        (_('Timestamps'), {
             'fields': ('start_time', 'stop_time', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
@@ -34,19 +35,19 @@ class RoomAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
-        ('Basic Information', {
+        (_('Basic Information'), {
             'fields': ('skyroom_id', 'service', 'name', 'title', 'description', 'status')
         }),
-        ('Access Control', {
+        (_('Access Control'), {
             'fields': ('guest_login', 'guest_limit', 'op_login_first')
         }),
-        ('Limits', {
+        (_('Limits'), {
             'fields': ('max_users', 'session_duration', 'time_limit')
         }),
-        ('Usage', {
+        (_('Usage'), {
             'fields': ('time_usage', 'time_total')
         }),
-        ('Timestamps', {
+        (_('Timestamps'), {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
@@ -61,19 +62,19 @@ class SkyroomUserAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
-        ('Credentials', {
+        (_('Credentials'), {
             'fields': ('skyroom_id', 'username', 'password')
         }),
-        ('Personal Information', {
+        (_('Personal Information'), {
             'fields': ('nickname', 'fname', 'lname', 'gender', 'email')
         }),
-        ('Status & Access', {
+        (_('Status & Access'), {
             'fields': ('status', 'is_public', 'concurrent')
         }),
-        ('Time Management', {
+        (_('Time Management'), {
             'fields': ('time_limit', 'time_usage', 'time_total', 'expiry_date')
         }),
-        ('Timestamps', {
+        (_('Timestamps'), {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
@@ -88,10 +89,10 @@ class RoomUserAccessAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
-        ('Access Information', {
+        (_('Access Information'), {
             'fields': ('room', 'user', 'access')
         }),
-        ('Timestamps', {
+        (_('Timestamps'), {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
@@ -106,20 +107,20 @@ class LoginUrlAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at', 'url']
     
     fieldsets = (
-        ('Room & User', {
+        (_('Room & User'), {
             'fields': ('room', 'user_id', 'nickname')
         }),
-        ('Access Settings', {
+        (_('Access Settings'), {
             'fields': ('access', 'concurrent', 'ttl', 'is_active')
         }),
-        ('URL', {
+        (_('URL'), {
             'fields': ('url',),
             'classes': ('collapse',)
         }),
-        ('Expiry', {
+        (_('Expiry'), {
             'fields': ('expires_at',)
         }),
-        ('Timestamps', {
+        (_('Timestamps'), {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),

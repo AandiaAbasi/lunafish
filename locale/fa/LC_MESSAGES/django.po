@@ -935,3 +935,63 @@ msgstr "زمان انقضاء این URL ورود"
 msgid "Login URLs"
 msgstr "URLهای ورود"
 
+#: skyroom/admin.py
+msgid "Basic Information"
+msgstr "اطلاعات اساسی"
+
+msgid "Limits"
+msgstr "محدودیت‌ها"
+
+msgid "Usage"
+msgstr "مصرف"
+
+msgid "Timestamps"
+msgstr "مهرزمان‌ها"
+
+msgid "Access Control"
+msgstr "کنترل دسترسی"
+
+msgid "Credentials"
+msgstr "اعتبارات"
+
+msgid "Personal Information"
+msgstr "اطلاعات شخصی"
+
+msgid "Status & Access"
+msgstr "وضعیت و دسترسی"
+
+msgid "Time Management"
+msgstr "مدیریت زمان"
+
+msgid "Access Information"
+msgstr "اطلاعات دسترسی"
+
+msgid "Room & User"
+msgstr "اتاق و کاربر"
+
+msgid "Access Settings"
+msgstr "تنظیمات دسترسی"
+
+msgid "URL"
+msgstr "URL"
+
+msgid "Expiry"
+msgstr "انقضاء"
+
+#: skyroom/apps.py
+msgid "Skyroom Integration"
+msgstr "انتگراسیون اسکایروم"
+
+#: skyroom/views.py
+msgid "Users added successfully"
+msgstr "کاربران با موفقیت افزوده شدند"
+
+msgid "Users removed successfully"
+msgstr "کاربران با موفقیت حذف شدند"
+
+msgid "Rooms added successfully"
+msgstr "اتاق‌ها با موفقیت افزوده شدند"
+
+msgid "Rooms removed successfully"
+msgstr "اتاق‌ها با موفقیت حذف شدند"
+

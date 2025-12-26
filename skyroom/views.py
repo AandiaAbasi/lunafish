@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from datetime import timedelta
 
 from .models import Service, Room, SkyroomUser, RoomUserAccess, LoginUrl
@@ -84,7 +85,7 @@ class RoomViewSet(viewsets.ModelViewSet):
         
         return Response({
             'success': True,
-            'message': f'{created_count} users added',
+            'message': _('Users added successfully'),
             'count': created_count
         }, status=status.HTTP_201_CREATED)
     
@@ -101,7 +102,7 @@ class RoomViewSet(viewsets.ModelViewSet):
         
         return Response({
             'success': True,
-            'message': f'{deleted_count} users removed',
+            'message': _('Users removed successfully'),
             'count': deleted_count
         })
 
@@ -155,7 +156,7 @@ class SkyroomUserViewSet(viewsets.ModelViewSet):
         
         return Response({
             'success': True,
-            'message': f'{created_count} rooms added',
+            'message': _('Rooms added successfully'),
             'count': created_count
         }, status=status.HTTP_201_CREATED)
     
@@ -172,7 +173,7 @@ class SkyroomUserViewSet(viewsets.ModelViewSet):
         
         return Response({
             'success': True,
-            'message': f'{deleted_count} rooms removed',
+            'message': _('Rooms removed successfully'),
             'count': deleted_count
         })
 

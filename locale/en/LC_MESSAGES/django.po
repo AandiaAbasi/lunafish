@@ -934,3 +934,63 @@ msgstr "When this login URL expires"
 msgid "Login URLs"
 msgstr "Login URLs"
 
+#: skyroom/admin.py
+msgid "Basic Information"
+msgstr "Basic Information"
+
+msgid "Limits"
+msgstr "Limits"
+
+msgid "Usage"
+msgstr "Usage"
+
+msgid "Timestamps"
+msgstr "Timestamps"
+
+msgid "Access Control"
+msgstr "Access Control"
+
+msgid "Credentials"
+msgstr "Credentials"
+
+msgid "Personal Information"
+msgstr "Personal Information"
+
+msgid "Status & Access"
+msgstr "Status & Access"
+
+msgid "Time Management"
+msgstr "Time Management"
+
+msgid "Access Information"
+msgstr "Access Information"
+
+msgid "Room & User"
+msgstr "Room & User"
+
+msgid "Access Settings"
+msgstr "Access Settings"
+
+msgid "URL"
+msgstr "URL"
+
+msgid "Expiry"
+msgstr "Expiry"
+
+#: skyroom/apps.py
+msgid "Skyroom Integration"
+msgstr "Skyroom Integration"
+
+#: skyroom/views.py
+msgid "Users added successfully"
+msgstr "Users added successfully"
+
+msgid "Users removed successfully"
+msgstr "Users removed successfully"
+
+msgid "Rooms added successfully"
+msgstr "Rooms added successfully"
+
+msgid "Rooms removed successfully"
+msgstr "Rooms removed successfully"
+

@@ -1,7 +1,8 @@
 from django.apps import AppConfig
+from django.utils.translation import gettext_lazy as _
 
 
 class SkyroomConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'skyroom'
-    verbose_name = 'Skyroom Integration'
+    verbose_name = _('Skyroom Integration')
