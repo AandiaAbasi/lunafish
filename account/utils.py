@@ -140,13 +140,13 @@ def send_email_otp(email, otp_code, user_type='user'):
         bool: True if email sent successfully, False otherwise
     """
     try:
-        subject = 'Your Fofofish Verification Code'
+        subject = 'Your Lunafish Verification Code'
         
         # Prepare email context
         context = {
             'otp_code': otp_code,
             'user_type': user_type,
-            'app_name': 'Fofofish'
+            'app_name': 'Lunafish'
         }
         
         # Render HTML email

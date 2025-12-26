@@ -1,19 +1,19 @@
-fofofish - Email Verification Code
+Lunafish - Email Verification Code
 ==================================
 
 Hello,
 
-Your fofofish verification code is: {{ otp_code }}
+Your Lunafish verification code is: {{ otp_code }}
 
 This code expires in 15 minutes. Use it to complete your {{ user_type }} login.
 
 SECURITY NOTICE:
-Never share this code with anyone, not even fofofish support staff. 
+Never share this code with anyone, not even Lunafish support staff. 
 We will never ask for this code.
 
 If you didn't request this code, please ignore this email.
 
 ---
-© 2025 fofofish. All rights reserved.
+© 2025 Lunafish. All rights reserved.
 Visit: https://fofofish.app
 Help: https://fofofish.app/help

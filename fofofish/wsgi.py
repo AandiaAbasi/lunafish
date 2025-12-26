@@ -1,5 +1,5 @@
 """
-WSGI config for fofofish project.
+WSGI config for Lunafish project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

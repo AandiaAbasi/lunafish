@@ -1,5 +1,5 @@
 """
-ASGI config for fofofish project.
+ASGI config for Lunafish project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
