@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
+from decouple import config
 
 SHOP_NAME = _("Nozima")
 
@@ -19,14 +20,19 @@ SHOP_NAME = _("Nozima")
 BASE_DIR = Path(__file__).resolve().parent.parent
 BASE_URL = 'https://fofofish.app/'
 
+# Load environment variables from .env file
+if os.path.isfile(os.path.join(BASE_DIR, '.env')):
+    from decouple import load_dotenv
+    load_dotenv(os.path.join(BASE_DIR, '.env'))
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-s%3ursx!kyqj!t_q6a+=g8p(%rz5(+z^)477=1hg$79(oh-+v+'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-s%3ursx!kyqj!t_q6a+=g8p(%rz5(+z^)477=1hg$79(oh-+v+')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app', 'localhost', '127.0.0.1', '*']
 CSRF_TRUSTED_ORIGINS = ["https://fofofish.app", "https://www.fofofish.app"]
@@ -136,11 +142,11 @@ WSGI_APPLICATION = 'fofofish.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', 
-        'NAME': 'fofofish_fofofish', 
-        'USER': 'fofofish_fofofish', 
-        'PASSWORD': 'UZlbqUwJi)O5#0e#', 
-        'HOST': '127.0.0.1', 
-        'PORT': '3306', 
+        'NAME': config('DB_NAME', default='fofofish_fofofish'), 
+        'USER': config('DB_USER', default='fofofish_fofofish'), 
+        'PASSWORD': config('DB_PASSWORD', default='UZlbqUwJi)O5#0e#'), 
+        'HOST': config('DB_HOST', default='127.0.0.1'), 
+        'PORT': config('DB_PORT', default='3306'), 
         'OPTIONS': {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -225,8 +231,8 @@ REST_FRAMEWORK = {
 
 # ============ SMS Configuration ============
 # SMS.ir API
-SMSIR_API_KEY = os.getenv('SMSIR_API_KEY', 'your-api-key-here')
-SMSIR_SENDER_LINE = os.getenv('SMSIR_SENDER_LINE', 'fofofish')
+SMSIR_API_KEY = config('SMSIR_API_KEY', default='your-api-key-here')
+SMSIR_SENDER_LINE = config('SMSIR_SENDER_LINE', default='fofofish')
 
 # OTP Settings
 OTP_EXPIRY_TIME = 5 * 60  # 5 minutes in seconds
@@ -235,12 +241,12 @@ OTP_LENGTH = 6
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'info@fofofish.app')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'your-password')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'info@fofofish.app')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='info@fofofish.app')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your-password')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='info@fofofish.app')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
