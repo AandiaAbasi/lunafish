@@ -21,7 +21,7 @@ def send_sms(phone_number, code):
     }
     data = {
         "mobile": phone_number,
-        "templateId": "477475",  # Your SMS.ir template ID
+        "templateId": "134611",  # Your SMS.ir template ID
         "parameters": [{"name": "CODE", "value": code}]
     }
     
@@ -42,7 +42,7 @@ def send_teacher_sms(phone_number, code):
     }
     data = {
         "mobile": phone_number,
-        "templateId": "477475",  # Your SMS.ir template ID for teachers
+        "templateId": "134611",  # Your SMS.ir template ID for teachers
         "parameters": [{"name": "CODE", "value": code}]
     }
     
