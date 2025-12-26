@@ -101,8 +101,6 @@ MIDDLEWARE = [
     'fofofish.middleware.auth_middleware.APIAuthenticationMiddleware',
     'fofofish.middleware.auth_middleware.APIErrorHandlingMiddleware',
     'fofofish.middleware.auth_middleware.APICORSMiddleware',
-    # Web Middleware
-    'fofofish.middleware.auth_middleware.LoginRequiredMiddleware',
 ]
 
 ROOT_URLCONF = 'fofofish.urls'
