@@ -961,7 +961,31 @@ class CheckUsernameAPIView(APIView):
 # ========== Profile Management APIs ==========
 
 class FetchUserAPIView(APIView):
-    """API: Fetch current user data with token (GET only)"""
+    """
+    Fetch Current User Data API
+    
+    Retrieve current authenticated user's complete profile information.
+    Requires valid JWT authentication token.
+    
+    get:
+        Get current user information based on authentication token.
+        
+        Returns:
+            200 OK:
+                - success: boolean (true)
+                - user: object containing:
+                    - id: integer
+                    - username: string
+                    - email: string
+                    - phone: string
+                    - first_name: string
+                    - last_name: string
+                    - bio: string
+                    - role: string (user or teacher)
+                    - avatar: string (URL)
+                    
+            401 Unauthorized - Invalid or missing authentication token
+    """
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
@@ -984,27 +1008,31 @@ class UserProfileAPIView(APIView):
         Update the current user's profile information.
         Supports both regular users and teachers with role-specific fields.
         
-        Request body (User):
-        - first_name: User's first name
-        - last_name: User's last name
-        - email: Email address
-        - phone: Phone number
-        - bio: User biography
-        - avatar_url: Avatar URL
+        Request body parameters for regular users:
+            - first_name: string (optional) - User's first name
+            - last_name: string (optional) - User's last name  
+            - email: string (optional) - Email address
+            - phone: string (optional) - Phone number
+            - bio: string (optional) - User biography
+            - avatar_url: string (optional) - Avatar URL
+            
+        Request body parameters for teachers:
+            - first_name: string (optional) - Teacher's first name
+            - last_name: string (optional) - Teacher's last name
+            - email: string (optional) - Email address
+            - phone: string (optional) - Phone number
+            - bio: string (optional) - Biography
+            - specialization: string (optional) - Area of specialization
+            - experience_years: integer (optional) - Years of teaching experience
+            - qualifications: string (optional) - Professional qualifications
         
-        Request body (Teacher):
-        - first_name: Teacher's first name
-        - last_name: Teacher's last name
-        - email: Email address
-        - phone: Phone number
-        - bio: Biography
-        - specialization: Area of specialization
-        - experience_years: Years of teaching experience
-        - qualifications: Professional qualifications
-        
-        Returns: Updated user/teacher profile data
+        Returns:
+            200 OK - Updated user/teacher profile data with all profile fields
+            400 Bad Request - Invalid data provided
+            401 Unauthorized - User not authenticated
     """
     permission_classes = [IsAuthenticated]
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
     
     def post(self, request):
         """Update user profile via POST"""
@@ -1050,7 +1078,26 @@ class AvatarTemplateListAPIView(generics.ListAPIView):
 
 
 class SelectAvatarAPIView(APIView):
-    """API: Select an avatar template as profile photo"""
+    """
+    Select Avatar Template API
+    
+    Select and set an avatar template as the user's profile photo.
+    
+    post:
+        Set an avatar as the user's profile picture.
+        
+        Request body parameters:
+            - avatar_template_id: integer (required) - ID of avatar template to select
+        
+        Returns:
+            200 OK:
+                - success: boolean (true)
+                - message: string - Success message
+                - user: object - Updated user profile with selected avatar
+                
+            404 Not Found - Avatar template does not exist
+            400 Bad Request - Invalid data provided
+    """
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
@@ -1092,7 +1139,31 @@ class SelectAvatarAPIView(APIView):
 
 
 class PromoteToTeacherAPIView(APIView):
-    """API: Promote user to teacher role"""
+    """
+    Promote to Teacher Role API
+    
+    Upgrade a regular user account to teacher role.
+    User must provide professional qualifications and experience details.
+    
+    post:
+        Promote authenticated user to teacher role.
+        
+        Request body parameters:
+            - specialization: string (required) - Area of expertise (e.g., "Mathematics", "English")
+            - experience_years: integer (required) - Years of teaching experience
+            - qualifications: string (required) - Professional qualifications and certifications
+        
+        Returns:
+            200 OK:
+                - success: boolean (true)
+                - message: string - Promotion confirmation
+                - user: object - Updated user profile with teacher role
+                
+            400 Bad Request:
+                - User is already a teacher
+                - Invalid or missing required fields
+            401 Unauthorized - User not authenticated
+    """
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
@@ -1179,7 +1250,30 @@ class ChangePasswordAPIView(APIView):
 
 
 class LogoutAPIView(APIView):
-    """API: Logout user (blacklist refresh token)"""
+    """
+    Logout User API
+    
+    Logout authenticated user by blacklisting their refresh token.
+    Prevents token reuse for enhanced security.
+    
+    post:
+        Logout the authenticated user and invalidate their refresh token.
+        
+        Request body parameters:
+            - refresh_token: string (required) - Refresh token to blacklist
+            OR
+            - refresh: string (required) - Alternative parameter name for refresh token
+        
+        Returns:
+            200 OK:
+                - success: boolean (true)
+                - message: string - "Logout successful"
+                
+            400 Bad Request:
+                - Refresh token not provided
+                - Invalid token format
+            401 Unauthorized - User not authenticated
+    """
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
