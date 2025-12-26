@@ -188,17 +188,16 @@ AUTH_USER_MODEL = 'account.User'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = 'staticfiles/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_IGNORE_PATTERNS = ['.gitignore', '.git', '.svn']
 
 # Media files (User uploaded files)
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join('/home/fofofish/public_html/media')
 # CKEditor settings
 CKEDITOR_RESTRICT_BY_DATE = True
 
