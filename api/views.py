@@ -54,21 +54,7 @@ def get_tokens_for_user(user):
 # ========== OTP Authentication APIs ==========
 
 class SendOTPAPIView(APIView):
-    """
-    Send OTP (One-Time Password) API
-    
-    Send OTP to user's phone or email for authentication.
-    Supports both login and registration purposes.
-    
-    post:
-        Send OTP to specified phone number or email.
-        
-        Request parameters:
-        - identifier: Phone number or email address (required)
-        - purpose: 'login' or 'registration' (optional, default: 'login')
-        
-        Returns: Success message with OTP details
-    """
+    """API: Send OTP to phone or email"""
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -179,24 +165,7 @@ class SendOTPAPIView(APIView):
 
 
 class VerifyOTPAPIView(APIView):
-    """
-    Verify OTP API
-    
-    Verify one-time password for login or registration.
-    Returns JWT tokens for login or verification token for registration.
-    
-    post:
-        Verify OTP code sent to phone/email.
-        
-        Request parameters:
-        - identifier: Phone number or email (required)
-        - code: OTP code received (required)
-        - purpose: 'login' or 'registration' (optional, default: 'login')
-        
-        Returns:
-            For login: user profile + JWT tokens
-            For registration: verification token
-    """
+    """API: Verify OTP and login/register user"""
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -255,23 +224,7 @@ class VerifyOTPAPIView(APIView):
 
 
 class CompleteRegistrationAPIView(APIView):
-    """
-    Complete User Registration API
-    
-    Finalize user registration by setting username and password.
-    Must be called after OTP verification.
-    
-    post:
-        Complete user registration process.
-        
-        Request parameters:
-        - verification_token: Token from OTP verification (required)
-        - username: Desired username (required, unique)
-        - password: Account password (required)
-        - name: User's full name (required)
-        
-        Returns: Newly created user profile + JWT tokens
-    """
+    """API: Complete registration with username and password"""
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -320,21 +273,7 @@ class CompleteRegistrationAPIView(APIView):
 # ========== Teacher Authentication APIs ==========
 
 class UserLoginPasswordAPIView(APIView):
-    """
-    User Login with Username/Password API
-    
-    Authenticate user using username and password credentials.
-    Returns JWT tokens and user profile information.
-    
-    post:
-        Login a user with username and password.
-        
-        Request parameters:
-        - username: User's username (required)
-        - password: User's password (required)
-        
-        Returns: JWT tokens + user profile data
-    """
+    """API: User login with username/password"""
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -369,21 +308,7 @@ class UserLoginPasswordAPIView(APIView):
 
 
 class TeacherLoginPasswordAPIView(APIView):
-    """
-    Teacher Login with Username/Password API
-    
-    Authenticate teacher using username and password credentials.
-    Returns JWT tokens and teacher profile with specialization info.
-    
-    post:
-        Login a teacher with username and password.
-        
-        Request parameters:
-        - username: Teacher's username (required)
-        - password: Teacher's password (required)
-        
-        Returns: JWT tokens + teacher profile with specialization
-    """
+    """API: Teacher login with username/password"""
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -409,21 +334,7 @@ class TeacherLoginPasswordAPIView(APIView):
             tokens = get_tokens_for_user(user)
             user_data = UserProfileSerializer(user).data
             
-       
-    Send OTP for Teacher API
-    
-    Send OTP to teacher's phone for authentication.
-    Used in teacher login and registration flows.
-    
-    post:
-        Send OTP to specified phone number for teacher.
-        
-        Request parameters:
-        - identifier: Phone number (required)
-        - purpose: 'login' or 'registration' (optional)
-        
-        Returns: OTP confirmation details
-    
+            return Response({
                 "success": True,
                 "message": _("Login successful"),
                 "user": user_data,
@@ -472,21 +383,7 @@ class TeacherSendOTPAPIView(APIView):
                     "success": True,
                     "message": _("Verification code sent.")
                 }, status=status.HTTP_200_OK)
-       
-    Verify OTP for Teacher API
-    
-    Verify OTP sent to teacher's phone for login or registration.
-    
-    post:
-        Verify OTP code sent to teacher phone.
-        
-        Request parameters:
-        - identifier: Phone number (required)
-        - code: OTP code received (required)
-        - purpose: 'login' or 'registration' (optional)
-        
-        Returns: JWT tokens + teacher profile OR verification token
-    
+            except Exception as e:
                 return Response({
                     "success": False,
                     "message": _(f"Error sending code: {str(e)}")
@@ -516,25 +413,7 @@ class TeacherVerifyOTPAPIView(APIView):
                 
                 # Check if user is teacher
                 if user.role != 'teacher':
-       
-    Complete Teacher Registration API
-    
-    Finalize teacher registration by setting username, password and specialization.
-    Must be called after OTP verification.
-    
-    post:
-        Complete teacher registration process.
-        
-        Request parameters:
-        - verification_token: Token from OTP verification (required)
-        - username: Desired username (required, unique)
-        - password: Account password (required)
-        - name: Teacher's full name (required)
-        - specialization: Area of specialization (required)
-        - experience_years: Years of teaching experience (required)
-        
-        Returns: Teacher profile + JWT tokens
-    
+                    return Response({
                         "success": False,
                         "message": _("This account is not for teachers")
                     }, status=status.HTTP_403_FORBIDDEN)
@@ -613,21 +492,7 @@ class TeacherCompleteRegistrationAPIView(APIView):
 # ========== Email-Based Authentication APIs ==========
 
 class UserSendEmailOTPAPIView(APIView):
-    """
-    Send Email OTP for User API
-    
-    Send OTP to user's email for authentication.
-    Used in email-based login and registration.
-    
-    post:
-        Send OTP to specified email address for user login.
-        
-        Request parameters:
-        - email: Email address (required)
-        - purpose: 'login' or 'registration' (optional)
-        
-        Returns: Email confirmation + OTP status
-    """
+    """API: Send OTP to user email"""
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -676,21 +541,7 @@ class UserSendEmailOTPAPIView(APIView):
 
 
 class UserVerifyEmailOTPAPIView(APIView):
-    """
-    Verify Email OTP for User API
-    
-    Verify OTP sent to user's email for login.
-    Marks email as verified and returns authentication tokens.
-    
-    post:
-        Verify OTP code sent to user email.
-        
-        Request parameters:
-        - email: Email address (required)
-        - code: 6-digit OTP code (required)
-        
-        Returns: JWT tokens + user profile data
-    """
+    """API: Verify OTP and login user via email"""
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -729,21 +580,7 @@ class UserVerifyEmailOTPAPIView(APIView):
             tokens = get_tokens_for_user(user)
             user_data = UserProfileSerializer(user).data
             
-       
-    Send Email OTP for Teacher API
-    
-    Send OTP to teacher's email for authentication.
-    Alternative email-based authentication for teachers.
-    
-    post:
-        Send OTP to specified email address for teacher login.
-        
-        Request parameters:
-        - email: Email address (required)
-        - purpose: 'login' or 'registration' (optional)
-        
-        Returns: Email confirmation + OTP status
-    
+            return Response({
                 "success": True,
                 "message": _("Login successful"),
                 "user": user_data,
@@ -792,21 +629,7 @@ class TeacherSendEmailOTPAPIView(APIView):
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         
         try:
-       
-    Verify Email OTP for Teacher API
-    
-    Verify OTP sent to teacher's email for login.
-    Alternative email-based authentication for teachers.
-    
-    post:
-        Verify OTP code sent to teacher email.
-        
-        Request parameters:
-        - email: Email address (required)
-        - code: 6-digit OTP code (required)
-        
-        Returns: JWT tokens + teacher profile data
-    login', user=None, is_teacher=True)
+            generate_and_send_otp(email, purpose='login', user=None, is_teacher=True)
             return Response({
                 "success": True,
                 "message": _("Verification code has been sent to your email"),
