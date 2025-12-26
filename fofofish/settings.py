@@ -12,31 +12,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
-from gettext import NullTranslations
-import struct
-
-# Ensure translations work with fallback
-import gettext as gettext_module
-_original_translation = gettext_module.translation
-
-def translation_fallback(domain, localedir=None, languages=None, class_=None, fallback=True, codeset=None):
-    """Custom translation function with better fallback handling"""
-    try:
-        # Call with keyword arguments to avoid signature issues
-        return _original_translation(
-            domain=domain,
-            localedir=localedir, 
-            languages=languages,
-            class_=class_,
-            fallback=fallback,
-            codeset=codeset
-        )
-    except (FileNotFoundError, struct.error, EOFError, TypeError):
-        # If translation file is corrupted or missing, return null translations
-        return NullTranslations()
-
-# Monkey patch to handle corrupted translation files
-gettext_module.translation = translation_fallback
 
 SHOP_NAME = _("Nozima")
 
@@ -197,8 +172,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'fa'
 TIME_ZONE = 'Asia/Tehran'
-# Disable i18n temporarily to avoid translation file errors
-USE_I18N = False
+USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
