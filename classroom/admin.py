@@ -233,10 +233,10 @@ class StudentQuizAttemptAdmin(admin.ModelAdmin):
 
 @admin.register(StudentQuestionResponse)
 class StudentQuestionResponseAdmin(admin.ModelAdmin):
-    list_display = ['attempt', 'question', 'is_correct', 'points_earned', 'answered_at']
-    list_filter = ['is_correct', 'attempt__quiz', 'answered_at']
+    list_display = ['attempt', 'question', 'is_correct', 'points_earned', 'response_time_seconds']
+    list_filter = ['is_correct', 'attempt__quiz', 'created_at']
     search_fields = ['attempt__student__username', 'question__question_text']
-    readonly_fields = ['answered_at', 'created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at']
 
 
 @admin.register(Attendance)
