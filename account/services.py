@@ -183,61 +183,72 @@ def validate_otp(phone_or_email: str, raw_code: str, purpose='login'):
     
     logger.info(f"Validating OTP for: {phone_or_email}, purpose: {purpose}")
     
-    # Normalize phone to +98 format if it's a phone number
-    is_phone = phone_or_email.startswith('09') or phone_or_email.startswith('+98')
-    normalized_phone = phone_or_email
-    
-    if is_phone:
-        try:
-            if phone_or_email.startswith('09'):
-                # Convert 09xxxxxxxxx to +989xxxxxxxxx
-                phone_obj = phonenumbers.parse(phone_or_email, "IR")
-                normalized_phone = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
-            elif phone_or_email.startswith('+98'):
-                # Already in +98 format
-                normalized_phone = phone_or_email
-            
-            logger.info(f"Normalized phone from {phone_or_email} to {normalized_phone}")
-        except Exception as e:
-            logger.error(f"Phone normalization error: {e}")
-            normalized_phone = phone_or_email
-    
-    phone_formats = [normalized_phone]
-    
-    if phone_or_email.startswith('09'):
-        try:
-            phone_obj = phonenumbers.parse(phone_or_email, "IR")
-            e164_phone = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
-            phone_formats.append(e164_phone)
-        except Exception as e:
-            logger.error(f"Phone parsing error: {e}")
-    elif phone_or_email.startswith('+98'):
-        try:
-            phone_obj = phonenumbers.parse(phone_or_email, None)
-            local_phone = '0' + str(phone_obj.national_number)
-            phone_formats.append(local_phone)
-        except Exception as e:
-            logger.error(f"Phone parsing error: {e}")
-    
+    # Determine if it's email or phone
+    is_email = '@' in phone_or_email
     otp = None
-    for phone_format in phone_formats:
+    
+    if is_email:
+        # Direct email lookup
+        logger.info(f"Looking for OTP with email: {phone_or_email}")
         otp = OTP.objects.filter(
-            phone=phone_format,
+            email=phone_or_email.lower(),
             purpose=purpose,
             is_used=False
         ).order_by('-created_at').first()
-        if otp:
-            break
+    else:
+        # Phone number lookup with normalization
+        is_phone = phone_or_email.startswith('09') or phone_or_email.startswith('+98')
+        normalized_phone = phone_or_email
+        phone_formats = [phone_or_email]
+        
+        if is_phone:
+            try:
+                if phone_or_email.startswith('09'):
+                    # Convert 09xxxxxxxxx to +989xxxxxxxxx
+                    phone_obj = phonenumbers.parse(phone_or_email, "IR")
+                    normalized_phone = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
+                elif phone_or_email.startswith('+98'):
+                    # Already in +98 format
+                    normalized_phone = phone_or_email
+                
+                logger.info(f"Normalized phone from {phone_or_email} to {normalized_phone}")
+                phone_formats.insert(0, normalized_phone)
+            except Exception as e:
+                logger.error(f"Phone normalization error: {e}")
+        
+        # Try alternative formats
+        if phone_or_email.startswith('09'):
+            try:
+                phone_obj = phonenumbers.parse(phone_or_email, "IR")
+                e164_phone = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
+                if e164_phone not in phone_formats:
+                    phone_formats.append(e164_phone)
+            except Exception as e:
+                logger.error(f"Phone parsing error: {e}")
+        elif phone_or_email.startswith('+98'):
+            try:
+                phone_obj = phonenumbers.parse(phone_or_email, None)
+                local_phone = '0' + str(phone_obj.national_number)
+                if local_phone not in phone_formats:
+                    phone_formats.append(local_phone)
+            except Exception as e:
+                logger.error(f"Phone parsing error: {e}")
+        
+        # Search for OTP in all phone formats
+        logger.info(f"Searching for OTP with phone formats: {phone_formats}")
+        for phone_format in phone_formats:
+            otp = OTP.objects.filter(
+                phone=phone_format,
+                purpose=purpose,
+                is_used=False
+            ).order_by('-created_at').first()
+            if otp:
+                logger.info(f"Found OTP for phone format: {phone_format}")
+                break
     
     if not otp:
-        otp = OTP.objects.filter(
-            email=phone_or_email,
-            purpose=purpose,
-            is_used=False
-        ).order_by('-created_at').first()
-    
-    if not otp:
-        return False, _("No OTP found for this phone/email.")
+        identifier_type = "email" if is_email else "phone number"
+        return False, _(f"No verification code found for this {identifier_type}. Please request a new one.")
     
     if otp.expires_at < timezone.now():
         otp.delete()
@@ -274,8 +285,10 @@ def validate_otp(phone_or_email: str, raw_code: str, purpose='login'):
         if otp.user:
             user = otp.user
         else:
+            # For login purpose, try to find existing user by phone or email
+            user = None
             if otp.phone:
-                # Use normalized +98 format for phone in database
+                # Try to find user by phone (with multiple format attempts)
                 stored_phone = otp.phone
                 if stored_phone.startswith('09'):
                     try:
@@ -284,17 +297,42 @@ def validate_otp(phone_or_email: str, raw_code: str, purpose='login'):
                     except Exception as e:
                         logger.error(f"Phone normalization error: {e}")
                 
-                username = f"user_{stored_phone.replace('+', '').replace(' ', '')}"
-                user, created = User.objects.get_or_create(
-                    phone=stored_phone,
-                    defaults={'username': username, 'role': 'user'}
-                )
-            else:
-                username = otp.email.split('@')[0]
-                user, created = User.objects.get_or_create(
-                    email=otp.email,
-                    defaults={'username': username, 'role': 'user'}
-                )
+                # Try both normalized and original phone format
+                user = User.objects.filter(phone=stored_phone).first()
+                if not user and otp.phone != stored_phone:
+                    user = User.objects.filter(phone=otp.phone).first()
+                
+                # If no user found and purpose is login, user must complete registration
+                if not user and purpose == 'login':
+                    logger.warning(f"No user found for phone {stored_phone} during login. User must register first.")
+                    return False, _("User account not found. Please register first.")
+                
+                # If registering, create or get user
+                if not user and purpose == 'registration':
+                    username = f"user_{stored_phone.replace('+', '').replace(' ', '')}"
+                    user, created = User.objects.get_or_create(
+                        phone=stored_phone,
+                        defaults={'username': username, 'role': 'user'}
+                    )
+            elif otp.email:
+                # Try to find user by email
+                user = User.objects.filter(email=otp.email).first()
+                
+                # If no user found and purpose is login, user must complete registration
+                if not user and purpose == 'login':
+                    logger.warning(f"No user found for email {otp.email} during login. User must register first.")
+                    return False, _("User account not found. Please register first.")
+                
+                # If registering, create or get user
+                if not user and purpose == 'registration':
+                    username = otp.email.split('@')[0]
+                    user, created = User.objects.get_or_create(
+                        email=otp.email,
+                        defaults={'username': username, 'role': 'user'}
+                    )
+        
+        if not user:
+            return False, _("Unable to process OTP verification.")
         
         return True, user
     

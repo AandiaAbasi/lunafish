@@ -1104,4 +1104,16 @@ msgstr "آدرس ویدئو معرفی خیلی طولانی است"
 msgid "User is not a teacher"
 msgstr "کاربر معلم نیست"
 
+msgid "No verification code found for this email. Please request a new one."
+msgstr "هیچ کد تایید برای این ایمیل یافت نشد. لطفاً یک مورد جدید درخواست کنید."
+
+msgid "No verification code found for this phone number. Please request a new one."
+msgstr "هیچ کد تایید برای این شماره تلفن یافت نشد. لطفاً یک مورد جدید درخواست کنید."
+
+msgid "User account not found. Please register first."
+msgstr "حساب کاربری یافت نشد. لطفاً ابتدا ثبت‌نام کنید."
+
+msgid "Unable to process OTP verification."
+msgstr "امکان پردازش تایید OTP وجود ندارد."
+
 

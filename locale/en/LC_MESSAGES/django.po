@@ -1102,3 +1102,15 @@ msgstr "Introduction video URL is too long"
 
 msgid "User is not a teacher"
 msgstr "User is not a teacher"
+
+msgid "No verification code found for this email. Please request a new one."
+msgstr "No verification code found for this email. Please request a new one."
+
+msgid "No verification code found for this phone number. Please request a new one."
+msgstr "No verification code found for this phone number. Please request a new one."
+
+msgid "User account not found. Please register first."
+msgstr "User account not found. Please register first."
+
+msgid "Unable to process OTP verification."
+msgstr "Unable to process OTP verification."
