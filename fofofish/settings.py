@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'account',
     'skyroom',
     'api',
+    'classroom'
 ]
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
