@@ -496,7 +496,7 @@ class TeacherLoginPasswordAPIView(APIView):
 
 
 class TeacherSendOTPAPIView(APIView):
-    """API: Send OTP to teacher phone"""
+    """API: Send OTP to teacher phone or email"""
     permission_classes = [AllowAny]
     
     def post(self, request):
@@ -504,37 +504,41 @@ class TeacherSendOTPAPIView(APIView):
         if serializer.is_valid():
             identifier = serializer.validated_data['identifier']
             
+            # Determine if it's email or phone
+            is_email = '@' in str(identifier)
+            
             # Check cooldown
-            recent_otp = OTP.objects.filter(
-                phone=identifier if '@' not in str(identifier) else None,
-                email=identifier if '@' in str(identifier) else None,
-                is_used=False
-            ).order_by('-created_at').first()
+            if is_email:
+                recent_otp = OTP.objects.filter(
+                    email=identifier,
+                    purpose='login',
+                    is_used=False
+                ).order_by('-created_at').first()
+            else:
+                recent_otp = OTP.objects.filter(
+                    phone=identifier,
+                    purpose='login',
+                    is_used=False
+                ).order_by('-created_at').first()
             
             if recent_otp and (timezone.now() - recent_otp.created_at).seconds < 120:
                 return Response({
                     "success": False,
-                    "message": _("Please wait 2 minutes.")
+                    "message": _("Please wait 2 minutes before requesting a new code.")
                 }, status=status.HTTP_429_TOO_MANY_REQUESTS)
             
             # Generate and send OTP with teacher template
             try:
-                if '@' in str(identifier):
-                    return Response({
-                        "success": False,
-                        "message": _("Sending OTP to email is currently not supported")
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    generate_and_send_otp(identifier, purpose='login', user=None, is_teacher=True)
+                generate_and_send_otp(identifier, purpose='login', user=None, is_teacher=True)
                     
                 return Response({
                     "success": True,
-                    "message": _("Verification code sent.")
+                    "message": _("Verification code sent successfully.") if is_email else _("Verification code sent.")
                 }, status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({
                     "success": False,
-                    "message": _(f"Error sending code: {str(e)}")
+                    "message": _(f"Error sending verification code: {str(e)}")
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response({
