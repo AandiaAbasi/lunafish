@@ -19,7 +19,7 @@ class TeacherAvailability(BaseModel):
     date = models.DateField(verbose_name=_("تاریخ"), help_text=_("تاریخ مشخص برای این دسترسی"))
     start_time = models.TimeField(verbose_name=_("ساعت شروع"), help_text=_("زمانی که معلم تدریس را شروع می‌کند (مثال: 09:00)"))
     end_time = models.TimeField(verbose_name=_("ساعت پایان"), help_text=_("زمانی که معلم تدریس را پایان می‌دهد (مثال: 17:00)"))
-    is_available = models.BooleanField(default=True, verbose_name=_("دسترس‌پذیر"), help_text=_("آیا این بازه زمانی برای رزرو دسترس‌پذیر است؟"))
+    is_available = models.BooleanField(default=True, verbose_name=_("در دسترس"), help_text=_("آیا این بازه زمانی برای رزرو در دسترس است؟"))
     is_booked = models.BooleanField(default=False, verbose_name=_("رزرو شده"), help_text=_("آیا این بازه زمانی قبلاً رزرو شده است؟"))
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("قیمت"), help_text=_("قیمت تدریس برای این بازه زمانی"))
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("قیمت با تخفیف"), help_text=_("قیمت تدریس با تخفیف برای این بازه زمانی"))
