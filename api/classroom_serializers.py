@@ -3,9 +3,9 @@ Serializers for Classroom App - Time Slots, Bookings, Revenue, Transactions
 """
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
+from classroom.models import TeacherAvailability, TeachingSubject
 from .models import (
-    TeacherAvailability, TeachingSubject, ClassBooking,
-    TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
+    ClassBooking, TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
     StudentTransaction, PlatformSettings
 )
 import jdatetime
