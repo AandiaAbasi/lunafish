@@ -1089,3 +1089,93 @@ msgstr "User account not found. Please register first."
 
 msgid "Unable to process OTP verification."
 msgstr "Unable to process OTP verification."
+#: exercise/models.py
+msgid "Title"
+msgstr "Title"
+
+msgid "Sort"
+msgstr "Sort"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Is Required"
+msgstr "Is Required"
+
+msgid "Is Required Help"
+msgstr "Mark as required or optional"
+
+msgid "Image"
+msgstr "Image"
+
+msgid "Audio"
+msgstr "Audio"
+
+msgid "Video"
+msgstr "Video"
+
+msgid "Icon"
+msgstr "Icon"
+
+msgid "Guide"
+msgstr "Guide"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Question"
+msgstr "Question"
+
+msgid "Questions"
+msgstr "Questions"
+
+msgid "Second Title"
+msgstr "Second Title"
+
+msgid "Is Correct"
+msgstr "Is Correct"
+
+msgid "Option"
+msgstr "Option"
+
+msgid "Options"
+msgstr "Options"
+
+msgid "Classroom Teaching Subject"
+msgstr "Classroom Teaching Subject"
+
+msgid "Step"
+msgstr "Step"
+
+msgid "Is Conditional"
+msgstr "Is Conditional"
+
+msgid "Exam"
+msgstr "Exam"
+
+msgid "Exams"
+msgstr "Exams"
+
+msgid "Teaching Subject"
+msgstr "Teaching Subject"
+
+msgid "Score"
+msgstr "Score"
+
+msgid "Correct"
+msgstr "Correct"
+
+msgid "Incorrect"
+msgstr "Incorrect"
+
+msgid "Attempt"
+msgstr "Attempt"
+
+msgid "Attempts"
+msgstr "Attempts"
+
+msgid "Answer"
+msgstr "Answer"
+
+msgid "Answers"
+msgstr "Answers"

@@ -1092,3 +1092,94 @@ msgid "Unable to process OTP verification."
 msgstr "امکان پردازش تایید OTP وجود ندارد."
 
 
+#: exercise/models.py
+msgid "Title"
+msgstr "عنوان"
+
+msgid "Sort"
+msgstr "ترتیب"
+
+msgid "Type"
+msgstr "نوع"
+
+msgid "Is Required"
+msgstr "ضروری است"
+
+msgid "Is Required Help"
+msgstr "به عنوان ضروری یا اختیاری علامت‌گذاری کنید"
+
+msgid "Image"
+msgstr "تصویر"
+
+msgid "Audio"
+msgstr "صدا"
+
+msgid "Video"
+msgstr "فیلم"
+
+msgid "Icon"
+msgstr "نماد"
+
+msgid "Guide"
+msgstr "راهنمایی"
+
+msgid "Description"
+msgstr "توضیح"
+
+msgid "Question"
+msgstr "سؤال"
+
+msgid "Questions"
+msgstr "سؤالات"
+
+msgid "Second Title"
+msgstr "عنوان دوم"
+
+msgid "Is Correct"
+msgstr "صحیح است"
+
+msgid "Option"
+msgstr "گزینه"
+
+msgid "Options"
+msgstr "گزینه‌ها"
+
+msgid "Classroom Teaching Subject"
+msgstr "موضوع تدریس کلاس"
+
+msgid "Step"
+msgstr "مرحله"
+
+msgid "Is Conditional"
+msgstr "شرطی است"
+
+msgid "Exam"
+msgstr "آزمون"
+
+msgid "Exams"
+msgstr "آزمون‌ها"
+
+msgid "Teaching Subject"
+msgstr "موضوع تدریس"
+
+msgid "Score"
+msgstr "امتیاز"
+
+msgid "Correct"
+msgstr "صحیح"
+
+msgid "Incorrect"
+msgstr "غلط"
+
+msgid "Attempt"
+msgstr "تلاش"
+
+msgid "Attempts"
+msgstr "تلاش‌ها"
+
+msgid "Answer"
+msgstr "پاسخ"
+
+msgid "Answers"
+msgstr "پاسخ‌ها"
+

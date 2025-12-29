@@ -2445,31 +2445,50 @@ class TeacherAvailabilityListAPIView(generics.ListAPIView):
     Requires authentication.
     
     get:
-        Get list of teacher availability slots.
+        Get list of teacher availability slots with pagination.
         
         Query parameters:
         - teacher_id: integer (optional) - Filter by specific teacher
         - date: string (optional) - Filter by date in YYYY/MM/DD format
         - is_available: boolean (optional) - Filter available slots only
+        - page: integer (optional, default: 1) - Page number for pagination
+        - page_size: integer (optional, default: 20) - Items per page
         
         Returns:
             200 OK:
-                - data: array - List of availability slots
                 - count: integer - Total number of slots
+                - next: string - URL to next page (or null)
+                - previous: string - URL to previous page (or null)
+                - results: array - List of availability slots on current page
                 
             401 Unauthorized - User not authenticated
     """
     permission_classes = [IsAuthenticated]
     serializer_class = None
+    pagination_class = None  # سفارشی سازی پایین‌تر
+    
+    def get_paginator(self):
+        """استفاده از pagination پیش‌فرض DRF"""
+        from rest_framework.pagination import PageNumberPagination
+        
+        class StandardResultsSetPagination(PageNumberPagination):
+            page_size = 20
+            page_size_query_param = 'page_size'
+            page_size_query_description = 'Number of results to return per page.'
+            max_page_size = 100
+        
+        return StandardResultsSetPagination()
     
     @extend_schema(
         tags=['Teacher Time Slots'],
         summary='Get Teacher Availability Slots',
-        description='Retrieve teacher availability time slots with optional filters',
+        description='Retrieve teacher availability time slots with optional filters and pagination',
         parameters=[
             OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, description='Filter by specific teacher'),
             OpenApiParameter('date', OpenApiTypes.STR, required=False, description='Filter by date in YYYY/MM/DD format'),
             OpenApiParameter('is_available', OpenApiTypes.BOOL, required=False, description='Filter available slots only'),
+            OpenApiParameter('page', OpenApiTypes.INT, required=False, description='Page number (default: 1)'),
+            OpenApiParameter('page_size', OpenApiTypes.INT, required=False, description='Items per page (default: 20, max: 100)'),
         ]
     )
     def get(self, request, *args, **kwargs):
@@ -2497,11 +2516,15 @@ class TeacherAvailabilityListAPIView(generics.ListAPIView):
         if is_available and is_available.lower() in ['true', '1', 'yes']:
             queryset = queryset.filter(is_available=True)
         
-        serializer = TeacherAvailabilitySerializer(queryset, many=True)
-        return Response(
-            {'data': serializer.data, 'count': queryset.count()},
-            status=status.HTTP_200_OK
-        )
+        # مرتب‌سازی
+        queryset = queryset.order_by('-date', '-start_time')
+        
+        # Pagination
+        paginator = self.get_paginator()
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        
+        serializer = TeacherAvailabilitySerializer(paginated_queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class UpdateTeacherAvailabilityAPIView(APIView):
