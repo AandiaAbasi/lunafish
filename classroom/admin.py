@@ -194,6 +194,10 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
         count, _ = deletable.delete()
         self.message_user(request, _(f'{count} بازه زمانی حذف شد'))
     bulk_delete.short_description = _('حذف بازه های آزاد')
+    
+    def has_delete_permission(self, request, obj=None):
+        """منع حذف مستقیم - فقط از طریق bulk_delete"""
+        return False
 
 
 # ===== TeachingSubject Admin =====
@@ -202,7 +206,7 @@ class TeachingSubjectAdmin(admin.ModelAdmin):
     list_display = ['title', 'teacher', 'level', 'is_active_badge']
     list_filter = ['level', 'is_active', 'created_at']
     search_fields = ['title', 'teacher__name', 'teacher__username']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'teacher']
     
     fieldsets = (
         (_('اطلاعات اساسی'), {
@@ -236,7 +240,13 @@ class ClassBookingAdmin(admin.ModelAdmin):
     list_display = ['subject', 'teacher', 'student', 'status_badge', 'final_price']
     list_filter = ['status', 'created_at']
     search_fields = ['subject__title', 'teacher__name', 'student__name']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'teacher', 'student', 'subject', 'availability', 'price', 'discount_amount', 'final_price']
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
     
     fieldsets = (
         (_('طرف‌های کلاس'), {
@@ -273,7 +283,10 @@ class TeacherWalletAdmin(admin.ModelAdmin):
     list_display = ['teacher', 'available_balance_display', 'pending_balance_display', 'is_verified_badge', 'is_active_badge']
     list_filter = ['is_verified', 'is_active', 'created_at']
     search_fields = ['teacher__name', 'teacher__username']
-    readonly_fields = ['balance', 'total_earned', 'total_withdrawn', 'verified_at', 'created_at', 'updated_at']
+    readonly_fields = ['balance', 'total_earned', 'total_withdrawn', 'verified_at', 'created_at', 'updated_at', 'available_balance', 'pending_balance']
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
     
     fieldsets = (
         (_('معلم'), {
@@ -327,7 +340,13 @@ class ClassRevenueAdmin(admin.ModelAdmin):
     list_display = ['teacher', 'booking', 'total_amount_display', 'teacher_share_display', 'is_confirmed_badge']
     list_filter = ['is_confirmed', 'is_settled', 'created_at']
     search_fields = ['teacher__name', 'booking__subject__title']
-    readonly_fields = ['platform_fee', 'teacher_share', 'created_at', 'updated_at', 'confirmed_at', 'settled_at']
+    readonly_fields = ['platform_fee', 'teacher_share', 'created_at', 'updated_at', 'confirmed_at', 'settled_at', 'teacher', 'booking', 'original_price', 'discount_amount', 'total_amount']
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
     
     fieldsets = (
         (_('درآمد'), {
@@ -375,7 +394,13 @@ class WithdrawalRequestAdmin(admin.ModelAdmin):
     list_display = ['teacher', 'amount_display', 'status_badge', 'payment_method_display', 'jalali_created']
     list_filter = ['status', 'payment_method', 'created_at']
     search_fields = ['teacher__name']
-    readonly_fields = ['created_at', 'updated_at', 'completed_at', 'jalali_created_display']
+    readonly_fields = ['created_at', 'updated_at', 'completed_at', 'jalali_created_display', 'teacher', 'amount', 'revenues', 'account_info']
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
     
     fieldsets = (
         (_('درخواست کننده'), {
@@ -503,7 +528,13 @@ class StudentTransactionAdmin(admin.ModelAdmin):
     list_display = ['student', 'transaction_type_badge', 'amount_display', 'status_badge']
     list_filter = ['transaction_type', 'status', 'created_at']
     search_fields = ['student__name', 'student__username']
-    readonly_fields = ['payment_date', 'created_at', 'updated_at']
+    readonly_fields = ['payment_date', 'created_at', 'updated_at', 'student', 'transaction_type', 'amount', 'booking']
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
     
     fieldsets = (
         (_('دانش‌آموز'), {
