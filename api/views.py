@@ -2204,44 +2204,36 @@ class CreateTeacherAvailabilityAPIView(APIView):
             name='CreateTeacherAvailabilityBulk',
             fields={
                 'start_date': serializers.CharField(
-                    help_text='Start date in YYYY/MM/DD Jalali format (e.g., 1403/01/01)',
-                    example='1403/01/01'
+                    help_text='Start date in YYYY/MM/DD Jalali format (e.g., 1403/01/01)'
                 ),
                 'end_date': serializers.CharField(
-                    help_text='End date in YYYY/MM/DD Jalali format (e.g., 1403/01/10)',
-                    example='1403/01/10'
+                    help_text='End date in YYYY/MM/DD Jalali format (e.g., 1403/01/10)'
                 ),
                 'daily_start_time': serializers.TimeField(
-                    help_text='Daily start time in HH:MM format (e.g., 09:00)',
-                    example='09:00'
+                    help_text='Daily start time in HH:MM format (e.g., 09:00)'
                 ),
                 'daily_end_time': serializers.TimeField(
-                    help_text='Daily end time in HH:MM format (e.g., 17:00)',
-                    example='17:00'
+                    help_text='Daily end time in HH:MM format (e.g., 17:00)'
                 ),
                 'session_duration': serializers.IntegerField(
                     default=30,
-                    help_text='Duration of each session in minutes (e.g., 30, 45, 60)',
-                    example=30,
+                    help_text='Duration of each session in minutes (default: 30, min: 5)',
                     min_value=5
                 ),
                 'break_duration': serializers.IntegerField(
                     default=10,
-                    help_text='Break duration between sessions in minutes (e.g., 10, 15)',
-                    example=10,
+                    help_text='Break duration between sessions in minutes (default: 10, min: 0)',
                     min_value=0
                 ),
                 'price': serializers.DecimalField(
                     max_digits=10,
                     decimal_places=2,
-                    help_text='Price per session in currency units (e.g., 50000)',
-                    example=50000
+                    help_text='Price per session in currency units'
                 ),
                 'notes': serializers.CharField(
                     required=False,
                     allow_blank=True,
-                    help_text='Optional notes about the availability slots',
-                    example='Online classes via Zoom'
+                    help_text='Optional notes about the availability slots'
                 ),
             }
         ),
@@ -2433,28 +2425,23 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
                         name='AvailabilityItemDirect',
                         fields={
                             'date': serializers.CharField(
-                                help_text='Date in YYYY/MM/DD Jalali format (e.g., 1403/01/01)',
-                                example='1403/01/01'
+                                help_text='Date in YYYY/MM/DD Jalali format (e.g., 1403/01/01)'
                             ),
                             'start_time': serializers.TimeField(
-                                help_text='Start time in HH:MM format (e.g., 09:00)',
-                                example='09:00'
+                                help_text='Start time in HH:MM format (e.g., 09:00)'
                             ),
                             'end_time': serializers.TimeField(
-                                help_text='End time in HH:MM format (e.g., 10:00)',
-                                example='10:00'
+                                help_text='End time in HH:MM format (e.g., 10:00)'
                             ),
                             'price': serializers.DecimalField(
                                 max_digits=10,
                                 decimal_places=2,
-                                help_text='Price per session (e.g., 50000)',
-                                example=50000
+                                help_text='Price per session'
                             ),
                             'notes': serializers.CharField(
                                 required=False,
                                 allow_blank=True,
-                                help_text='Optional notes for this slot',
-                                example='Morning session'
+                                help_text='Optional notes for this slot'
                             ),
                         }
                     ),
