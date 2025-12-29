@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import TeacherAvailability, ClassSession, ClassEnrollment, ClassAnnouncement
+from .models import (
+    TeacherAvailability, TeachingSubject, DiscountCode, ClassBooking,
+    TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
+    StudentTransaction, PlatformSettings
+)
 
 
 @admin.register(TeacherAvailability)
