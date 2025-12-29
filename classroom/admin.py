@@ -167,7 +167,7 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
         color = '#28a745' if obj.is_available else '#dc3545'
         text = _('دسترسی‌پذیر') if obj.is_available else _('غیردسترسی‌پذیر')
         return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
-    is_available_badge.short_description = _('دسترسی‌پذیری')
+    is_available_badge.short_description = _('در دسترس')
     
     def is_booked_badge(self, obj):
         color = '#ff6b6b' if obj.is_booked else '#95e1d3'
@@ -176,13 +176,13 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
     is_booked_badge.short_description = _('وضعیت رزرو')
     
     def mark_available(self, request, queryset):
-        """انتخاب بازه‌های زمانی برای دسترسی‌پذیری"""
+        """انتخاب بازه‌های زمانی برای در دسترس"""
         updated = queryset.filter(is_booked=False).update(is_available=True)
         self.message_user(request, _(f'{updated} بازه زمانی به عنوان دسترسی‌پذیر علامت‌گذاری شد'))
     mark_available.short_description = _('علامت‌گذاری به عنوان دسترسی‌پذیر')
     
     def mark_unavailable(self, request, queryset):
-        """انتخاب بازه‌های زمانی برای غیردسترسی‌پذیری"""
+        """انتخاب بازه‌های زمانی برای غیردر دسترس"""
         updated = queryset.update(is_available=False)
         self.message_user(request, _(f'{updated} بازه زمانی به عنوان غیردسترسی‌پذیر علامت‌گذاری شد'))
     mark_unavailable.short_description = _('علامت‌گذاری به عنوان غیردسترسی‌پذیر')

@@ -2492,7 +2492,7 @@ class TeacherAvailabilityListAPIView(generics.ListAPIView):
         if date_str:
             queryset = queryset.filter(date=date_str)
         
-        # فیلتر دسترسی‌پذیری
+        # فیلتر دسترسی
         is_available = request.query_params.get('is_available')
         if is_available and is_available.lower() in ['true', '1', 'yes']:
             queryset = queryset.filter(is_available=True)
