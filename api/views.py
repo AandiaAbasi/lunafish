@@ -2180,20 +2180,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
     @extend_schema(
         tags=['Teacher Time Slots'],
         summary='Create Teacher Availability Slot',
-        description='Add a single time slot for teacher availability',
-        request={
-            'application/json': {
-                'type': 'object',
-                'properties': {
-                    'date': {'type': 'string', 'description': 'Date in YYYY/MM/DD format'},
-                    'start_time': {'type': 'string', 'description': 'Start time in HH:MM format'},
-                    'end_time': {'type': 'string', 'description': 'End time in HH:MM format'},
-                    'price': {'type': 'number', 'description': 'Price per hour or session'},
-                    'notes': {'type': 'string', 'description': 'Additional notes (optional)'},
-                },
-                'required': ['date', 'start_time', 'end_time', 'price']
-            }
-        },
+        description='Add a single time slot for teacher availability. Required fields: date (YYYY/MM/DD), start_time (HH:MM), end_time (HH:MM), price.',
         responses={
             201: OpenApiResponse(description="Time slot created successfully"),
             400: OpenApiResponse(description="Invalid data provided"),
@@ -2257,29 +2244,7 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
     @extend_schema(
         tags=['Teacher Time Slots'],
         summary='Bulk Create Teacher Availability Slots',
-        description='Add multiple time slots for teacher availability in a single request',
-        request={
-            'application/json': {
-                'type': 'object',
-                'properties': {
-                    'availabilities': {
-                        'type': 'array',
-                        'items': {
-                            'type': 'object',
-                            'properties': {
-                                'date': {'type': 'string', 'description': 'Date in YYYY/MM/DD format'},
-                                'start_time': {'type': 'string', 'description': 'Start time in HH:MM format'},
-                                'end_time': {'type': 'string', 'description': 'End time in HH:MM format'},
-                                'price': {'type': 'number', 'description': 'Price per hour or session'},
-                                'notes': {'type': 'string', 'description': 'Additional notes (optional)'},
-                            },
-                            'required': ['date', 'start_time', 'end_time', 'price']
-                        }
-                    }
-                },
-                'required': ['availabilities']
-            }
-        },
+        description='Add multiple time slots for teacher availability in a single request. Send array of availability objects with date, start_time, end_time, and price.',
         responses={
             201: OpenApiResponse(description="Time slots created successfully"),
             400: OpenApiResponse(description="Invalid data or empty array provided"),
