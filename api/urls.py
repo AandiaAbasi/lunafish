@@ -65,4 +65,11 @@ urlpatterns = [
     path('teacher/availability/bulk-create/', views.BulkCreateTeacherAvailabilityAPIView.as_view(), name='availability_bulk_create'),
     path('teacher/availability/<int:id>/update/', views.UpdateTeacherAvailabilityAPIView.as_view(), name='availability_update'),
     path('teacher/availability/<int:id>/delete/', views.DeleteTeacherAvailabilityAPIView.as_view(), name='availability_delete'),
+    
+    # ========== Teaching Subjects (کلاس‌ها) ==========
+    path('teaching-subjects/', views.TeachingSubjectListAPIView.as_view(), name='teaching_subject_list'),
+    path('teaching-subjects/create/', views.TeachingSubjectCreateAPIView.as_view(), name='teaching_subject_create'),
+    path('teaching-subjects/<int:id>/', views.TeachingSubjectRetrieveAPIView.as_view(), name='teaching_subject_retrieve'),
+    path('teaching-subjects/<int:id>/update/', views.TeachingSubjectUpdateAPIView.as_view(), name='teaching_subject_update'),
+    path('teaching-subjects/<int:id>/delete/', views.TeachingSubjectDeleteAPIView.as_view(), name='teaching_subject_delete'),
 ]

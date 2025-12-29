@@ -2653,3 +2653,255 @@ class DeleteTeacherAvailabilityAPIView(APIView):
         )
 
 
+# ========== Teaching Subject APIs (کلاس‌های معلم) ==========
+
+class TeachingSubjectListAPIView(APIView):
+    """
+    List Teaching Subjects
+    
+    دریافت لیست موضوعات تدریس
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """Filter by teacher if requested"""
+        from classroom.models import TeachingSubject
+        
+        if self.request.user.role == 'teacher':
+            # معلم تنها می‌تواند موضوعات خود را ببیند
+            return TeachingSubject.objects.filter(teacher=self.request.user)
+        elif self.request.user.role == 'admin':
+            # ادمین تمام موضوعات را می‌بیند
+            return TeachingSubject.objects.all()
+        else:
+            # دانش‌آموز تنها موضوعات فعال را می‌بیند
+            return TeachingSubject.objects.filter(is_active=True)
+    
+    @extend_schema(
+        tags=['Teaching Subject'],
+        summary='List Teaching Subjects',
+        description='دریافت لیست موضوعات تدریس',
+        parameters=[
+            OpenApiParameter('teacher', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Filter by teacher ID'),
+            OpenApiParameter('level', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Filter by level: beginner, intermediate, advanced'),
+            OpenApiParameter('is_active', OpenApiTypes.BOOL, required=False, location=OpenApiParameter.QUERY, description='Filter by active status'),
+        ],
+        responses={
+            200: OpenApiResponse(description="List of teaching subjects"),
+        }
+    )
+    def get(self, request):
+        from classroom.models import TeachingSubject
+        from .classroom_serializers import TeachingSubjectSerializer
+        
+        queryset = self.get_queryset()
+        
+        # Filter by teacher
+        teacher_id = request.query_params.get('teacher')
+        if teacher_id:
+            queryset = queryset.filter(teacher_id=teacher_id)
+        
+        # Filter by level
+        level = request.query_params.get('level')
+        if level:
+            queryset = queryset.filter(level=level)
+        
+        # Filter by active status
+        is_active = request.query_params.get('is_active')
+        if is_active is not None:
+            is_active = is_active.lower() in ['true', '1', 'yes']
+            queryset = queryset.filter(is_active=is_active)
+        
+        serializer = TeachingSubjectSerializer(queryset, many=True)
+        return Response({'results': serializer.data}, status=status.HTTP_200_OK)
+
+
+class TeachingSubjectCreateAPIView(APIView):
+    """
+    Create Teaching Subject
+    
+    ایجاد موضوع تدریس جدید
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    
+    @extend_schema(
+        tags=['Teaching Subject'],
+        summary='Create Teaching Subject',
+        description='ایجاد موضوع تدریس جدید (فقط برای معلمان)',
+        request=None,
+        responses={
+            201: OpenApiResponse(description="Subject created successfully"),
+            400: OpenApiResponse(description="Invalid data"),
+            403: OpenApiResponse(description="Only teachers can create subjects"),
+        }
+    )
+    def post(self, request):
+        from classroom.models import TeachingSubject
+        from .classroom_serializers import TeachingSubjectSerializer
+        
+        # فقط معلمان می‌توانند موضوع ایجاد کنند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('تنها معلمان می‌توانند موضوع تدریس ایجاد کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        data = request.data.copy()
+        data['teacher'] = request.user.id
+        
+        serializer = TeachingSubjectSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TeachingSubjectRetrieveAPIView(APIView):
+    """
+    Retrieve Teaching Subject
+    
+    دریافت جزئیات موضوع تدریس
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Teaching Subject'],
+        summary='Get Teaching Subject Details',
+        description='دریافت جزئیات موضوع تدریس',
+        parameters=[
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Subject ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Subject details"),
+            404: OpenApiResponse(description="Subject not found"),
+        }
+    )
+    def get(self, request, id):
+        from classroom.models import TeachingSubject
+        from .classroom_serializers import TeachingSubjectSerializer
+        
+        try:
+            subject = TeachingSubject.objects.get(id=id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی دسترسی
+        if request.user.role != 'admin' and request.user.role == 'student':
+            if not subject.is_active:
+                return Response(
+                    {'error': _('دسترسی محدود است')},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        
+        serializer = TeachingSubjectSerializer(subject)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TeachingSubjectUpdateAPIView(APIView):
+    """
+    Update Teaching Subject
+    
+    ویرایش موضوع تدریس
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    
+    @extend_schema(
+        tags=['Teaching Subject'],
+        summary='Update Teaching Subject',
+        description='ویرایش موضوع تدریس (صاحب موضوع یا ادمین)',
+        parameters=[
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Subject ID')
+        ],
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Subject updated successfully"),
+            400: OpenApiResponse(description="Invalid data"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Subject not found"),
+        }
+    )
+    def post(self, request, id):
+        from classroom.models import TeachingSubject
+        from .classroom_serializers import TeachingSubjectSerializer
+        
+        try:
+            subject = TeachingSubject.objects.get(id=id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی دسترسی - فقط صاحب یا ادمین
+        if request.user.role == 'teacher' and subject.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به ویرایش این موضوع ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        elif request.user.role not in ['teacher', 'admin']:
+            return Response(
+                {'error': _('تنها معلمان و ادمین می‌توانند موضوع را ویرایش کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = TeachingSubjectSerializer(subject, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TeachingSubjectDeleteAPIView(APIView):
+    """
+    Delete Teaching Subject
+    
+    حذف موضوع تدریس
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Teaching Subject'],
+        summary='Delete Teaching Subject',
+        description='حذف موضوع تدریس (صاحب یا ادمین)',
+        parameters=[
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Subject ID')
+        ],
+        responses={
+            204: OpenApiResponse(description="Subject deleted successfully"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Subject not found"),
+        }
+    )
+    def post(self, request, id):
+        from classroom.models import TeachingSubject
+        
+        try:
+            subject = TeachingSubject.objects.get(id=id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی دسترسی - فقط صاحب یا ادمین
+        if request.user.role == 'teacher' and subject.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به حذف این موضوع ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        elif request.user.role not in ['teacher', 'admin']:
+            return Response(
+                {'error': _('تنها معلمان و ادمین می‌توانند موضوع را حذف کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        subject.delete()
+        return Response(
+            {'message': _('موضوع تدریسی با موفقیت حذف شد')},
+            status=status.HTTP_204_NO_CONTENT
+        )
