@@ -1,6 +1,10 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django.urls import path
+from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect
+from django.contrib import messages
 from .models import (
     TeacherAvailability, TeachingSubject, DiscountCode, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
@@ -8,6 +12,8 @@ from .models import (
 )
 import jdatetime
 from datetime import datetime
+import csv
+from io import StringIO
 
 
 def get_jalali_date(date_obj):
@@ -28,6 +34,8 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
     search_fields = ['teacher__name', 'teacher__username']
     ordering = ['-date', 'start_time']
     readonly_fields = ['created_at', 'updated_at', 'jalali_date_display']
+    actions = ['mark_available', 'mark_unavailable', 'bulk_delete']
+    change_list_template = 'admin/classroom/teacherAvailability/change_list.html'
     
     fieldsets = (
         (_('معلم و تاریخ'), {
@@ -51,6 +59,70 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
         }),
     )
     
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('bulk-create/', self.admin_site.admin_view(self.bulk_create_view), name='classroom_availability_bulk_create'),
+        ]
+        return custom_urls + urls
+    
+    def bulk_create_view(self, request):
+        """صفحه برای افزودن گروهی شکاف‌های زمانی"""
+        if request.method == 'POST':
+            form_data = request.POST
+            teacher_id = form_data.get('teacher')
+            date_str = form_data.get('date')
+            price = form_data.get('price')
+            start_times = form_data.getlist('start_times')
+            end_times = form_data.getlist('end_times')
+            
+            if not all([teacher_id, date_str, price, start_times, end_times]):
+                messages.error(request, _('لطفاً تمام فیلدهای ضروری را پر کنید'))
+                return render(request, 'admin/classroom/teacherAvailability/bulk_create.html', {
+                    'title': _('افزودن گروهی شکاف‌های زمانی'),
+                    'opts': self.model._meta,
+                })
+            
+            # تبدیل تاریخ شمسی به میلادی
+            try:
+                j_date = jdatetime.datetime.strptime(date_str, '%Y/%m/%d')
+                gregorian_date = j_date.togregorian().date()
+            except:
+                messages.error(request, _('فرمت تاریخ نادرست است. از فرمت YYYY/MM/DD استفاده کنید'))
+                return render(request, 'admin/classroom/teacherAvailability/bulk_create.html', {
+                    'title': _('افزودن گروهی شکاف‌های زمانی'),
+                    'opts': self.model._meta,
+                })
+            
+            # ایجاد شکاف‌های زمانی
+            created_count = 0
+            for start_time, end_time in zip(start_times, end_times):
+                if start_time and end_time:
+                    try:
+                        availability = TeacherAvailability.objects.create(
+                            teacher_id=teacher_id,
+                            date=gregorian_date,
+                            start_time=start_time,
+                            end_time=end_time,
+                            price=price
+                        )
+                        created_count += 1
+                    except Exception as e:
+                        messages.warning(request, _(f'خطا در ایجاد شکاف {start_time}-{end_time}: {str(e)}'))
+            
+            messages.success(request, _(f'{created_count} شکاف زمانی با موفقیت ایجاد شد'))
+            return redirect('admin:classroom_teacheravailability_changelist')
+        
+        from account.models import User
+        teachers = User.objects.filter(role='teacher')
+        
+        return render(request, 'admin/classroom/teacherAvailability/bulk_create.html', {
+            'title': _('افزودن گروهی شکاف‌های زمانی'),
+            'teachers': teachers,
+            'opts': self.model._meta,
+            'admin_site': self.admin_site,
+        })
+    
     def jalali_date(self, obj):
         return get_jalali_date(obj.date)
     jalali_date.short_description = _('تاریخ')
@@ -70,6 +142,26 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
         text = _('رزرو‌شده') if obj.is_booked else _('آزاد')
         return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
     is_booked_badge.short_description = _('وضعیت رزرو')
+    
+    def mark_available(self, request, queryset):
+        """انتخاب شکاف‌های زمانی برای دسترسی‌پذیری"""
+        updated = queryset.filter(is_booked=False).update(is_available=True)
+        self.message_user(request, _(f'{updated} شکاف زمانی به عنوان دسترسی‌پذیر علامت‌گذاری شد'))
+    mark_available.short_description = _('علامت‌گذاری به عنوان دسترسی‌پذیر')
+    
+    def mark_unavailable(self, request, queryset):
+        """انتخاب شکاف‌های زمانی برای غیردسترسی‌پذیری"""
+        updated = queryset.update(is_available=False)
+        self.message_user(request, _(f'{updated} شکاف زمانی به عنوان غیردسترسی‌پذیر علامت‌گذاری شد'))
+    mark_unavailable.short_description = _('علامت‌گذاری به عنوان غیردسترسی‌پذیر')
+    
+    def bulk_delete(self, request, queryset):
+        """حذف گروهی شکاف‌های زمانی آزاد (رزرو‌نشده)"""
+        # فقط شکاف‌های زمانی آزاد می‌توانند حذف شوند
+        deletable = queryset.filter(is_booked=False)
+        count, _ = deletable.delete()
+        self.message_user(request, _(f'{count} شکاف زمانی حذف شد'))
+    bulk_delete.short_description = _('حذف شکاف‌های آزاد')
 
 
 # ===== TeachingSubject Admin =====

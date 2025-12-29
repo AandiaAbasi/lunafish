@@ -58,4 +58,11 @@ urlpatterns = [
     path('privacy/', views.PrivacyListAPIView.as_view(), name='privacy'),
     path('contact/', views.ContactListAPIView.as_view(), name='contact'),
     path('contact/phone/', views.ContactPhoneAPIView.as_view(), name='contact_phone'),
+    
+    # ========== Teacher Time Slots ==========
+    path('teacher/availability/', views.TeacherAvailabilityListAPIView.as_view(), name='availability_list'),
+    path('teacher/availability/create/', views.CreateTeacherAvailabilityAPIView.as_view(), name='availability_create'),
+    path('teacher/availability/bulk-create/', views.BulkCreateTeacherAvailabilityAPIView.as_view(), name='availability_bulk_create'),
+    path('teacher/availability/<int:id>/update/', views.UpdateTeacherAvailabilityAPIView.as_view(), name='availability_update'),
+    path('teacher/availability/<int:id>/delete/', views.DeleteTeacherAvailabilityAPIView.as_view(), name='availability_delete'),
 ]

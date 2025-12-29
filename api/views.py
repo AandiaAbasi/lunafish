@@ -1903,3 +1903,263 @@ class HomePageAPIView(APIView):
             'message': _("Home page data retrieved successfully")
         })
 
+
+# ===== Teacher Time Slot (Availability) APIs =====
+class CreateTeacherAvailabilityAPIView(APIView):
+    """API برای افزودن یک شکاف زمانی معلم"""
+    permission_classes = [IsAuthenticated]
+    parser_classes = (JSONParser, FormParser, MultiPartParser)
+    
+    @extend_schema(
+        tags=['Teacher Time Slots'],
+        summary=_('افزودن شکاف زمانی معلم'),
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'date': {'type': 'string', 'description': 'تاریخ (YYYY/MM/DD)'},
+                    'start_time': {'type': 'string', 'description': 'ساعت شروع (HH:MM)'},
+                    'end_time': {'type': 'string', 'description': 'ساعت پایان (HH:MM)'},
+                    'price': {'type': 'number', 'description': 'قیمت'},
+                    'notes': {'type': 'string', 'description': 'یادداشت‌ها (اختیاری)'},
+                },
+                'required': ['date', 'start_time', 'end_time', 'price']
+            }
+        },
+        responses={201: 'ایجاد شده'}
+    )
+    def post(self, request):
+        from .classroom_serializers import TeacherAvailabilitySerializer
+        
+        # فقط معلمین می‌توانند شکاف زمانی اضافه کنند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('شما معلم نیستید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        data = request.data.copy()
+        data['teacher'] = request.user.id
+        
+        serializer = TeacherAvailabilitySerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {'data': serializer.data, 'message': _('شکاف زمانی با موفقیت ایجاد شد')},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BulkCreateTeacherAvailabilityAPIView(APIView):
+    """API برای افزودن چند شکاف زمانی معلم به صورت گروهی"""
+    permission_classes = [IsAuthenticated]
+    parser_classes = (JSONParser, FormParser, MultiPartParser)
+    
+    @extend_schema(
+        tags=['Teacher Time Slots'],
+        summary=_('افزودن چند شکاف زمانی معلم'),
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'availabilities': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'date': {'type': 'string', 'description': 'تاریخ (YYYY/MM/DD)'},
+                                'start_time': {'type': 'string', 'description': 'ساعت شروع (HH:MM)'},
+                                'end_time': {'type': 'string', 'description': 'ساعت پایان (HH:MM)'},
+                                'price': {'type': 'number', 'description': 'قیمت'},
+                                'notes': {'type': 'string', 'description': 'یادداشت‌ها'},
+                            },
+                            'required': ['date', 'start_time', 'end_time', 'price']
+                        }
+                    }
+                },
+                'required': ['availabilities']
+            }
+        },
+        responses={201: 'ایجاد شده'}
+    )
+    def post(self, request):
+        from .classroom_serializers import TeacherAvailabilitySerializer
+        from classroom.models import TeacherAvailability
+        
+        # فقط معلمین می‌توانند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('شما معلم نیستید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        availabilities_data = request.data.get('availabilities', [])
+        if not isinstance(availabilities_data, list) or len(availabilities_data) == 0:
+            return Response(
+                {'error': _('لطفاً لیست شکاف‌های زمانی را ارائه دهید')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # بیشترین تعداد در یک درخواست
+        if len(availabilities_data) > 100:
+            return Response(
+                {'error': _('حداکثر 100 شکاف زمانی در یک درخواست مجاز است')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # اضافه کردن معلم به هر شکاف
+        for item in availabilities_data:
+            item['teacher'] = request.user.id
+        
+        serializer = TeacherAvailabilitySerializer(data=availabilities_data, many=True)
+        if serializer.is_valid():
+            instances = serializer.save()
+            return Response(
+                {
+                    'data': serializer.data,
+                    'count': len(instances),
+                    'message': _('شکاف‌های زمانی با موفقیت ایجاد شدند')
+                },
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TeacherAvailabilityListAPIView(generics.ListAPIView):
+    """API برای نمایش شکاف‌های زمانی معلم"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = None
+    
+    @extend_schema(
+        tags=['Teacher Time Slots'],
+        summary=_('نمایش شکاف‌های زمانی معلم'),
+        parameters=[
+            OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, description=_('شناسه معلم')),
+            OpenApiParameter('date', OpenApiTypes.STR, required=False, description=_('تاریخ (YYYY/MM/DD)')),
+            OpenApiParameter('is_available', OpenApiTypes.BOOL, required=False, description=_('فقط دسترسی‌پذیر')),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+        from .classroom_serializers import TeacherAvailabilitySerializer
+        from classroom.models import TeacherAvailability
+        
+        # اگر معلم است، فقط خود را می‌بیند
+        if request.user.role == 'teacher':
+            queryset = TeacherAvailability.objects.filter(teacher=request.user)
+        else:
+            # ادمین یا دانش‌آموز
+            teacher_id = request.query_params.get('teacher_id')
+            if teacher_id:
+                queryset = TeacherAvailability.objects.filter(teacher_id=teacher_id)
+            else:
+                queryset = TeacherAvailability.objects.all()
+        
+        # فیلتر بر اساس تاریخ
+        date_str = request.query_params.get('date')
+        if date_str:
+            queryset = queryset.filter(date=date_str)
+        
+        # فیلتر دسترسی‌پذیری
+        is_available = request.query_params.get('is_available')
+        if is_available and is_available.lower() in ['true', '1', 'yes']:
+            queryset = queryset.filter(is_available=True)
+        
+        serializer = TeacherAvailabilitySerializer(queryset, many=True)
+        return Response(
+            {'data': serializer.data, 'count': queryset.count()},
+            status=status.HTTP_200_OK
+        )
+
+
+class UpdateTeacherAvailabilityAPIView(APIView):
+    """API برای ویرایش شکاف زمانی معلم"""
+    permission_classes = [IsAuthenticated]
+    parser_classes = (JSONParser, FormParser, MultiPartParser)
+    
+    @extend_schema(
+        tags=['Teacher Time Slots'],
+        summary=_('ویرایش شکاف زمانی معلم'),
+        parameters=[
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, description=_('شناسه شکاف زمانی'))
+        ]
+    )
+    def patch(self, request, id):
+        from .classroom_serializers import TeacherAvailabilitySerializer
+        from classroom.models import TeacherAvailability
+        
+        try:
+            availability = TeacherAvailability.objects.get(id=id)
+        except TeacherAvailability.DoesNotExist:
+            return Response(
+                {'error': _('شکاف زمانی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # فقط معلم می‌تواند ویرایش کند
+        if request.user.role != 'teacher' or availability.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به این شکاف زمانی ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # اگر رزرو شده، نمی‌تواند تغییر کند
+        if availability.is_booked:
+            return Response(
+                {'error': _('این شکاف زمانی رزرو شده است و نمی‌تواند تغییر کند')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        serializer = TeacherAvailabilitySerializer(availability, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {'data': serializer.data, 'message': _('شکاف زمانی با موفقیت ویرایش شد')},
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteTeacherAvailabilityAPIView(APIView):
+    """API برای حذف شکاف زمانی معلم"""
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Teacher Time Slots'],
+        summary=_('حذف شکاف زمانی معلم'),
+        parameters=[
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, description=_('شناسه شکاف زمانی'))
+        ]
+    )
+    def delete(self, request, id):
+        from classroom.models import TeacherAvailability
+        
+        try:
+            availability = TeacherAvailability.objects.get(id=id)
+        except TeacherAvailability.DoesNotExist:
+            return Response(
+                {'error': _('شکاف زمانی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # فقط معلم می‌تواند حذف کند
+        if request.user.role != 'teacher' or availability.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به این شکاف زمانی ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # اگر رزرو شده، نمی‌تواند حذف کند
+        if availability.is_booked:
+            return Response(
+                {'error': _('این شکاف زمانی رزرو شده است و نمی‌تواند حذف شود')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        availability.delete()
+        return Response(
+            {'message': _('شکاف زمانی با موفقیت حذف شد')},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+

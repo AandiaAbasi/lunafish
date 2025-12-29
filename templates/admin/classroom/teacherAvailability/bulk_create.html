@@ -1,0 +1,232 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "افزودن گروهی شکاف‌های زمانی" %}{% endblock %}
+
+{% block extrahead %}
+<style>
+    .bulk-create-container {
+        max-width: 900px;
+        margin: 20px auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #417690;
+        box-shadow: 0 0 0 3px rgba(65, 118, 144, 0.1);
+    }
+    
+    .time-slots {
+        margin-top: 30px;
+        padding: 20px;
+        background: #f5f5f5;
+        border-radius: 4px;
+    }
+    
+    .time-slot {
+        display: grid;
+        grid-template-columns: 1fr 1fr 50px;
+        gap: 15px;
+        margin-bottom: 15px;
+        align-items: flex-end;
+    }
+    
+    .time-slot input {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    .btn-remove {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    
+    .btn-remove:hover {
+        background: #c82333;
+    }
+    
+    .btn-add-time {
+        background: #17a2b8;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+    
+    .btn-add-time:hover {
+        background: #138496;
+    }
+    
+    .form-actions {
+        margin-top: 30px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+    
+    .btn-submit {
+        background: #28a745;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .btn-submit:hover {
+        background: #218838;
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+    
+    .info-box {
+        background: #e7f3ff;
+        border-left: 4px solid #2196F3;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        color: #0c5460;
+    }
+    
+    h2 {
+        color: #333;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bulk-create-container">
+    <h2>{% trans "افزودن گروهی شکاف‌های زمانی" %}</h2>
+    
+    <div class="info-box">
+        <strong>{% trans "نکات:" %}</strong>
+        <ul style="margin: 10px 0 0 20px;">
+            <li>{% trans "تاریخ را به صورت شمسی وارد کنید (مثال: 1403/09/27)" %}</li>
+            <li>{% trans "می‌توانید چندین شکاف زمانی برای یک روز اضافه کنید" %}</li>
+            <li>{% trans "ساعت‌ها به صورت HH:MM وارد شوند (مثال: 09:00)" %}</li>
+        </ul>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="teacher">{% trans "معلم" %} *</label>
+            <select name="teacher" id="teacher" required>
+                <option value="">{% trans "انتخاب معلم" %}</option>
+                {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}">{{ teacher.name }} ({{ teacher.username }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="date">{% trans "تاریخ (YYYY/MM/DD)" %} *</label>
+            <input type="text" name="date" id="date" placeholder="1403/09/27" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="price">{% trans "قیمت (تومان)" %} *</label>
+            <input type="number" name="price" id="price" placeholder="50000" required step="1000">
+        </div>
+        
+        <div class="time-slots">
+            <h3 style="margin-top: 0;">{% trans "شکاف‌های زمانی" %}</h3>
+            <div id="time-slots-container">
+                <div class="time-slot">
+                    <input type="time" name="start_times" class="start-time" placeholder="09:00" required>
+                    <input type="time" name="end_times" class="end-time" placeholder="10:00" required>
+                    <button type="button" class="btn-remove" onclick="removeTimeSlot(this)">{% trans "حذف" %}</button>
+                </div>
+            </div>
+            
+            <button type="button" class="btn-add-time" onclick="addTimeSlot()">+ {% trans "اضافه کردن شکاف زمانی" %}</button>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">{% trans "افزودن شکاف‌های زمانی" %}</button>
+            <a href="{% url 'admin:classroom_teacheravailability_changelist' %}" class="btn-cancel">{% trans "انصراف" %}</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function addTimeSlot() {
+    const container = document.getElementById('time-slots-container');
+    const timeSlot = document.createElement('div');
+    timeSlot.className = 'time-slot';
+    timeSlot.innerHTML = `
+        <input type="time" name="start_times" class="start-time" required>
+        <input type="time" name="end_times" class="end-time" required>
+        <button type="button" class="btn-remove" onclick="removeTimeSlot(this)">{% trans "حذف" %}</button>
+    `;
+    container.appendChild(timeSlot);
+}
+
+function removeTimeSlot(button) {
+    const container = document.getElementById('time-slots-container');
+    if (container.children.length > 1) {
+        button.parentElement.remove();
+    } else {
+        alert('{% trans "حداقل یک شکاف زمانی ضروری است" %}');
+    }
+}
+
+// Jalali date picker (ساده‌تر)
+document.getElementById('date').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') e.preventDefault();
+});
+</script>
+{% endblock %}
