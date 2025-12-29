@@ -94,14 +94,6 @@ class SendOTPAPIView(APIView):
             400: OpenApiResponse(description="Invalid data or phone already registered"),
             429: OpenApiResponse(description="Rate limit exceeded"),
             503: OpenApiResponse(description="Email service not configured"),
-        },
-        examples={
-            '200': {
-                'value': {
-                    'success': True,
-                    'message': 'Verification code sent.'
-                }
-            }
         }
     )
     def post(self, request):
