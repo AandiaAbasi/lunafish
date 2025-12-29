@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from .models import (
-    TeacherAvailability, TeachingSubject, DiscountCode, ClassBooking,
+    TeacherAvailability, TeachingSubject, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
     StudentTransaction, PlatformSettings
 )
@@ -227,73 +227,6 @@ class TeachingSubjectAdmin(admin.ModelAdmin):
         color = '#28a745' if obj.is_active else '#dc3545'
         text = _('فعال') if obj.is_active else _('غیرفعال')
         return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
-    is_active_badge.short_description = _('وضعیت')
-
-
-# ===== DiscountCode Admin =====
-@admin.register(DiscountCode)
-class DiscountCodeAdmin(admin.ModelAdmin):
-    list_display = ['code', 'discount_type_display', 'discount_value', 'jalali_valid_from', 'is_active_badge', 'used_count_display']
-    list_filter = ['discount_type', 'is_active', 'valid_from']
-    search_fields = ['code']
-    readonly_fields = ['used_count', 'created_at', 'updated_at', 'jalali_valid_from_display', 'jalali_valid_until_display']
-    
-    fieldsets = (
-        (_('کد و نوع'), {
-            'fields': ('code', 'discount_type')
-        }),
-        (_('مقدار تخفیف'), {
-            'fields': ('discount_value', 'maximum_discount')
-        }),
-        (_('محدودیت‌ها'), {
-            'fields': ('minimum_purchase', 'usage_limit', 'used_count')
-        }),
-        (_('تاریخ اعتبار'), {
-            'fields': ('valid_from', 'valid_until', 'jalali_valid_from_display', 'jalali_valid_until_display')
-        }),
-        (_('توصیف'), {
-            'fields': ('description',)
-        }),
-        (_('وضعیت'), {
-            'fields': ('is_active',)
-        }),
-        (_('اطلاعات سیستم'), {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
-    
-    def discount_type_display(self, obj):
-        return obj.get_discount_type_display()
-    discount_type_display.short_description = _('نوع تخفیف')
-    
-    def jalali_valid_from(self, obj):
-        if obj.valid_from:
-            jalali = jdatetime.datetime.fromgregorian(datetime=obj.valid_from)
-            return jalali.strftime('%Y/%m/%d %H:%M')
-        return '-'
-    jalali_valid_from.short_description = _('معتبر از')
-    
-    def jalali_valid_from_display(self, obj):
-        return self.jalali_valid_from(obj)
-    jalali_valid_from_display.short_description = _('معتبر از (شمسی)')
-    
-    def jalali_valid_until_display(self, obj):
-        if obj.valid_until:
-            jalali = jdatetime.datetime.fromgregorian(datetime=obj.valid_until)
-            return jalali.strftime('%Y/%m/%d %H:%M')
-        return '-'
-    jalali_valid_until_display.short_description = _('معتبر تا (شمسی)')
-    
-    def used_count_display(self, obj):
-        limit = obj.usage_limit or '∞'
-        return f"{obj.used_count}/{limit}"
-    used_count_display.short_description = _('استفاده شده')
-    
-    def is_active_badge(self, obj):
-        color = '#28a745' if obj.is_active else '#dc3545'
-        text = _('فعال') if obj.is_active else _('غیرفعال')
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
     is_active_badge.short_description = _('وضعیت')
 
 

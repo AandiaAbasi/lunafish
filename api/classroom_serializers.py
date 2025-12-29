@@ -4,7 +4,7 @@ Serializers for Classroom App - Time Slots, Bookings, Revenue, Transactions
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 from .models import (
-    TeacherAvailability, TeachingSubject, DiscountCode, ClassBooking,
+    TeacherAvailability, TeachingSubject, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
     StudentTransaction, PlatformSettings
 )
@@ -68,25 +68,7 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
             'cover_image', 'demo_video', 'min_age', 'max_age', 'is_active', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
-
-
-class DiscountCodeSerializer(serializers.ModelSerializer):
-    """Serializer for DiscountCode"""
-    discount_type_display = serializers.CharField(source='get_discount_type_display', read_only=True)
-    is_valid = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = DiscountCode
-        fields = [
-            'id', 'code', 'discount_type', 'discount_type_display', 'discount_value',
-            'maximum_discount', 'minimum_purchase', 'valid_from', 'valid_until',
-            'usage_limit', 'used_count', 'is_active', 'is_valid', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'used_count', 'created_at', 'updated_at']
-    
-    def get_is_valid(self, obj):
-        return obj.is_valid()
-
+        
 
 class ClassBookingSerializer(serializers.ModelSerializer):
     """Serializer for ClassBooking"""
