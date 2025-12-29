@@ -84,92 +84,6 @@ class TeachingSubject(BaseModel):
         return f"{self.title} - {self.teacher.name}"
 
 
-# ===== Discount Code Model =====
-class DiscountCode(BaseModel):
-    """کد‌های تخفیف برای کلاس‌ها"""
-    DISCOUNT_TYPE_CHOICES = [
-        ('percentage', _("درصدی")),
-        ('fixed', _("مبلغ ثابت")),
-    ]
-    code = models.CharField(max_length=50, unique=True, verbose_name=_("کد"))
-    description = models.TextField(blank=True, verbose_name=_("توضیح"))
-    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES, verbose_name=_("نوع تخفیف"))
-    discount_value = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("مقدار تخفیف"))
-    maximum_discount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name=_("حداکثر تخفیف"))
-    minimum_purchase = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name=_("خرید حداقل"))
-    valid_from = models.DateTimeField(verbose_name=_("معتبر از"))
-    valid_until = models.DateTimeField(verbose_name=_("معتبر تا"))
-    usage_limit = models.IntegerField(null=True, blank=True, verbose_name=_("محدودیت استفاده"))
-    used_count = models.IntegerField(default=0, verbose_name=_("تعداد استفاده"))
-    is_active = models.BooleanField(default=True, verbose_name=_("فعال"))
-    
-    class Meta:
-        verbose_name = _("کد تخفیف")
-        verbose_name_plural = _("کدهای تخفیف")
-        ordering = ['-valid_from']
-        indexes = [
-            models.Index(fields=['code']),
-            models.Index(fields=['is_active', '-valid_from']),
-        ]
-
-    def __str__(self):
-        return f"{self.code} - {self.discount_value} {self.get_discount_type_display()}"
-    
-    def is_valid(self):
-        """بررسی صحت کد"""
-        from django.utils import timezone
-        
-        now = timezone.now()
-        if not self.is_active:
-            return False
-
-        # Normalize validity window to be comparable with aware 'now'
-        valid_from = self.valid_from
-        valid_until = self.valid_until
-        try:
-            if timezone.is_naive(valid_from):
-                valid_from = timezone.make_aware(valid_from, timezone.get_current_timezone())
-            if timezone.is_naive(valid_until):
-                valid_until = timezone.make_aware(valid_until, timezone.get_current_timezone())
-        except Exception:
-            # Fallback: compare as naive values to avoid TypeError
-            valid_from = getattr(valid_from, 'replace', lambda **kwargs: valid_from)(tzinfo=None)
-            valid_until = getattr(valid_until, 'replace', lambda **kwargs: valid_until)(tzinfo=None)
-            now = now.replace(tzinfo=None)
-
-        if now < valid_from or now > valid_until:
-            return False
-        if self.usage_limit and self.used_count >= self.usage_limit:
-            return False
-        
-        return True
-    
-    def calculate_discount(self, amount):
-        """محاسبه مقدار تخفیف"""
-        if not self.is_valid():
-            return Decimal('0')
-        
-        if amount < self.minimum_purchase:
-            return Decimal('0')
-        
-        if self.discount_type == 'percentage':
-            discount = amount * (self.discount_value / Decimal('100'))
-            if self.maximum_discount:
-                discount = min(discount, self.maximum_discount)
-        else:  # fixed
-            discount = self.discount_value
-        
-        return discount
-    
-    def apply(self):
-        """اعمال تخفیف (افزایش تعداد استفاده)"""
-        if self.usage_limit is None or self.used_count < self.usage_limit:
-            self.used_count += 1
-            self.save(update_fields=['used_count'])
-            return True
-        return False
-
-
 class ClassBooking(BaseModel):
     availability = models.OneToOneField(TeacherAvailability, on_delete=models.PROTECT, verbose_name=_("دسترسی"))
     teacher = models.ForeignKey(User, on_delete=models.PROTECT, related_name='booked_classes', verbose_name=_("معلم"))
@@ -179,8 +93,7 @@ class ClassBooking(BaseModel):
     
     # قیمت
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("قیمت"))
-    # اطلاعات تخفیف
-    discount_code = models.ForeignKey(DiscountCode, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("کد تخفیف"), related_name='class_bookings')
+    
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name=_("مبلغ تخفیف")) 
     final_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("قیمت نهایی"))
 

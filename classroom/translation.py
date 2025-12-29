@@ -2,7 +2,6 @@ from modeltranslation.translator import translator, TranslationOptions
 from .models import (
     TeacherAvailability, 
     TeachingSubject, 
-    DiscountCode, 
     ClassBooking,
     TeacherWallet, 
     ClassRevenue, 
@@ -23,13 +22,6 @@ class TeachingSubjectTranslationOptions(TranslationOptions):
     fields = ('title', 'description')
 
 translator.register(TeachingSubject, TeachingSubjectTranslationOptions)
-
-
-class DiscountCodeTranslationOptions(TranslationOptions):
-    fields = ('description',)
-
-translator.register(DiscountCode, DiscountCodeTranslationOptions)
-
 
 class ClassBookingTranslationOptions(TranslationOptions):
     fields = ()
