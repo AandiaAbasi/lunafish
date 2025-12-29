@@ -675,15 +675,11 @@ msgstr "Invalid JSON format"
 msgid "An unexpected error occurred"
 msgstr "An unexpected error occurred"
 
-#: skyroom/models.py
 msgid "Inactive"
 msgstr "Inactive"
 
 msgid "Active"
 msgstr "Active"
-
-msgid "Skyroom Service ID"
-msgstr "Skyroom Service ID"
 
 msgid "Service Title"
 msgstr "Service Title"
@@ -735,9 +731,6 @@ msgstr "Services"
 
 msgid "0: Inactive, 1: Active"
 msgstr "0: Inactive, 1: Active"
-
-msgid "Skyroom Room ID"
-msgstr "Skyroom Room ID"
 
 msgid "Service this room belongs to"
 msgstr "Service this room belongs to"
@@ -811,9 +804,6 @@ msgstr "Male"
 msgid "Female"
 msgstr "Female"
 
-msgid "Skyroom User ID"
-msgstr "Skyroom User ID"
-
 msgid "Username"
 msgstr "Username"
 
@@ -877,12 +867,6 @@ msgstr "Expiry Date"
 msgid "Account expiry date (Unix timestamp)"
 msgstr "Account expiry date (Unix timestamp)"
 
-msgid "Skyroom User"
-msgstr "Skyroom User"
-
-msgid "Skyroom Users"
-msgstr "Skyroom Users"
-
 msgid "Normal User"
 msgstr "Normal User"
 
@@ -903,9 +887,6 @@ msgstr "Room User Access"
 
 msgid "Room User Accesses"
 msgstr "Room User Accesses"
-
-msgid "Associated Skyroom user"
-msgstr "Associated Skyroom user"
 
 msgid "Display name for this login"
 msgstr "Display name for this login"
@@ -934,7 +915,6 @@ msgstr "When this login URL expires"
 msgid "Login URLs"
 msgstr "Login URLs"
 
-#: skyroom/admin.py
 msgid "Basic Information"
 msgstr "Basic Information"
 
@@ -977,11 +957,6 @@ msgstr "URL"
 msgid "Expiry"
 msgstr "Expiry"
 
-#: skyroom/apps.py
-msgid "Skyroom Integration"
-msgstr "Skyroom Integration"
-
-#: skyroom/views.py
 msgid "Users added successfully"
 msgstr "Users added successfully"
 

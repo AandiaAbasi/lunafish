@@ -676,15 +676,11 @@ msgstr "فرمت JSON نامعتبر است"
 msgid "An unexpected error occurred"
 msgstr "خطای غیرمنتظره‌ای رخ داد"
 
-#: skyroom/models.py
 msgid "Inactive"
 msgstr "غیرفعال"
 
 msgid "Active"
 msgstr "فعال"
-
-msgid "Skyroom Service ID"
-msgstr "شناسه سرویس اسکایروم"
 
 msgid "Service Title"
 msgstr "عنوان سرویس"
@@ -736,9 +732,6 @@ msgstr "سرویس‌ها"
 
 msgid "0: Inactive, 1: Active"
 msgstr "0: غیرفعال, 1: فعال"
-
-msgid "Skyroom Room ID"
-msgstr "شناسه اتاق اسکایروم"
 
 msgid "Service this room belongs to"
 msgstr "سرویسی که این اتاق به آن تعلق دارد"
@@ -812,9 +805,6 @@ msgstr "مرد"
 msgid "Female"
 msgstr "زن"
 
-msgid "Skyroom User ID"
-msgstr "شناسه کاربر اسکایروم"
-
 msgid "Username"
 msgstr "نام کاربری"
 
@@ -878,12 +868,6 @@ msgstr "تاریخ انقضاء"
 msgid "Account expiry date (Unix timestamp)"
 msgstr "تاریخ انقضاء حساب (Unix timestamp)"
 
-msgid "Skyroom User"
-msgstr "کاربر اسکایروم"
-
-msgid "Skyroom Users"
-msgstr "کاربران اسکایروم"
-
 msgid "Normal User"
 msgstr "کاربر عادی"
 
@@ -904,9 +888,6 @@ msgstr "دسترسی کاربر به اتاق"
 
 msgid "Room User Accesses"
 msgstr "دسترسی‌های کاربر به اتاقها"
-
-msgid "Associated Skyroom user"
-msgstr "کاربر اسکایروم ترتبطه"
 
 msgid "Display name for this login"
 msgstr "نام نمایش برای این ورود"
@@ -935,7 +916,6 @@ msgstr "زمان انقضاء این URL ورود"
 msgid "Login URLs"
 msgstr "URLهای ورود"
 
-#: skyroom/admin.py
 msgid "Basic Information"
 msgstr "اطلاعات اساسی"
 
@@ -978,11 +958,6 @@ msgstr "URL"
 msgid "Expiry"
 msgstr "انقضاء"
 
-#: skyroom/apps.py
-msgid "Skyroom Integration"
-msgstr "انتگراسیون اسکایروم"
-
-#: skyroom/views.py
 msgid "Users added successfully"
 msgstr "کاربران با موفقیت افزوده شدند"
 

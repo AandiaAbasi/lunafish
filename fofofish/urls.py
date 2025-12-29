@@ -24,7 +24,6 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('', include('core.urls')),
     path('api/', include('api.urls')),
-    path('api/skyroom/', include('skyroom.urls')),
     
     # Swagger/OpenAPI Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

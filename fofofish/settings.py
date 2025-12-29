@@ -69,9 +69,7 @@ INSTALLED_APPS = [
     # Local apps
     'core',
     'account',
-    'skyroom',
-    'api',
-    'classroom'
+    'api'
 ]
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
@@ -222,7 +220,6 @@ CKEDITOR_RESTRICT_BY_DATE = True
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'fofofish.authentication.BearerJWTAuthentication',
-        'core.api_auth.APIKeyAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -240,7 +237,7 @@ REST_FRAMEWORK = {
 # drf-spectacular Swagger/OpenAPI Configuration
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Fofofish API',
-    'DESCRIPTION': 'API for Fofofish - Educational Platform with Skyroom Integration',
+    'DESCRIPTION': 'API for Fofofish - Educational Platform',
     'VERSION': '1.0.0',
     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
     'SERVERS': [
@@ -287,11 +284,6 @@ SPECTACULAR_SETTINGS = {
             'apiKey': [],
         }
     ],
-}
-
-# Valid API Keys
-VALID_API_KEYS = {
-    'apikey-39974696-1-e570445f94a95d2573d9922d04583008': 'skyroom_integration_key',
 }
 
 # JWT Configuration (SimpleJWT)
