@@ -1,32 +1,521 @@
 from django.contrib import admin
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 from .models import (
     TeacherAvailability, TeachingSubject, DiscountCode, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
     StudentTransaction, PlatformSettings
 )
+import jdatetime
+from datetime import datetime
 
 
+def get_jalali_date(date_obj):
+    """تبدیل تاریخ میلادی به شمسی"""
+    if not date_obj:
+        return '-'
+    if isinstance(date_obj, datetime):
+        date_obj = date_obj.date()
+    jalali = jdatetime.datetime.fromgregorian(datetime=datetime.combine(date_obj, datetime.min.time()))
+    return jalali.strftime('%Y/%m/%d')
+
+
+# ===== TeacherAvailability Admin =====
 @admin.register(TeacherAvailability)
 class TeacherAvailabilityAdmin(admin.ModelAdmin):
-    list_display = ['teacher', 'date', 'start_time', 'end_time', 'price', 'is_available', 'is_booked']
+    list_display = ['teacher', 'jalali_date', 'start_time', 'end_time', 'price', 'is_available_badge', 'is_booked_badge']
     list_filter = ['teacher', 'date', 'is_available', 'is_booked', 'created_at']
     search_fields = ['teacher__name', 'teacher__username']
     ordering = ['-date', 'start_time']
+    readonly_fields = ['created_at', 'updated_at', 'jalali_date_display']
+    
     fieldsets = (
-        ('معلم و تاریخ', {
-            'fields': ('teacher', 'date')
+        (_('معلم و تاریخ'), {
+            'fields': ('teacher', 'date', 'jalali_date_display')
         }),
-        ('ساعات', {
+        (_('ساعات'), {
             'fields': ('start_time', 'end_time')
         }),
-        ('قیمت‌گذاری', {
+        (_('قیمت‌گذاری'), {
             'fields': ('price',)
         }),
-        ('وضعیت', {
+        (_('وضعیت'), {
             'fields': ('is_available', 'is_booked')
         }),
-        ('یادداشت', {
+        (_('یادداشت'), {
             'fields': ('notes',)
         }),
+        (_('اطلاعات سیستم'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
     )
+    
+    def jalali_date(self, obj):
+        return get_jalali_date(obj.date)
+    jalali_date.short_description = _('تاریخ')
+    
+    def jalali_date_display(self, obj):
+        return get_jalali_date(obj.date)
+    jalali_date_display.short_description = _('تاریخ شمسی')
+    
+    def is_available_badge(self, obj):
+        color = '#28a745' if obj.is_available else '#dc3545'
+        text = _('دسترسی‌پذیر') if obj.is_available else _('غیردسترسی‌پذیر')
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    is_available_badge.short_description = _('دسترسی‌پذیری')
+    
+    def is_booked_badge(self, obj):
+        color = '#ff6b6b' if obj.is_booked else '#95e1d3'
+        text = _('رزرو‌شده') if obj.is_booked else _('آزاد')
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    is_booked_badge.short_description = _('وضعیت رزرو')
+
+
+# ===== TeachingSubject Admin =====
+@admin.register(TeachingSubject)
+class TeachingSubjectAdmin(admin.ModelAdmin):
+    list_display = ['title', 'teacher', 'level', 'is_active_badge']
+    list_filter = ['level', 'is_active', 'created_at']
+    search_fields = ['title', 'teacher__name', 'teacher__username']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        (_('اطلاعات اساسی'), {
+            'fields': ('teacher', 'title', 'level', 'is_active')
+        }),
+        (_('توصیف'), {
+            'fields': ('description',)
+        }),
+        (_('رسانه'), {
+            'fields': ('cover_image', 'demo_video')
+        }),
+        (_('محدودیت سن'), {
+            'fields': ('min_age', 'max_age')
+        }),
+        (_('اطلاعات سیستم'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def is_active_badge(self, obj):
+        color = '#28a745' if obj.is_active else '#dc3545'
+        text = _('فعال') if obj.is_active else _('غیرفعال')
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    is_active_badge.short_description = _('وضعیت')
+
+
+# ===== DiscountCode Admin =====
+@admin.register(DiscountCode)
+class DiscountCodeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'discount_type_display', 'discount_value', 'jalali_valid_from', 'is_active_badge', 'used_count_display']
+    list_filter = ['discount_type', 'is_active', 'valid_from']
+    search_fields = ['code']
+    readonly_fields = ['used_count', 'created_at', 'updated_at', 'jalali_valid_from_display', 'jalali_valid_until_display']
+    
+    fieldsets = (
+        (_('کد و نوع'), {
+            'fields': ('code', 'discount_type')
+        }),
+        (_('مقدار تخفیف'), {
+            'fields': ('discount_value', 'maximum_discount')
+        }),
+        (_('محدودیت‌ها'), {
+            'fields': ('minimum_purchase', 'usage_limit', 'used_count')
+        }),
+        (_('تاریخ اعتبار'), {
+            'fields': ('valid_from', 'valid_until', 'jalali_valid_from_display', 'jalali_valid_until_display')
+        }),
+        (_('توصیف'), {
+            'fields': ('description',)
+        }),
+        (_('وضعیت'), {
+            'fields': ('is_active',)
+        }),
+        (_('اطلاعات سیستم'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def discount_type_display(self, obj):
+        return obj.get_discount_type_display()
+    discount_type_display.short_description = _('نوع تخفیف')
+    
+    def jalali_valid_from(self, obj):
+        if obj.valid_from:
+            jalali = jdatetime.datetime.fromgregorian(datetime=obj.valid_from)
+            return jalali.strftime('%Y/%m/%d %H:%M')
+        return '-'
+    jalali_valid_from.short_description = _('معتبر از')
+    
+    def jalali_valid_from_display(self, obj):
+        return self.jalali_valid_from(obj)
+    jalali_valid_from_display.short_description = _('معتبر از (شمسی)')
+    
+    def jalali_valid_until_display(self, obj):
+        if obj.valid_until:
+            jalali = jdatetime.datetime.fromgregorian(datetime=obj.valid_until)
+            return jalali.strftime('%Y/%m/%d %H:%M')
+        return '-'
+    jalali_valid_until_display.short_description = _('معتبر تا (شمسی)')
+    
+    def used_count_display(self, obj):
+        limit = obj.usage_limit or '∞'
+        return f"{obj.used_count}/{limit}"
+    used_count_display.short_description = _('استفاده شده')
+    
+    def is_active_badge(self, obj):
+        color = '#28a745' if obj.is_active else '#dc3545'
+        text = _('فعال') if obj.is_active else _('غیرفعال')
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    is_active_badge.short_description = _('وضعیت')
+
+
+# ===== ClassBooking Admin =====
+@admin.register(ClassBooking)
+class ClassBookingAdmin(admin.ModelAdmin):
+    list_display = ['subject', 'teacher', 'student', 'status_badge', 'final_price']
+    list_filter = ['status', 'created_at']
+    search_fields = ['subject__title', 'teacher__name', 'student__name']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        (_('طرف‌های کلاس'), {
+            'fields': ('teacher', 'student', 'subject', 'availability')
+        }),
+        (_('قیمت‌گذاری'), {
+            'fields': ('price', 'discount_code', 'discount_amount', 'final_price')
+        }),
+        (_('وضعیت'), {
+            'fields': ('status',)
+        }),
+        (_('اطلاعات سیستم'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def status_badge(self, obj):
+        colors = {
+            'reserved': '#ffc107',
+            'completed': '#28a745',
+            'cancelled': '#dc3545',
+            'no_show': '#6c757d'
+        }
+        color = colors.get(obj.status, '#6c757d')
+        text = obj.get_status_display()
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    status_badge.short_description = _('وضعیت')
+
+
+# ===== TeacherWallet Admin =====
+@admin.register(TeacherWallet)
+class TeacherWalletAdmin(admin.ModelAdmin):
+    list_display = ['teacher', 'available_balance_display', 'pending_balance_display', 'is_verified_badge', 'is_active_badge']
+    list_filter = ['is_verified', 'is_active', 'created_at']
+    search_fields = ['teacher__name', 'teacher__username']
+    readonly_fields = ['balance', 'total_earned', 'total_withdrawn', 'verified_at', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        (_('معلم'), {
+            'fields': ('teacher', 'is_active')
+        }),
+        (_('موجودی'), {
+            'fields': ('balance', 'available_balance', 'pending_balance')
+        }),
+        (_('درآمد'), {
+            'fields': ('total_earned', 'total_withdrawn')
+        }),
+        (_('اطلاعات بانکی'), {
+            'fields': ('bank_name', 'account_number', 'iban', 'card_number', 'account_holder_name')
+        }),
+        (_('تنظیمات تسویه'), {
+            'fields': ('minimum_settlement_amount', 'next_settlement_date')
+        }),
+        (_('تایید'), {
+            'fields': ('is_verified', 'verified_at')
+        }),
+        (_('اطلاعات سیستم'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def available_balance_display(self, obj):
+        return format_html(f'<strong style="color:#28a745">{obj.available_balance:,.0f}</strong> تومان')
+    available_balance_display.short_description = _('موجودی قابل برداشت')
+    
+    def pending_balance_display(self, obj):
+        return format_html(f'<strong style="color:#ffc107">{obj.pending_balance:,.0f}</strong> تومان')
+    pending_balance_display.short_description = _('موجودی در انتظار')
+    
+    def is_verified_badge(self, obj):
+        color = '#28a745' if obj.is_verified else '#dc3545'
+        text = _('تایید شده') if obj.is_verified else _('تایید نشده')
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    is_verified_badge.short_description = _('تایید')
+    
+    def is_active_badge(self, obj):
+        color = '#28a745' if obj.is_active else '#dc3545'
+        text = _('فعال') if obj.is_active else _('غیرفعال')
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    is_active_badge.short_description = _('وضعیت')
+
+
+# ===== ClassRevenue Admin =====
+@admin.register(ClassRevenue)
+class ClassRevenueAdmin(admin.ModelAdmin):
+    list_display = ['teacher', 'booking', 'total_amount_display', 'teacher_share_display', 'is_confirmed_badge']
+    list_filter = ['is_confirmed', 'is_settled', 'created_at']
+    search_fields = ['teacher__name', 'booking__subject__title']
+    readonly_fields = ['platform_fee', 'teacher_share', 'created_at', 'updated_at', 'confirmed_at', 'settled_at']
+    
+    fieldsets = (
+        (_('درآمد'), {
+            'fields': ('teacher', 'booking')
+        }),
+        (_('مبالغ'), {
+            'fields': ('original_price', 'discount_amount', 'total_amount')
+        }),
+        (_('کارمزد و سهم'), {
+            'fields': ('platform_fee_percentage', 'platform_fee', 'teacher_share')
+        }),
+        (_('تایید'), {
+            'fields': ('is_confirmed', 'confirmed_at')
+        }),
+        (_('تسویه'), {
+            'fields': ('is_settled', 'settled_at')
+        }),
+        (_('یادداشت'), {
+            'fields': ('notes',)
+        }),
+        (_('اطلاعات سیستم'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def total_amount_display(self, obj):
+        return format_html(f'<strong style="color:#007bff">{obj.total_amount:,.0f}</strong> تومان')
+    total_amount_display.short_description = _('مبلغ کل')
+    
+    def teacher_share_display(self, obj):
+        return format_html(f'<strong style="color:#28a745">{obj.teacher_share:,.0f}</strong> تومان')
+    teacher_share_display.short_description = _('سهم معلم')
+    
+    def is_confirmed_badge(self, obj):
+        color = '#28a745' if obj.is_confirmed else '#dc3545'
+        text = _('تایید شده') if obj.is_confirmed else _('تایید نشده')
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    is_confirmed_badge.short_description = _('تایید')
+
+
+# ===== WithdrawalRequest Admin =====
+@admin.register(WithdrawalRequest)
+class WithdrawalRequestAdmin(admin.ModelAdmin):
+    list_display = ['teacher', 'amount_display', 'status_badge', 'payment_method_display', 'jalali_created']
+    list_filter = ['status', 'payment_method', 'created_at']
+    search_fields = ['teacher__name']
+    readonly_fields = ['created_at', 'updated_at', 'completed_at', 'jalali_created_display']
+    
+    fieldsets = (
+        (_('درخواست کننده'), {
+            'fields': ('teacher', 'amount')
+        }),
+        (_('درآمدهای انتخاب‌شده'), {
+            'fields': ('revenues',)
+        }),
+        (_('روش پرداخت'), {
+            'fields': ('payment_method', 'account_info')
+        }),
+        (_('وضعیت'), {
+            'fields': ('status', 'completed_at')
+        }),
+        (_('تراکنش'), {
+            'fields': ('transaction_id',)
+        }),
+        (_('یادداشت‌ها'), {
+            'fields': ('notes', 'admin_notes')
+        }),
+        (_('اطلاعات سیستم'), {
+            'fields': ('created_at', 'updated_at', 'jalali_created_display'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def amount_display(self, obj):
+        return format_html(f'<strong style="color:#dc3545">{obj.amount:,.0f}</strong> تومان')
+    amount_display.short_description = _('مبلغ')
+    
+    def status_badge(self, obj):
+        colors = {
+            'pending': '#ffc107',
+            'processing': '#17a2b8',
+            'completed': '#28a745',
+            'failed': '#dc3545',
+            'cancelled': '#6c757d'
+        }
+        color = colors.get(obj.status, '#6c757d')
+        text = obj.get_status_display()
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    status_badge.short_description = _('وضعیت')
+    
+    def payment_method_display(self, obj):
+        return obj.get_payment_method_display()
+    payment_method_display.short_description = _('روش پرداخت')
+    
+    def jalali_created(self, obj):
+        if obj.created_at:
+            jalali = jdatetime.datetime.fromgregorian(datetime=obj.created_at)
+            return jalali.strftime('%Y/%m/%d %H:%M')
+        return '-'
+    jalali_created.short_description = _('تاریخ درخواست')
+    
+    def jalali_created_display(self, obj):
+        return self.jalali_created(obj)
+    jalali_created_display.short_description = _('تاریخ درخواست (شمسی)')
+
+
+# ===== WalletTransaction Admin =====
+@admin.register(WalletTransaction)
+class WalletTransactionAdmin(admin.ModelAdmin):
+    list_display = ['wallet', 'transaction_type_badge', 'amount_display', 'jalali_created']
+    list_filter = ['transaction_type', 'created_at']
+    search_fields = ['wallet__teacher__name', 'description']
+    readonly_fields = ['wallet', 'transaction_type', 'amount', 'balance_before', 'balance_after', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        (_('کیف پول'), {
+            'fields': ('wallet', 'transaction_type')
+        }),
+        (_('مبالغ'), {
+            'fields': ('amount', 'balance_before', 'balance_after')
+        }),
+        (_('ارجاع'), {
+            'fields': ('revenue', 'withdrawal')
+        }),
+        (_('توصیف'), {
+            'fields': ('description', 'admin_note')
+        }),
+        (_('اطلاعات سیستم'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+    
+    def transaction_type_badge(self, obj):
+        colors = {
+            'revenue': '#28a745',
+            'confirmation': '#17a2b8',
+            'withdrawal': '#dc3545',
+            'refund': '#ffc107',
+            'adjustment': '#6c757d',
+            'bonus': '#20c997',
+            'penalty': '#e83e8c'
+        }
+        color = colors.get(obj.transaction_type, '#6c757d')
+        text = obj.get_transaction_type_display()
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    transaction_type_badge.short_description = _('نوع تراکنش')
+    
+    def amount_display(self, obj):
+        sign = '+' if obj.transaction_type in ['revenue', 'refund', 'bonus'] else '-'
+        color = '#28a745' if sign == '+' else '#dc3545'
+        return format_html(f'<strong style="color:{color}">{sign}{obj.amount:,.0f}</strong> تومان')
+    amount_display.short_description = _('مبلغ')
+    
+    def jalali_created(self, obj):
+        if obj.created_at:
+            jalali = jdatetime.datetime.fromgregorian(datetime=obj.created_at)
+            return jalali.strftime('%Y/%m/%d %H:%M')
+        return '-'
+    jalali_created.short_description = _('تاریخ')
+
+
+# ===== StudentTransaction Admin =====
+@admin.register(StudentTransaction)
+class StudentTransactionAdmin(admin.ModelAdmin):
+    list_display = ['student', 'transaction_type_badge', 'amount_display', 'status_badge']
+    list_filter = ['transaction_type', 'status', 'created_at']
+    search_fields = ['student__name', 'student__username']
+    readonly_fields = ['payment_date', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        (_('دانش‌آموز'), {
+            'fields': ('student',)
+        }),
+        (_('تراکنش'), {
+            'fields': ('transaction_type', 'amount')
+        }),
+        (_('کلاس'), {
+            'fields': ('booking',)
+        }),
+        (_('توصیف'), {
+            'fields': ('description',)
+        }),
+        (_('وضعیت'), {
+            'fields': ('status', 'payment_date')
+        }),
+        (_('اطلاعات سیستم'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def transaction_type_badge(self, obj):
+        colors = {
+            'class_payment': '#007bff',
+            'refund': '#ffc107'
+        }
+        color = colors.get(obj.transaction_type, '#6c757d')
+        text = obj.get_transaction_type_display()
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    transaction_type_badge.short_description = _('نوع تراکنش')
+    
+    def amount_display(self, obj):
+        return format_html(f'<strong style="color:#007bff">{obj.amount:,.0f}</strong> تومان')
+    amount_display.short_description = _('مبلغ')
+    
+    def status_badge(self, obj):
+        colors = {
+            'pending': '#ffc107',
+            'completed': '#28a745',
+            'failed': '#dc3545',
+            'refunded': '#17a2b8'
+        }
+        color = colors.get(obj.status, '#6c757d')
+        text = obj.get_status_display()
+        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+    status_badge.short_description = _('وضعیت')
+
+
+# ===== PlatformSettings Admin =====
+@admin.register(PlatformSettings)
+class PlatformSettingsAdmin(admin.ModelAdmin):
+    list_display = ['commission_rate_class']
+    readonly_fields = ['updated_at', 'updated_by']
+    
+    fieldsets = (
+        (_('کمیسیون'), {
+            'fields': ('commission_rate_class',)
+        }),
+        (_('اطلاعات سیستم'), {
+            'fields': ('updated_by', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
 
