@@ -1,17 +1,31 @@
 {% extends "admin/change_list.html" %}
 {% load i18n admin_urls static %}
 
+{% block content_title %}
+    <h1>{{ cl.opts.verbose_name_plural }}</h1>
+{% endblock %}
+
 {% block search %}
     {{ block.super }}
 {% endblock %}
 
+{% block date_hierarchy %}
+    {{ block.super }}
+{% endblock %}
+
+{% block filters %}
+    {{ block.super }}
+{% endblock %}
+
 {% block result_list %}
-    {% if cl.result_count %}
-        <div style="margin-bottom: 20px;">
-            <a href="{% url 'admin:classroom_availability_bulk_create' %}" class="button" style="background-color: #17a2b8; color: white; text-decoration: none; padding: 8px 15px; border-radius: 4px;">
-                + {% trans "افزودن گروهی" %}
-            </a>
-        </div>
-    {% endif %}
+<div style="margin-bottom: 15px;">
+    <a href="{% url 'admin:classroom_availability_bulk_create' %}" class="button default" style="background-color: #17a2b8;">
+        <span style="margin-right: 5px;">➕</span> {% trans "افزودن گروهی" %}
+    </a>
+</div>
+{{ block.super }}
+{% endblock %}
+
+{% block pagination %}
     {{ block.super }}
 {% endblock %}

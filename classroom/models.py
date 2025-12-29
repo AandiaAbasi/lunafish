@@ -26,8 +26,8 @@ class TeacherAvailability(BaseModel):
     
     class Meta:
         ordering = ['date', 'start_time']
-        verbose_name = _("دسترسی معلم")
-        verbose_name_plural = _("دسترسی‌های معلم")
+        verbose_name = _("زمان‌بندی کلاس معلم")
+        verbose_name_plural = _("زمان‌بندی کلاس‌های معلم")
         unique_together = ('teacher', 'date', 'start_time', 'end_time')
         indexes = [
             models.Index(fields=['teacher', 'date']),
