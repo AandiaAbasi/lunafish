@@ -1,7 +1,7 @@
 {% extends "admin/base_site.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "افزودن گروهی شکاف‌های زمانی" %}{% endblock %}
+{% block title %}{% trans "افزودن گروهی بازه های زمانی" %}{% endblock %}
 
 {% block extrahead %}
 <link rel="stylesheet" href="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.css">
@@ -123,10 +123,10 @@
 
 {% block content %}
 <div class="bulk-create-container">
-    <h2>🕐 {% trans "افزودن گروهی شکاف‌های زمانی" %}</h2>
+    <h2>🕐 {% trans "افزودن گروهی بازه های زمانی" %}</h2>
     
     <div class="info-text">
-        {% trans "از این صفحه می‌توانید شکاف‌های زمانی متعددی را برای معلمی در یک بازه زمانی و الگوی دوره‌ای ایجاد کنید." %}
+        {% trans "از این صفحه می‌توانید بازه های زمانی متعددی را برای معلمی در یک بازه زمانی و الگوی دوره‌ای ایجاد کنید." %}
     </div>
     
     <form method="post" class="bulk-form">
@@ -187,14 +187,14 @@
         <!-- قیمت -->
         <div class="form-row full">
             <div class="form-group">
-                <label for="price">{% trans "قیمت برای هر شکاف (تومان)" %} <span style="color:red;">*</span></label>
+                <label for="price">{% trans "قیمت برای هر بازه (تومان)" %} <span style="color:red;">*</span></label>
                 <input type="number" name="price" id="price" required value="50000" min="0" />
             </div>
         </div>
         
         <!-- دکمه‌ها -->
         <div class="form-actions">
-            <button type="submit" class="btn btn-submit">✓ {% trans "ایجاد شکاف‌های زمانی" %}</button>
+            <button type="submit" class="btn btn-submit">✓ {% trans "ایجاد بازه‌های زمانی" %}</button>
             <a href="{% url 'admin:classroom_teacheravailability_changelist' %}" class="btn btn-cancel">✕ {% trans "لغو" %}</a>
         </div>
     </form>

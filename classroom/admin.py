@@ -67,7 +67,7 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
         return custom_urls + urls
     
     def bulk_create_view(self, request):
-        """صفحه برای افزودن گروهی شکاف‌های زمانی"""
+        """صفحه برای افزودن گروهی بازه‌های زمانی"""
         if request.method == 'POST':
             from django import forms
             from account.models import User
@@ -88,7 +88,7 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
             except Exception as e:
                 messages.error(request, _('فرمت تاریخ نادرست است'))
                 return render(request, 'admin/classroom/teacherAvailability/bulk_create.html', {
-                    'title': _('افزودن گروهی شکاف‌های زمانی'),
+                    'title': _('افزودن گروهی بازه‌های زمانی'),
                     'opts': self.model._meta,
                 })
             
@@ -102,11 +102,11 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
             except Exception as e:
                 messages.error(request, _('خطا در پردازش داده‌های وقت یا قیمت'))
                 return render(request, 'admin/classroom/teacherAvailability/bulk_create.html', {
-                    'title': _('افزودن گروهی شکاف‌های زمانی'),
+                    'title': _('افزودن گروهی بازه‌های زمانی'),
                     'opts': self.model._meta,
                 })
             
-            # ایجاد شکاف‌های زمانی برای هر روز
+            # ایجاد بازه‌های زمانی برای هر روز
             created = 0
             cur_date = start_date
             import datetime as _dt
@@ -140,14 +140,14 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
                 
                 cur_date = cur_date + _dt.timedelta(days=1)
             
-            messages.success(request, _(f'ایجاد شد: {created} شکاف زمانی'))
+            messages.success(request, _(f'ایجاد شد: {created} بازه زمانی'))
             return redirect('admin:classroom_teacheravailability_changelist')
         
         from account.models import User
         teachers = User.objects.filter(role='teacher')
         
         return render(request, 'admin/classroom/teacherAvailability/bulk_create.html', {
-            'title': _('افزودن گروهی شکاف‌های زمانی'),
+            'title': _('افزودن گروهی بازه‌های زمانی'),
             'teachers': teachers,
             'opts': self.model._meta,
         })
@@ -173,24 +173,24 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
     is_booked_badge.short_description = _('وضعیت رزرو')
     
     def mark_available(self, request, queryset):
-        """انتخاب شکاف‌های زمانی برای دسترسی‌پذیری"""
+        """انتخاب بازه‌های زمانی برای دسترسی‌پذیری"""
         updated = queryset.filter(is_booked=False).update(is_available=True)
-        self.message_user(request, _(f'{updated} شکاف زمانی به عنوان دسترسی‌پذیر علامت‌گذاری شد'))
+        self.message_user(request, _(f'{updated} بازه زمانی به عنوان دسترسی‌پذیر علامت‌گذاری شد'))
     mark_available.short_description = _('علامت‌گذاری به عنوان دسترسی‌پذیر')
     
     def mark_unavailable(self, request, queryset):
-        """انتخاب شکاف‌های زمانی برای غیردسترسی‌پذیری"""
+        """انتخاب بازه‌های زمانی برای غیردسترسی‌پذیری"""
         updated = queryset.update(is_available=False)
-        self.message_user(request, _(f'{updated} شکاف زمانی به عنوان غیردسترسی‌پذیر علامت‌گذاری شد'))
+        self.message_user(request, _(f'{updated} بازه زمانی به عنوان غیردسترسی‌پذیر علامت‌گذاری شد'))
     mark_unavailable.short_description = _('علامت‌گذاری به عنوان غیردسترسی‌پذیر')
     
     def bulk_delete(self, request, queryset):
-        """حذف گروهی شکاف‌های زمانی آزاد (رزرو‌نشده)"""
-        # فقط شکاف‌های زمانی آزاد می‌توانند حذف شوند
+        """حذف گروهی بازه‌های زمانی آزاد (رزرو‌نشده)"""
+        # فقط بازه‌های زمانی آزاد می‌توانند حذف شوند
         deletable = queryset.filter(is_booked=False)
         count, _ = deletable.delete()
-        self.message_user(request, _(f'{count} شکاف زمانی حذف شد'))
-    bulk_delete.short_description = _('حذف شکاف‌های آزاد')
+        self.message_user(request, _(f'{count} بازه زمانی حذف شد'))
+    bulk_delete.short_description = _('حذف بازه های آزاد')
 
 
 # ===== TeachingSubject Admin =====

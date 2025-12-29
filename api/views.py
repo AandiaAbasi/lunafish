@@ -2174,7 +2174,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
             201 Created:
                 - data: array - List of created availability slots
                 - created_count: integer - Number of slots created
-                - message: string - "شکاف‌های زمانی با موفقیت ایجاد شدند"
+                - message: string - "بازه زمانی با موفقیت ایجاد شدند"
                 
             400 Bad Request - Invalid data provided
             403 Forbidden - User is not a teacher
@@ -2248,7 +2248,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
         from datetime import datetime, timedelta
         from classroom.models import TeacherAvailability
         
-        # فقط معلمین می‌توانند شکاف زمانی اضافه کنند
+        # فقط معلمین می‌توانند بازه زمانی اضافه کنند
         if request.user.role != 'teacher':
             return Response(
                 {'error': _('شما معلم نیستید')},
@@ -2298,7 +2298,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # ایجاد شکاف‌های زمانی برای هر روز
+        # ایجاد بازه‌های زمانی برای هر روز
         created = 0
         cur_date = start_date
         
@@ -2334,11 +2334,11 @@ class CreateTeacherAvailabilityAPIView(APIView):
         
         if created == 0:
             return Response(
-                {'error': _('هیچ شکاف زمانی جدیدی ایجاد نشد. شاید همه شکاف‌ها قبلاً وجود دارند.')},
+                {'error': _('هیچ بازه زمانی جدیدی ایجاد نشد. شاید همه بازه‌ها قبلاً وجود دارند.')},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # بازیابی و بازگشت شکاف‌های ایجاد شده
+        # بازیابی و بازگشت بازه‌های ایجاد شده
         new_slots = TeacherAvailability.objects.filter(
             teacher_id=request.user.id,
             date__gte=start_date,
@@ -2352,7 +2352,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
             {
                 'data': serializer.data,
                 'created_count': created,
-                'message': _('شکاف‌های زمانی با موفقیت ایجاد شدند')
+                'message': _('بازه‌های زمانی با موفقیت ایجاد شدند')
             },
             status=status.HTTP_201_CREATED
         )
@@ -2383,7 +2383,7 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
             201 Created:
                 - data: array - List of created availability slots
                 - count: integer - Number of slots created
-                - message: string - "شکاف‌های زمانی با موفقیت ایجاد شدند"
+                - message: string - "بازه‌های زمانی با موفقیت ایجاد شدند"
                 
             400 Bad Request - Invalid data or empty array
             403 Forbidden - User is not a teacher
@@ -2469,18 +2469,18 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
         availabilities_data = request.data.get('availabilities', [])
         if not isinstance(availabilities_data, list) or len(availabilities_data) == 0:
             return Response(
-                {'error': _('لطفاً لیست شکاف‌های زمانی را ارائه دهید')},
+                {'error': _('لطفاً لیست بازه‌های زمانی را ارائه دهید')},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         # بیشترین تعداد در یک درخواست
         if len(availabilities_data) > 100:
             return Response(
-                {'error': _('حداکثر 100 شکاف زمانی در یک درخواست مجاز است')},
+                {'error': _('حداکثر 100 بازه زمانی در یک درخواست مجاز است')},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # اضافه کردن معلم به هر شکاف
+        # اضافه کردن معلم به هر باز
         for item in availabilities_data:
             item['teacher'] = request.user.id
         
@@ -2491,7 +2491,7 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
                 {
                     'data': serializer.data,
                     'count': len(instances),
-                    'message': _('شکاف‌های زمانی با موفقیت ایجاد شدند')
+                    'message': _('بازه‌های زمانی با موفقیت ایجاد شدند')
                 },
                 status=status.HTTP_201_CREATED
             )
@@ -2617,21 +2617,21 @@ class UpdateTeacherAvailabilityAPIView(APIView):
             availability = TeacherAvailability.objects.get(id=id)
         except TeacherAvailability.DoesNotExist:
             return Response(
-                {'error': _('شکاف زمانی یافت نشد')},
+                {'error': _('بازه زمانی یافت نشد')},
                 status=status.HTTP_404_NOT_FOUND
             )
         
         # فقط معلم می‌تواند ویرایش کند
         if request.user.role != 'teacher' or availability.teacher_id != request.user.id:
             return Response(
-                {'error': _('شما دسترسی به این شکاف زمانی ندارید')},
+                {'error': _('شما دسترسی به این بازه زمانی ندارید')},
                 status=status.HTTP_403_FORBIDDEN
             )
         
         # اگر رزرو شده، نمی‌تواند تغییر کند
         if availability.is_booked:
             return Response(
-                {'error': _('این شکاف زمانی رزرو شده است و نمی‌تواند تغییر کند')},
+                {'error': _('این بازه زمانی رزرو شده است و نمی‌تواند تغییر کند')},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -2639,7 +2639,7 @@ class UpdateTeacherAvailabilityAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(
-                {'data': serializer.data, 'message': _('شکاف زمانی با موفقیت ویرایش شد')},
+                {'data': serializer.data, 'message': _('بازه زمانی با موفقیت ویرایش شد')},
                 status=status.HTTP_200_OK
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -2690,27 +2690,27 @@ class DeleteTeacherAvailabilityAPIView(APIView):
             availability = TeacherAvailability.objects.get(id=id)
         except TeacherAvailability.DoesNotExist:
             return Response(
-                {'error': _('شکاف زمانی یافت نشد')},
+                {'error': _('بازه زمانی یافت نشد')},
                 status=status.HTTP_404_NOT_FOUND
             )
         
         # فقط معلم می‌تواند حذف کند
         if request.user.role != 'teacher' or availability.teacher_id != request.user.id:
             return Response(
-                {'error': _('شما دسترسی به این شکاف زمانی ندارید')},
+                {'error': _('شما دسترسی به این بازه زمانی ندارید')},
                 status=status.HTTP_403_FORBIDDEN
             )
         
         # اگر رزرو شده، نمی‌تواند حذف کند
         if availability.is_booked:
             return Response(
-                {'error': _('این شکاف زمانی رزرو شده است و نمی‌تواند حذف شود')},
+                {'error': _('این بازه زمانی رزرو شده است و نمی‌تواند حذف شود')},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         availability.delete()
         return Response(
-            {'message': _('شکاف زمانی با موفقیت حذف شد')},
+            {'message': _('بازه زمانی با موفقیت حذف شد')},
             status=status.HTTP_204_NO_CONTENT
         )
 

@@ -13,15 +13,15 @@ from decimal import Decimal
 class TeacherAvailability(BaseModel):
     """
     زمان‌های دسترسی معلم برای تدریس کلاس‌ها
-    هر معلم می‌تواند شکاف‌های زمانی خاص برای تاریخ‌های مشخص تنظیم کند
+    هر معلم می‌تواند بازه های زمانی خاص برای تاریخ‌های مشخص تنظیم کند
     """
     teacher = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'teacher'}, verbose_name=_("معلم"), related_name='availabilities')
     date = models.DateField(verbose_name=_("تاریخ"), help_text=_("تاریخ مشخص برای این دسترسی"))
     start_time = models.TimeField(verbose_name=_("ساعت شروع"), help_text=_("زمانی که معلم تدریس را شروع می‌کند (مثال: 09:00)"))
     end_time = models.TimeField(verbose_name=_("ساعت پایان"), help_text=_("زمانی که معلم تدریس را پایان می‌دهد (مثال: 17:00)"))
-    is_available = models.BooleanField(default=True, verbose_name=_("دسترس‌پذیر"), help_text=_("آیا این شکاف زمانی برای رزرو دسترس‌پذیر است؟"))
-    is_booked = models.BooleanField(default=False, verbose_name=_("رزرو شده"), help_text=_("آیا این شکاف زمانی قبلاً رزرو شده است؟"))
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("قیمت"), help_text=_("قیمت تدریس برای این شکاف زمانی"))
+    is_available = models.BooleanField(default=True, verbose_name=_("دسترس‌پذیر"), help_text=_("آیا این بازه زمانی برای رزرو دسترس‌پذیر است؟"))
+    is_booked = models.BooleanField(default=False, verbose_name=_("رزرو شده"), help_text=_("آیا این بازه زمانی قبلاً رزرو شده است؟"))
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("قیمت"), help_text=_("قیمت تدریس برای این بازه زمانی"))
     notes = models.TextField(blank=True, null=True, verbose_name=_("یادداشت‌ها"), help_text=_("یادداشت‌های اضافی درباره این دسترسی"))
     
     class Meta:
@@ -48,7 +48,7 @@ class TeacherAvailability(BaseModel):
         ).strftime('%Y/%m/%d')
     
     def reserve(self):
-        """رزرو این شکاف زمانی"""
+        """رزرو این بازه زمانی"""
         if not self.is_booked:
             self.is_booked = True
             self.save()
@@ -56,7 +56,7 @@ class TeacherAvailability(BaseModel):
         return False
     
     def release(self):
-        """آزاد کردن این شکاف زمانی"""
+        """آزاد کردن این بازه زمانی"""
         if self.is_booked:
             self.is_booked = False
             self.save()
