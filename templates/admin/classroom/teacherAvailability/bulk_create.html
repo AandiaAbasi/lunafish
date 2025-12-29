@@ -4,8 +4,8 @@
 {% block title %}{% trans "افزودن گروهی شکاف‌های زمانی" %}{% endblock %}
 
 {% block extrahead %}
-<link rel="stylesheet" href="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.css">
-<script src="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@majidh1/jalalidatepicker@5.4.0/dist/jalalidatepicker.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@majidh1/jalalidatepicker@5.4.0/dist/jalalidatepicker.min.js"></script>
 
 <style>
     .bulk-create-container {
@@ -149,11 +149,11 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="start_date">{% trans "تاریخ شروع" %} <span style="color:red;">*</span></label>
-                <input type="text" name="start_date" id="start_date" class="jalali_date_input" required placeholder="YYYY/MM/DD" />
+                <input type="text" name="start_date" id="start_date" required placeholder="YYYY/MM/DD" />
             </div>
             <div class="form-group">
                 <label for="end_date">{% trans "تاریخ پایان" %} <span style="color:red;">*</span></label>
-                <input type="text" name="end_date" id="end_date" class="jalali_date_input" required placeholder="YYYY/MM/DD" />
+                <input type="text" name="end_date" id="end_date" required placeholder="YYYY/MM/DD" />
             </div>
         </div>
         
@@ -204,8 +204,16 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Jalali Date Picker initialization
     jalalidatepicker.startWatch({
-        watch: true
+        watch: true,
+        withoutIcon: false,
+        setTextboxValue: true,
+        autoCloseOnSelect: true,
+        format: 'YYYY/MM/DD'
     });
+    
+    // تعریف date pickers
+    jalalidatepicker.setToDate(new persianDate().toString(), 'start_date');
+    jalalidatepicker.setToDate(new persianDate().toString(), 'end_date');
 });
 </script>
 {% endblock %}
