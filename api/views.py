@@ -85,12 +85,23 @@ class SendOTPAPIView(APIView):
     permission_classes = [AllowAny]
     
     @extend_schema(
+        tags=['Authentication - OTP'],
+        summary='Send OTP Code',
+        description='Send One-Time Password to phone number or email for authentication',
         request=SendOTPSerializer,
         responses={
             200: OpenApiResponse(description="Verification code sent successfully"),
             400: OpenApiResponse(description="Invalid data or phone already registered"),
             429: OpenApiResponse(description="Rate limit exceeded"),
             503: OpenApiResponse(description="Email service not configured"),
+        },
+        examples={
+            '200': {
+                'value': {
+                    'success': True,
+                    'message': 'Verification code sent.'
+                }
+            }
         }
     )
     def post(self, request):
@@ -221,6 +232,16 @@ class VerifyOTPAPIView(APIView):
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Authentication - OTP'],
+        summary='Verify OTP Code',
+        description='Verify One-Time Password code for login or registration. Returns JWT tokens for login or verification token for registration.',
+        responses={
+            200: OpenApiResponse(description="OTP verified successfully, returns tokens or verification token"),
+            400: OpenApiResponse(description="Invalid or expired OTP"),
+            401: OpenApiResponse(description="Unauthorized - Invalid credentials"),
+        }
+    )
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -311,6 +332,9 @@ class CompleteRegistrationAPIView(APIView):
     permission_classes = [AllowAny]
     
     @extend_schema(
+        tags=['Authentication - Registration'],
+        summary='Complete User Registration',
+        description='Finalize user registration by setting username and password after OTP verification.',
         request=CompleteRegistrationSerializer,
         responses={
             201: OpenApiResponse(description="Registration completed successfully"),
@@ -394,6 +418,9 @@ class UserLoginPasswordAPIView(APIView):
     permission_classes = [AllowAny]
     
     @extend_schema(
+        tags=['Authentication - Login'],
+        summary='User Login with Password',
+        description='Authenticate user with username and password. Returns JWT tokens and user profile.',
         request={
             'application/json': {
                 'type': 'object',
@@ -459,6 +486,27 @@ class TeacherLoginPasswordAPIView(APIView):
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Teacher Authentication - Login'],
+        summary='Teacher Login with Password',
+        description='Authenticate teacher with username and password. Returns JWT tokens and teacher profile.',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'username': {'type': 'string', 'description': 'Teacher registered username'},
+                    'password': {'type': 'string', 'description': 'Teacher account password'}
+                },
+                'required': ['username', 'password']
+            }
+        },
+        responses={
+            200: OpenApiResponse(description="Login successful"),
+            400: OpenApiResponse(description="Invalid credentials"),
+            401: OpenApiResponse(description="Unauthorized"),
+            403: OpenApiResponse(description="Account is not for a teacher"),
+        }
+    )
     def post(self, request):
         username = request.data.get('username', '').strip()
         password = request.data.get('password', '').strip()
@@ -496,9 +544,33 @@ class TeacherLoginPasswordAPIView(APIView):
 
 
 class TeacherSendOTPAPIView(APIView):
-    """API: Send OTP to teacher phone or email"""
+    """
+    Teacher Send OTP API
+    
+    Send OTP to teacher phone or email for authentication.
+    
+    post:
+        Send OTP to teacher's phone or email.
+        
+        Request parameters:
+        - identifier: Phone or email (required)
+        - purpose: 'login' or 'registration' (optional)
+        
+        Returns: Confirmation of OTP sent
+    """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Teacher Authentication - OTP'],
+        summary='Send OTP to Teacher',
+        description='Send One-Time Password to teacher phone or email for authentication',
+        request=SendOTPSerializer,
+        responses={
+            200: OpenApiResponse(description="OTP sent successfully"),
+            429: OpenApiResponse(description="Rate limit - wait 2 minutes"),
+            500: OpenApiResponse(description="Server error"),
+        }
+    )
     def post(self, request):
         serializer = SendOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -549,9 +621,33 @@ class TeacherSendOTPAPIView(APIView):
 
 
 class TeacherVerifyOTPAPIView(APIView):
-    """API: Verify OTP and login teacher"""
+    """
+    Teacher Verify OTP API
+    
+    Verify OTP and login teacher or return verification token for registration.
+    
+    post:
+        Verify OTP code for teacher.
+        
+        Request parameters:
+        - identifier: Phone or email (required)
+        - code: OTP code (required)
+        - purpose: 'login' or 'registration' (optional)
+        
+        Returns: User tokens and profile or verification token
+    """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Teacher Authentication - OTP'],
+        summary='Verify Teacher OTP',
+        description='Verify OTP code for teacher login or registration',
+        responses={
+            200: OpenApiResponse(description="OTP verified successfully"),
+            400: OpenApiResponse(description="Invalid OTP"),
+            403: OpenApiResponse(description="Account is not for teachers"),
+        }
+    )
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -617,6 +713,16 @@ class TeacherCompleteRegistrationAPIView(APIView):
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Teacher Authentication - Registration'],
+        summary='Complete Teacher Registration',
+        description='Finalize teacher registration after OTP verification with specialization details.',
+        request=CompleteTeacherRegistrationSerializer,
+        responses={
+            201: OpenApiResponse(description="Teacher registration completed successfully"),
+            400: OpenApiResponse(description="Invalid token or validation failed"),
+        }
+    )
     def post(self, request):
         serializer = CompleteTeacherRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -682,6 +788,26 @@ class UserSendEmailOTPAPIView(APIView):
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Authentication - Email OTP'],
+        summary='Send Email OTP to User',
+        description='Send One-Time Password to user email for authentication',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'email': {'type': 'string', 'format': 'email', 'description': 'User email address'},
+                    'purpose': {'type': 'string', 'enum': ['login', 'registration'], 'description': 'Purpose of OTP'}
+                },
+                'required': ['email']
+            }
+        },
+        responses={
+            200: OpenApiResponse(description="OTP sent successfully"),
+            400: OpenApiResponse(description="Invalid email"),
+            429: OpenApiResponse(description="Rate limit"),
+        }
+    )
     def post(self, request):
         email = request.data.get('email', '').strip().lower()
         
@@ -973,6 +1099,9 @@ class CheckUsernameAPIView(APIView):
     permission_classes = [AllowAny]
     
     @extend_schema(
+        tags=['Utilities'],
+        summary='Check Username Availability',
+        description='Verify if a username is available for registration',
         parameters=[
             OpenApiParameter(
                 name='username',
@@ -1105,6 +1234,15 @@ class FetchUserAPIView(APIView):
     """
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        tags=['Profile Management'],
+        summary='Fetch Current User Profile',
+        description='Get authenticated user profile information',
+        responses={
+            200: OpenApiResponse(description="User profile retrieved successfully"),
+            401: OpenApiResponse(description="User not authenticated"),
+        }
+    )
     def get(self, request):
         """Get current user information"""
         serializer = UserProfileSerializer(request.user)
@@ -1160,6 +1298,9 @@ class UserProfileAPIView(APIView):
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     
     @extend_schema(
+        tags=['Profile Management'],
+        summary='Update User/Teacher Profile',
+        description='Update user or teacher profile information based on role',
         request=EditUserProfileSerializer,
         responses={
             200: OpenApiResponse(description="Profile updated successfully"),
@@ -1587,6 +1728,9 @@ class ChangePasswordAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
     @extend_schema(
+        tags=['Account Settings'],
+        summary='Change User Password',
+        description='Change authenticated user password with old password verification',
         request=ChangePasswordSerializer,
         responses={
             200: OpenApiResponse(description="Password changed successfully"),
@@ -1650,6 +1794,9 @@ class LogoutAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
     @extend_schema(
+        tags=['Authentication'],
+        summary='Logout User',
+        description='Logout user and blacklist their refresh token for security',
         request={
             'application/json': {
                 'type': 'object',
@@ -1707,16 +1854,60 @@ class LogoutAPIView(APIView):
 # ========== Core Content APIs ==========
 
 class ArticleListAPIView(generics.ListAPIView):
-    """API: List all articles"""
+    """
+    List Articles API
+    
+    Retrieve all published articles.
+    
+    get:
+        List all articles ordered by creation date (newest first).
+        Supports pagination.
+        
+        Returns:
+            - Array of article objects with id, title, content, author, created_at
+    """
     permission_classes = [AllowAny]
     queryset = Article.objects.all().order_by('-created_at')
     serializer_class = ArticleListSerializer
+    
+    @extend_schema(
+        tags=['Content'],
+        summary='List Articles',
+        description='Retrieve all published articles with pagination'
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 class ArticleDetailAPIView(APIView):
-    """API: Get article detail"""
+    """
+    Get Article Detail API
+    
+    Retrieve full content of a specific article.
+    
+    get:
+        Get complete article with all details.
+        
+        Path parameters:
+        - pk: integer - Article ID
+        
+        Returns:
+            200 OK:
+                - success: boolean (true)
+                - data: Article object with full content
+                
+            404 Not Found - Article not found
+    """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Content'],
+        summary='Get Article Detail',
+        description='Retrieve full content of a specific article',
+        parameters=[
+            OpenApiParameter('pk', OpenApiTypes.INT, location='path', description='Article ID')
+        ]
+    )
     def get(self, request, pk):
         article = get_object_or_404(Article, pk=pk)
         serializer = ArticleDetailSerializer(article)
@@ -1741,11 +1932,19 @@ class FAQListAPIView(generics.ListAPIView):
     permission_classes = [AllowAny]
     queryset = FAQ.objects.filter(is_active=True).order_by('-created_at')
     serializer_class = FAQSerializer
+    
+    @extend_schema(
+        tags=['Content'],
+        summary='List FAQs',
+        description='Retrieve all active frequently asked questions'
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 class AboutAPIView(APIView):
     """
-    Get About Page API (Duplicate)
+    Get About Page API
     
     Retrieve content for the about/company information page.
     
@@ -1753,11 +1952,19 @@ class AboutAPIView(APIView):
         Get about page content.
         
         Returns:
-            - success: Boolean
-            - data: About page object with id, title, description, contact_info, created_at
+            200 OK:
+                - success: boolean (true)
+                - data: About page object with id, title, description, contact_info, created_at
+                
+            404 Not Found - About content not available
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Content'],
+        summary='Get About Page',
+        description='Retrieve company/about information page content'
+    )
     def get(self, request):
         about = About.objects.first()
         if about:
@@ -1774,7 +1981,7 @@ class AboutAPIView(APIView):
 
 class TermListAPIView(generics.ListAPIView):
     """
-    List Terms and Conditions API (Duplicate)
+    List Terms and Conditions API
     
     Retrieve all terms and conditions documents.
     
@@ -1787,33 +1994,39 @@ class TermListAPIView(generics.ListAPIView):
     permission_classes = [AllowAny]
     queryset = Term.objects.all().order_by('-created_at')
     serializer_class = TermSerializer
+    
+    @extend_schema(
+        tags=['Content'],
+        summary='List Terms and Conditions',
+        description='Retrieve all terms and conditions documents'
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 class PrivacyListAPIView(generics.ListAPIView):
     """
-    List Privacy Policies API (Duplicate)
+    List Privacy Policies API
     
     Retrieve all privacy policy documents.
     
     get:
         List all privacy policies ordered by creation date.
-       
-    List Contact Information API (Duplicate)
-    
-    Retrieve all contact information records.
-    
-    get:
-        List all contact records ordered by type.
         
-        Returns:
-            - List of contact objects with id, type, value (phone/email/address), created_at
-    
         Returns:
             - List of privacy objects with id, title, content, version, created_at
     """
     permission_classes = [AllowAny]
     queryset = Privacy.objects.all().order_by('-created_at')
     serializer_class = PrivacySerializer
+    
+    @extend_schema(
+        tags=['Content'],
+        summary='List Privacy Policies',
+        description='Retrieve all privacy policy documents'
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 class ContactListAPIView(generics.ListAPIView):
@@ -1831,6 +2044,14 @@ class ContactListAPIView(generics.ListAPIView):
     permission_classes = [AllowAny]
     queryset = Contact.objects.all().order_by('type')
     serializer_class = ContactSerializer
+    
+    @extend_schema(
+        tags=['Content'],
+        summary='List Contact Information',
+        description='Retrieve all contact information records'
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 class ContactPhoneAPIView(APIView):
@@ -1843,12 +2064,21 @@ class ContactPhoneAPIView(APIView):
         Get the first phone contact record from the database.
         
         Returns:
-            - status: 'success' or 'error'
-            - data: Contact object with type='phone' and value (phone number)
-            - message: Status message
+            200 OK:
+                - status: 'success'
+                - data: Contact object with type='phone' and value (phone number)
+                - message: Status message
+                
+            404 Not Found - No phone contact found
+            500 Internal Server Error
     """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Content'],
+        summary='Get Phone Contact',
+        description='Retrieve the primary phone contact information'
+    )
     def get(self, request):
         """Get the first contact record where type is 'phone'"""
         try:
@@ -1884,8 +2114,29 @@ class IsTeacher(permissions.BasePermission):
 
 # ========== Home Page API ==========
 class HomePageAPIView(APIView):
+    """
+    Home Page Content API
+    
+    Retrieve home page content including banners and featured sections.
+    
+    get:
+        Get home page data for mobile app home screen.
+        
+        Returns:
+            200 OK:
+                - data: array of sections
+                    - id: section identifier
+                    - type: section type (banners, featured, etc.)
+                    - data: section content
+                - message: Status message
+    """
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        tags=['Content'],
+        summary='Get Home Page Content',
+        description='Retrieve home page content including banners and featured sections'
+    )
     def get(self, request):
         # 1. Main banners
         banners = Banner.objects.filter(is_active=True, placement='app_home').order_by('sort', '-created_at')[:5]
@@ -1906,27 +2157,56 @@ class HomePageAPIView(APIView):
 
 # ===== Teacher Time Slot (Availability) APIs =====
 class CreateTeacherAvailabilityAPIView(APIView):
-    """API برای افزودن یک شکاف زمانی معلم"""
+    """
+    Create Teacher Availability Slot API
+    
+    Add a single time slot for teacher availability.
+    Only teachers can create availability slots.
+    Requires authentication.
+    
+    post:
+        Create a new teacher availability slot.
+        
+        Request body parameters:
+        - date: string (required) - Date in YYYY/MM/DD format
+        - start_time: string (required) - Start time in HH:MM format
+        - end_time: string (required) - End time in HH:MM format
+        - price: number (required) - Price per hour or session
+        - notes: string (optional) - Additional notes about the slot
+        
+        Returns:
+            201 Created:
+                - data: object - Created availability slot details
+                - message: string - "Time slot created successfully"
+                
+            400 Bad Request - Invalid data provided
+            403 Forbidden - User is not a teacher
+    """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     
     @extend_schema(
         tags=['Teacher Time Slots'],
-        summary=_('افزودن شکاف زمانی معلم'),
+        summary='Create Teacher Availability Slot',
+        description='Add a single time slot for teacher availability',
         request={
             'application/json': {
                 'type': 'object',
                 'properties': {
-                    'date': {'type': 'string', 'description': 'تاریخ (YYYY/MM/DD)'},
-                    'start_time': {'type': 'string', 'description': 'ساعت شروع (HH:MM)'},
-                    'end_time': {'type': 'string', 'description': 'ساعت پایان (HH:MM)'},
-                    'price': {'type': 'number', 'description': 'قیمت'},
-                    'notes': {'type': 'string', 'description': 'یادداشت‌ها (اختیاری)'},
+                    'date': {'type': 'string', 'description': 'Date in YYYY/MM/DD format'},
+                    'start_time': {'type': 'string', 'description': 'Start time in HH:MM format'},
+                    'end_time': {'type': 'string', 'description': 'End time in HH:MM format'},
+                    'price': {'type': 'number', 'description': 'Price per hour or session'},
+                    'notes': {'type': 'string', 'description': 'Additional notes (optional)'},
                 },
                 'required': ['date', 'start_time', 'end_time', 'price']
             }
         },
-        responses={201: 'ایجاد شده'}
+        responses={
+            201: OpenApiResponse(description="Time slot created successfully"),
+            400: OpenApiResponse(description="Invalid data provided"),
+            403: OpenApiResponse(description="User is not a teacher"),
+        }
     )
     def post(self, request):
         from .classroom_serializers import TeacherAvailabilitySerializer
@@ -1952,13 +2232,40 @@ class CreateTeacherAvailabilityAPIView(APIView):
 
 
 class BulkCreateTeacherAvailabilityAPIView(APIView):
-    """API برای افزودن چند شکاف زمانی معلم به صورت گروهی"""
+    """
+    Bulk Create Teacher Availability Slots API
+    
+    Add multiple time slots for teacher availability in a single request.
+    Only teachers can create availability slots.
+    Requires authentication.
+    
+    post:
+        Create multiple teacher availability slots at once.
+        
+        Request body parameters:
+        - availabilities: array (required) - Array of availability objects
+            - date: string - Date in YYYY/MM/DD format
+            - start_time: string - Start time in HH:MM format
+            - end_time: string - End time in HH:MM format
+            - price: number - Price per hour or session
+            - notes: string (optional) - Additional notes
+        
+        Returns:
+            201 Created:
+                - data: array - List of created availability slots
+                - created_count: integer - Number of slots created
+                - message: string - "Time slots created successfully"
+                
+            400 Bad Request - Invalid data or empty array
+            403 Forbidden - User is not a teacher
+    """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     
     @extend_schema(
         tags=['Teacher Time Slots'],
-        summary=_('افزودن چند شکاف زمانی معلم'),
+        summary='Bulk Create Teacher Availability Slots',
+        description='Add multiple time slots for teacher availability in a single request',
         request={
             'application/json': {
                 'type': 'object',
@@ -1968,11 +2275,11 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
                         'items': {
                             'type': 'object',
                             'properties': {
-                                'date': {'type': 'string', 'description': 'تاریخ (YYYY/MM/DD)'},
-                                'start_time': {'type': 'string', 'description': 'ساعت شروع (HH:MM)'},
-                                'end_time': {'type': 'string', 'description': 'ساعت پایان (HH:MM)'},
-                                'price': {'type': 'number', 'description': 'قیمت'},
-                                'notes': {'type': 'string', 'description': 'یادداشت‌ها'},
+                                'date': {'type': 'string', 'description': 'Date in YYYY/MM/DD format'},
+                                'start_time': {'type': 'string', 'description': 'Start time in HH:MM format'},
+                                'end_time': {'type': 'string', 'description': 'End time in HH:MM format'},
+                                'price': {'type': 'number', 'description': 'Price per hour or session'},
+                                'notes': {'type': 'string', 'description': 'Additional notes (optional)'},
                             },
                             'required': ['date', 'start_time', 'end_time', 'price']
                         }
@@ -1981,7 +2288,11 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
                 'required': ['availabilities']
             }
         },
-        responses={201: 'ایجاد شده'}
+        responses={
+            201: OpenApiResponse(description="Time slots created successfully"),
+            400: OpenApiResponse(description="Invalid data or empty array provided"),
+            403: OpenApiResponse(description="User is not a teacher"),
+        }
     )
     def post(self, request):
         from .classroom_serializers import TeacherAvailabilitySerializer
@@ -2027,17 +2338,39 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
 
 
 class TeacherAvailabilityListAPIView(generics.ListAPIView):
-    """API برای نمایش شکاف‌های زمانی معلم"""
+    """
+    Teacher Availability List API
+    
+    Retrieve teacher availability time slots with optional filters.
+    Teachers see only their own slots, admins/students can query others.
+    Requires authentication.
+    
+    get:
+        Get list of teacher availability slots.
+        
+        Query parameters:
+        - teacher_id: integer (optional) - Filter by specific teacher
+        - date: string (optional) - Filter by date in YYYY/MM/DD format
+        - is_available: boolean (optional) - Filter available slots only
+        
+        Returns:
+            200 OK:
+                - data: array - List of availability slots
+                - count: integer - Total number of slots
+                
+            401 Unauthorized - User not authenticated
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = None
     
     @extend_schema(
         tags=['Teacher Time Slots'],
-        summary=_('نمایش شکاف‌های زمانی معلم'),
+        summary='Get Teacher Availability Slots',
+        description='Retrieve teacher availability time slots with optional filters',
         parameters=[
-            OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, description=_('شناسه معلم')),
-            OpenApiParameter('date', OpenApiTypes.STR, required=False, description=_('تاریخ (YYYY/MM/DD)')),
-            OpenApiParameter('is_available', OpenApiTypes.BOOL, required=False, description=_('فقط دسترسی‌پذیر')),
+            OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, description='Filter by specific teacher'),
+            OpenApiParameter('date', OpenApiTypes.STR, required=False, description='Filter by date in YYYY/MM/DD format'),
+            OpenApiParameter('is_available', OpenApiTypes.BOOL, required=False, description='Filter available slots only'),
         ]
     )
     def get(self, request, *args, **kwargs):
@@ -2073,15 +2406,46 @@ class TeacherAvailabilityListAPIView(generics.ListAPIView):
 
 
 class UpdateTeacherAvailabilityAPIView(APIView):
-    """API برای ویرایش شکاف زمانی معلم"""
+    """
+    Update Teacher Availability Slot API
+    
+    Update an existing teacher availability time slot.
+    Only the teacher who created the slot can update it.
+    Cannot update booked slots.
+    Requires authentication.
+    
+    patch:
+        Update teacher availability slot details.
+        
+        Path parameters:
+        - id: integer (required) - Time slot ID
+        
+        Request body parameters:
+        - date: string (optional) - Date in YYYY/MM/DD format
+        - start_time: string (optional) - Start time in HH:MM format
+        - end_time: string (optional) - End time in HH:MM format
+        - price: number (optional) - Price per hour or session
+        - notes: string (optional) - Additional notes
+        - is_available: boolean (optional) - Availability status
+        
+        Returns:
+            200 OK:
+                - data: object - Updated slot details
+                - message: string - "Slot updated successfully"
+                
+            400 Bad Request - Cannot update booked slot
+            403 Forbidden - User is not slot owner
+            404 Not Found - Slot does not exist
+    """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     
     @extend_schema(
         tags=['Teacher Time Slots'],
-        summary=_('ویرایش شکاف زمانی معلم'),
+        summary='Update Teacher Availability Slot',
+        description='Update existing teacher availability slot (owner only)',
         parameters=[
-            OpenApiParameter('id', OpenApiTypes.INT, required=True, description=_('شناسه شکاف زمانی'))
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, location='path', description='Time slot ID')
         ]
     )
     def patch(self, request, id):
@@ -2121,15 +2485,42 @@ class UpdateTeacherAvailabilityAPIView(APIView):
 
 
 class DeleteTeacherAvailabilityAPIView(APIView):
-    """API برای حذف شکاف زمانی معلم"""
+    """
+    Delete Teacher Availability Slot API
+    
+    Delete an existing teacher availability time slot.
+    Only the teacher who created the slot can delete it.
+    Cannot delete booked slots.
+    Requires authentication.
+    
+    delete:
+        Delete teacher availability slot.
+        
+        Path parameters:
+        - id: integer (required) - Time slot ID
+        
+        Returns:
+            204 No Content - Slot deleted successfully
+            
+            400 Bad Request - Cannot delete booked slot
+            403 Forbidden - User is not slot owner
+            404 Not Found - Slot does not exist
+    """
     permission_classes = [IsAuthenticated]
     
     @extend_schema(
         tags=['Teacher Time Slots'],
-        summary=_('حذف شکاف زمانی معلم'),
+        summary='Delete Teacher Availability Slot',
+        description='Delete existing teacher availability slot (owner only, cannot be booked)',
         parameters=[
-            OpenApiParameter('id', OpenApiTypes.INT, required=True, description=_('شناسه شکاف زمانی'))
-        ]
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, location='path', description='Time slot ID')
+        ],
+        responses={
+            204: OpenApiResponse(description="Slot deleted successfully"),
+            400: OpenApiResponse(description="Cannot delete booked slot"),
+            403: OpenApiResponse(description="User is not slot owner"),
+            404: OpenApiResponse(description="Slot not found"),
+        }
     )
     def delete(self, request, id):
         from classroom.models import TeacherAvailability

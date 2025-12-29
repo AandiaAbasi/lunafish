@@ -277,3 +277,61 @@
 ## 8. نتیجه‌گیری
 
 پلتفرم **FoFo Fish** با ترکیب آموزش زنده، ابزارهای تعاملی پیشرفته و سیستم‌های انگیزشی بازی‌محور، بستری امن و جذاب برای یادگیری زبان کودکان فراهم می‌کند. معماری فنی مقیاس‌پذیر و چندزبانه، امکان توسعه سریع و حضور در بازارهای بین‌المللی را مهیا می‌سازد. همچنین پنل مدیریتی جامع، کنترل کامل کیفیت آموزشی و عملکرد سامانه را برای مدیران تضمین می‌کند.
+
+---
+
+## 9. 📚 API Documentation
+
+### Swagger/OpenAPI Documentation
+The Fofofish API is fully documented using **OpenAPI 3.0** specification with interactive documentation interfaces.
+
+#### Access the API Documentation:
+- **Swagger UI (Interactive):** https://fofofish.app/api/docs/swagger/
+- **ReDoc (Clean View):** https://fofofish.app/api/docs/redoc/
+- **OpenAPI Schema:** https://fofofish.app/api/schema/
+
+#### Documentation Files:
+- **[START_HERE.md](./START_HERE.md)** 🎯 - Begin here!
+- **[NAVIGATION_GUIDE.md](./NAVIGATION_GUIDE.md)** 🗺️ - Documentation navigation
+- **[API_QUICK_START.md](./API_QUICK_START.md)** ⚡ - Code examples
+- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** 📚 - Complete reference
+- **[CHANGES_SUMMARY.md](./CHANGES_SUMMARY.md)** ✅ - Implementation summary
+- **[SWAGGER_IMPLEMENTATION.md](./SWAGGER_IMPLEMENTATION.md)** 🔧 - Technical details
+
+#### Key Features:
+✅ 30+ endpoints fully documented
+✅ Interactive endpoint testing
+✅ Code examples (cURL, Python, JavaScript)
+✅ Complete parameter specifications
+✅ Error handling documentation
+✅ Authentication flow guides
+✅ Best practices documented
+
+### Quick Start:
+```bash
+# 1. Visit Swagger UI
+# https://fofofish.app/api/docs/swagger/
+
+# 2. Read Quick Start Guide
+# [API_QUICK_START.md](./API_QUICK_START.md)
+
+# 3. Try endpoints directly in Swagger UI
+# No coding needed - just click and test!
+```
+
+### For Developers:
+```python
+# Example: Login with password
+import requests
+
+response = requests.post(
+    'https://fofofish.app/api/login-password/',
+    json={'username': 'user', 'password': 'password'}
+)
+data = response.json()
+print(data['tokens']['access'])
+```
+
+See [API_QUICK_START.md](./API_QUICK_START.md) for more examples in Python and JavaScript.
+
+
