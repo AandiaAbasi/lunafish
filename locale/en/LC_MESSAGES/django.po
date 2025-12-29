@@ -1179,3 +1179,379 @@ msgstr "Answer"
 
 msgid "Answers"
 msgstr "Answers"
+
+#: classroom/models.py
+msgid "Teacher"
+msgstr "Teacher"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Specific date for this availability"
+msgstr "Specific date for this availability"
+
+msgid "Start Time"
+msgstr "Start Time"
+
+msgid "Time that teacher starts teaching (example: 09:00)"
+msgstr "Time that teacher starts teaching (example: 09:00)"
+
+msgid "End Time"
+msgstr "End Time"
+
+msgid "Time that teacher ends teaching (example: 17:00)"
+msgstr "Time that teacher ends teaching (example: 17:00)"
+
+msgid "Available"
+msgstr "Available"
+
+msgid "Is this time slot available for booking?"
+msgstr "Is this time slot available for booking?"
+
+msgid "Booked"
+msgstr "Booked"
+
+msgid "Is this time slot already booked?"
+msgstr "Is this time slot already booked?"
+
+msgid "Price"
+msgstr "Price"
+
+msgid "Price of teaching for this time slot"
+msgstr "Price of teaching for this time slot"
+
+msgid "Discount Price"
+msgstr "Discount Price"
+
+msgid "Price of teaching with discount for this time slot"
+msgstr "Price of teaching with discount for this time slot"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "Additional notes about this availability"
+msgstr "Additional notes about this availability"
+
+msgid "Teacher Class Scheduling"
+msgstr "Teacher Class Scheduling"
+
+msgid "Teacher Class Scheduling (Plural)"
+msgstr "Teacher Class Scheduling (Plural)"
+
+msgid "Subject Title (example: English Beginner - Alphabet)"
+msgstr "Subject Title (example: English Beginner - Alphabet)"
+
+msgid "Description of what will be taught in this class"
+msgstr "Description of what will be taught in this class"
+
+msgid "Cover Image"
+msgstr "Cover Image"
+
+msgid "Demo Video"
+msgstr "Demo Video"
+
+msgid "Short demo video of teaching"
+msgstr "Short demo video of teaching"
+
+msgid "Minimum Age"
+msgstr "Minimum Age"
+
+msgid "Maximum Age"
+msgstr "Maximum Age"
+
+msgid "Level"
+msgstr "Level"
+
+msgid "Beginner"
+msgstr "Beginner"
+
+msgid "Intermediate"
+msgstr "Intermediate"
+
+msgid "Advanced"
+msgstr "Advanced"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "Teaching Subject"
+msgstr "Teaching Subject"
+
+msgid "Teaching Subjects"
+msgstr "Teaching Subjects"
+
+msgid "Availability"
+msgstr "Availability"
+
+msgid "Student"
+msgstr "Student"
+
+msgid "Subject"
+msgstr "Subject"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Reserved"
+msgstr "Reserved"
+
+msgid "Completed"
+msgstr "Completed"
+
+msgid "Cancelled"
+msgstr "Cancelled"
+
+msgid "No Show"
+msgstr "No Show"
+
+msgid "Discount Amount"
+msgstr "Discount Amount"
+
+msgid "Final Price"
+msgstr "Final Price"
+
+msgid "Class Booking"
+msgstr "Class Booking"
+
+msgid "Class Bookings"
+msgstr "Class Bookings"
+
+msgid "Full Name"
+msgstr "Full Name"
+
+msgid "Bank Name"
+msgstr "Bank Name"
+
+msgid "Account Number"
+msgstr "Account Number"
+
+msgid "IBAN"
+msgstr "IBAN"
+
+msgid "IR + 24 digits"
+msgstr "IR + 24 digits"
+
+msgid "Card Number"
+msgstr "Card Number"
+
+msgid "Account Holder Name"
+msgstr "Account Holder Name"
+
+msgid "Minimum Settlement Amount"
+msgstr "Minimum Settlement Amount"
+
+msgid "Minimum amount for settlement request"
+msgstr "Minimum amount for settlement request"
+
+msgid "Next Settlement Date"
+msgstr "Next Settlement Date"
+
+msgid "Total Earned"
+msgstr "Total Earned"
+
+msgid "Total amount of all earnings"
+msgstr "Total amount of all earnings"
+
+msgid "Total Withdrawn"
+msgstr "Total Withdrawn"
+
+msgid "Total amount of all settled amounts"
+msgstr "Total amount of all settled amounts"
+
+msgid "Verified"
+msgstr "Verified"
+
+msgid "Bank information verified"
+msgstr "Bank information verified"
+
+msgid "Verified At"
+msgstr "Verified At"
+
+msgid "Teacher Wallet"
+msgstr "Teacher Wallet"
+
+msgid "Teacher Wallets"
+msgstr "Teacher Wallets"
+
+msgid "Booked Classes"
+msgstr "Booked Classes"
+
+msgid "Wallet Balance"
+msgstr "Wallet Balance"
+
+msgid "Pending Balance"
+msgstr "Pending Balance"
+
+msgid "Available Balance"
+msgstr "Available Balance"
+
+msgid "Original Price"
+msgstr "Original Price"
+
+msgid "Original price of the class"
+msgstr "Original price of the class"
+
+msgid "Total Amount"
+msgstr "Total Amount"
+
+msgid "Final price of the class"
+msgstr "Final price of the class"
+
+msgid "Platform Fee Percentage"
+msgstr "Platform Fee Percentage"
+
+msgid "Platform fee percentage"
+msgstr "Platform fee percentage"
+
+msgid "Platform Fee"
+msgstr "Platform Fee"
+
+msgid "Platform fee (auto-calculated)"
+msgstr "Platform fee (auto-calculated)"
+
+msgid "Teacher Share"
+msgstr "Teacher Share"
+
+msgid "Teacher share (auto-calculated)"
+msgstr "Teacher share (auto-calculated)"
+
+msgid "Confirmed"
+msgstr "Confirmed"
+
+msgid "Revenue confirmed by admin"
+msgstr "Revenue confirmed by admin"
+
+msgid "Confirmed At"
+msgstr "Confirmed At"
+
+msgid "Settled"
+msgstr "Settled"
+
+msgid "Settled At"
+msgstr "Settled At"
+
+msgid "Class Revenue"
+msgstr "Class Revenue"
+
+msgid "Class Revenues"
+msgstr "Class Revenues"
+
+msgid "Revenues"
+msgstr "Revenues"
+
+msgid "Payment Method"
+msgstr "Payment Method"
+
+msgid "Bank Transfer"
+msgstr "Bank Transfer"
+
+msgid "Card to Card"
+msgstr "Card to Card"
+
+msgid "Wallet"
+msgstr "Wallet"
+
+msgid "Other"
+msgstr "Other"
+
+msgid "Account Information"
+msgstr "Account Information"
+
+msgid "Card number, IBAN, etc."
+msgstr "Card number, IBAN, etc."
+
+msgid "Transaction ID"
+msgstr "Transaction ID"
+
+msgid "Pending"
+msgstr "Pending"
+
+msgid "Processing"
+msgstr "Processing"
+
+msgid "Failed"
+msgstr "Failed"
+
+msgid "Admin Notes"
+msgstr "Admin Notes"
+
+msgid "Completed At"
+msgstr "Completed At"
+
+msgid "Withdrawal Request"
+msgstr "Withdrawal Request"
+
+msgid "Withdrawal Requests"
+msgstr "Withdrawal Requests"
+
+msgid "Transaction Type"
+msgstr "Transaction Type"
+
+msgid "Revenue"
+msgstr "Revenue"
+
+msgid "Confirmation"
+msgstr "Confirmation"
+
+msgid "Withdrawal"
+msgstr "Withdrawal"
+
+msgid "Refund"
+msgstr "Refund"
+
+msgid "Adjustment"
+msgstr "Adjustment"
+
+msgid "Bonus"
+msgstr "Bonus"
+
+msgid "Penalty"
+msgstr "Penalty"
+
+msgid "Amount"
+msgstr "Amount"
+
+msgid "Balance Before"
+msgstr "Balance Before"
+
+msgid "Balance After"
+msgstr "Balance After"
+
+msgid "Admin Note"
+msgstr "Admin Note"
+
+msgid "Wallet Transaction"
+msgstr "Wallet Transaction"
+
+msgid "Wallet Transactions"
+msgstr "Wallet Transactions"
+
+msgid "Class Payment"
+msgstr "Class Payment"
+
+msgid "Refunded"
+msgstr "Refunded"
+
+msgid "Payment Date"
+msgstr "Payment Date"
+
+msgid "Student Transaction"
+msgstr "Student Transaction"
+
+msgid "Student Transactions"
+msgstr "Student Transactions"
+
+msgid "Commission Rate Class"
+msgstr "Commission Rate Class"
+
+msgid "Platform commission percentage for teaching classes (0-100)"
+msgstr "Platform commission percentage for teaching classes (0-100)"
+
+msgid "Updated By"
+msgstr "Updated By"
+
+msgid "Updated At"
+msgstr "Updated At"
+
+msgid "Platform Settings"
+msgstr "Platform Settings"

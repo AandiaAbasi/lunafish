@@ -1183,3 +1183,378 @@ msgstr "پاسخ"
 msgid "Answers"
 msgstr "پاسخ‌ها"
 
+#: classroom/models.py
+msgid "Teacher"
+msgstr "معلم"
+
+msgid "Date"
+msgstr "تاریخ"
+
+msgid "Specific date for this availability"
+msgstr "تاریخ مشخص برای این دسترسی"
+
+msgid "Start Time"
+msgstr "ساعت شروع"
+
+msgid "Time that teacher starts teaching (example: 09:00)"
+msgstr "زمانی که معلم تدریس را شروع می‌کند (مثال: 09:00)"
+
+msgid "End Time"
+msgstr "ساعت پایان"
+
+msgid "Time that teacher ends teaching (example: 17:00)"
+msgstr "زمانی که معلم تدریس را پایان می‌دهد (مثال: 17:00)"
+
+msgid "Available"
+msgstr "در دسترس"
+
+msgid "Is this time slot available for booking?"
+msgstr "آیا این بازه زمانی برای رزرو در دسترس است؟"
+
+msgid "Booked"
+msgstr "رزرو شده"
+
+msgid "Is this time slot already booked?"
+msgstr "آیا این بازه زمانی قبلاً رزرو شده است؟"
+
+msgid "Price"
+msgstr "قیمت"
+
+msgid "Price of teaching for this time slot"
+msgstr "قیمت تدریس برای این بازه زمانی"
+
+msgid "Discount Price"
+msgstr "قیمت با تخفیف"
+
+msgid "Price of teaching with discount for this time slot"
+msgstr "قیمت تدریس با تخفیف برای این بازه زمانی"
+
+msgid "Notes"
+msgstr "یادداشت‌ها"
+
+msgid "Additional notes about this availability"
+msgstr "یادداشت‌های اضافی درباره این دسترسی"
+
+msgid "Teacher Class Scheduling"
+msgstr "زمان‌بندی کلاس معلم"
+
+msgid "Teacher Class Scheduling (Plural)"
+msgstr "زمان‌بندی کلاس‌های معلم"
+
+msgid "Subject Title (example: English Beginner - Alphabet)"
+msgstr "عنوان موضوع (مثال: انگلیسی مبتدی - الفبا)"
+
+msgid "Description of what will be taught in this class"
+msgstr "توضیح در مورد آنچه در این درس تدریس خواهد شد"
+
+msgid "Cover Image"
+msgstr "عکس کاور"
+
+msgid "Demo Video"
+msgstr "ویدیوی نمونه"
+
+msgid "Short demo video of teaching"
+msgstr "ویدیوی نمونه کوتاه تدریس"
+
+msgid "Minimum Age"
+msgstr "حداقل سن"
+
+msgid "Maximum Age"
+msgstr "حداکثر سن"
+
+msgid "Level"
+msgstr "سطح"
+
+msgid "Beginner"
+msgstr "مبتدی"
+
+msgid "Intermediate"
+msgstr "متوسط"
+
+msgid "Advanced"
+msgstr "پیشرفته"
+
+msgid "Active"
+msgstr "فعال"
+
+msgid "Teaching Subject"
+msgstr "موضوع تدریس"
+
+msgid "Teaching Subjects"
+msgstr "موضوعات تدریس"
+
+msgid "Availability"
+msgstr "دسترسی"
+
+msgid "Student"
+msgstr "دانش‌آموز"
+
+msgid "Subject"
+msgstr "موضوع"
+
+msgid "Status"
+msgstr "وضعیت"
+
+msgid "Reserved"
+msgstr "رزرو شده"
+
+msgid "Completed"
+msgstr "تکمیل شده"
+
+msgid "Cancelled"
+msgstr "لغو شده"
+
+msgid "No Show"
+msgstr "حاضر نشد"
+
+msgid "Discount Amount"
+msgstr "مبلغ تخفیف"
+
+msgid "Final Price"
+msgstr "قیمت نهایی"
+
+msgid "Class Booking"
+msgstr "رزرو کلاس"
+
+msgid "Class Bookings"
+msgstr "رزروهای کلاس"
+
+msgid "Full Name"
+msgstr "نام کامل"
+
+msgid "Bank Name"
+msgstr "نام بانک"
+
+msgid "Account Number"
+msgstr "شماره حساب"
+
+msgid "IBAN"
+msgstr "شماب (IBAN)"
+
+msgid "IR + 24 digits"
+msgstr "IR + 24 رقم"
+
+msgid "Card Number"
+msgstr "شماره کارت"
+
+msgid "Account Holder Name"
+msgstr "نام صاحب حساب"
+
+msgid "Minimum Settlement Amount"
+msgstr "حداقل مبلغ تسویه"
+
+msgid "Minimum amount for settlement request"
+msgstr "حداقل موجودی برای درخواست تسویه"
+
+msgid "Next Settlement Date"
+msgstr "تاریخ تسویه بعدی"
+
+msgid "Total Earned"
+msgstr "درآمد کل"
+
+msgid "Total amount of all earnings"
+msgstr "مجموع کل درآمدهای دریافتی"
+
+msgid "Total Withdrawn"
+msgstr "برداشت کل"
+
+msgid "Total amount of all settled amounts"
+msgstr "مجموع کل مبالغ تسویه شده"
+
+msgid "Verified"
+msgstr "تایید شده"
+
+msgid "Bank information verified"
+msgstr "اطلاعات بانکی تایید شده"
+
+msgid "Verified At"
+msgstr "تاریخ تایید"
+
+msgid "Teacher Wallet"
+msgstr "کیف پول معلم"
+
+msgid "Teacher Wallets"
+msgstr "کیف پول‌های معلم"
+
+msgid "Booked Classes"
+msgstr "کلاس‌های رزرو شده"
+
+msgid "Wallet Balance"
+msgstr "موجودی کیف پول"
+
+msgid "Pending Balance"
+msgstr "موجودی در انتظار"
+
+msgid "Available Balance"
+msgstr "موجودی قابل برداشت"
+
+msgid "Original Price"
+msgstr "قیمت اولیه"
+
+msgid "Original price of the class"
+msgstr "قیمت اولیه کلاس"
+
+msgid "Total Amount"
+msgstr "مبلغ کل"
+
+msgid "Final price of the class"
+msgstr "قیمت نهایی کلاس"
+
+msgid "Platform Fee Percentage"
+msgstr "درصد کارمزد پلتفرم"
+
+msgid "Platform fee percentage"
+msgstr "درصد کارمزد پلتفرم"
+
+msgid "Platform Fee"
+msgstr "کارمزد پلتفرم"
+
+msgid "Platform fee (auto-calculated)"
+msgstr "کارمزد پلتفرم (محاسبه خودکار)"
+
+msgid "Teacher Share"
+msgstr "سهم معلم"
+
+msgid "Teacher share (auto-calculated)"
+msgstr "سهم معلم (محاسبه خودکار)"
+
+msgid "Confirmed"
+msgstr "تایید شده"
+
+msgid "Revenue confirmed by admin"
+msgstr "درآمد توسط ادمین تایید شده است"
+
+msgid "Confirmed At"
+msgstr "تاریخ تایید"
+
+msgid "Settled"
+msgstr "تسویه شده"
+
+msgid "Settled At"
+msgstr "تاریخ تسویه"
+
+msgid "Class Revenue"
+msgstr "درآمد کلاس"
+
+msgid "Class Revenues"
+msgstr "درآمدهای کلاس"
+
+msgid "Revenues"
+msgstr "درآمدها"
+
+msgid "Payment Method"
+msgstr "روش پرداخت"
+
+msgid "Bank Transfer"
+msgstr "انتقال بانکی"
+
+msgid "Card to Card"
+msgstr "کارت به کارت"
+
+msgid "Wallet"
+msgstr "کیف پول"
+
+msgid "Other"
+msgstr "سایر"
+
+msgid "Account Information"
+msgstr "اطلاعات حساب"
+
+msgid "Card number, IBAN, etc."
+msgstr "شماره کارت، شماب و غیره"
+
+msgid "Transaction ID"
+msgstr "شناسه تراکنش"
+
+msgid "Pending"
+msgstr "در انتظار"
+
+msgid "Processing"
+msgstr "در حال پردازش"
+
+msgid "Failed"
+msgstr "ناموفق"
+
+msgid "Admin Notes"
+msgstr "یادداشت‌های ادمین"
+
+msgid "Completed At"
+msgstr "تاریخ تکمیل"
+
+msgid "Withdrawal Request"
+msgstr "درخواست برداشت"
+
+msgid "Withdrawal Requests"
+msgstr "درخواست‌های برداشت"
+
+msgid "Transaction Type"
+msgstr "نوع تراکنش"
+
+msgid "Revenue"
+msgstr "درآمد"
+
+msgid "Confirmation"
+msgstr "تایید"
+
+msgid "Withdrawal"
+msgstr "برداشت"
+
+msgid "Refund"
+msgstr "بازگشت"
+
+msgid "Adjustment"
+msgstr "تعدیل"
+
+msgid "Bonus"
+msgstr "جایزه"
+
+msgid "Penalty"
+msgstr "جریمه"
+
+msgid "Amount"
+msgstr "مبلغ"
+
+msgid "Balance Before"
+msgstr "موجودی قبل"
+
+msgid "Balance After"
+msgstr "موجودی بعد"
+
+msgid "Admin Note"
+msgstr "یادداشت ادمین"
+
+msgid "Wallet Transaction"
+msgstr "تراکنش کیف پول"
+
+msgid "Wallet Transactions"
+msgstr "تراکنش‌های کیف پول"
+
+msgid "Class Payment"
+msgstr "پرداخت کلاس"
+
+msgid "Refunded"
+msgstr "بازگشت‌شده"
+
+msgid "Payment Date"
+msgstr "تاریخ پرداخت"
+
+msgid "Student Transaction"
+msgstr "تراکنش دانش‌آموز"
+
+msgid "Student Transactions"
+msgstr "تراکنش‌های دانش‌آموز"
+
+msgid "Commission Rate Class"
+msgstr "درصد کمیسیون کلاس"
+
+msgid "Platform commission percentage for teaching classes (0-100)"
+msgstr "درصد کمیسیون پلتفرم برای کلاس‌های تدریس شده (0-100)"
+
+msgid "Updated By"
+msgstr "به‌روزرسانی‌شده توسط"
+
+msgid "Updated At"
+msgstr "تاریخ به‌روزرسانی"
+
+msgid "Platform Settings"
+msgstr "تنظیمات پلتفرم"
