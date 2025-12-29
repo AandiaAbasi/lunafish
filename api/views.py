@@ -5,13 +5,13 @@ Supports role-based access: user, teacher, admin
 """
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions, generics, parsers
+from rest_framework import status, permissions, generics, parsers, serializers
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, inline_serializer
 from drf_spectacular.openapi import OpenApiResponse
 from django.contrib.auth import authenticate, get_user_model
 from django.core.exceptions import ValidationError
@@ -2180,7 +2180,17 @@ class CreateTeacherAvailabilityAPIView(APIView):
     @extend_schema(
         tags=['Teacher Time Slots'],
         summary='Create Teacher Availability Slot',
-        description='Add a single time slot for teacher availability. Required fields: date (YYYY/MM/DD), start_time (HH:MM), end_time (HH:MM), price.',
+        description='Add a single time slot for teacher availability.',
+        request=inline_serializer(
+            name='CreateTeacherAvailability',
+            fields={
+                'date': serializers.CharField(help_text='Date in YYYY/MM/DD format'),
+                'start_time': serializers.TimeField(help_text='Start time in HH:MM format'),
+                'end_time': serializers.TimeField(help_text='End time in HH:MM format'),
+                'price': serializers.DecimalField(max_digits=10, decimal_places=2, help_text='Price per hour or session'),
+                'notes': serializers.CharField(required=False, allow_blank=True, help_text='Additional notes (optional)'),
+            }
+        ),
         responses={
             201: OpenApiResponse(description="Time slot created successfully"),
             400: OpenApiResponse(description="Invalid data provided"),
@@ -2244,7 +2254,25 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
     @extend_schema(
         tags=['Teacher Time Slots'],
         summary='Bulk Create Teacher Availability Slots',
-        description='Add multiple time slots for teacher availability in a single request. Send array of availability objects with date, start_time, end_time, and price.',
+        description='Add multiple time slots for teacher availability in a single request.',
+        request=inline_serializer(
+            name='BulkCreateTeacherAvailability',
+            fields={
+                'availabilities': serializers.ListField(
+                    child=inline_serializer(
+                        name='AvailabilityItem',
+                        fields={
+                            'date': serializers.CharField(help_text='Date in YYYY/MM/DD format'),
+                            'start_time': serializers.TimeField(help_text='Start time in HH:MM format'),
+                            'end_time': serializers.TimeField(help_text='End time in HH:MM format'),
+                            'price': serializers.DecimalField(max_digits=10, decimal_places=2, help_text='Price per hour or session'),
+                            'notes': serializers.CharField(required=False, allow_blank=True, help_text='Additional notes (optional)'),
+                        }
+                    ),
+                    help_text='Array of availability objects to create'
+                )
+            }
+        ),
         responses={
             201: OpenApiResponse(description="Time slots created successfully"),
             400: OpenApiResponse(description="Invalid data or empty array provided"),
