@@ -4,8 +4,8 @@
 {% block title %}{% trans "افزودن گروهی شکاف‌های زمانی" %}{% endblock %}
 
 {% block extrahead %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@majidh1/jalalidatepicker@5.4.0/dist/jalalidatepicker.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/@majidh1/jalalidatepicker@5.4.0/dist/jalalidatepicker.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.css">
+<script type="text/javascript" src="https://unpkg.com/@majidh1/jalalidatepicker/dist/jalalidatepicker.min.js"></script>
 
 <style>
     .bulk-create-container {
@@ -200,16 +200,10 @@
     </form>
 </div>
 
-<script>
-window.addEventListener('load', function() {
-    // منتظر لود شدن library
-    if (typeof jalalidatepicker !== 'undefined') {
-        jalalidatepicker.calendar({
-            view: 'day',
-            format: 'YYYY/MM/DD',
-            autoCloseOnSelect: true
-        });
-    }
+<script type="text/javascript">
+jalaliDatepicker.startWatch({
+    watch: true,
+    format: 'YYYY/MM/DD'
 });
 </script>
 {% endblock %}
