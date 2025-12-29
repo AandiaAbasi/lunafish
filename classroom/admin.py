@@ -29,7 +29,7 @@ def get_jalali_date(date_obj):
 # ===== TeacherAvailability Admin =====
 @admin.register(TeacherAvailability)
 class TeacherAvailabilityAdmin(admin.ModelAdmin):
-    list_display = ['teacher', 'jalali_date', 'start_time', 'end_time', 'price', 'is_available_badge', 'is_booked_badge']
+    list_display = ['teacher', 'jalali_date', 'start_time', 'end_time', 'price', 'discount_price', 'is_available_badge', 'is_booked_badge']
     list_filter = ['teacher', 'date', 'is_available', 'is_booked', 'created_at']
     search_fields = ['teacher__name', 'teacher__username']
     ordering = ['-date', 'start_time']
@@ -45,7 +45,7 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
             'fields': ('start_time', 'end_time')
         }),
         (_('قیمت‌گذاری'), {
-            'fields': ('price',)
+            'fields': ('price', 'discount_price')
         }),
         (_('وضعیت'), {
             'fields': ('is_available', 'is_booked')
@@ -80,6 +80,7 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
             session_minutes_str = request.POST.get('session_duration')
             break_minutes_str = request.POST.get('break_duration')
             price_str = request.POST.get('price')
+            discount_price_str = request.POST.get('discount_price')
             
             # تبدیل تاریخ‌های شمسی به میلادی
             try:
@@ -99,6 +100,7 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
                 session_minutes = int(session_minutes_str) if session_minutes_str else 30
                 break_minutes = int(break_minutes_str) if break_minutes_str else 10
                 price = int(price_str) if price_str else 0
+                discount_price = int(discount_price_str) if discount_price_str else 0
             except Exception as e:
                 messages.error(request, _('خطا در پردازش داده‌های وقت یا قیمت'))
                 return render(request, 'admin/classroom/teacherAvailability/bulk_create.html', {
@@ -132,6 +134,7 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
                             start_time=slot_start,
                             end_time=slot_end,
                             price=price,
+                            discount_price=discount_price,
                             is_available=True
                         )
                         created += 1

@@ -2390,6 +2390,7 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
             session_minutes = int(request.data.get('session_duration', 45))
             break_minutes = int(request.data.get('break_duration', 15))
             price = Decimal(request.data.get('price', 0))
+            discount_price = Decimal(request.data.get('discount_price', 0))
 
         except Exception:
             return Response({'error': _('داده‌های ورودی نامعتبر است')}, status=400)
@@ -2419,6 +2420,7 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
                         start_time=slot_start,
                         end_time=slot_end,
                         price=price,
+                        discount_price=discount_price,
                         is_available=True,
                         is_booked=False
                     )

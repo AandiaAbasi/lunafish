@@ -22,6 +22,7 @@ class TeacherAvailability(BaseModel):
     is_available = models.BooleanField(default=True, verbose_name=_("دسترس‌پذیر"), help_text=_("آیا این بازه زمانی برای رزرو دسترس‌پذیر است؟"))
     is_booked = models.BooleanField(default=False, verbose_name=_("رزرو شده"), help_text=_("آیا این بازه زمانی قبلاً رزرو شده است؟"))
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("قیمت"), help_text=_("قیمت تدریس برای این بازه زمانی"))
+    discount_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("قیمت با تخفیف"), help_text=_("قیمت تدریس با تخفیف برای این بازه زمانی"))
     notes = models.TextField(blank=True, null=True, verbose_name=_("یادداشت‌ها"), help_text=_("یادداشت‌های اضافی درباره این دسترسی"))
     
     class Meta:

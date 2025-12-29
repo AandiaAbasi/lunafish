@@ -42,7 +42,7 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
         model = TeacherAvailability
         fields = [
             'id', 'teacher', 'teacher_name', 'date', 'start_time', 'end_time',
-            'price', 'is_available', 'is_booked', 'notes', 'created_at', 'updated_at'
+            'price', 'discount_price', 'is_available', 'is_booked', 'notes', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
