@@ -5,7 +5,7 @@
 
 {% block extrahead %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@majidh1/jalalidatepicker@5.4.0/dist/jalalidatepicker.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@majidh1/jalalidatepicker@5.4.0/dist/jalalidatepicker.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@majidh1/jalalidatepicker@5.4.0/dist/jalalidatepicker.min.js"></script>
 
 <style>
     .bulk-create-container {
@@ -201,13 +201,15 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Jalali Date Picker initialization
-    const jdp = jalalidatepicker.calendar({
-        view: 'day',
-        format: 'YYYY/MM/DD',
-        autoCloseOnSelect: true
-    });
+window.addEventListener('load', function() {
+    // منتظر لود شدن library
+    if (typeof jalalidatepicker !== 'undefined') {
+        jalalidatepicker.calendar({
+            view: 'day',
+            format: 'YYYY/MM/DD',
+            autoCloseOnSelect: true
+        });
+    }
 });
 </script>
 {% endblock %}
