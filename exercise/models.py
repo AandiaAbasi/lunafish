@@ -161,7 +161,7 @@ class ExerciseChoice(BaseModel):
         User,
         on_delete=models.CASCADE,
         limit_choices_to={'role': 'teacher'},
-        related_name='exercise_choices',
+        related_name='created_exercise_choices',
         verbose_name=_('معلم')
     )
     subject = models.ForeignKey(
@@ -230,7 +230,7 @@ class StudentExerciseChoice(BaseModel):
         User,
         on_delete=models.CASCADE,
         limit_choices_to={'role': 'student'},
-        related_name='exercise_choices',
+        related_name='student_exercise_choices',
         verbose_name=_('دانش‌آموز')
     )
     exercise_choice_group = models.ForeignKey(
