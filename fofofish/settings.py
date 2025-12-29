@@ -69,7 +69,8 @@ INSTALLED_APPS = [
     # Local apps
     'core',
     'account',
-    'api'
+    'api',
+    'classroom',
 ]
 
 CKEDITOR_UPLOAD_PATH = "uploads/"

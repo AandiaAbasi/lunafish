@@ -107,4 +107,5 @@ site/
 *.sublime-workspace
 *.sublime-project
 
+/nozima
 /sedamix
