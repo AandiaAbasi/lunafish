@@ -163,13 +163,13 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
     def is_available_badge(self, obj):
         color = '#28a745' if obj.is_available else '#dc3545'
         text = _('دسترسی‌پذیر') if obj.is_available else _('غیردسترسی‌پذیر')
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     is_available_badge.short_description = _('دسترسی‌پذیری')
     
     def is_booked_badge(self, obj):
         color = '#ff6b6b' if obj.is_booked else '#95e1d3'
         text = _('رزرو‌شده') if obj.is_booked else _('آزاد')
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     is_booked_badge.short_description = _('وضعیت رزرو')
     
     def mark_available(self, request, queryset):
@@ -223,7 +223,7 @@ class TeachingSubjectAdmin(admin.ModelAdmin):
     def is_active_badge(self, obj):
         color = '#28a745' if obj.is_active else '#dc3545'
         text = _('فعال') if obj.is_active else _('غیرفعال')
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     is_active_badge.short_description = _('وضعیت')
 
 
@@ -327,7 +327,7 @@ class ClassBookingAdmin(admin.ModelAdmin):
         }
         color = colors.get(obj.status, '#6c757d')
         text = obj.get_status_display()
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     status_badge.short_description = _('وضعیت')
 
 
@@ -365,23 +365,23 @@ class TeacherWalletAdmin(admin.ModelAdmin):
     )
     
     def available_balance_display(self, obj):
-        return format_html(f'<strong style="color:#28a745">{obj.available_balance:,.0f}</strong> تومان')
+        return format_html('<strong style="color:#28a745">{:,.0f}</strong> تومان', obj.available_balance)
     available_balance_display.short_description = _('موجودی قابل برداشت')
     
     def pending_balance_display(self, obj):
-        return format_html(f'<strong style="color:#ffc107">{obj.pending_balance:,.0f}</strong> تومان')
+        return format_html('<strong style="color:#ffc107">{:,.0f}</strong> تومان', obj.pending_balance)
     pending_balance_display.short_description = _('موجودی در انتظار')
     
     def is_verified_badge(self, obj):
         color = '#28a745' if obj.is_verified else '#dc3545'
         text = _('تایید شده') if obj.is_verified else _('تایید نشده')
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     is_verified_badge.short_description = _('تایید')
     
     def is_active_badge(self, obj):
         color = '#28a745' if obj.is_active else '#dc3545'
         text = _('فعال') if obj.is_active else _('غیرفعال')
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     is_active_badge.short_description = _('وضعیت')
 
 
@@ -419,17 +419,17 @@ class ClassRevenueAdmin(admin.ModelAdmin):
     )
     
     def total_amount_display(self, obj):
-        return format_html(f'<strong style="color:#007bff">{obj.total_amount:,.0f}</strong> تومان')
+        return format_html('<strong style="color:#007bff">{:,.0f}</strong> تومان', obj.total_amount)
     total_amount_display.short_description = _('مبلغ کل')
     
     def teacher_share_display(self, obj):
-        return format_html(f'<strong style="color:#28a745">{obj.teacher_share:,.0f}</strong> تومان')
+        return format_html('<strong style="color:#28a745">{:,.0f}</strong> تومان', obj.teacher_share)
     teacher_share_display.short_description = _('سهم معلم')
     
     def is_confirmed_badge(self, obj):
         color = '#28a745' if obj.is_confirmed else '#dc3545'
         text = _('تایید شده') if obj.is_confirmed else _('تایید نشده')
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     is_confirmed_badge.short_description = _('تایید')
 
 
@@ -467,7 +467,7 @@ class WithdrawalRequestAdmin(admin.ModelAdmin):
     )
     
     def amount_display(self, obj):
-        return format_html(f'<strong style="color:#dc3545">{obj.amount:,.0f}</strong> تومان')
+        return format_html('<strong style="color:#dc3545">{:,.0f}</strong> تومان', obj.amount)
     amount_display.short_description = _('مبلغ')
     
     def status_badge(self, obj):
@@ -480,7 +480,7 @@ class WithdrawalRequestAdmin(admin.ModelAdmin):
         }
         color = colors.get(obj.status, '#6c757d')
         text = obj.get_status_display()
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     status_badge.short_description = _('وضعیت')
     
     def payment_method_display(self, obj):
@@ -544,13 +544,13 @@ class WalletTransactionAdmin(admin.ModelAdmin):
         }
         color = colors.get(obj.transaction_type, '#6c757d')
         text = obj.get_transaction_type_display()
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     transaction_type_badge.short_description = _('نوع تراکنش')
     
     def amount_display(self, obj):
         sign = '+' if obj.transaction_type in ['revenue', 'refund', 'bonus'] else '-'
         color = '#28a745' if sign == '+' else '#dc3545'
-        return format_html(f'<strong style="color:{color}">{sign}{obj.amount:,.0f}</strong> تومان')
+        return format_html('<strong style="color:{}\">{}{:,.0f}</strong> تومان', color, sign, obj.amount)
     amount_display.short_description = _('مبلغ')
     
     def jalali_created(self, obj):
@@ -598,11 +598,11 @@ class StudentTransactionAdmin(admin.ModelAdmin):
         }
         color = colors.get(obj.transaction_type, '#6c757d')
         text = obj.get_transaction_type_display()
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     transaction_type_badge.short_description = _('نوع تراکنش')
     
     def amount_display(self, obj):
-        return format_html(f'<strong style="color:#007bff">{obj.amount:,.0f}</strong> تومان')
+        return format_html('<strong style="color:#007bff\">{:,.0f}</strong> تومان', obj.amount)
     amount_display.short_description = _('مبلغ')
     
     def status_badge(self, obj):
@@ -614,7 +614,7 @@ class StudentTransactionAdmin(admin.ModelAdmin):
         }
         color = colors.get(obj.status, '#6c757d')
         text = obj.get_status_display()
-        return format_html(f'<span style="background-color:{color}; color:white; padding:3px 8px; border-radius:3px;">{text}</span>')
+        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
     status_badge.short_description = _('وضعیت')
 
 
