@@ -2199,24 +2199,56 @@ class CreateTeacherAvailabilityAPIView(APIView):
     @extend_schema(
         tags=['Teacher Time Slots'],
         summary='Create Teacher Availability Slots (Bulk Date Range)',
-        description='Add multiple time slots for teacher availability based on date range with automatic session scheduling.',
+        description='Create multiple time slots for a date range with automatic scheduling. Similar to admin bulk creation.',
         request=inline_serializer(
             name='CreateTeacherAvailabilityBulk',
             fields={
-                'start_date': serializers.CharField(help_text='Start date in YYYY/MM/DD format (Jalali)'),
-                'end_date': serializers.CharField(help_text='End date in YYYY/MM/DD format (Jalali)'),
-                'daily_start_time': serializers.TimeField(help_text='Daily start time in HH:MM format'),
-                'daily_end_time': serializers.TimeField(help_text='Daily end time in HH:MM format'),
-                'session_duration': serializers.IntegerField(default=30, help_text='Session duration in minutes (default: 30)'),
-                'break_duration': serializers.IntegerField(default=10, help_text='Break duration in minutes (default: 10)'),
-                'price': serializers.DecimalField(max_digits=10, decimal_places=2, help_text='Price per session'),
-                'notes': serializers.CharField(required=False, allow_blank=True, help_text='Additional notes (optional)'),
+                'start_date': serializers.CharField(
+                    help_text='Start date in YYYY/MM/DD Jalali format (e.g., 1403/01/01)',
+                    example='1403/01/01'
+                ),
+                'end_date': serializers.CharField(
+                    help_text='End date in YYYY/MM/DD Jalali format (e.g., 1403/01/10)',
+                    example='1403/01/10'
+                ),
+                'daily_start_time': serializers.TimeField(
+                    help_text='Daily start time in HH:MM format (e.g., 09:00)',
+                    example='09:00'
+                ),
+                'daily_end_time': serializers.TimeField(
+                    help_text='Daily end time in HH:MM format (e.g., 17:00)',
+                    example='17:00'
+                ),
+                'session_duration': serializers.IntegerField(
+                    default=30,
+                    help_text='Duration of each session in minutes (e.g., 30, 45, 60)',
+                    example=30,
+                    min_value=5
+                ),
+                'break_duration': serializers.IntegerField(
+                    default=10,
+                    help_text='Break duration between sessions in minutes (e.g., 10, 15)',
+                    example=10,
+                    min_value=0
+                ),
+                'price': serializers.DecimalField(
+                    max_digits=10,
+                    decimal_places=2,
+                    help_text='Price per session in currency units (e.g., 50000)',
+                    example=50000
+                ),
+                'notes': serializers.CharField(
+                    required=False,
+                    allow_blank=True,
+                    help_text='Optional notes about the availability slots',
+                    example='Online classes via Zoom'
+                ),
             }
         ),
         responses={
-            201: OpenApiResponse(description="Time slots created successfully"),
-            400: OpenApiResponse(description="Invalid data provided"),
-            403: OpenApiResponse(description="User is not a teacher"),
+            201: OpenApiResponse(description="Time slots created successfully with count and details"),
+            400: OpenApiResponse(description="Invalid date format, time values, or other data validation error"),
+            403: OpenApiResponse(description="User is not authenticated as a teacher"),
         }
     )
     def post(self, request):
@@ -2392,7 +2424,7 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
     @extend_schema(
         tags=['Teacher Time Slots'],
         summary='Bulk Create Teacher Availability Slots (Direct)',
-        description='Add multiple time slots directly for teacher availability without date range calculation.',
+        description='Create multiple time slots directly. For each slot, specify the exact date, start/end times, and price.',
         request=inline_serializer(
             name='BulkCreateTeacherAvailabilityDirect',
             fields={
@@ -2400,21 +2432,40 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
                     child=inline_serializer(
                         name='AvailabilityItemDirect',
                         fields={
-                            'date': serializers.CharField(help_text='Date in YYYY/MM/DD format (Jalali)'),
-                            'start_time': serializers.TimeField(help_text='Start time in HH:MM format'),
-                            'end_time': serializers.TimeField(help_text='End time in HH:MM format'),
-                            'price': serializers.DecimalField(max_digits=10, decimal_places=2, help_text='Price per session'),
-                            'notes': serializers.CharField(required=False, allow_blank=True, help_text='Additional notes (optional)'),
+                            'date': serializers.CharField(
+                                help_text='Date in YYYY/MM/DD Jalali format (e.g., 1403/01/01)',
+                                example='1403/01/01'
+                            ),
+                            'start_time': serializers.TimeField(
+                                help_text='Start time in HH:MM format (e.g., 09:00)',
+                                example='09:00'
+                            ),
+                            'end_time': serializers.TimeField(
+                                help_text='End time in HH:MM format (e.g., 10:00)',
+                                example='10:00'
+                            ),
+                            'price': serializers.DecimalField(
+                                max_digits=10,
+                                decimal_places=2,
+                                help_text='Price per session (e.g., 50000)',
+                                example=50000
+                            ),
+                            'notes': serializers.CharField(
+                                required=False,
+                                allow_blank=True,
+                                help_text='Optional notes for this slot',
+                                example='Morning session'
+                            ),
                         }
                     ),
-                    help_text='Array of availability objects to create'
+                    help_text='Array of availability slots (max 100 per request)'
                 )
             }
         ),
         responses={
-            201: OpenApiResponse(description="Time slots created successfully"),
-            400: OpenApiResponse(description="Invalid data or empty array provided"),
-            403: OpenApiResponse(description="User is not a teacher"),
+            201: OpenApiResponse(description="Time slots created successfully with count and details"),
+            400: OpenApiResponse(description="Empty array, invalid data, or more than 100 slots provided"),
+            403: OpenApiResponse(description="User is not authenticated as a teacher"),
         }
     )
     def post(self, request):
