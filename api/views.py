@@ -1905,7 +1905,7 @@ class ArticleDetailAPIView(APIView):
         summary='Get Article Detail',
         description='Retrieve full content of a specific article',
         parameters=[
-            OpenApiParameter('pk', OpenApiTypes.INT, location='path', description='Article ID')
+            OpenApiParameter('pk', OpenApiTypes.INT, location=OpenApiParameter.PATH, description='Article ID')
         ]
     )
     def get(self, request, pk):
@@ -2445,7 +2445,7 @@ class UpdateTeacherAvailabilityAPIView(APIView):
         summary='Update Teacher Availability Slot',
         description='Update existing teacher availability slot (owner only)',
         parameters=[
-            OpenApiParameter('id', OpenApiTypes.INT, required=True, location='path', description='Time slot ID')
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Time slot ID')
         ]
     )
     def patch(self, request, id):
@@ -2513,7 +2513,7 @@ class DeleteTeacherAvailabilityAPIView(APIView):
         summary='Delete Teacher Availability Slot',
         description='Delete existing teacher availability slot (owner only, cannot be booked)',
         parameters=[
-            OpenApiParameter('id', OpenApiTypes.INT, required=True, location='path', description='Time slot ID')
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Time slot ID')
         ],
         responses={
             204: OpenApiResponse(description="Slot deleted successfully"),
