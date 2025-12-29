@@ -2359,143 +2359,79 @@ class CreateTeacherAvailabilityAPIView(APIView):
 
 
 class BulkCreateTeacherAvailabilityAPIView(APIView):
-    """
-    Bulk Create Teacher Availability Slots (Direct) API
-    
-    Add multiple time slots directly for teacher availability.
-    Use this for creating individual slots without date range calculation.
-    For automatic date range scheduling, use CreateTeacherAvailabilityAPIView.
-    Only teachers can create availability slots.
-    Requires authentication.
-    
-    post:
-        Create multiple teacher availability slots at once (direct array).
-        
-        Request body parameters:
-        - availabilities: array (required) - Array of availability objects
-            - date: string - Date in YYYY/MM/DD format (Jalali)
-            - start_time: string - Start time in HH:MM format
-            - end_time: string - End time in HH:MM format
-            - price: number - Price per session
-            - notes: string (optional) - Additional notes
-        
-        Returns:
-            201 Created:
-                - data: array - List of created availability slots
-                - count: integer - Number of slots created
-                - message: string - "بازه‌های زمانی با موفقیت ایجاد شدند"
-                
-            400 Bad Request - Invalid data or empty array
-            403 Forbidden - User is not a teacher
-        
-        Example Request:
-        ```json
-        {
-            "availabilities": [
-                {
-                    "date": "1403/01/01",
-                    "start_time": "09:00",
-                    "end_time": "10:00",
-                    "price": 50000,
-                    "notes": "Morning session"
-                },
-                {
-                    "date": "1403/01/01",
-                    "start_time": "14:00",
-                    "end_time": "15:00",
-                    "price": 50000,
-                    "notes": "Afternoon session"
-                }
-            ]
-        }
-        ```
-    """
     permission_classes = [IsAuthenticated]
-    parser_classes = (JSONParser, FormParser, MultiPartParser)
-    
-    @extend_schema(
-        tags=['Teacher Time Slots'],
-        summary='Bulk Create Teacher Availability Slots (Direct)',
-        description='Create multiple time slots directly. For each slot, specify the exact date, start/end times, and price.',
-        request=inline_serializer(
-            name='BulkCreateTeacherAvailabilityDirect',
-            fields={
-                'availabilities': serializers.ListField(
-                    child=inline_serializer(
-                        name='AvailabilityItemDirect',
-                        fields={
-                            'date': serializers.CharField(
-                                help_text='Date in YYYY/MM/DD Jalali format (e.g., 1403/01/01)'
-                            ),
-                            'start_time': serializers.TimeField(
-                                help_text='Start time in HH:MM format (e.g., 09:00)'
-                            ),
-                            'end_time': serializers.TimeField(
-                                help_text='End time in HH:MM format (e.g., 10:00)'
-                            ),
-                            'price': serializers.DecimalField(
-                                max_digits=10,
-                                decimal_places=2,
-                                help_text='Price per session'
-                            ),
-                            'notes': serializers.CharField(
-                                required=False,
-                                allow_blank=True,
-                                help_text='Optional notes for this slot'
-                            ),
-                        }
-                    ),
-                    help_text='Array of availability slots (max 100 per request)'
-                )
-            }
-        ),
-        responses={
-            201: OpenApiResponse(description="Time slots created successfully with count and details"),
-            400: OpenApiResponse(description="Empty array, invalid data, or more than 100 slots provided"),
-            403: OpenApiResponse(description="User is not authenticated as a teacher"),
-        }
-    )
+
     def post(self, request):
-        from .classroom_serializers import TeacherAvailabilitySerializer
         from classroom.models import TeacherAvailability
-        
-        # فقط معلمین می‌توانند
+        import jdatetime
+        import datetime as dt
+        from decimal import Decimal
+
         if request.user.role != 'teacher':
-            return Response(
-                {'error': _('شما معلم نیستید')},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        availabilities_data = request.data.get('availabilities', [])
-        if not isinstance(availabilities_data, list) or len(availabilities_data) == 0:
-            return Response(
-                {'error': _('لطفاً لیست بازه‌های زمانی را ارائه دهید')},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # بیشترین تعداد در یک درخواست
-        if len(availabilities_data) > 100:
-            return Response(
-                {'error': _('حداکثر 100 بازه زمانی در یک درخواست مجاز است')},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # اضافه کردن معلم به هر باز
-        for item in availabilities_data:
-            item['teacher'] = request.user.id
-        
-        serializer = TeacherAvailabilitySerializer(data=availabilities_data, many=True)
-        if serializer.is_valid():
-            instances = serializer.save()
-            return Response(
-                {
-                    'data': serializer.data,
-                    'count': len(instances),
-                    'message': _('بازه‌های زمانی با موفقیت ایجاد شدند')
-                },
-                status=status.HTTP_201_CREATED
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('شما معلم نیستید')}, status=403)
+
+        try:
+            start_date = jdatetime.datetime.strptime(
+                request.data['start_date'], '%Y/%m/%d'
+            ).togregorian().date()
+
+            end_date = jdatetime.datetime.strptime(
+                request.data['end_date'], '%Y/%m/%d'
+            ).togregorian().date()
+
+            daily_start = dt.datetime.strptime(
+                request.data['daily_start_time'], '%H:%M'
+            ).time()
+
+            daily_end = dt.datetime.strptime(
+                request.data['daily_end_time'], '%H:%M'
+            ).time()
+
+            session_minutes = int(request.data.get('session_duration', 45))
+            break_minutes = int(request.data.get('break_duration', 15))
+            price = Decimal(request.data.get('price', 0))
+
+        except Exception:
+            return Response({'error': _('داده‌های ورودی نامعتبر است')}, status=400)
+
+        created = 0
+        cur_date = start_date
+
+        while cur_date <= end_date:
+            cursor = dt.datetime.combine(cur_date, daily_start)
+            day_end = dt.datetime.combine(cur_date, daily_end)
+
+            while cursor + dt.timedelta(minutes=session_minutes) <= day_end:
+                slot_start = cursor.time()
+                slot_end = (cursor + dt.timedelta(minutes=session_minutes)).time()
+
+                exists = TeacherAvailability.objects.filter(
+                    teacher=request.user,
+                    date=cur_date,
+                    start_time=slot_start,
+                    end_time=slot_end
+                ).exists()
+
+                if not exists:
+                    TeacherAvailability.objects.create(
+                        teacher=request.user,
+                        date=cur_date,
+                        start_time=slot_start,
+                        end_time=slot_end,
+                        price=price,
+                        is_available=True,
+                        is_booked=False
+                    )
+                    created += 1
+
+                cursor += dt.timedelta(minutes=session_minutes + break_minutes)
+
+            cur_date += dt.timedelta(days=1)
+
+        return Response({
+            'count': created,
+            'message': _('بازه‌های زمانی با موفقیت ایجاد شدند')
+        }, status=201)
 
 
 class TeacherAvailabilityListAPIView(generics.ListAPIView):
