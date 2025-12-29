@@ -2150,55 +2150,79 @@ class HomePageAPIView(APIView):
 # ===== Teacher Time Slot (Availability) APIs =====
 class CreateTeacherAvailabilityAPIView(APIView):
     """
-    Create Teacher Availability Slot API
+    Create Teacher Availability Slots API (Bulk with Date Range)
     
-    Add a single time slot for teacher availability.
+    Add multiple time slots for teacher availability based on date range.
+    Similar to admin bulk creation feature.
     Only teachers can create availability slots.
     Requires authentication.
     
     post:
-        Create a new teacher availability slot.
+        Create multiple teacher availability slots for a date range.
         
-        Request body parameters:
-        - date: string (required) - Date in YYYY/MM/DD format
-        - start_time: string (required) - Start time in HH:MM format
-        - end_time: string (required) - End time in HH:MM format
-        - price: number (required) - Price per hour or session
-        - notes: string (optional) - Additional notes about the slot
+        Request body parameters (JSON):
+        - start_date: string (required) - Start date in YYYY/MM/DD format
+        - end_date: string (required) - End date in YYYY/MM/DD format
+        - daily_start_time: string (required) - Daily start time in HH:MM format
+        - daily_end_time: string (required) - Daily end time in HH:MM format
+        - session_duration: integer (optional, default: 30) - Session duration in minutes
+        - break_duration: integer (optional, default: 10) - Break duration between sessions in minutes
+        - price: number (required) - Price per session
+        - notes: string (optional) - Additional notes about the slots
         
         Returns:
             201 Created:
-                - data: object - Created availability slot details
-                - message: string - "Time slot created successfully"
+                - data: array - List of created availability slots
+                - created_count: integer - Number of slots created
+                - message: string - "شکاف‌های زمانی با موفقیت ایجاد شدند"
                 
             400 Bad Request - Invalid data provided
             403 Forbidden - User is not a teacher
+        
+        Example Request:
+        ```json
+        {
+            "start_date": "1403/01/01",
+            "end_date": "1403/01/10",
+            "daily_start_time": "09:00",
+            "daily_end_time": "17:00",
+            "session_duration": 30,
+            "break_duration": 10,
+            "price": 50000,
+            "notes": "Online classes via Zoom"
+        }
+        ```
     """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     
     @extend_schema(
         tags=['Teacher Time Slots'],
-        summary='Create Teacher Availability Slot',
-        description='Add a single time slot for teacher availability.',
+        summary='Create Teacher Availability Slots (Bulk Date Range)',
+        description='Add multiple time slots for teacher availability based on date range with automatic session scheduling.',
         request=inline_serializer(
-            name='CreateTeacherAvailability',
+            name='CreateTeacherAvailabilityBulk',
             fields={
-                'date': serializers.CharField(help_text='Date in YYYY/MM/DD format'),
-                'start_time': serializers.TimeField(help_text='Start time in HH:MM format'),
-                'end_time': serializers.TimeField(help_text='End time in HH:MM format'),
-                'price': serializers.DecimalField(max_digits=10, decimal_places=2, help_text='Price per hour or session'),
+                'start_date': serializers.CharField(help_text='Start date in YYYY/MM/DD format (Jalali)'),
+                'end_date': serializers.CharField(help_text='End date in YYYY/MM/DD format (Jalali)'),
+                'daily_start_time': serializers.TimeField(help_text='Daily start time in HH:MM format'),
+                'daily_end_time': serializers.TimeField(help_text='Daily end time in HH:MM format'),
+                'session_duration': serializers.IntegerField(default=30, help_text='Session duration in minutes (default: 30)'),
+                'break_duration': serializers.IntegerField(default=10, help_text='Break duration in minutes (default: 10)'),
+                'price': serializers.DecimalField(max_digits=10, decimal_places=2, help_text='Price per session'),
                 'notes': serializers.CharField(required=False, allow_blank=True, help_text='Additional notes (optional)'),
             }
         ),
         responses={
-            201: OpenApiResponse(description="Time slot created successfully"),
+            201: OpenApiResponse(description="Time slots created successfully"),
             400: OpenApiResponse(description="Invalid data provided"),
             403: OpenApiResponse(description="User is not a teacher"),
         }
     )
     def post(self, request):
-        from .classroom_serializers import TeacherAvailabilitySerializer
+        import jdatetime
+        from datetime import datetime, timedelta
+        from classroom.models import TeacherAvailability
         
         # فقط معلمین می‌توانند شکاف زمانی اضافه کنند
         if request.user.role != 'teacher':
@@ -2207,65 +2231,179 @@ class CreateTeacherAvailabilityAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        data = request.data.copy()
-        data['teacher'] = request.user.id
+        # گرفتن داده‌ها
+        start_date_str = request.data.get('start_date', '').strip()
+        end_date_str = request.data.get('end_date', '').strip()
+        daily_start_str = request.data.get('daily_start_time', '').strip()
+        daily_end_str = request.data.get('daily_end_time', '').strip()
+        session_minutes_str = request.data.get('session_duration', '30')
+        break_minutes_str = request.data.get('break_duration', '10')
+        price_str = request.data.get('price', '')
+        notes = request.data.get('notes', '').strip()
         
-        serializer = TeacherAvailabilitySerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
+        # اعتبارسنجی پارامترهای الزامی
+        if not all([start_date_str, end_date_str, daily_start_str, daily_end_str, price_str]):
             return Response(
-                {'data': serializer.data, 'message': _('شکاف زمانی با موفقیت ایجاد شد')},
-                status=status.HTTP_201_CREATED
+                {'error': _('لطفاً تمام فیلدهای الزامی را پر کنید')},
+                status=status.HTTP_400_BAD_REQUEST
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # تبدیل تاریخ‌های شمسی به میلادی
+        try:
+            start_date = jdatetime.datetime.strptime(start_date_str, '%Y/%m/%d').togregorian().date()
+            end_date = jdatetime.datetime.strptime(end_date_str, '%Y/%m/%d').togregorian().date()
+        except Exception as e:
+            return Response(
+                {'error': _('فرمت تاریخ نادرست است. لطفاً از فرمت YYYY/MM/DD استفاده کنید')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # تبدیل زمان‌ها و مدت‌های زمانی
+        try:
+            daily_start = datetime.strptime(daily_start_str, '%H:%M').time()
+            daily_end = datetime.strptime(daily_end_str, '%H:%M').time()
+            session_minutes = int(session_minutes_str) if session_minutes_str else 30
+            break_minutes = int(break_minutes_str) if break_minutes_str else 10
+            price = float(price_str) if price_str else 0
+            
+            if session_minutes <= 0 or break_minutes < 0 or price <= 0:
+                raise ValueError(_('مقادیر باید مثبت باشند'))
+        except (ValueError, TypeError):
+            return Response(
+                {'error': _('خطا در پردازش داده‌های زمان یا قیمت')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # ایجاد شکاف‌های زمانی برای هر روز
+        created = 0
+        cur_date = start_date
+        
+        while cur_date <= end_date:
+            cursor = datetime.combine(cur_date, daily_start)
+            day_end = datetime.combine(cur_date, daily_end)
+            
+            while cursor + timedelta(minutes=session_minutes) <= day_end:
+                slot_start = cursor.time()
+                slot_end = (cursor + timedelta(minutes=session_minutes)).time()
+                
+                # بررسی تکراری نبودن
+                if not TeacherAvailability.objects.filter(
+                    teacher_id=request.user.id,
+                    date=cur_date,
+                    start_time=slot_start,
+                    end_time=slot_end
+                ).exists():
+                    TeacherAvailability.objects.create(
+                        teacher_id=request.user.id,
+                        date=cur_date,
+                        start_time=slot_start,
+                        end_time=slot_end,
+                        price=price,
+                        is_available=True,
+                        notes=notes
+                    )
+                    created += 1
+                
+                cursor += timedelta(minutes=(session_minutes + break_minutes))
+            
+            cur_date = cur_date + timedelta(days=1)
+        
+        if created == 0:
+            return Response(
+                {'error': _('هیچ شکاف زمانی جدیدی ایجاد نشد. شاید همه شکاف‌ها قبلاً وجود دارند.')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # بازیابی و بازگشت شکاف‌های ایجاد شده
+        new_slots = TeacherAvailability.objects.filter(
+            teacher_id=request.user.id,
+            date__gte=start_date,
+            date__lte=end_date
+        ).order_by('date', 'start_time')
+        
+        from .classroom_serializers import TeacherAvailabilitySerializer
+        serializer = TeacherAvailabilitySerializer(new_slots, many=True)
+        
+        return Response(
+            {
+                'data': serializer.data,
+                'created_count': created,
+                'message': _('شکاف‌های زمانی با موفقیت ایجاد شدند')
+            },
+            status=status.HTTP_201_CREATED
+        )
 
 
 class BulkCreateTeacherAvailabilityAPIView(APIView):
     """
-    Bulk Create Teacher Availability Slots API
+    Bulk Create Teacher Availability Slots (Direct) API
     
-    Add multiple time slots for teacher availability in a single request.
+    Add multiple time slots directly for teacher availability.
+    Use this for creating individual slots without date range calculation.
+    For automatic date range scheduling, use CreateTeacherAvailabilityAPIView.
     Only teachers can create availability slots.
     Requires authentication.
     
     post:
-        Create multiple teacher availability slots at once.
+        Create multiple teacher availability slots at once (direct array).
         
         Request body parameters:
         - availabilities: array (required) - Array of availability objects
-            - date: string - Date in YYYY/MM/DD format
+            - date: string - Date in YYYY/MM/DD format (Jalali)
             - start_time: string - Start time in HH:MM format
             - end_time: string - End time in HH:MM format
-            - price: number - Price per hour or session
+            - price: number - Price per session
             - notes: string (optional) - Additional notes
         
         Returns:
             201 Created:
                 - data: array - List of created availability slots
-                - created_count: integer - Number of slots created
-                - message: string - "Time slots created successfully"
+                - count: integer - Number of slots created
+                - message: string - "شکاف‌های زمانی با موفقیت ایجاد شدند"
                 
             400 Bad Request - Invalid data or empty array
             403 Forbidden - User is not a teacher
+        
+        Example Request:
+        ```json
+        {
+            "availabilities": [
+                {
+                    "date": "1403/01/01",
+                    "start_time": "09:00",
+                    "end_time": "10:00",
+                    "price": 50000,
+                    "notes": "Morning session"
+                },
+                {
+                    "date": "1403/01/01",
+                    "start_time": "14:00",
+                    "end_time": "15:00",
+                    "price": 50000,
+                    "notes": "Afternoon session"
+                }
+            ]
+        }
+        ```
     """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, FormParser, MultiPartParser)
     
     @extend_schema(
         tags=['Teacher Time Slots'],
-        summary='Bulk Create Teacher Availability Slots',
-        description='Add multiple time slots for teacher availability in a single request.',
+        summary='Bulk Create Teacher Availability Slots (Direct)',
+        description='Add multiple time slots directly for teacher availability without date range calculation.',
         request=inline_serializer(
-            name='BulkCreateTeacherAvailability',
+            name='BulkCreateTeacherAvailabilityDirect',
             fields={
                 'availabilities': serializers.ListField(
                     child=inline_serializer(
-                        name='AvailabilityItem',
+                        name='AvailabilityItemDirect',
                         fields={
-                            'date': serializers.CharField(help_text='Date in YYYY/MM/DD format'),
+                            'date': serializers.CharField(help_text='Date in YYYY/MM/DD format (Jalali)'),
                             'start_time': serializers.TimeField(help_text='Start time in HH:MM format'),
                             'end_time': serializers.TimeField(help_text='End time in HH:MM format'),
-                            'price': serializers.DecimalField(max_digits=10, decimal_places=2, help_text='Price per hour or session'),
+                            'price': serializers.DecimalField(max_digits=10, decimal_places=2, help_text='Price per session'),
                             'notes': serializers.CharField(required=False, allow_blank=True, help_text='Additional notes (optional)'),
                         }
                     ),
