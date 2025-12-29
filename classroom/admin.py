@@ -69,48 +69,78 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
     def bulk_create_view(self, request):
         """صفحه برای افزودن گروهی شکاف‌های زمانی"""
         if request.method == 'POST':
-            form_data = request.POST
-            teacher_id = form_data.get('teacher')
-            date_str = form_data.get('date')
-            price = form_data.get('price')
-            start_times = form_data.getlist('start_times')
-            end_times = form_data.getlist('end_times')
+            from django import forms
+            from account.models import User
             
-            if not all([teacher_id, date_str, price, start_times, end_times]):
-                messages.error(request, _('لطفاً تمام فیلدهای ضروری را پر کنید'))
-                return render(request, 'admin/classroom/teacherAvailability/bulk_create.html', {
-                    'title': _('افزودن گروهی شکاف‌های زمانی'),
-                    'opts': self.model._meta,
-                })
+            teacher_id = request.POST.get('teacher')
+            sd_raw = request.POST.get('start_date')
+            ed_raw = request.POST.get('end_date')
+            daily_start_str = request.POST.get('daily_start_time')
+            daily_end_str = request.POST.get('daily_end_time')
+            session_minutes_str = request.POST.get('session_duration')
+            break_minutes_str = request.POST.get('break_duration')
+            price_str = request.POST.get('price')
             
-            # تبدیل تاریخ شمسی به میلادی
+            # تبدیل تاریخ‌های شمسی به میلادی
             try:
-                j_date = jdatetime.datetime.strptime(date_str, '%Y/%m/%d')
-                gregorian_date = j_date.togregorian().date()
-            except:
-                messages.error(request, _('فرمت تاریخ نادرست است. از فرمت YYYY/MM/DD استفاده کنید'))
+                start_date = jdatetime.datetime.strptime(sd_raw, '%Y/%m/%d').togregorian().date()
+                end_date = jdatetime.datetime.strptime(ed_raw, '%Y/%m/%d').togregorian().date()
+            except Exception as e:
+                messages.error(request, _('فرمت تاریخ نادرست است'))
                 return render(request, 'admin/classroom/teacherAvailability/bulk_create.html', {
                     'title': _('افزودن گروهی شکاف‌های زمانی'),
                     'opts': self.model._meta,
                 })
             
-            # ایجاد شکاف‌های زمانی
-            created_count = 0
-            for start_time, end_time in zip(start_times, end_times):
-                if start_time and end_time:
-                    try:
-                        availability = TeacherAvailability.objects.create(
-                            teacher_id=teacher_id,
-                            date=gregorian_date,
-                            start_time=start_time,
-                            end_time=end_time,
-                            price=price
-                        )
-                        created_count += 1
-                    except Exception as e:
-                        messages.warning(request, _(f'خطا در ایجاد شکاف {start_time}-{end_time}: {str(e)}'))
+            # تبدیل زمان‌ها و مدت‌های زمانی
+            try:
+                daily_start = datetime.strptime(daily_start_str, '%H:%M').time()
+                daily_end = datetime.strptime(daily_end_str, '%H:%M').time()
+                session_minutes = int(session_minutes_str) if session_minutes_str else 30
+                break_minutes = int(break_minutes_str) if break_minutes_str else 10
+                price = int(price_str) if price_str else 0
+            except Exception as e:
+                messages.error(request, _('خطا در پردازش داده‌های وقت یا قیمت'))
+                return render(request, 'admin/classroom/teacherAvailability/bulk_create.html', {
+                    'title': _('افزودن گروهی شکاف‌های زمانی'),
+                    'opts': self.model._meta,
+                })
             
-            messages.success(request, _(f'{created_count} شکاف زمانی با موفقیت ایجاد شد'))
+            # ایجاد شکاف‌های زمانی برای هر روز
+            created = 0
+            cur_date = start_date
+            import datetime as _dt
+            
+            while cur_date <= end_date:
+                cursor = _dt.datetime.combine(cur_date, daily_start)
+                day_end = _dt.datetime.combine(cur_date, daily_end)
+                
+                while cursor + _dt.timedelta(minutes=session_minutes) <= day_end:
+                    slot_start = cursor.time()
+                    slot_end = (cursor + _dt.timedelta(minutes=session_minutes)).time()
+                    
+                    # بررسی تکراری نبودن
+                    if not TeacherAvailability.objects.filter(
+                        teacher_id=teacher_id,
+                        date=cur_date,
+                        start_time=slot_start,
+                        end_time=slot_end
+                    ).exists():
+                        TeacherAvailability.objects.create(
+                            teacher_id=teacher_id,
+                            date=cur_date,
+                            start_time=slot_start,
+                            end_time=slot_end,
+                            price=price,
+                            is_available=True
+                        )
+                        created += 1
+                    
+                    cursor += _dt.timedelta(minutes=(session_minutes + break_minutes))
+                
+                cur_date = cur_date + _dt.timedelta(days=1)
+            
+            messages.success(request, _(f'ایجاد شد: {created} شکاف زمانی'))
             return redirect('admin:classroom_teacheravailability_changelist')
         
         from account.models import User
@@ -120,7 +150,6 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
             'title': _('افزودن گروهی شکاف‌های زمانی'),
             'teachers': teachers,
             'opts': self.model._meta,
-            'admin_site': self.admin_site,
         })
     
     def jalali_date(self, obj):
