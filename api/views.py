@@ -2225,8 +2225,10 @@ class CreateTeacherAvailabilityAPIView(APIView):
                     help_text='Break duration between sessions in minutes (default: 10, min: 0)',
                     min_value=0
                 ),
-                'price': serializers.IntegerField(
-                    help_text='Price per session in currency units (integer)'
+                'price': serializers.DecimalField(
+                    max_digits=10,
+                    decimal_places=2,
+                    help_text='Price per session in currency units'
                 ),
                 'notes': serializers.CharField(
                     required=False,
@@ -2286,7 +2288,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
             daily_end = datetime.strptime(daily_end_str, '%H:%M').time()
             session_minutes = int(session_minutes_str) if session_minutes_str else 30
             break_minutes = int(break_minutes_str) if break_minutes_str else 10
-            price = int(price_str) if price_str else 0
+            price = float(price_str) if price_str else 0
             
             if session_minutes <= 0 or break_minutes < 0 or price <= 0:
                 raise ValueError(_('مقادیر باید مثبت باشند'))
@@ -2431,8 +2433,10 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
                             'end_time': serializers.TimeField(
                                 help_text='End time in HH:MM format (e.g., 10:00)'
                             ),
-                            'price': serializers.IntegerField(
-                                help_text='Price per session in currency units (integer)'
+                            'price': serializers.DecimalField(
+                                max_digits=10,
+                                decimal_places=2,
+                                help_text='Price per session'
                             ),
                             'notes': serializers.CharField(
                                 required=False,
