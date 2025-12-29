@@ -80,6 +80,7 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
             session_minutes_str = request.POST.get('session_duration')
             break_minutes_str = request.POST.get('break_duration')
             price_str = request.POST.get('price')
+            notes = request.POST.get('notes', '').strip()
             
             # تبدیل تاریخ‌های شمسی به میلادی
             try:
@@ -132,7 +133,8 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
                             start_time=slot_start,
                             end_time=slot_end,
                             price=price,
-                            is_available=True
+                            is_available=True,
+                            notes=notes
                         )
                         created += 1
                     
