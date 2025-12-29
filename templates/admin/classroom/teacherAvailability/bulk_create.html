@@ -136,7 +136,7 @@
         <div class="form-row full">
             <div class="form-group">
                 <label for="teacher">{% trans "معلم" %} <span style="color:red;">*</span></label>
-                <select name="teacher" id="teacher" required>
+                <select name="teacher" id="teacher" required style="height: 40px;">
                     <option value="">{% trans "انتخاب کنید..." %}</option>
                     {% for teacher in teachers %}
                         <option value="{{ teacher.id }}">{{ teacher.get_full_name }} ({{ teacher.username }})</option>
