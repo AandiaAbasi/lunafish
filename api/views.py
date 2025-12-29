@@ -1275,32 +1275,71 @@ class CompleteTeacherProfileAPIView(APIView):
     post:
         Complete teacher profile with professional information.
         
-        Request body parameters:
-            - name: string (optional) - Teacher's full name
-            - qualifications: string (optional) - Educational qualifications and certifications
-            - languages_taught: string (optional) - Languages that can be taught (comma-separated)
-            - specialization: string (optional) - Area of specialization/expertise
-            - resume_summary: string (optional) - Brief professional background summary
-            - introduction_video: string (optional) - YouTube/video URL for introduction
-            - hourly_rate: decimal (optional) - Suggested hourly teaching rate
-            - available_times: object (optional) - JSON object with available teaching times
-            - experience_years: integer (optional) - Years of teaching experience
-            - profile_photo_path: file (optional) - Teacher profile photo/picture
+        **Request body (form-data or JSON):**
         
-        Returns:
-            200 OK:
-                - success: boolean (true)
-                - message: string - "Teacher profile completed successfully"
-                - user: object - Updated teacher profile data
+        - **name** (string, optional): Teacher's full name
+        - **qualifications** (string, optional): Educational qualifications and certifications
+        - **languages_taught** (string, optional): Languages that can be taught (comma-separated)
+        - **specialization** (string, optional): Area of specialization/expertise
+        - **resume_summary** (string, optional): Brief professional background summary
+        - **introduction_video** (string/URL, optional): YouTube/video URL for introduction
+        - **hourly_rate** (decimal, optional): Suggested hourly teaching rate (e.g., 15.50)
+        - **available_times** (JSON, optional): JSON object with available teaching times
+        - **experience_years** (integer, optional): Years of teaching experience
+        - **profile_photo_path** (file, optional): Teacher profile photo/picture (image file)
+        
+        **Returns:**
+        
+        - **200 OK**: Profile updated successfully
+            - success: boolean (true)
+            - message: string - "Teacher profile completed successfully"
+            - user: object - Updated teacher profile data with all fields
                 
-            400 Bad Request:
-                - Invalid data provided
-                - Invalid hourly rate (must be positive)
-                - Invalid experience years (cannot be negative)
-                - Invalid video URL
+        - **400 Bad Request**: Validation error
+            - Invalid data provided
+            - Invalid hourly rate (must be positive)
+            - Invalid experience years (cannot be negative)
+            - Invalid video URL
+            - File too large or invalid format
                 
-            401 Unauthorized - User not authenticated
-            403 Forbidden - User is not a teacher
+        - **401 Unauthorized**: User not authenticated
+            - message: "Not authenticated"
+            
+        - **403 Forbidden**: User is not a teacher
+            - message: "Only teachers can use this endpoint"
+    
+    **Example Request (JSON):**
+    ```json
+    {
+        "name": "Dr. Sarah Johnson",
+        "qualifications": "PhD in Linguistics, TEFL Certified",
+        "languages_taught": "English, Spanish, French",
+        "specialization": "Business English, Test Preparation",
+        "resume_summary": "10+ years teaching experience in international schools",
+        "introduction_video": "https://youtube.com/watch?v=abc123",
+        "hourly_rate": 25.50,
+        "experience_years": 12,
+        "available_times": {
+            "monday": ["09:00-12:00", "14:00-17:00"],
+            "wednesday": ["10:00-13:00"],
+            "friday": ["15:00-19:00"]
+        }
+    }
+    ```
+    
+    **Example Request (form-data):**
+    ```
+    name: Dr. Sarah Johnson
+    qualifications: PhD in Linguistics, TEFL Certified
+    languages_taught: English, Spanish, French
+    specialization: Business English
+    resume_summary: 10+ years experience
+    introduction_video: https://youtube.com/watch?v=abc123
+    hourly_rate: 25.50
+    experience_years: 12
+    available_times: {...}
+    profile_photo_path: <file>
+    ```
     """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, MultiPartParser, FormParser)

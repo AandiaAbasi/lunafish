@@ -348,6 +348,15 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
     Teachers can set: name, qualifications, languages, introduction video, 
     resume summary, hourly rate, and available times.
     """
+    profile_photo_path = serializers.ImageField(required=False, allow_null=True, help_text=_("Teacher profile photo"))
+    qualifications = serializers.CharField(required=False, allow_blank=True, help_text=_("Educational qualifications and certifications"))
+    languages_taught = serializers.CharField(required=False, allow_blank=True, help_text=_("Languages that can be taught"))
+    specialization = serializers.CharField(required=False, allow_blank=True, help_text=_("Area of specialization"))
+    resume_summary = serializers.CharField(required=False, allow_blank=True, help_text=_("Brief professional summary"))
+    introduction_video = serializers.URLField(required=False, allow_blank=True, help_text=_("Introduction video URL"))
+    hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True, help_text=_("Hourly teaching rate"))
+    available_times = serializers.JSONField(required=False, allow_null=True, help_text=_("Available teaching times (JSON format)"))
+    experience_years = serializers.IntegerField(required=False, allow_null=True, help_text=_("Years of teaching experience"))
     
     class Meta:
         model = User
@@ -364,16 +373,7 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
             'profile_photo_path'
         ]
         extra_kwargs = {
-            'name': {'required': False},
-            'qualifications': {'required': False},
-            'languages_taught': {'required': False},
-            'specialization': {'required': False},
-            'resume_summary': {'required': False},
-            'introduction_video': {'required': False},
-            'hourly_rate': {'required': False},
-            'available_times': {'required': False},
-            'experience_years': {'required': False},
-            'profile_photo_path': {'required': False},
+            'name': {'required': False, 'help_text': _("Teacher full name")},
         }
     
     def validate_hourly_rate(self, value):
