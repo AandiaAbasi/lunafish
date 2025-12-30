@@ -3438,6 +3438,10 @@ class TeachingSubjectUpdateAPIView(APIView):
     Update Teaching Subject
 
     ویرایش موضوع تدریس
+    
+    Supports file removal with explicit boolean flags:
+    - remove_cover_image=true: removes the cover_image file
+    - remove_demo_video=true: removes the demo_video file
     """
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser, JSONParser)
@@ -3465,7 +3469,7 @@ class TeachingSubjectUpdateAPIView(APIView):
     )
     def post(self, request, id):
         from classroom.models import TeachingSubject
-        from .classroom_serializers import TeachingSubjectSerializer
+        from .classroom_serializers import TeachingSubjectUpdateSerializer, TeachingSubjectSerializer
 
         # ---------- get subject ----------
         try:
@@ -3499,6 +3503,11 @@ class TeachingSubjectUpdateAPIView(APIView):
         # ---------- fix boolean ----------
         if 'is_active' in data and isinstance(data.get('is_active'), str):
             data['is_active'] = data['is_active'].lower() in ['true', '1', 'yes']
+        
+        # ---------- fix removal flags ----------
+        for field in ['remove_cover_image', 'remove_demo_video']:
+            if field in data and isinstance(data.get(field), str):
+                data[field] = data[field].lower() in ['true', '1', 'yes']
 
         # ---------- fix integers ----------
         for field in ['min_age', 'max_age']:
@@ -3513,7 +3522,7 @@ class TeachingSubjectUpdateAPIView(APIView):
             data['level'] = data['level'][0]
 
         # ---------- serializer ----------
-        serializer = TeachingSubjectSerializer(
+        serializer = TeachingSubjectUpdateSerializer(
             subject,
             data=data,
             partial=True
@@ -3521,9 +3530,11 @@ class TeachingSubjectUpdateAPIView(APIView):
 
         if serializer.is_valid():
             serializer.save()
+            # Return the full subject data using the read serializer
+            read_serializer = TeachingSubjectSerializer(subject)
             return Response(
                 {
-                    'data': serializer.data,
+                    'data': read_serializer.data,
                     'message': _('موضوع تدریسی با موفقیت ویرایش شد')
                 },
                 status=status.HTTP_200_OK
@@ -3536,6 +3547,7 @@ class TeachingSubjectUpdateAPIView(APIView):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
+
 
 
 

@@ -104,6 +104,62 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
             'created_at',
         ]
 
+
+class TeachingSubjectUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating TeachingSubject with explicit file removal support.
+    
+    Supports removing files using boolean flags:
+    - remove_cover_image: true - removes the cover_image file
+    - remove_demo_video: true - removes the demo_video file
+    """
+    remove_cover_image = serializers.BooleanField(required=False, write_only=True, default=False)
+    remove_demo_video = serializers.BooleanField(required=False, write_only=True, default=False)
+    
+    class Meta:
+        model = TeachingSubject
+        fields = [
+            'title',
+            'description',
+            'level',
+            'cover_image',
+            'demo_video',
+            'min_age',
+            'max_age',
+            'is_active',
+            'remove_cover_image',
+            'remove_demo_video',
+        ]
+    
+    def update(self, instance, validated_data):
+        """
+        Update the TeachingSubject instance.
+        Handle explicit file removal before saving.
+        """
+        # Extract removal flags
+        remove_cover_image = validated_data.pop('remove_cover_image', False)
+        remove_demo_video = validated_data.pop('remove_demo_video', False)
+        
+        # Handle cover_image removal
+        if remove_cover_image:
+            if instance.cover_image:
+                instance.cover_image.delete(save=False)
+            instance.cover_image = None
+        
+        # Handle demo_video removal
+        if remove_demo_video:
+            if instance.demo_video:
+                instance.demo_video.delete(save=False)
+            instance.demo_video = None
+        
+        # Update other fields normally
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
+
+
 class ClassBookingSerializer(serializers.ModelSerializer):
     """Serializer for ClassBooking - List & Detail"""
     subject_title = serializers.CharField(source='subject.title', read_only=True)
