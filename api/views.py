@@ -3674,8 +3674,7 @@ class GetChatHistoryAPIView(APIView):
         responses={200: MessageSerializer(many=True)}
     )
     def get(self, request, chat_room_id):
-        from classroom.models import ChatRoom, Message
-        from .chat_serializers import MessageSerializer
+        from classroom.models import ChatRoom
         
         try:
             chat_room = ChatRoom.objects.get(id=chat_room_id)
@@ -3731,7 +3730,6 @@ class SendMessageAPIView(APIView):
     )
     def post(self, request, chat_room_id):
         from classroom.models import ChatRoom, Message
-        from .chat_serializers import MessageSerializer
         
         try:
             chat_room = ChatRoom.objects.get(id=chat_room_id)
@@ -3815,7 +3813,6 @@ class AddReactionAPIView(APIView):
     )
     def post(self, request, message_id):
         from classroom.models import Message, MessageReaction
-        from .chat_serializers import MessageReactionSerializer
         
         try:
             message = Message.objects.get(id=message_id)
@@ -3878,7 +3875,6 @@ class ListParticipantsAPIView(APIView):
     )
     def get(self, request, chat_room_id):
         from classroom.models import ChatRoom
-        from .chat_serializers import ChatParticipantSerializer
         
         try:
             chat_room = ChatRoom.objects.get(id=chat_room_id)
