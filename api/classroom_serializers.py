@@ -276,3 +276,117 @@ class PlatformSettingsSerializer(serializers.ModelSerializer):
             'id', 'commission_rate_class', 'updated_by', 'updated_at'
         ]
         read_only_fields = ['id', 'updated_at']
+
+
+# ============= Teacher List and Detail Serializers =============
+
+class TeacherListSerializer(serializers.Serializer):
+    """Serializer for Teacher List - Basic information for discovery"""
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(max_length=200, read_only=True)
+    qualifications = serializers.CharField(max_length=500, read_only=True, allow_blank=True)
+    languages_taught = serializers.CharField(max_length=500, read_only=True, allow_blank=True)
+    profile_photo_path = serializers.ImageField(read_only=True, allow_null=True)
+    hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    resume_summary = serializers.SerializerMethodField()
+    experience_years = serializers.IntegerField(read_only=True)
+    is_teacher_verified = serializers.BooleanField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    
+    def get_resume_summary(self, obj):
+        """Return truncated resume summary (first 200 characters)"""
+        if hasattr(obj, 'resume_summary') and obj.resume_summary:
+            return obj.resume_summary[:200] + ('...' if len(obj.resume_summary) > 200 else '')
+        return ''
+
+
+class TeachingSubjectDetailSerializer(serializers.ModelSerializer):
+    """Serializer for TeachingSubject in Teacher Detail"""
+    level_display = serializers.CharField(source='get_level_display', read_only=True)
+    
+    class Meta:
+        model = TeachingSubject
+        fields = [
+            'id', 'title', 'description', 'level', 'level_display',
+            'cover_image', 'demo_video', 'min_age', 'max_age', 'is_active'
+        ]
+        read_only_fields = ['id', 'level_display']
+
+
+class TeacherAvailabilityDetailSerializer(serializers.ModelSerializer):
+    """Serializer for TeacherAvailability in Teacher Detail"""
+    date = JalaliDateField(read_only=True)
+    
+    class Meta:
+        model = TeacherAvailability
+        fields = [
+            'id', 'date', 'start_time', 'end_time', 'price',
+            'discount_price', 'is_available', 'is_booked', 'is_expired', 'notes'
+        ]
+        read_only_fields = ['id', 'date', 'start_time', 'end_time', 'price', 'discount_price', 'is_available', 'is_booked', 'is_expired']
+
+
+class TeacherDetailSerializer(serializers.Serializer):
+    """Serializer for Teacher Detail - Complete teacher profile"""
+    # Basic Information
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(max_length=200, read_only=True)
+    email = serializers.EmailField(read_only=True)
+    phone = serializers.CharField(max_length=20, read_only=True, allow_blank=True)
+    
+    # Teacher Qualifications
+    qualifications = serializers.CharField(max_length=500, read_only=True, allow_blank=True)
+    languages_taught = serializers.CharField(max_length=500, read_only=True, allow_blank=True)
+    specialization = serializers.CharField(max_length=500, read_only=True, allow_blank=True)
+    experience_years = serializers.IntegerField(read_only=True)
+    is_teacher_verified = serializers.BooleanField(read_only=True)
+    
+    # Introduction Section
+    resume_summary = serializers.CharField(read_only=True, allow_blank=True)
+    introduction_video = serializers.URLField(read_only=True, allow_null=True)
+    bio = serializers.CharField(read_only=True, allow_blank=True)
+    profile_photo_path = serializers.ImageField(read_only=True, allow_null=True)
+    
+    # Teaching Information
+    hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    
+    # Related Data
+    teaching_subjects = serializers.SerializerMethodField()
+    availability_slots = serializers.SerializerMethodField()
+    
+    def get_teaching_subjects(self, obj):
+        """Get all teaching subjects for this teacher"""
+        if not hasattr(obj, 'teaching_subjects'):
+            # Query teaching subjects from database
+            subjects = TeachingSubject.objects.filter(teacher=obj, is_active=True)
+        else:
+            subjects = obj.teaching_subjects.filter(is_active=True)
+        
+        serializer = TeachingSubjectDetailSerializer(subjects, many=True)
+        return serializer.data
+    
+    def get_availability_slots(self, obj):
+        """Get upcoming and current availability slots (not expired, not booked)"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Get slots from today onwards that are available
+        today = timezone.now().date()
+        if not hasattr(obj, 'availabilities'):
+            slots = TeacherAvailability.objects.filter(
+                teacher=obj,
+                date__gte=today,
+                is_available=True,
+                is_booked=False,
+                is_expired=False
+            ).order_by('date', 'start_time')[:50]  # Limit to first 50 slots
+        else:
+            slots = obj.availabilities.filter(
+                date__gte=today,
+                is_available=True,
+                is_booked=False,
+                is_expired=False
+            ).order_by('date', 'start_time')[:50]
+        
+        serializer = TeacherAvailabilityDetailSerializer(slots, many=True)
+        return serializer.data

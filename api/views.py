@@ -4226,3 +4226,147 @@ class GetExamAttemptDetailAPIView(APIView):
         serializer = OrderRetrieveSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+# ============= Teacher List and Detail APIs =============
+
+class TeacherListAPIView(generics.ListAPIView):
+    """
+    API: List all teachers with basic information
+    
+    Description:
+        Returns a paginated list of all verified teachers with their basic
+        information for discovery and browsing.
+    
+    Permissions:
+        - Allow any user (public access)
+    
+    Query Parameters:
+        - page: int (default=1) - Page number for pagination
+        - page_size: int (default=10) - Number of teachers per page
+    
+    Returns:
+        200 OK:
+            - count: int - Total number of teachers
+            - next: string or null - URL to next page
+            - previous: string or null - URL to previous page
+            - results: array of teacher objects
+                - id: integer
+                - name: string
+                - qualifications: string
+                - languages_taught: string
+                - profile_photo_path: string (image URL or null)
+                - hourly_rate: decimal (price per hour)
+                - resume_summary: string (truncated to 200 chars)
+                - experience_years: integer
+                - is_teacher_verified: boolean
+                - created_at: string (ISO datetime)
+    """
+    permission_classes = [AllowAny]
+    pagination_class = None  # Will be set dynamically
+    
+    def get_queryset(self):
+        """Get all verified teachers, ordered by creation date"""
+        return User.objects.filter(role='teacher', is_teacher_verified=True).order_by('-created_at')
+    
+    def get_serializer_class(self):
+        from .classroom_serializers import TeacherListSerializer
+        return TeacherListSerializer
+    
+    def list(self, request, *args, **kwargs):
+        """Override list to add pagination"""
+        from rest_framework.pagination import PageNumberPagination
+        
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Set up pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = request.query_params.get('page_size', 10)
+        
+        try:
+            paginator.page_size = int(paginator.page_size)
+            if paginator.page_size < 1:
+                paginator.page_size = 10
+        except (ValueError, TypeError):
+            paginator.page_size = 10
+        
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class TeacherDetailAPIView(APIView):
+    """
+    API: Get detailed teacher profile
+    
+    Description:
+        Returns complete teacher profile including qualifications, teaching
+        subjects, and available time slots.
+    
+    Permissions:
+        - Allow any user (public access)
+    
+    Path Parameters:
+        - id: integer (required) - Teacher ID
+    
+    Returns:
+        200 OK:
+            - id: integer
+            - name: string
+            - email: string (email address)
+            - phone: string (phone number)
+            - qualifications: string
+            - languages_taught: string
+            - specialization: string
+            - experience_years: integer
+            - is_teacher_verified: boolean
+            - resume_summary: string (full resume)
+            - introduction_video: string (video URL or null)
+            - bio: string
+            - profile_photo_path: string (image URL or null)
+            - hourly_rate: decimal (price per hour)
+            - teaching_subjects: array of teaching subject objects
+                - id: integer
+                - title: string
+                - description: string
+                - level: string (beginner/intermediate/advanced)
+                - level_display: string (translated level)
+                - cover_image: string (image URL or null)
+                - demo_video: string (file URL or null)
+                - min_age: integer or null
+                - max_age: integer or null
+                - is_active: boolean
+            - availability_slots: array of availability objects
+                - id: integer
+                - date: string (Jalali date format YYYY/MM/DD)
+                - start_time: string (HH:MM format)
+                - end_time: string (HH:MM format)
+                - price: decimal
+                - discount_price: decimal or null
+                - is_available: boolean
+                - is_booked: boolean
+                - is_expired: boolean
+                - notes: string
+        
+        404 Not Found:
+            - error: string - "معلم یافت نشد"
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, id):
+        """Get teacher detail with all related data"""
+        try:
+            teacher = User.objects.get(id=id, role='teacher', is_teacher_verified=True)
+        except User.DoesNotExist:
+            return Response(
+                {'error': _('معلم یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        from .classroom_serializers import TeacherDetailSerializer
+        serializer = TeacherDetailSerializer(teacher)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+

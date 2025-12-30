@@ -81,6 +81,10 @@ urlpatterns = [
     path('teaching-subjects/<int:id>/update/', views.TeachingSubjectUpdateAPIView.as_view(), name='teaching_subject_update'),
     path('teaching-subjects/<int:id>/delete/', views.TeachingSubjectDeleteAPIView.as_view(), name='teaching_subject_delete'),
     
+    # ========== Teacher Discovery APIs ==========
+    path('teachers/', views.TeacherListAPIView.as_view(), name='teacher_list'),
+    path('teachers/<int:id>/', views.TeacherDetailAPIView.as_view(), name='teacher_detail'),
+    
     # ========== Exercise APIs (آزمون‌ها) ==========
     path('exercise/field/create/', views.CreateFieldAPIView.as_view(), name='field_create'),
     path('exercise/exam/create/', views.CreateExamAPIView.as_view(), name='exam_create'),
