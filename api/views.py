@@ -2584,10 +2584,24 @@ class UpdateTeacherAvailabilityAPIView(APIView):
     """
     Update Teacher Availability Slot API
     
-    Update an existing teacher availability time slot.
+    Retrieve and update an existing teacher availability time slot.
     Only the teacher who created the slot can update it.
     Cannot update booked slots.
     Requires authentication.
+    
+    get:
+        Retrieve details of a teacher availability slot.
+        
+        Path parameters:
+        - id: integer (required) - Time slot ID
+        
+        Returns:
+            200 OK:
+                - data: object - Slot details with all information
+                - message: string - "Slot details retrieved"
+                
+            403 Forbidden - User is not slot owner
+            404 Not Found - Slot does not exist
     
     patch:
         Update teacher availability slot details.
@@ -2600,6 +2614,7 @@ class UpdateTeacherAvailabilityAPIView(APIView):
         - start_time: string (optional) - Start time in HH:MM format
         - end_time: string (optional) - End time in HH:MM format
         - price: number (optional) - Price per hour or session
+        - discount_price: number (optional) - Discounted price
         - notes: string (optional) - Additional notes
         - is_available: boolean (optional) - Availability status
         
@@ -2611,9 +2626,102 @@ class UpdateTeacherAvailabilityAPIView(APIView):
             400 Bad Request - Cannot update booked slot
             403 Forbidden - User is not slot owner
             404 Not Found - Slot does not exist
+    
+    Example GET Request:
+    ```
+    GET /api/teacher/availability/123/update/
+    Authorization: Bearer <token>
+    ```
+    
+    Example GET Response:
+    ```json
+    {
+        "data": {
+            "id": 123,
+            "teacher": 1,
+            "date": "1403/01/15",
+            "start_time": "09:00",
+            "end_time": "10:00",
+            "price": 50000,
+            "discount_price": 40000,
+            "is_available": true,
+            "is_booked": false,
+            "notes": "Online via Zoom",
+            "created_at": "2025-01-01T10:00:00Z"
+        },
+        "message": "Slot details retrieved"
+    }
+    ```
+    
+    Example PATCH Request:
+    ```json
+    {
+        "price": 60000,
+        "discount_price": 45000,
+        "notes": "Updated: Online via Google Meet"
+    }
+    ```
+    
+    Example PATCH Response:
+    ```json
+    {
+        "data": {
+            "id": 123,
+            "teacher": 1,
+            "date": "1403/01/15",
+            "start_time": "09:00",
+            "end_time": "10:00",
+            "price": 60000,
+            "discount_price": 45000,
+            "is_available": true,
+            "is_booked": false,
+            "notes": "Updated: Online via Google Meet",
+            "created_at": "2025-01-01T10:00:00Z"
+        },
+        "message": "Slot updated successfully"
+    }
+    ```
     """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, FormParser, MultiPartParser)
+    
+    @extend_schema(
+        tags=['Teacher Time Slots'],
+        summary='Get Teacher Availability Slot Details',
+        description='Retrieve complete details of a teacher availability slot',
+        parameters=[
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Time slot ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Slot details retrieved successfully"),
+            403: OpenApiResponse(description="User is not slot owner"),
+            404: OpenApiResponse(description="Slot not found"),
+        }
+    )
+    def get(self, request, id):
+        from .classroom_serializers import TeacherAvailabilitySerializer
+        from classroom.models import TeacherAvailability
+        
+        try:
+            availability = TeacherAvailability.objects.get(id=id)
+        except TeacherAvailability.DoesNotExist:
+            return Response(
+                {'error': _('بازه زمانی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # فقط معلم می‌تواند جزئیات خود را ببیند
+        if request.user.role != 'teacher' or availability.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به این بازه زمانی ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = TeacherAvailabilitySerializer(availability)
+        return Response(
+            {'data': serializer.data, 'message': _('جزئیات بازه زمانی دریافت شد')},
+            status=status.HTTP_200_OK
+        )
     
     @extend_schema(
         tags=['Teacher Time Slots'],
@@ -2621,7 +2729,13 @@ class UpdateTeacherAvailabilityAPIView(APIView):
         description='Update existing teacher availability slot (owner only)',
         parameters=[
             OpenApiParameter('id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Time slot ID')
-        ]
+        ],
+        responses={
+            200: OpenApiResponse(description="Slot updated successfully"),
+            400: OpenApiResponse(description="Cannot update booked slot"),
+            403: OpenApiResponse(description="User is not slot owner"),
+            404: OpenApiResponse(description="Slot not found"),
+        }
     )
     def patch(self, request, id):
         from .classroom_serializers import TeacherAvailabilitySerializer
