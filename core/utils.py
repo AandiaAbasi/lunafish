@@ -5,6 +5,7 @@ import uuid
 def upload_to_dynamic(instance, filename):
     from .models import About, Article, Banner
     from account.models import User
+    from classroom.models import TeachingSubject
     """Dynamic upload path for user images"""
     name, ext = os.path.splitext(filename)
     filename = f"{uuid.uuid4().hex}{ext}"
@@ -17,6 +18,8 @@ def upload_to_dynamic(instance, filename):
         folder = "banners"
     elif isinstance(instance, User):
         folder = "users"
+    elif isinstance(instance, TeachingSubject):
+        folder = "teacher_subjects"
     else:
         folder = "others"
     

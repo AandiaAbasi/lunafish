@@ -73,6 +73,7 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
     """Serializer for TeachingSubject"""
     teacher_name = serializers.CharField(source='teacher.name', read_only=True)
     level_display = serializers.CharField(source='get_level_display', read_only=True)
+    demo_video = serializers.FileField(required=False, allow_null=True, help_text="فیلم نمونه (MP4, WebM, etc)")
     
     class Meta:
         model = TeachingSubject

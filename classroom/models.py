@@ -7,6 +7,7 @@ from core.abstract_models import BaseModel
 import jdatetime
 from datetime import datetime
 from decimal import Decimal
+from core.utils import upload_to_dynamic
 
 
 # ===== Classroom & Scheduling Models =====
@@ -92,8 +93,8 @@ class TeachingSubject(BaseModel):
     teacher = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'teacher'}, related_name='subjects', verbose_name=_("معلم"))
     title = models.CharField(max_length=200, verbose_name=_("عنوان"), help_text=_("مثال: انگلیسی مبتدی - الفبا"))
     description = models.TextField(verbose_name=_("توضیح"),help_text=_("توضیح در مورد آنچه در این درس تدریس خواهد شد"))
-    cover_image = models.ImageField(upload_to='subjects/images/', null=True, blank=True, verbose_name=_("عکس کاور"))
-    demo_video = models.URLField(null=True, blank=True, verbose_name=_("ویدیوی نمونه"), help_text=_("ویدیوی نمونه کوتاه تدریس"))
+    cover_image = models.ImageField(upload_to=upload_to_dynamic, null=True, blank=True, verbose_name=_("عکس کاور"))
+    demo_video = models.FileField(upload_to=upload_to_dynamic, null=True, blank=True, verbose_name=_("ویدیوی نمونه"), help_text=_("ویدیوی نمونه کوتاه تدریس (MP4, WebM, etc)"))
     min_age = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("حداقل سن"))
     max_age = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("حداکثر سن"))
     level = models.CharField(max_length=50, choices=[('beginner', _("مبتدی")), ('intermediate', _("متوسط")), ('advanced', _("پیشرفته"))], verbose_name=_("سطح"))

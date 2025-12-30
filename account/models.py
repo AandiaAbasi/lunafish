@@ -374,7 +374,7 @@ class AvatarTemplate(BaseModel):
     Avatar template images that users can choose as their profile photo
     """
     image = models.ImageField(
-        upload_to='avatars/templates/',
+        upload_to=upload_to_dynamic,
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'webp'])],
         verbose_name=_("Avatar image")
     )
