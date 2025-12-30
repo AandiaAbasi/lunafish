@@ -528,12 +528,6 @@ class ChatRoom(BaseModel):
     class Meta:
         verbose_name = _('اتاق چت')
         verbose_name_plural = _('اتاق‌های چت')
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(type='support', teaching_subject__isnull=True) | models.Q(type='classroom', teaching_subject__isnull=False),
-                name='valid_chat_type_teaching_subject'
-            )
-        ]
     
     def __str__(self):
         if self.type == 'support':
