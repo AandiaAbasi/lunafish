@@ -96,6 +96,7 @@ urlpatterns = [
     
     # ========== Attendance APIs ==========
     path('attendance/<int:booking_id>/', views.AttendanceAPIView.as_view(), name='attendance'),
+    path('attendance/<int:booking_id>/list/', views.AttendanceListAPIView.as_view(), name='attendance_list'),
     
     # ========== Exercise APIs (آزمون‌ها) ==========
     path('exercise/field/create/', views.CreateFieldAPIView.as_view(), name='field_create'),

@@ -5018,3 +5018,82 @@ class AttendanceAPIView(APIView):
             'status': attendance.status,
             'created': created
         }, status=status.HTTP_200_OK)
+
+
+class AttendanceListAPIView(APIView):
+    """
+    دریافت لیست حضور و غیاب برای یک جلسه (کلاس)
+    
+    get:
+        Get attendance list for a specific class booking
+        
+        URL: /api/attendance/<booking_id>/list/
+        
+        Returns:
+            200 OK:
+                - List of attendance records
+                - Each record: {student_id, student_name, status}
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Attendance'],
+        summary='Get Session Attendance List',
+        description='دریافت لیست حضور و غیاب برای یک جلسه',
+        responses={
+            200: inline_serializer(
+                name='AttendanceListResponse',
+                fields={
+                    'results': serializers.ListField(
+                        child=inline_serializer(
+                            name='AttendanceRecord',
+                            fields={
+                                'student_id': serializers.IntegerField(),
+                                'student_name': serializers.CharField(),
+                                'status': serializers.CharField()
+                            }
+                        )
+                    ),
+                    'total': serializers.IntegerField(),
+                    'present_count': serializers.IntegerField(),
+                    'absent_count': serializers.IntegerField()
+                }
+            )
+        }
+    )
+    def get(self, request, booking_id):
+        """Get attendance list for a session"""
+        from classroom.models import Attendance
+        
+        # بررسی وجود کلاس
+        try:
+            booking = ClassBooking.objects.get(id=booking_id)
+        except ClassBooking.DoesNotExist:
+            return Response(
+                {'error': _('Booking not found')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # دریافت همه رکوردهای حضور و غیاب برای این جلسه
+        attendances = Attendance.objects.filter(booking=booking).select_related('student')
+        
+        # ساخت لیست پاسخ
+        results = []
+        for attendance in attendances:
+            results.append({
+                'student_id': attendance.student.id,
+                'student_name': attendance.student.name or attendance.student.username,
+                'status': attendance.status
+            })
+        
+        # محاسبه آمار
+        total = attendances.count()
+        present_count = attendances.filter(status='present').count()
+        absent_count = attendances.filter(status='absent').count()
+        
+        return Response({
+            'results': results,
+            'total': total,
+            'present_count': present_count,
+            'absent_count': absent_count
+        }, status=status.HTTP_200_OK)
