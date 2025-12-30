@@ -3377,7 +3377,8 @@ class TeachingSubjectCreateAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        data = request.data.copy()
+        # Build data dict without copying (to avoid pickling file objects)
+        data = dict(request.data)
         data['teacher'] = request.user.id
         
         serializer = TeachingSubjectSerializer(data=data)
@@ -3480,7 +3481,8 @@ class TeachingSubjectUpdateAPIView(APIView):
             )
         
         # اگر داده خالی برای teacher تلقی شود (فقط ادمین تغییر می‌دهد)
-        data = request.data.copy()
+        # Build data dict without copying (to avoid pickling file objects)
+        data = dict(request.data)
         if 'teacher' in data and request.user.role == 'teacher':
             del data['teacher']
         
