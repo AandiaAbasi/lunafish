@@ -41,6 +41,10 @@ class FieldAdmin(BilingualModelAdmin):
         (_('توصیف'), {
             'fields': ('des', 'guide')
         }),
+        (_('پاسخ صحیح'), {
+            'fields': ('correct_answer',),
+            'description': _('برای سوالات تایپی: پاسخ درست را وارد کنید')
+        }),
         (_('رسانه'), {
             'fields': ('image_path', 'audio_path', 'video_path', 'icon_name')
         }),
