@@ -3436,18 +3436,24 @@ class TeachingSubjectRetrieveAPIView(APIView):
 class TeachingSubjectUpdateAPIView(APIView):
     """
     Update Teaching Subject
-    
+
     ویرایش موضوع تدریس
     """
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser, JSONParser)
-    
+
     @extend_schema(
         tags=['Teaching Subject'],
         summary='Update Teaching Subject',
         description='ویرایش موضوع تدریس (صاحب موضوع یا ادمین)',
         parameters=[
-            OpenApiParameter('id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Subject ID')
+            OpenApiParameter(
+                'id',
+                OpenApiTypes.INT,
+                required=True,
+                location=OpenApiParameter.PATH,
+                description='Subject ID'
+            )
         ],
         request=None,
         responses={
@@ -3459,7 +3465,9 @@ class TeachingSubjectUpdateAPIView(APIView):
     )
     def post(self, request, id):
         from classroom.models import TeachingSubject
-        
+        from .classroom_serializers import TeachingSubjectSerializer
+
+        # ---------- get subject ----------
         try:
             subject = TeachingSubject.objects.get(id=id)
         except TeachingSubject.DoesNotExist:
@@ -3467,26 +3475,50 @@ class TeachingSubjectUpdateAPIView(APIView):
                 {'error': _('موضوع تدریسی یافت نشد')},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
-        # بررسی دسترسی - فقط صاحب یا ادمین
-        if request.user.role == 'teacher' and subject.teacher_id != request.user.id:
+
+        # ---------- permission ----------
+        if request.user.role == 'teacher':
+            if subject.teacher_id != request.user.id:
+                return Response(
+                    {'error': _('شما دسترسی به ویرایش این موضوع ندارید')},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        elif request.user.role != 'admin':
             return Response(
-                {'error': _('شما دسترسی به ویرایش این موضوع ندارید')},
+                {'error': _('تنها معلمان یا ادمین می‌توانند موضوع را ویرایش کنند')},
                 status=status.HTTP_403_FORBIDDEN
             )
-        elif request.user.role not in ['teacher', 'admin']:
-            return Response(
-                {'error': _('تنها معلمان و ادمین می‌توانند موضوع را ویرایش کنند')},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        # اگر داده خالی برای teacher تلقی شود (فقط ادمین تغییر می‌دهد)
-        # Build data dict without copying (to avoid pickling file objects)
-        data = dict(request.data)
-        if 'teacher' in data and request.user.role == 'teacher':
-            del data['teacher']
-        
-        serializer = TeachingSubjectSerializer(subject, data=data, partial=True)
+
+        # ---------- build mutable data safely ----------
+        data = request.data.copy()  # ❗️نه dict() نه deepcopy
+
+        # teacher فقط توسط admin قابل تغییر است
+        if request.user.role != 'admin':
+            data.pop('teacher', None)
+
+        # ---------- fix boolean ----------
+        if 'is_active' in data and isinstance(data.get('is_active'), str):
+            data['is_active'] = data['is_active'].lower() in ['true', '1', 'yes']
+
+        # ---------- fix integers ----------
+        for field in ['min_age', 'max_age']:
+            if field in data and data.get(field) not in [None, '']:
+                try:
+                    data[field] = int(data[field])
+                except (TypeError, ValueError):
+                    pass
+
+        # ---------- fix level (FormData array issue) ----------
+        if 'level' in data and isinstance(data.get('level'), (list, tuple)):
+            data['level'] = data['level'][0]
+
+        # ---------- serializer ----------
+        serializer = TeachingSubjectSerializer(
+            subject,
+            data=data,
+            partial=True
+        )
+
         if serializer.is_valid():
             serializer.save()
             return Response(
@@ -3496,6 +3528,7 @@ class TeachingSubjectUpdateAPIView(APIView):
                 },
                 status=status.HTTP_200_OK
             )
+
         return Response(
             {
                 'error': _('داده‌های نامعتبر'),
@@ -3503,6 +3536,7 @@ class TeachingSubjectUpdateAPIView(APIView):
             },
             status=status.HTTP_400_BAD_REQUEST
         )
+
 
 
 class TeachingSubjectDeleteAPIView(APIView):
