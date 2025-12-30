@@ -694,8 +694,6 @@ class SupportMessageAdmin(admin.ModelAdmin):
         }),
     )
     
-    change_list_template = 'admin/support_message_changelist.html'
-    
     def get_urls(self):
         """اضافه کردن URL برای صفحه مدیریت چت"""
         urls = super().get_urls()
