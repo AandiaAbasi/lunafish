@@ -37,6 +37,13 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
     """Serializer for TeacherAvailability - Time Slots"""
     date = JalaliDateField()
     teacher_name = serializers.CharField(source='teacher.name', read_only=True)
+    discount_price = serializers.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        required=False, 
+        allow_null=True,
+        help_text='Discounted price (optional)'
+    )
     
     class Meta:
         model = TeacherAvailability
