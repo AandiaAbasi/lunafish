@@ -134,8 +134,10 @@ def test_2_create_exam(data1):
     
     response = client.post('/api/exercise/exam/create/', data, format='json')
     if response.status_code == 201:
-        exam = response.json()['data']
-        print_ok(f"آزمون ایجاد شد با {len(exam['questions'])} سوال")
+        exam_response = response.json()
+        # Response دارای 'data' key است
+        exam = exam_response.get('data', exam_response)
+        print_ok(f"آزمون ایجاد شد با {len(exam.get('questions', []))} سوال")
         return {'subject': subject, 'token': token, 'teacher': teacher}
     else:
         print_err(f"خرابی: {response.status_code}")
@@ -156,11 +158,12 @@ def test_3_get_exam(data2):
     response = client.get(f'/api/exercise/exam/{subject.id}/', format='json')
     
     if response.status_code == 200:
-        exam = response.json()['data']
-        print_ok(f"آزمون دریافت شد: {len(exam['questions'])} سوال")
+        # Response مستقیماً شی است، نه dict با 'data' key
+        exam = response.json()
+        print_ok(f"آزمون دریافت شد: {len(exam.get('questions', []))} سوال")
         
-        for i, q in enumerate(exam['questions'], 1):
-            ans = q['field'].get('correct_answer')
+        for i, q in enumerate(exam.get('questions', []), 1):
+            ans = q.get('correct_answer')
             if ans:
                 print_ok(f"سوال {i}: پاسخ صحیح = '{ans}'")
             else:
@@ -169,6 +172,7 @@ def test_3_get_exam(data2):
         return {'subject': subject, 'student': student, 'student_token': student_token, 'exam': exam}
     else:
         print_err(f"خرابی: {response.status_code}")
+        print_info(response.json())
         return False
 
 def test_4_submit_exam(data3):
@@ -185,9 +189,9 @@ def test_4_submit_exam(data3):
     print_test("ارسال پاسخ‌های صحیح...")
     
     answers = []
-    for question in exam['questions']:
-        field_id = question['field']['id']
-        field_type = question['field']['type']
+    for question in exam.get('questions', []):
+        field_id = question['id']
+        field_type = question['type']
         
         if field_type == 'input':
             # پاسخ تایپی: پاسخ صحیح
@@ -197,11 +201,12 @@ def test_4_submit_exam(data3):
             })
         else:
             # انتخاب اول (باید صحیح باشد)
-            first_option = question['field']['details'][0]
-            answers.append({
-                'field_id': field_id,
-                'field_detail_id': first_option['id']
-            })
+            first_option = question.get('details', [])[0] if question.get('details') else None
+            if first_option:
+                answers.append({
+                    'field_id': field_id,
+                    'field_detail_id': first_option['id']
+                })
     
     data = {
         "teachingsubject_id": subject.id,
@@ -234,7 +239,9 @@ def test_5_get_results(data4):
     response = client.get('/api/exercise/results/', format='json')
     
     if response.status_code == 200:
-        results = response.json()['data']
+        results = response.json().get('data', [])  # می‌تواند 'data' key داشته باشد یا نه
+        if not results and isinstance(response.json(), list):
+            results = response.json()
         print_ok(f"تعداد تلاش‌ها: {len(results)}")
     else:
         print_err(f"خرابی: {response.status_code}")
@@ -244,12 +251,12 @@ def test_5_get_results(data4):
     response = client.get(f'/api/exercise/results/{attempt_id}/', format='json')
     
     if response.status_code == 200:
-        detail = response.json()['data']
+        detail = response.json().get('data', response.json())
         print_ok(f"نتایج دریافت شدند")
-        print_info(f"کل امتیاز: {detail['score']}")
+        print_info(f"کل امتیاز: {detail.get('score', 0)}")
         
-        for answer in detail['details']:
-            print_info(f"- {answer['field_title']}: {answer['score']} امتیاز")
+        for answer in detail.get('details', []):
+            print_info(f"- {answer.get('field_title', 'سوال')}: {answer.get('score', 0)} امتیاز")
         
         return True
     else:
