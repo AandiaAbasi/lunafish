@@ -3377,9 +3377,31 @@ class TeachingSubjectCreateAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Build data dict without copying (to avoid pickling file objects)
+        # Build data dict and fix common type issues
         data = dict(request.data)
         data['teacher'] = request.user.id
+        
+        # Fix: Convert string "true"/"false" to boolean
+        if 'is_active' in data:
+            if isinstance(data['is_active'], str):
+                data['is_active'] = data['is_active'].lower() in ['true', '1', 'yes']
+        
+        # Fix: Convert string numbers to integers
+        if 'min_age' in data and data['min_age']:
+            try:
+                data['min_age'] = int(data['min_age'])
+            except (ValueError, TypeError):
+                pass
+        
+        if 'max_age' in data and data['max_age']:
+            try:
+                data['max_age'] = int(data['max_age'])
+            except (ValueError, TypeError):
+                pass
+        
+        # Fix: If level is array, extract first element
+        if 'level' in data and isinstance(data['level'], (list, tuple)):
+            data['level'] = data['level'][0] if data['level'] else 'beginner'
         
         serializer = TeachingSubjectSerializer(data=data)
         if serializer.is_valid():
