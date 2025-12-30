@@ -5,9 +5,67 @@ APIs available to student users (role: `student`)
 
 ---
 
+## Teacher Discovery APIs
+
+### 1. View All Teachers
+Browse all available and verified teachers.
+
+**Method:** `GET`  
+**URL:** `/api/teachers/`  
+**Permission:** `AllowAny` (Public - No authentication required)
+
+**Query Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| page | integer | No | Page number (default: 1) |
+| page_size | integer | No | Teachers per page (default: 10) |
+
+**Response:** `200 OK`
+```json
+{
+  "count": 25,
+  "next": "http://api.example.com/api/teachers/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "name": "علی محمدی",
+      "qualifications": "دارای دیپلم تدریس و تجربه 10 سال",
+      "languages_taught": "فارسی، انگلیسی",
+      "profile_photo_path": "https://cdn.example.com/photos/user1.jpg",
+      "hourly_rate": "150.00",
+      "resume_summary": "معلم با تجربه زیاد در تدریس ریاضیات و فیزیک به دانش‌آموزان...",
+      "experience_years": 10,
+      "is_teacher_verified": true,
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### 2. View Teacher Profile
+Get complete teacher profile with qualifications, teaching subjects, and available time slots.
+
+**Method:** `GET`  
+**URL:** `/api/teachers/{id}/`  
+**Permission:** `AllowAny` (Public - No authentication required)
+
+**Response fields (selected):**
+- `name`: نام معلم
+- `qualifications`: مدرک تحصیلی
+- `languages_taught`: زبان‌های تدریس‌شده
+- `introduction_video`: ویدئوی معرفی
+- `resume_summary`: خلاصه رزومه
+- `hourly_rate`: قیمت ساعتی پیشنهادی
+- `availability_slots`: زمان‌های در دسترس
+
+---
+
 ## Class Booking APIs
 
-### 1. View Available Time Slots
+### 3. View Available Time Slots
 Retrieve list of available teacher time slots for booking classes.
 
 **Method:** `GET`  
@@ -51,7 +109,7 @@ Retrieve list of available teacher time slots for booking classes.
 
 ---
 
-### 2. Book/Purchase a Class
+### 4. Book/Purchase a Class
 Student purchases/reserves a time slot from a teacher.
 
 **Method:** `POST`  
@@ -101,7 +159,7 @@ Student purchases/reserves a time slot from a teacher.
 
 ---
 
-### 3. View My Bookings
+### 5. View My Bookings
 Get list of all classes booked/purchased by student.
 
 **Method:** `GET`  
@@ -145,7 +203,7 @@ Get list of all classes booked/purchased by student.
 
 ---
 
-### 4. Cancel Booking
+### 6. Cancel Booking
 Cancel a reserved class booking (refund/cancellation).
 
 **Method:** `POST`  
@@ -187,7 +245,7 @@ Cancel a reserved class booking (refund/cancellation).
 
 ## Teaching Subjects (Classes) APIs
 
-### 5. View Available Teaching Subjects
+### 7. View Available Teaching Subjects
 Get list of active teaching subjects available to students.
 
 **Method:** `GET`  
@@ -224,7 +282,7 @@ Get list of active teaching subjects available to students.
 
 ---
 
-### 6. View Teaching Subject Details
+### 8. View Teaching Subject Details
 Get full details of a specific teaching subject.
 
 **Method:** `GET`  
@@ -261,7 +319,7 @@ Get full details of a specific teaching subject.
 
 ## Exercise/Exam APIs
 
-### 7. Get Exam for a Subject
+### 9. Get Exam for a Subject
 Retrieve all questions and answer options for an exam/subject.
 
 **Method:** `GET`  
@@ -348,7 +406,7 @@ Retrieve all questions and answer options for an exam/subject.
 
 ---
 
-### 8. Submit Exam Answers
+### 10. Submit Exam Answers
 Submit answers to exam questions. Server calculates score automatically.
 
 **Method:** `POST`  
@@ -442,7 +500,7 @@ Submit answers to exam questions. Server calculates score automatically.
 
 ---
 
-### 9. View All My Exam Results
+### 11. View All My Exam Results
 Get list of all exam attempts by the student with scores.
 
 **Method:** `GET`  
@@ -481,7 +539,7 @@ Get list of all exam attempts by the student with scores.
 
 ---
 
-### 10. View Specific Exam Attempt Details
+### 12. View Specific Exam Attempt Details
 Get detailed breakdown of a single exam attempt with all answers and feedback.
 
 **Method:** `GET`  
@@ -547,7 +605,7 @@ Get detailed breakdown of a single exam attempt with all answers and feedback.
 
 ## Profile & Account APIs
 
-### 11. Fetch User Profile
+### 13. Fetch User Profile
 Get current logged-in student's profile data.
 
 **Method:** `GET`  
@@ -580,7 +638,7 @@ Get current logged-in student's profile data.
 
 ---
 
-### 12. Update Student Profile
+### 14. Update Student Profile
 Update profile information.
 
 **Method:** `PATCH`  
@@ -594,16 +652,27 @@ Update profile information.
   "last_name": "Hosseini",
   "display_name": "Ali H",
   "bio": "Updated bio",
-  "gender": "m",
-  "birth_date": "1403-05-15"
+  "gender": "male",
+  "birth_date": "1403-05-15",
+  "selected_avatar": 2
 }
 ```
 
-**Response:** `200 OK` (same as fetch user response)
+| Field | Type | Description |
+|-------|------|-------------|
+| first_name | string | نام |
+| last_name | string | نام خانوادگی |
+| display_name | string | نام نمایشی |
+| bio | string | شرح مختصر |
+| gender | string | جنسیت: `male`, `female`, `custom`, `prefer_not_to_say` |
+| birth_date | string | تاریخ تولد (YYYY-MM-DD فرمت جلالی) |
+| selected_avatar | integer | انتخاب آواتار کارتونی |
+
+**Response:** `200 OK` (same as fetch user)
 
 ---
 
-### 13. Complete Student Profile
+### 15. Complete Student Profile
 Fill in extended student profile information (optional).
 
 **Method:** `POST`  
@@ -617,22 +686,46 @@ Fill in extended student profile information (optional).
   "last_name": "Hosseini",
   "display_name": "Ali",
   "bio": "I am interested in learning English",
-  "gender": "m",
-  "birth_date": "1403-05-15"
+  "gender": "male",
+  "birth_date": "1403-05-15",
+  "selected_avatar": 1
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| first_name | string | نام |
+| last_name | string | نام خانوادگی |
+| display_name | string | نام نمایشی |
+| bio | string | شرح مختصر |
+| gender | string | جنسیت: `male`, `female`, `custom`, `prefer_not_to_say` |
+| birth_date | string | تاریخ تولد (YYYY-MM-DD فرمت جلالی) |
+| selected_avatar | integer | انتخاب آواتار کارتونی |
 
 **Response:** `200 OK`
 ```json
 {
   "message": "پروفایل با موفقیت تکمیل شد",
-  "data": {...}
+  "data": {
+    "id": 2,
+    "username": "student1",
+    "first_name": "Ali",
+    "last_name": "Hosseini",
+    "display_name": "Ali",
+    "bio": "I am interested in learning English",
+    "gender": "male",
+    "birth_date": "1403-05-15",
+    "selected_avatar": 1,
+    "avatar": "http://...",
+    "is_phone_verified": true,
+    "is_email_verified": true
+  }
 }
 ```
 
 ---
 
-### 14. Select Avatar
+### 16. Select Avatar
 Choose an avatar from available templates.
 
 **Method:** `POST`  
@@ -661,7 +754,7 @@ Choose an avatar from available templates.
 
 ## Content/Info APIs (Read-Only)
 
-### 15. Get Articles
+### 17. Get Articles
 Get list of published articles.
 
 **Method:** `GET`  
@@ -686,7 +779,7 @@ Get list of published articles.
 
 ---
 
-### 16. Get FAQs
+### 18. Get FAQs
 Get frequently asked questions.
 
 **Method:** `GET`  
@@ -711,7 +804,7 @@ Get frequently asked questions.
 
 ---
 
-### 17. Get Home Page Data
+### 19. Get Home Page Data
 Get home page banners and content.
 
 **Method:** `GET`  

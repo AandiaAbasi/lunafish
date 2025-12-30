@@ -3267,13 +3267,13 @@ class TeachingSubjectListAPIView(APIView):
         
         if self.request.user.role == 'teacher':
             # معلم تنها می‌تواند موضوعات خود را ببیند
-            return TeachingSubject.objects.filter(teacher=self.request.user)
+            return TeachingSubject.objects.filter(teacher=self.request.user).order_by('-created_at')
         elif self.request.user.role == 'admin':
             # ادمین تمام موضوعات را می‌بیند
-            return TeachingSubject.objects.all()
+            return TeachingSubject.objects.all().order_by('-created_at')
         else:
             # دانش‌آموز تنها موضوعات فعال را می‌بیند
-            return TeachingSubject.objects.filter(is_active=True)
+            return TeachingSubject.objects.filter(is_active=True).order_by('-created_at')
     
     @extend_schema(
         tags=['Teaching Subject'],
