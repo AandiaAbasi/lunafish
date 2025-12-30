@@ -64,9 +64,9 @@ class ParentLoginSerializer(serializers.Serializer):
                 student = User.objects.get(id=int(identifier), role='user')
             else:
                 # سپس بر اساس شماره تماس یا ایمیل جستجو کنید
+                from django.db.models import Q
                 student = User.objects.get(
-                    models.Q(phone=identifier) | models.Q(email=identifier),
-                    role='user'
+                    (Q(phone=identifier) | Q(email=identifier)) & Q(role='user')
                 )
         except User.DoesNotExist:
             raise serializers.ValidationError({
