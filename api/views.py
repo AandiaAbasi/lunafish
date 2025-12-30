@@ -3494,8 +3494,15 @@ class TeachingSubjectUpdateAPIView(APIView):
             )
 
         # ---------- build mutable data safely ----------
-        data = request.data.copy()  # ❗️نه dict() نه deepcopy
-
+        # جلوگیری از TypeError با ایجاد dict جدید
+        # از request.data مستقیماً استفاده می‌کنیم (شامل فایل‌ها)
+        # فقط فیلدهای مورد نیاز رو استخراج می‌کنیم
+        data = {}
+        
+        # تمام فیلدهای form data رو کپی کن (شامل فایل‌ها)
+        for key in request.data.keys():
+            data[key] = request.data.get(key)
+        
         # teacher فقط توسط admin قابل تغییر است
         if request.user.role != 'admin':
             data.pop('teacher', None)
