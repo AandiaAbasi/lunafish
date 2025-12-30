@@ -35,7 +35,7 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         model = Field
         fields = [
             'id', 'title', 'type', 'is_required', 'image_path',
-            'audio_path', 'video_path', 'guide', 'des', 'sort', 'details'
+            'audio_path', 'video_path', 'guide', 'des', 'sort', 'details', 'correct_answer'
         ]
         read_only_fields = ['id']
     
@@ -73,7 +73,7 @@ class FieldRetrieveSerializer(serializers.ModelSerializer):
         model = Field
         fields = [
             'id', 'title', 'type', 'is_required', 'image_path',
-            'audio_path', 'video_path', 'guide', 'des', 'sort', 'details'
+            'audio_path', 'video_path', 'guide', 'des', 'sort', 'details', 'correct_answer'
         ]
 
 
@@ -173,9 +173,18 @@ class OrderCreateSubmitSerializer(serializers.Serializer):
                     incorrect += 1
             else:
                 # Text-based answer (input/typing)
-                # For typing, you might want to implement fuzzy matching or accept exact only
+                # Compare with correct_answer from the Field model
                 field_detail = None
-                # TODO: Implement comparison logic for typed answers
+                if field.correct_answer:
+                    # Simple exact match comparison (case-insensitive)
+                    if value.strip().lower() == field.correct_answer.strip().lower():
+                        answer_score = 1
+                        correct += 1
+                    else:
+                        incorrect += 1
+                else:
+                    # No correct answer defined, cannot grade
+                    incorrect += 1
             
             total_score += answer_score
             

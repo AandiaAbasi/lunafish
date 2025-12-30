@@ -1,51 +1,311 @@
 #!/usr/bin/env python
 """
-Exercise API - Test Cases
-Quick test script to verify exercise API endpoints work correctly.
+سیستم تست API های سیستم آزمون
+تست کردن ایجاد سوال، ایجاد آزمون، و جمع‌بندی نتایج
 """
 
-import requests
-import json
-from datetime import datetime
+import os
+import sys
+import django
 
-# Configuration
-API_BASE_URL = "http://localhost:8000/api"
-TEACHER_TOKEN = "YOUR_TEACHER_TOKEN_HERE"
-STUDENT_TOKEN = "YOUR_STUDENT_TOKEN_HERE"
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'fofofish.settings')
+django.setup()
 
-def test_create_question():
-    """Test creating a question"""
-    print("\n" + "="*60)
-    print("TEST 1: Create Question")
-    print("="*60)
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
+from exercise.models import Field, FieldDetail, CategoryField, Order
+from classroom.models import TeachingSubject
+
+User = get_user_model()
+
+# رنگ‌های خروجی
+GREEN = '\033[92m'
+RED = '\033[91m'
+BLUE = '\033[94m'
+YELLOW = '\033[93m'
+BOLD = '\033[1m'
+END = '\033[0m'
+
+def print_test(msg):
+    print(f"{BLUE}▶ {msg}{END}")
+
+def print_ok(msg):
+    print(f"{GREEN}✓ {msg}{END}")
+
+def print_err(msg):
+    print(f"{RED}✗ {msg}{END}")
+
+def print_info(msg):
+    print(f"{YELLOW}ℹ {msg}{END}")
+
+def create_user(username, email, role='teacher'):
+    """ایجاد کاربر تست"""
+    User.objects.filter(username=username).delete()
+    user = User.objects.create_user(
+        username=username,
+        email=email,
+        phone_number=f"0910{username[-6:]}",
+        password='Test123456!',
+        role=role,
+        is_active=True
+    )
+    refresh = RefreshToken.for_user(user)
+    return user, str(refresh.access_token)
+
+def test_1_create_question():
+    """تست 1: ایجاد سوال"""
+    print(f"\n{BOLD}═══ تست 1: ایجاد سوال ═══{END}")
     
-    url = f"{API_BASE_URL}/exercise/field/create/"
+    teacher, token = create_user('teacher1', 'teacher@test.com', 'teacher')
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
     
+    # سوال تایپی
+    print_test("ایجاد سوال تایپی...")
     data = {
-        "title": "What is 2+2?",
-        "type": "radioButton",
+        "title": "فرمول شیمیایی آب چیست؟",
+        "type": "input",
+        "correct_answer": "H2O",
         "is_required": 1,
-        "guide": "Choose the correct answer",
+        "guide": "فرمول شیمیایی را بنویسید"
+    }
+    
+    response = client.post('/api/exercise/field/create/', data, format='json')
+    if response.status_code == 201:
+        field = response.json()['data']
+        print_ok(f"سوال تایپی ایجاد شد (ID: {field['id']})")
+        if field.get('correct_answer') == 'H2O':
+            print_ok(f"correct_answer به درستی ذخیره شد: {field['correct_answer']}")
+        else:
+            print_err(f"correct_answer نادرست: {field.get('correct_answer')}")
+    else:
+        print_err(f"خرابی: {response.status_code}")
+        print_info(response.json())
+        return False
+    
+    # سوال چند گزینه‌ای
+    print_test("ایجاد سوال چند گزینه‌ای...")
+    data = {
+        "title": "پایتخت فرانسه کدام است؟",
+        "type": "radioButton",
+        "correct_answer": "پاریس",
         "details": [
-            {"title": "3", "is_correct": 0},
-            {"title": "4", "is_correct": 1},
-            {"title": "5", "is_correct": 0}
+            {"title": "لندن", "is_correct": 0},
+            {"title": "پاریس", "is_correct": 1},
+            {"title": "برلین", "is_correct": 0}
         ]
     }
     
-    headers = {"Authorization": f"Bearer {TEACHER_TOKEN}"}
+    response = client.post('/api/exercise/field/create/', data, format='json')
+    if response.status_code == 201:
+        field2 = response.json()['data']
+        print_ok(f"سوال چند گزینه‌ای ایجاد شد (ID: {field2['id']})")
+    else:
+        print_err(f"خرابی: {response.status_code}")
+        return False
     
-    response = requests.post(url, json=data, headers=headers)
-    print(f"Status: {response.status_code}")
-    print(f"Response: {json.dumps(response.json(), indent=2)}")
+    return {'field1': field['id'], 'field2': field2['id'], 'teacher': teacher, 'token': token}
+
+def test_2_create_exam(data1):
+    """تست 2: ایجاد آزمون"""
+    print(f"\n{BOLD}═══ تست 2: ایجاد آزمون ═══{END}")
+    
+    teacher = data1['teacher']
+    token = data1['token']
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+    
+    # ایجاد درس
+    TeachingSubject.objects.filter(teacher=teacher).delete()
+    subject = TeachingSubject.objects.create(
+        teacher=teacher,
+        title="کلاس ریاضی تست"
+    )
+    
+    print_test("اضافه کردن سوالات به آزمون...")
+    data = {
+        "teachingsubject_id": subject.id,
+        "questions": [
+            {"field_id": data1['field1'], "step": 0, "sort": 0, "type": "input"},
+            {"field_id": data1['field2'], "step": 0, "sort": 1, "type": "radioButton"}
+        ]
+    }
+    
+    response = client.post('/api/exercise/exam/create/', data, format='json')
+    if response.status_code == 201:
+        exam = response.json()['data']
+        print_ok(f"آزمون ایجاد شد با {len(exam['questions'])} سوال")
+        return {'subject': subject, 'token': token, 'teacher': teacher}
+    else:
+        print_err(f"خرابی: {response.status_code}")
+        print_info(response.json())
+        return False
+
+def test_3_get_exam(data2):
+    """تست 3: دریافت آزمون"""
+    print(f"\n{BOLD}═══ تست 3: دریافت آزمون ═══{END}")
+    
+    subject = data2['subject']
+    student, student_token = create_user('student1', 'student@test.com', 'user')
+    
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {student_token}')
+    
+    print_test("دریافت جزئیات آزمون...")
+    response = client.get(f'/api/exercise/exam/{subject.id}/', format='json')
+    
+    if response.status_code == 200:
+        exam = response.json()['data']
+        print_ok(f"آزمون دریافت شد: {len(exam['questions'])} سوال")
+        
+        for i, q in enumerate(exam['questions'], 1):
+            ans = q['field'].get('correct_answer')
+            if ans:
+                print_ok(f"سوال {i}: پاسخ صحیح = '{ans}'")
+            else:
+                print_info(f"سوال {i}: بدون پاسخ صحیح")
+        
+        return {'subject': subject, 'student': student, 'student_token': student_token, 'exam': exam}
+    else:
+        print_err(f"خرابی: {response.status_code}")
+        return False
+
+def test_4_submit_exam(data3):
+    """تست 4: ارسال پاسخ‌ها"""
+    print(f"\n{BOLD}═══ تست 4: ارسال پاسخ‌ها ═══{END}")
+    
+    subject = data3['subject']
+    student_token = data3['student_token']
+    exam = data3['exam']
+    
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {student_token}')
+    
+    print_test("ارسال پاسخ‌های صحیح...")
+    
+    answers = []
+    for question in exam['questions']:
+        field_id = question['field']['id']
+        field_type = question['field']['type']
+        
+        if field_type == 'input':
+            # پاسخ تایپی: پاسخ صحیح
+            answers.append({
+                'field_id': field_id,
+                'value': 'H2O'
+            })
+        else:
+            # انتخاب اول (باید صحیح باشد)
+            first_option = question['field']['details'][0]
+            answers.append({
+                'field_id': field_id,
+                'field_detail_id': first_option['id']
+            })
+    
+    data = {
+        "teachingsubject_id": subject.id,
+        "answers": answers
+    }
+    
+    response = client.post(f'/api/exercise/exam/{subject.id}/submit/', data, format='json')
     
     if response.status_code == 201:
-        question_id = response.json()['data']['id']
-        print(f"✓ Question created with ID: {question_id}")
-        return question_id
+        result = response.json()['data']
+        print_ok(f"پاسخ‌ها ارسال شدند")
+        print_info(f"امتیاز: {result['score']} | صحیح: {result['correct']} | غلط: {result['incorrect']}")
+        return {'attempt_id': result['id'], 'student_token': student_token, 'subject': subject}
     else:
-        print("✗ Failed to create question")
-        return None
+        print_err(f"خرابی: {response.status_code}")
+        print_info(response.json())
+        return False
+
+def test_5_get_results(data4):
+    """تست 5: دریافت نتایج"""
+    print(f"\n{BOLD}═══ تست 5: دریافت نتایج ═══{END}")
+    
+    student_token = data4['student_token']
+    attempt_id = data4['attempt_id']
+    
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {student_token}')
+    
+    print_test("دریافت فهرست نتایج...")
+    response = client.get('/api/exercise/results/', format='json')
+    
+    if response.status_code == 200:
+        results = response.json()['data']
+        print_ok(f"تعداد تلاش‌ها: {len(results)}")
+    else:
+        print_err(f"خرابی: {response.status_code}")
+        return False
+    
+    print_test("دریافت جزئیات تلاش...")
+    response = client.get(f'/api/exercise/results/{attempt_id}/', format='json')
+    
+    if response.status_code == 200:
+        detail = response.json()['data']
+        print_ok(f"نتایج دریافت شدند")
+        print_info(f"کل امتیاز: {detail['score']}")
+        
+        for answer in detail['details']:
+            print_info(f"- {answer['field_title']}: {answer['score']} امتیاز")
+        
+        return True
+    else:
+        print_err(f"خرابی: {response.status_code}")
+        return False
+
+def main():
+    """اجرای تمام تست‌ها"""
+    print(f"\n{BOLD}{BLUE}╔═══════════════════════════════════════╗{END}")
+    print(f"{BOLD}{BLUE}║   تست جامع API های سیستم آزمون     ║{END}")
+    print(f"{BOLD}{BLUE}╚═══════════════════════════════════════╝{END}")
+    
+    try:
+        # تست 1
+        data1 = test_1_create_question()
+        if not data1:
+            print_err("تست 1 ناموفق")
+            return False
+        
+        # تست 2
+        data2 = test_2_create_exam(data1)
+        if not data2:
+            print_err("تست 2 ناموفق")
+            return False
+        
+        # تست 3
+        data3 = test_3_get_exam(data2)
+        if not data3:
+            print_err("تست 3 ناموفق")
+            return False
+        
+        # تست 4
+        data4 = test_4_submit_exam(data3)
+        if not data4:
+            print_err("تست 4 ناموفق")
+            return False
+        
+        # تست 5
+        if not test_5_get_results(data4):
+            print_err("تست 5 ناموفق")
+            return False
+        
+        print(f"\n{BOLD}{GREEN}╔═══════════════════════════════════════╗{END}")
+        print(f"{BOLD}{GREEN}║      ✓ تمام تست‌ها موفق بود!       ║{END}")
+        print(f"{BOLD}{GREEN}╚═══════════════════════════════════════╝{END}\n")
+        return True
+        
+    except Exception as e:
+        print_err(f"خرابی: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+if __name__ == '__main__':
+    success = main()
+    sys.exit(0 if success else 1)
 
 
 def test_create_exam(question_id):
