@@ -1555,3 +1555,59 @@ msgstr "Updated At"
 
 msgid "Platform Settings"
 msgstr "Platform Settings"
+
+#: api/parent_serializers.py
+msgid "شناسه دانش‌آموز یا شماره تماس یا ایمیل"
+msgstr "Student ID or Phone or Email"
+
+msgid "رمز والدین"
+msgstr "Parent Password"
+
+msgid "Student not found. Please check your student ID, phone number or email."
+msgstr "Student not found. Please check your student ID, phone number or email."
+
+msgid "Invalid identifier format"
+msgstr "Invalid identifier format"
+
+msgid "No parent profile found for this student"
+msgstr "No parent profile found for this student"
+
+msgid "Invalid parent password"
+msgstr "Invalid parent password"
+
+msgid "Usage limit cannot be negative"
+msgstr "Usage limit cannot be negative"
+
+msgid "Usage limit cannot exceed 24 hours (1440 minutes)"
+msgstr "Usage limit cannot exceed 24 hours (1440 minutes)"
+
+msgid "End time must be after start time"
+msgstr "End time must be after start time"
+
+msgid "Passwords do not match"
+msgstr "Passwords do not match"
+
+msgid "Password must be at least 6 characters"
+msgstr "Password must be at least 6 characters"
+
+#: api/views.py
+msgid "Parent login requires identifier and parent_password"
+msgstr "Parent login requires identifier and parent_password"
+
+msgid "Parent dashboard requires child_id"
+msgstr "Parent dashboard requires child_id"
+
+msgid "Child class history requires child_id"
+msgstr "Child class history requires child_id"
+
+msgid "Child payment history requires child_id"
+msgstr "Child payment history requires child_id"
+
+msgid "Payment summary requires child_id"
+msgstr "Payment summary requires child_id"
+
+msgid "Update usage time requires child_id"
+msgstr "Update usage time requires child_id"
+
+msgid "Parent profile requires child_id"
+msgstr "Parent profile requires child_id"

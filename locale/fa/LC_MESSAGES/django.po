@@ -1661,3 +1661,59 @@ msgstr "پاسخ"
 
 msgid "نتیجه"
 msgstr "نتیجه"
+
+#: api/parent_serializers.py
+msgid "شناسه دانش‌آموز یا شماره تماس یا ایمیل"
+msgstr "شناسه دانش‌آموز یا شماره تماس یا ایمیل"
+
+msgid "رمز والدین"
+msgstr "رمز والدین"
+
+msgid "Student not found. Please check your student ID, phone number or email."
+msgstr "دانش‌آموز پیدا نشد. لطفاً شناسه، شماره تماس یا ایمیل دانش‌آموز را بررسی کنید."
+
+msgid "Invalid identifier format"
+msgstr "فرمت شناسه نامعتبر"
+
+msgid "No parent profile found for this student"
+msgstr "پروفایل والدی برای این دانش‌آموز پیدا نشد"
+
+msgid "Invalid parent password"
+msgstr "رمز والدین نادرست"
+
+msgid "Usage limit cannot be negative"
+msgstr "محدودیت استفاده نمی‌تواند منفی باشد"
+
+msgid "Usage limit cannot exceed 24 hours (1440 minutes)"
+msgstr "محدودیت استفاده نمی‌تواند از 24 ساعت (1440 دقیقه) تجاوز کند"
+
+msgid "End time must be after start time"
+msgstr "زمان پایان باید بعد از زمان شروع باشد"
+
+msgid "Passwords do not match"
+msgstr "رمزها مطابقت ندارند"
+
+msgid "Password must be at least 6 characters"
+msgstr "رمز باید حداقل 6 کاراکتر باشد"
+
+#: api/views.py
+msgid "Parent login requires identifier and parent_password"
+msgstr "ورود والد نیاز به شناسه و رمز والدین دارد"
+
+msgid "Parent dashboard requires child_id"
+msgstr "داشبورد والد نیاز به child_id دارد"
+
+msgid "Child class history requires child_id"
+msgstr "تاریخچه کلاس‌های کودک نیاز به child_id دارد"
+
+msgid "Child payment history requires child_id"
+msgstr "تاریخچه پرداخت کودک نیاز به child_id دارد"
+
+msgid "Payment summary requires child_id"
+msgstr "خلاصه پرداخت نیاز به child_id دارد"
+
+msgid "Update usage time requires child_id"
+msgstr "بروزرسانی زمان استفاده نیاز به child_id دارد"
+
+msgid "Parent profile requires child_id"
+msgstr "پروفایل والدین نیاز به child_id دارد"
