@@ -3061,11 +3061,28 @@ class TeachingSubjectUpdateAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        serializer = TeachingSubjectSerializer(subject, data=request.data, partial=True)
+        # اگر داده خالی برای teacher تلقی شود (فقط ادمین تغییر می‌دهد)
+        data = request.data.copy()
+        if 'teacher' in data and request.user.role == 'teacher':
+            del data['teacher']
+        
+        serializer = TeachingSubjectSerializer(subject, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    'data': serializer.data,
+                    'message': _('موضوع تدریسی با موفقیت ویرایش شد')
+                },
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            {
+                'error': _('داده‌های نامعتبر'),
+                'details': serializer.errors
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class TeachingSubjectDeleteAPIView(APIView):

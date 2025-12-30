@@ -67,7 +67,13 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
             'id', 'teacher', 'teacher_name', 'title', 'description', 'level', 'level_display',
             'cover_image', 'demo_video', 'min_age', 'max_age', 'is_active', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'teacher', 'created_at', 'updated_at']
+    
+    def to_representation(self, instance):
+        """اضافه کردن تعداد student‌ها و rating"""
+        data = super().to_representation(instance)
+        data['students_count'] = instance.bookings.filter(status='completed').count()
+        return data
         
 
 class ClassBookingSerializer(serializers.ModelSerializer):
