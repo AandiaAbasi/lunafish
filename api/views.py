@@ -2485,7 +2485,9 @@ class TeacherAvailabilityListAPIView(generics.ListAPIView):
         description='Retrieve teacher availability time slots with optional filters and pagination',
         parameters=[
             OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, description='Filter by specific teacher'),
-            OpenApiParameter('date', OpenApiTypes.STR, required=False, description='Filter by date in YYYY/MM/DD Jalali format (e.g., 1403/01/15)'),
+            OpenApiParameter('start_date', OpenApiTypes.STR, required=False, description='Filter from date in YYYY/MM/DD Jalali format (e.g., 1403/01/01)'),
+            OpenApiParameter('end_date', OpenApiTypes.STR, required=False, description='Filter to date in YYYY/MM/DD Jalali format (e.g., 1403/01/31)'),
+            OpenApiParameter('date', OpenApiTypes.STR, required=False, description='Filter by specific date in YYYY/MM/DD Jalali format (e.g., 1403/01/15)'),
             OpenApiParameter('is_available', OpenApiTypes.BOOL, required=False, description='Filter available slots (true/false/1/0)'),
             OpenApiParameter('is_booked', OpenApiTypes.BOOL, required=False, description='Filter booked slots (true/false/1/0)'),
             OpenApiParameter('page', OpenApiTypes.INT, required=False, description='Page number (default: 1)'),
@@ -2516,6 +2518,26 @@ class TeacherAvailabilityListAPIView(generics.ListAPIView):
                 queryset = queryset.filter(date=gregorian_date)
             except (ValueError, TypeError):
                 # اگر فرمت نادرست بود، فیلتر را무시 کن
+                pass
+        
+        # فیلتر بر اساس بازه تاریخی (start_date تا end_date)
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+        
+        if start_date_str:
+            try:
+                # تبدیل تاریخ شمسی شروع به میلادی
+                start_gregorian_date = jdatetime.datetime.strptime(start_date_str, '%Y/%m/%d').togregorian().date()
+                queryset = queryset.filter(date__gte=start_gregorian_date)
+            except (ValueError, TypeError):
+                pass
+        
+        if end_date_str:
+            try:
+                # تبدیل تاریخ شمسی پایان به میلادی
+                end_gregorian_date = jdatetime.datetime.strptime(end_date_str, '%Y/%m/%d').togregorian().date()
+                queryset = queryset.filter(date__lte=end_gregorian_date)
+            except (ValueError, TypeError):
                 pass
         
         # فیلتر is_available
