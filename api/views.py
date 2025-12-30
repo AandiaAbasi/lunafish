@@ -5274,7 +5274,30 @@ class SupportMessageDetailAPIView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
+    
+    def delete(self, request, message_id):
+        """حذف پیام پشتیبانی"""
+        from classroom.models import SupportMessage
+        
+        try:
+            message = SupportMessage.objects.get(id=message_id)
+            message.delete()
+            
+            return Response(
+                {'message': _("Message deleted successfully")},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        
+        except SupportMessage.DoesNotExist:
+            return Response(
+                {'error': _("Message not found")},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class AttendanceListAPIView(APIView):
     """

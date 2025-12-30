@@ -31,6 +31,7 @@ urlpatterns = [
     
     # ========== Profile Management ==========
     path('fetch-user/', views.FetchUserAPIView.as_view(), name='fetch_user'),
+    path('user/', views.FetchUserAPIView.as_view(), name='user'),
     path('profile/', views.UserProfileAPIView.as_view(), name='profile'),
     # Legacy endpoint for backward compatibility
     path('teacher-profile/', views.UserProfileAPIView.as_view(), name='teacher_profile'),
