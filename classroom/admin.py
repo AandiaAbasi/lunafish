@@ -677,7 +677,7 @@ class SupportMessageAttachmentInline(admin.TabularInline):
 # ===== Support Message Admin =====
 @admin.register(SupportMessage)
 class SupportMessageAdmin(admin.ModelAdmin):
-    list_display = ['teacher_name', 'sender_name', 'status_badge', 'message_preview', 'created_at']
+    list_display = ['teacher_name', 'sender_name', 'status_badge', 'message_preview', 'created_at', 'chat_link']
     list_filter = ['status', 'created_at', 'teacher', 'read_at']
     search_fields = ['teacher__name', 'teacher__username', 'sender__name', 'sender__username', 'message_text']
     readonly_fields = ['created_at', 'read_at', 'status']
@@ -693,6 +693,30 @@ class SupportMessageAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    change_list_template = 'admin/support_message_changelist.html'
+    
+    def get_urls(self):
+        """اضافه کردن URL برای صفحه مدیریت چت"""
+        urls = super().get_urls()
+        custom_urls = [
+            path('chat/', self.admin_site.admin_view(self.chat_view), name='supportmessage_chat'),
+        ]
+        return custom_urls + urls
+    
+    def chat_view(self, request):
+        """نمایش صفحه مدیریت چت"""
+        context = self.admin_site.each_context(request)
+        context['title'] = _('مدیریت پیام‌های پشتیبانی')
+        return render(request, 'admin/support_message_chat.html', context)
+    
+    def chat_link(self, obj):
+        """دکمه لینک به صفحه چت"""
+        return format_html(
+            '<a class="button" href="/admin/classroom/supportmessage/chat/" style="background-color: #417690; color: white; text-decoration: none; padding: 5px 12px; border-radius: 4px; display: inline-block;">'
+            '💬 جزئیات چت</a>'
+        )
+    chat_link.short_description = _('مدیریت')
     
     def teacher_name(self, obj):
         return obj.teacher.name or obj.teacher.username
