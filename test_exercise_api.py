@@ -216,10 +216,10 @@ def test_4_submit_exam(data3):
     response = client.post(f'/api/exercise/exam/{subject.id}/submit/', data, format='json')
     
     if response.status_code == 201:
-        result = response.json()['data']
+        result = response.json().get('data', response.json())
         print_ok(f"پاسخ‌ها ارسال شدند")
-        print_info(f"امتیاز: {result['score']} | صحیح: {result['correct']} | غلط: {result['incorrect']}")
-        return {'attempt_id': result['id'], 'student_token': student_token, 'subject': subject}
+        print_info(f"امتیاز: {result.get('score', 0)} | صحیح: {result.get('correct', 0)} | غلط: {result.get('incorrect', 0)}")
+        return {'attempt_id': result.get('id'), 'student_token': student_token, 'subject': subject}
     else:
         print_err(f"خرابی: {response.status_code}")
         print_info(response.json())

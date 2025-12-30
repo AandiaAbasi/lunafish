@@ -4012,11 +4012,14 @@ class SubmitExamAPIView(APIView):
             404: OpenApiResponse(description="Subject not found"),
         }
     )
-    def post(self, request):
+    def post(self, request, subject_id=None):
         from classroom.models import TeachingSubject
         from .exercise_serializers import OrderCreateSubmitSerializer, OrderRetrieveSerializer
         
-        subject_id = request.data.get('teachingsubject_id')
+        # اگر subject_id از URL بیاید، استفاده کن؛ وگرنه از request.data بگیر
+        if subject_id is None:
+            subject_id = request.data.get('teachingsubject_id')
+        
         answers = request.data.get('answers', [])
         
         if not subject_id or not answers:
