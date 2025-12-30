@@ -3335,7 +3335,8 @@ class TeachingSubjectListAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        data = request.data.copy()
+        # Build data dict without copying (to avoid pickling file objects)
+        data = dict(request.data)
         data['teacher'] = request.user.id
         
         serializer = TeachingSubjectSerializer(data=data)
