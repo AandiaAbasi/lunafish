@@ -36,7 +36,7 @@ from .exercise_serializers import (
     OrderCreateSubmitSerializer, OrderRetrieveSerializer, OrderListSerializer,
     OrderDetailRetrieveSerializer
 )
-
+from .classroom_serializers import TeachingSubjectSerializer
 
 # Import email function with fallback
 try:
@@ -3290,7 +3290,6 @@ class TeachingSubjectListAPIView(APIView):
     )
     def get(self, request):
         from classroom.models import TeachingSubject
-        from .classroom_serializers import TeachingSubjectSerializer
         
         queryset = self.get_queryset()
         
@@ -3326,7 +3325,6 @@ class TeachingSubjectListAPIView(APIView):
     )
     def post(self, request):
         from classroom.models import TeachingSubject
-        from .classroom_serializers import TeachingSubjectSerializer
         
         # فقط معلمان می‌توانند موضوع ایجاد کنند
         if request.user.role != 'teacher':
@@ -3414,7 +3412,6 @@ class TeachingSubjectRetrieveAPIView(APIView):
     )
     def get(self, request, id):
         from classroom.models import TeachingSubject
-        from .classroom_serializers import TeachingSubjectSerializer
         
         try:
             subject = TeachingSubject.objects.get(id=id)
@@ -3462,7 +3459,6 @@ class TeachingSubjectUpdateAPIView(APIView):
     )
     def post(self, request, id):
         from classroom.models import TeachingSubject
-        from .classroom_serializers import TeachingSubjectSerializer
         
         try:
             subject = TeachingSubject.objects.get(id=id)
