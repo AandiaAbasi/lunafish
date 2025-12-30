@@ -65,8 +65,8 @@ class ParentLoginSerializer(serializers.Serializer):
             else:
                 # سپس بر اساس شماره تماس یا ایمیل جستجو کنید
                 student = User.objects.get(
-                    role='user',
-                    models.Q(phone=identifier) | models.Q(email=identifier)
+                    models.Q(phone=identifier) | models.Q(email=identifier),
+                    role='user'
                 )
         except User.DoesNotExist:
             raise serializers.ValidationError({
