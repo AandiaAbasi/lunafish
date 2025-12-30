@@ -2485,8 +2485,9 @@ class TeacherAvailabilityListAPIView(generics.ListAPIView):
         description='Retrieve teacher availability time slots with optional filters and pagination',
         parameters=[
             OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, description='Filter by specific teacher'),
-            OpenApiParameter('date', OpenApiTypes.STR, required=False, description='Filter by date in YYYY/MM/DD format'),
-            OpenApiParameter('is_available', OpenApiTypes.BOOL, required=False, description='Filter available slots only'),
+            OpenApiParameter('date', OpenApiTypes.STR, required=False, description='Filter by date in YYYY/MM/DD Jalali format (e.g., 1403/01/15)'),
+            OpenApiParameter('is_available', OpenApiTypes.BOOL, required=False, description='Filter available slots (true/false/1/0)'),
+            OpenApiParameter('is_booked', OpenApiTypes.BOOL, required=False, description='Filter booked slots (true/false/1/0)'),
             OpenApiParameter('page', OpenApiTypes.INT, required=False, description='Page number (default: 1)'),
             OpenApiParameter('page_size', OpenApiTypes.INT, required=False, description='Items per page (default: 20, max: 100)'),
         ]
@@ -2506,15 +2507,32 @@ class TeacherAvailabilityListAPIView(generics.ListAPIView):
             else:
                 queryset = TeacherAvailability.objects.all()
         
-        # فیلتر بر اساس تاریخ
+        # فیلتر بر اساس تاریخ (شمسی به میلادی)
         date_str = request.query_params.get('date')
         if date_str:
-            queryset = queryset.filter(date=date_str)
+            try:
+                # تبدیل تاریخ شمسی (YYYY/MM/DD) به میلادی
+                gregorian_date = jdatetime.datetime.strptime(date_str, '%Y/%m/%d').togregorian().date()
+                queryset = queryset.filter(date=gregorian_date)
+            except (ValueError, TypeError):
+                # اگر فرمت نادرست بود، فیلتر را무시 کن
+                pass
         
-        # فیلتر دسترسی
+        # فیلتر is_available
         is_available = request.query_params.get('is_available')
-        if is_available and is_available.lower() in ['true', '1', 'yes']:
-            queryset = queryset.filter(is_available=True)
+        if is_available is not None:
+            if is_available.lower() in ['true', '1', 'yes']:
+                queryset = queryset.filter(is_available=True)
+            elif is_available.lower() in ['false', '0', 'no']:
+                queryset = queryset.filter(is_available=False)
+        
+        # فیلتر is_booked
+        is_booked = request.query_params.get('is_booked')
+        if is_booked is not None:
+            if is_booked.lower() in ['true', '1', 'yes']:
+                queryset = queryset.filter(is_booked=True)
+            elif is_booked.lower() in ['false', '0', 'no']:
+                queryset = queryset.filter(is_booked=False)
         
         # مرتب‌سازی
         queryset = queryset.order_by('-date', '-start_time')
