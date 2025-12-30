@@ -85,7 +85,7 @@ class MessageSerializer(serializers.ModelSerializer):
     
     def get_reactions_count(self, obj):
         """تعداد واکنش‌های متفاوت برای پیام"""
-        return obj.reactions.filter(is_deleted=False).values('reaction_type').distinct().count()
+        return obj.reactions.values('reaction_type').distinct().count()
 
 
 class ChatRoomDetailSerializer(serializers.ModelSerializer):
