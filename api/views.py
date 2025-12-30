@@ -22,6 +22,7 @@ from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.db import models
 from django.http import StreamingHttpResponse, HttpResponse
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 import boto3
 import re
 import jdatetime
@@ -5068,12 +5069,12 @@ class SupportMessageAPIView(APIView):
             sender_id = request.data.get('sender_id')
             message_text = request.data.get('message_text', '').strip()
             
-            # بررسی معلم
+            # بررسی معلم یا ادمین (گیرنده پیام)
             try:
-                teacher = User.objects.get(id=teacher_id, role='teacher')
+                teacher = User.objects.get(id=teacher_id, role__in=['teacher', 'admin'])
             except User.DoesNotExist:
                 return Response(
-                    {'error': _("Teacher not found")},
+                    {'error': _("Recipient not found")},
                     status=status.HTTP_404_NOT_FOUND
                 )
             

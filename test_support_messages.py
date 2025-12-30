@@ -103,10 +103,10 @@ def test_send_message_with_text(teacher, admin_user):
     factory = APIRequestFactory()
     view = SupportMessageAPIView.as_view()
     
-    # ایجاد درخواست
+    # ایجاد درخواست - teacher_id باید ادمین باشد (گیرنده)، sender_id معلم (فرستنده)
     request = factory.post('/api/support-messages/', {
-        'teacher_id': admin_user.id,  # پیام برای ادمین
-        'sender_id': teacher.id,      # معلم فرستنده است
+        'teacher_id': admin_user.id,  # ادمین دریافت‌کننده
+        'sender_id': teacher.id,      # معلم فرستنده
         'message_text': 'سلام، من یک مشکل تکنیکی دارم'
     }, format='json')
     
