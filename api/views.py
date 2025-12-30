@@ -3379,7 +3379,6 @@ class TeachingSubjectCreateAPIView(APIView):
         
         # Build data dict and fix common type issues
         data = request.data.copy()
-        data['teacher'] = request.user.id
         
         # Fix: Convert string "true"/"false" to boolean
         if 'is_active' in data:
@@ -3405,7 +3404,7 @@ class TeachingSubjectCreateAPIView(APIView):
         
         serializer = TeachingSubjectSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(teacher=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         # Return detailed error messages for debugging
