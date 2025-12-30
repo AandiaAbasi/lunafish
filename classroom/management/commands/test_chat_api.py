@@ -48,17 +48,17 @@ class Command(BaseCommand):
         # Create users
         self.teacher, _ = User.objects.get_or_create(
             username='chat_test_teacher',
-            defaults={'name': 'علی معلم', 'role': 'teacher', 'phone_number': '09111111111'}
+            defaults={'name': 'علی معلم', 'role': 'teacher', 'phone': '+989111111111'}
         )
         
         self.student, _ = User.objects.get_or_create(
             username='chat_test_student',
-            defaults={'name': 'فاطمه دانش‌آموز', 'role': 'student', 'phone_number': '09122222222'}
+            defaults={'name': 'فاطمه دانش‌آموز', 'role': 'student', 'phone': '+989122222222'}
         )
         
         self.admin, _ = User.objects.get_or_create(
             username='chat_test_admin',
-            defaults={'name': 'احمد ادمین', 'role': 'admin', 'phone_number': '09133333333'}
+            defaults={'name': 'احمد ادمین', 'role': 'admin', 'phone': '+989133333333'}
         )
         
         self.stdout.write(f'✅ Teacher: {self.teacher.name}')
@@ -221,7 +221,7 @@ class Command(BaseCommand):
         # Create non-participant user
         other_user, _ = User.objects.get_or_create(
             username='chat_test_other',
-            defaults={'name': 'کاربر دیگر', 'role': 'student', 'phone_number': '09144444444'}
+            defaults={'name': 'کاربر دیگر', 'role': 'student', 'phone': '+989144444444'}
         )
         
         client = APIClient()

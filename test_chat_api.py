@@ -51,19 +51,19 @@ def setup_test_data():
     # Create or get users
     teacher, created = User.objects.get_or_create(
         username='test_teacher',
-        defaults={'name': 'علی معلم', 'role': 'teacher', 'phone_number': '09111111111'}
+        defaults={'name': 'علی معلم', 'role': 'teacher', 'phone': '+989111111111'}
     )
     print_info(f"Teacher: {teacher.name} {'(created)' if created else '(existing)'}")
     
     student, created = User.objects.get_or_create(
         username='test_student',
-        defaults={'name': 'فاطمه دانش‌آموز', 'role': 'student', 'phone_number': '09122222222'}
+        defaults={'name': 'فاطمه دانش‌آموز', 'role': 'student', 'phone': '+989122222222'}
     )
     print_info(f"Student: {student.name} {'(created)' if created else '(existing)'}")
     
     admin, created = User.objects.get_or_create(
         username='test_admin',
-        defaults={'name': 'احمد ادمین', 'role': 'admin', 'phone_number': '09133333333'}
+        defaults={'name': 'احمد ادمین', 'role': 'admin', 'phone': '+989133333333'}
     )
     print_info(f"Admin: {admin.name} {'(created)' if created else '(existing)'}")
     
@@ -313,7 +313,7 @@ def test_permission_denied(client, users):
     # Create another user not in chat
     other_user, _ = User.objects.get_or_create(
         username='non_participant',
-        defaults={'name': 'کاربر غریب', 'role': 'student', 'phone_number': '09144444444'}
+        defaults={'name': 'کاربر غریب', 'role': 'student', 'phone': '+989144444444'}
     )
     
     chat_id = users['classroom_chat'].id
