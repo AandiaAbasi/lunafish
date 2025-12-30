@@ -1649,3 +1649,76 @@ msgstr "Update usage time requires child_id"
 
 msgid "Parent profile requires child_id"
 msgstr "Parent profile requires child_id"
+
+#: account/models.py
+msgid "Student"
+msgstr "Student"
+
+msgid "Parent full name"
+msgstr "Parent full name"
+
+msgid "Phone number"
+msgstr "Phone number"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Parent password (hashed)"
+msgstr "Parent password (hashed)"
+
+msgid "Hashed password for parent portal login"
+msgstr "Hashed password for parent portal login"
+
+msgid "Can view class history"
+msgstr "Can view class history"
+
+msgid "Can view payments"
+msgstr "Can view payments"
+
+msgid "Can select teacher"
+msgstr "Can select teacher"
+
+msgid "Can set usage time"
+msgstr "Can set usage time"
+
+msgid "Daily usage limit (minutes)"
+msgstr "Daily usage limit (minutes)"
+
+msgid "Allowed start time for app usage"
+msgstr "Allowed start time for app usage"
+
+msgid "Allowed end time for app usage"
+msgstr "Allowed end time for app usage"
+
+msgid "Is active"
+msgstr "Is active"
+
+msgid "Last login"
+msgstr "Last login"
+
+msgid "Parent Profile"
+msgstr "Parent Profile"
+
+msgid "Parent Profiles"
+msgstr "Parent Profiles"
+
+msgid "Parent"
+msgstr "Parent"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "App usage date"
+msgstr "App usage date"
+
+msgid "Total minutes used"
+msgstr "Total minutes used"
+
+msgid "Number of sessions"
+msgstr "Number of sessions"
+
+msgid "Parent App Usage Log"
+msgstr "Parent App Usage Log"
+
+msgid "Parent App Usage Logs"
+msgstr "Parent App Usage Logs"

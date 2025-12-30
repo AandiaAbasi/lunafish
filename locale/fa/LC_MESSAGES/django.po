@@ -1755,3 +1755,76 @@ msgstr "بروزرسانی زمان استفاده نیاز به child_id دار
 
 msgid "Parent profile requires child_id"
 msgstr "پروفایل والدین نیاز به child_id دارد"
+
+#: account/models.py
+msgid "Student"
+msgstr "دانش‌آموز"
+
+msgid "Parent full name"
+msgstr "نام کامل والد"
+
+msgid "Phone number"
+msgstr "شماره تماس"
+
+msgid "Email"
+msgstr "ایمیل"
+
+msgid "Parent password (hashed)"
+msgstr "رمز والدین (هش‌شده)"
+
+msgid "Hashed password for parent portal login"
+msgstr "رمز هش‌شده برای ورود به درگاه والدین"
+
+msgid "Can view class history"
+msgstr "می‌تواند تاریخچه کلاس را ببیند"
+
+msgid "Can view payments"
+msgstr "می‌تواند پرداخت‌ها را ببیند"
+
+msgid "Can select teacher"
+msgstr "می‌تواند معلم را انتخاب کند"
+
+msgid "Can set usage time"
+msgstr "می‌تواند زمان استفاده را تنظیم کند"
+
+msgid "Daily usage limit (minutes)"
+msgstr "محدودیت استفاده روزانه (دقیقه)"
+
+msgid "Allowed start time for app usage"
+msgstr "زمان شروع مجاز برای استفاده از اپ"
+
+msgid "Allowed end time for app usage"
+msgstr "زمان پایان مجاز برای استفاده از اپ"
+
+msgid "Is active"
+msgstr "فعال است"
+
+msgid "Last login"
+msgstr "آخرین ورود"
+
+msgid "Parent Profile"
+msgstr "پروفایل والد"
+
+msgid "Parent Profiles"
+msgstr "پروفایل‌های والدین"
+
+msgid "Parent"
+msgstr "والد"
+
+msgid "Date"
+msgstr "تاریخ"
+
+msgid "App usage date"
+msgstr "تاریخ استفاده از اپ"
+
+msgid "Total minutes used"
+msgstr "کل دقایق استفاده شده"
+
+msgid "Number of sessions"
+msgstr "تعداد جلسات"
+
+msgid "Parent App Usage Log"
+msgstr "ثبت استفاده اپ والدین"
+
+msgid "Parent App Usage Logs"
+msgstr "ثبت‌های استفاده اپ والدین"
