@@ -328,5 +328,346 @@
 
 ---
 
+## 📱 API برای اپ‌نویسان (شامل کد نمونه)
+
+### احراز هویت
+
+```javascript
+// 1. ارسال OTP
+POST /api/send-otp/
+{
+  "identifier": "09121234567",
+  "purpose": "login"
+}
+
+// 2. تایید و دریافت Token
+POST /api/verify-otp/
+{
+  "identifier": "09121234567",
+  "code": "123456"
+}
+
+// جواب:
+{
+  "tokens": {
+    "access": "eyJ0eXAiOiJKV1QiLC...",
+    "refresh": "eyJ0eXAiOiJKV1QiLC..."
+  }
+}
+```
+
+### 1️⃣ دریافت آزمون
+
+```
+GET /api/exercise/exam/{subject_id}/
+```
+
+**درخواست:**
+```bash
+curl -X GET "http://api.example.com/api/exercise/exam/5/" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**پاسخ 200:**
+```json
+{
+  "id": 5,
+  "subject_id": 5,
+  "subject_title": "ریاضی 1",
+  "total_questions": 3,
+  "questions": [
+    {
+      "id": 1,
+      "title": "دو به اضافه دو برابر است با:",
+      "type": "radioButton",
+      "guide": "جواب صحیح را انتخاب کنید",
+      "details": [
+        {"id": 1, "title": "3", "is_correct": 0, "sort": 0},
+        {"id": 2, "title": "4", "is_correct": 1, "sort": 1}
+      ]
+    },
+    {
+      "id": 2,
+      "title": "نام خود را بنویسید",
+      "type": "input",
+      "guide": "نام کامل خود را وارد کنید",
+      "details": []
+    },
+    {
+      "id": 3,
+      "title": "کدام کشورها در اروپا هستند؟",
+      "type": "checkbox",
+      "details": [
+        {"id": 10, "title": "فرانسه", "is_correct": 1},
+        {"id": 11, "title": "آلمان", "is_correct": 1}
+      ]
+    }
+  ]
+}
+```
+
+**کد نمونه React Native:**
+```javascript
+const getExam = async (subjectId) => {
+  try {
+    const response = await fetch(
+      `http://api.example.com/api/exercise/exam/${subjectId}/`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+
+    setExam(data);
+    return data;
+  } catch (error) {
+    console.error('Error:', error);
+    showError('خطا در دریافت آزمون');
+  }
+};
+```
+
+### 2️⃣ ارسال پاسخ‌ها
+
+```
+POST /api/exercise/exam/{subject_id}/submit/
+```
+
+**درخواست:**
+```json
+{
+  "teachingsubject_id": 5,
+  "answers": [
+    {
+      "field_id": 1,
+      "field_detail_id": 2
+    },
+    {
+      "field_id": 2,
+      "value": "علی حسینی"
+    },
+    {
+      "field_id": 3,
+      "field_detail_id": 10
+    },
+    {
+      "field_id": 3,
+      "field_detail_id": 11
+    }
+  ]
+}
+```
+
+**شرح:**
+- `field_id`: ID سؤال
+- برای انتخابی: `field_detail_id` = ID گزینه
+- برای تایپی: `value` = متن وارد شده
+
+**پاسخ 201:**
+```json
+{
+  "data": {
+    "id": 42,
+    "user_name": "علی حسینی",
+    "subject_title": "ریاضی 1",
+    "score": 2,
+    "correct": 2,
+    "incorrect": 1,
+    "total_questions": 3,
+    "percentage": 66.67,
+    "details": [
+      {
+        "field_id": 1,
+        "field_title": "دو به اضافه دو برابر است با:",
+        "option_title": "4",
+        "score": 1
+      },
+      {
+        "field_id": 2,
+        "field_title": "نام خود را بنویسید",
+        "value": "علی حسینی",
+        "score": 0
+      }
+    ]
+  },
+  "message": "پاسخ‌ها با موفقیت ثبت شدند"
+}
+```
+
+**کد نمونه React Native:**
+```javascript
+const submitExam = async (subjectId, answers) => {
+  try {
+    setLoading(true);
+
+    const response = await fetch(
+      `http://api.example.com/api/exercise/exam/${subjectId}/submit/`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          teachingsubject_id: subjectId,
+          answers: answers
+        })
+      }
+    );
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+
+    // نمایش نتیجه
+    showScore(result.data.score, result.data.total_questions);
+    
+    // ذخیره برای نمایش بعدی
+    setLastAttempt(result.data);
+    navigation.navigate('Results', { attemptId: result.data.id });
+    
+  } catch (error) {
+    console.error('Error:', error);
+    showError(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+```
+
+### 3️⃣ دریافت لیست نتایج
+
+```
+GET /api/exercise/results/?page_size=20
+```
+
+**درخواست:**
+```bash
+curl -X GET "http://api.example.com/api/exercise/results/?page_size=20" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**پاسخ 200:**
+```json
+{
+  "count": 5,
+  "page": 1,
+  "page_size": 20,
+  "results": [
+    {
+      "id": 42,
+      "subject_title": "ریاضی 1",
+      "score": 2,
+      "correct": 2,
+      "incorrect": 1,
+      "percentage": 66.67,
+      "created_at": "2025-12-30"
+    },
+    {
+      "id": 41,
+      "subject_title": "ریاضی 1",
+      "score": 3,
+      "correct": 3,
+      "incorrect": 0,
+      "percentage": 100.0,
+      "created_at": "2025-12-29"
+    }
+  ]
+}
+```
+
+**کد نمونه React Native:**
+```javascript
+const getMyResults = async () => {
+  try {
+    const response = await fetch(
+      'http://api.example.com/api/exercise/results/?page_size=20',
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    const data = await response.json();
+    setResults(data.results);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
+```
+
+### 4️⃣ جزئیات یک تلاش
+
+```
+GET /api/exercise/results/{attempt_id}/
+```
+
+**درخواست:**
+```bash
+curl -X GET "http://api.example.com/api/exercise/results/42/" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**پاسخ 200:**
+```json
+{
+  "id": 42,
+  "user_name": "علی حسینی",
+  "subject_title": "ریاضی 1",
+  "score": 2,
+  "correct": 2,
+  "incorrect": 1,
+  "percentage": 66.67,
+  "created_at": "2025-12-30",
+  "details": [
+    {
+      "field_id": 1,
+      "field_title": "دو به اضافه دو برابر است با:",
+      "field_type": "radioButton",
+      "option_title": "4",
+      "score": 1
+    },
+    {
+      "field_id": 2,
+      "field_title": "نام خود را بنویسید",
+      "field_type": "input",
+      "value": "علی حسینی",
+      "score": 0
+    }
+  ]
+}
+```
+
+**کد نمونه React Native:**
+```javascript
+const getAttemptDetails = async (attemptId) => {
+  try {
+    const response = await fetch(
+      `http://api.example.com/api/exercise/results/${attemptId}/`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    const data = await response.json();
+    setAttemptDetails(data);
+    
+    // نمایش تفصیلات
+    showDetails(data.details);
+    
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
+```
+
+---
+
 **موفق باشید! 🌟**
 

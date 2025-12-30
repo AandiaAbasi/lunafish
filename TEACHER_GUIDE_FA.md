@@ -441,5 +441,274 @@ Step 1 (کاربرد):
 
 ---
 
+## 📱 API برای اپ‌نویسان (شامل کد نمونه)
+
+### احراز هویت
+
+```javascript
+// 1. ارسال OTP
+POST /api/send-otp/
+{
+  "identifier": "09121234567",
+  "purpose": "login"
+}
+
+// 2. تایید و دریافت Token
+POST /api/verify-otp/
+{
+  "identifier": "09121234567",
+  "code": "123456"
+}
+
+// جواب:
+{
+  "tokens": {
+    "access": "eyJ0eXAiOiJKV1QiLC...",
+    "refresh": "eyJ0eXAiOiJKV1QiLC..."
+  }
+}
+```
+
+### 1️⃣ ایجاد سؤال
+
+```
+POST /api/exercise/field/create/
+```
+
+**درخواست:**
+```json
+{
+  "title": "دو به اضافه دو برابر است با:",
+  "type": "radioButton",
+  "is_required": 1,
+  "guide": "جواب صحیح را انتخاب کنید",
+  "des": "سؤال ریاضی ساده",
+  "details": [
+    {"title": "3", "is_correct": 0, "sort": 0},
+    {"title": "4", "is_correct": 1, "sort": 1}
+  ]
+}
+```
+
+**پاسخ 201:**
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "دو به اضافه دو برابر است با:",
+    "type": "radioButton",
+    "details": [
+      {"id": 1, "title": "3", "is_correct": 0},
+      {"id": 2, "title": "4", "is_correct": 1}
+    ]
+  },
+  "message": "سؤال با موفقیت ایجاد شد"
+}
+```
+
+**کد نمونه React Native:**
+```javascript
+const createQuestion = async (questionData) => {
+  try {
+    const response = await fetch(
+      'http://api.example.com/api/exercise/field/create/',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(questionData)
+      }
+    );
+    
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+    
+    return result.data.id; // برای استفاده در آزمون
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
+```
+
+### 2️⃣ ایجاد آزمون
+
+```
+POST /api/exercise/exam/create/
+```
+
+**درخواست:**
+```json
+{
+  "teachingsubject_id": 5,
+  "questions": [
+    {"field_id": 1, "step": 0, "sort": 0, "type": "radioButton"},
+    {"field_id": 2, "step": 0, "sort": 1, "type": "input"},
+    {"field_id": 3, "step": 0, "sort": 2, "type": "checkbox"}
+  ]
+}
+```
+
+**پاسخ 201:**
+```json
+{
+  "data": {
+    "id": 5,
+    "subject_id": 5,
+    "subject_title": "ریاضی 1",
+    "total_questions": 3,
+    "questions": [
+      {
+        "id": 1,
+        "field_id": 1,
+        "field_title": "دو به اضافه دو برابر است با:",
+        "type": "radioButton",
+        "details": [
+          {"id": 1, "title": "3", "is_correct": 0},
+          {"id": 2, "title": "4", "is_correct": 1}
+        ]
+      }
+    ]
+  },
+  "message": "آزمون با موفقیت ایجاد شد"
+}
+```
+
+**کد نمونه React Native:**
+```javascript
+const createExam = async (subjectId, questionIds) => {
+  try {
+    const questions = questionIds.map((id, idx) => ({
+      field_id: id,
+      step: 0,
+      sort: idx
+    }));
+
+    const response = await fetch(
+      'http://api.example.com/api/exercise/exam/create/',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          teachingsubject_id: subjectId,
+          questions: questions
+        })
+      }
+    );
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+    
+    showSuccess('آزمون با موفقیت ایجاد شد');
+    return result.data;
+  } catch (error) {
+    console.error('Error:', error);
+    showError(error.message);
+  }
+};
+```
+
+### 3️⃣ مشاهده نتایج دانش‌آموزان
+
+```
+GET /api/exercise/results/?subject_id={subject_id}
+```
+
+**درخواست:**
+```bash
+curl -X GET "http://api.example.com/api/exercise/results/?subject_id=5&page_size=20" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**پاسخ 200:**
+```json
+{
+  "count": 15,
+  "page": 1,
+  "page_size": 20,
+  "results": [
+    {
+      "id": 42,
+      "user_name": "علی حسینی",
+      "subject_title": "ریاضی 1",
+      "score": 2,
+      "correct": 2,
+      "incorrect": 1,
+      "total_questions": 3,
+      "percentage": 66.67,
+      "created_at": "2025-12-30T14:30:00Z"
+    }
+  ]
+}
+```
+
+**کد نمونه React Native:**
+```javascript
+const getStudentResults = async (subjectId) => {
+  try {
+    const response = await fetch(
+      `http://api.example.com/api/exercise/results/?subject_id=${subjectId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    const data = await response.json();
+    setResults(data.results);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
+```
+
+### 4️⃣ جزئیات پاسخ دانش‌آموز
+
+```
+GET /api/exercise/results/{attempt_id}/
+```
+
+**درخواست:**
+```bash
+curl -X GET "http://api.example.com/api/exercise/results/42/" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**پاسخ 200:**
+```json
+{
+  "id": 42,
+  "user_name": "علی حسینی",
+  "subject_title": "ریاضی 1",
+  "score": 2,
+  "correct": 2,
+  "incorrect": 1,
+  "created_at": "2025-12-30T14:30:00Z",
+  "details": [
+    {
+      "id": 1,
+      "field_title": "دو به اضافه دو برابر است با:",
+      "field_type": "radioButton",
+      "option_title": "4",
+      "score": 1
+    },
+    {
+      "id": 2,
+      "field_title": "نام خود را بنویسید",
+      "field_type": "input",
+      "value": "علی حسینی",
+      "score": 0
+    }
+  ]
+}
+```
+
+---
+
 **موفق باشید! 🎓**
 

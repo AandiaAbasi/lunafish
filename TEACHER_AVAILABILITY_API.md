@@ -1,83 +1,87 @@
-# معلم - مدیریت شکاف‌های زمانی
-# Teacher Availability Management
+# 🕐 Teacher Availability Management API
 
-## خلاصه
-
-معلمان می‌توانند ساعات کاری خود (شکاف‌های زمانی) را برای دریافت درس تعریف کنند. دانش‌آموزان می‌توانند این شکاف‌ها را ببینند و درس را رزرو کنند.
+معلم - مدیریت شکاف‌های زمانی
 
 ---
 
-## نقاط پایانی (Endpoints)
+## خلاصه
 
-### 1. لیست شکاف‌های زمانی معلم
+معلمان می‌توانند زمان‌های دسترسی (شکاف‌های زمانی) خود را برای تدریس تعریف کنند. هر شکاف شامل:
+- **تاریخ** (میلادی)
+- **ساعت شروع و پایان** 
+- **قیمت** برای آن بازه
+- **وضعیت** (موجود یا رزرو شده)
 
-```
+---
+
+## Model Fields
+
+### TeacherAvailability
+
+| فیلد | نوع | توضیح |
+|------|------|-------|
+| `id` | Integer | شناسه |
+| `teacher` | ForeignKey(User) | معلم مالک |
+| `date` | Date | تاریخ (میلادی) |
+| `start_time` | Time | شروع (HH:MM) |
+| `end_time` | Time | پایان (HH:MM) |
+| `price` | Decimal | قیمت جلسه |
+| `discount_price` | Decimal | قیمت تخفیف شده |
+| `is_available` | Boolean | برای رزرو موجود؟ |
+| `is_booked` | Boolean | رزرو شده؟ |
+| `notes` | Text | یادداشت |
+| `created_at` | DateTime | زمان ایجاد |
+| `updated_at` | DateTime | زمان ویرایش |
+
+**Unique:** `(teacher, date, start_time, end_time)`
+
+---
+
+## Endpoints
+
+### 1️⃣ دریافت لیست
+
+```http
 GET /api/teacher/availability/
 ```
 
-#### توضیح
-- دریافت تمام شکاف‌های زمانی فعلی معلم
-- معلم فقط شکاف‌های خود را می‌بیند
-- دانش‌آموزان فقط شکاف‌های منتشر شده را می‌بینند
+**پارامترهای Query:**
 
-#### مجوز
-```
-Authorization: Bearer YOUR_TOKEN
-```
+| نام | توضیح | مثال |
+|-----|-------|------|
+| `teacher_id` | فیلتر بر حسب معلم | `?teacher_id=1` |
+| `date` | تاریخ مشخص | `?date=1403/01/15` |
+| `start_date` | از این تاریخ | `?start_date=1403/01/01` |
+| `end_date` | تا این تاریخ | `?end_date=1403/01/31` |
+| `is_available` | فقط موجود | `?is_available=true` |
+| `is_booked` | فقط رزرو شده | `?is_booked=false` |
+| `page_size` | تعداد در صفحه | `?page_size=20` |
 
-#### پارامترهای کوئری (اختیاری)
-
-| پارامتر | نوع | توضیح | مثال |
-|---------|------|-------|------|
-| `date` | string | تاریخ خاص (YYYY-MM-DD) | `2025-01-15` |
-| `day_of_week` | integer | روز هفته (0=شنبه، 6=جمعه) | `1` |
-| `is_active` | boolean | فقط شکاف‌های فعال | `true` |
-| `page` | integer | شماره صفحه | `1` |
-
-#### مثال درخواست
-
+**درخواست:**
 ```bash
-curl -X GET 'http://localhost:8000/api/teacher/availability/?day_of_week=1&is_active=true' \
+curl 'http://localhost:8000/api/teacher/availability/?date=1403/01/15' \
   -H 'Authorization: Bearer TOKEN'
 ```
 
-#### پاسخ موفق (200)
-
+**پاسخ 200:**
 ```json
 {
-  "count": 5,
-  "next": "http://localhost:8000/api/teacher/availability/?page=2",
+  "count": 2,
+  "next": null,
   "previous": null,
   "results": [
     {
       "id": 1,
       "teacher": 1,
       "teacher_name": "علی محمدی",
-      "day_of_week": 1,
-      "day_of_week_display": "دوشنبه",
+      "date": "1403/01/15",
       "start_time": "09:00:00",
       "end_time": "10:00:00",
-      "capacity": 2,
-      "booked": 1,
-      "available_slots": 1,
-      "hourly_rate": 100000,
-      "is_active": true,
-      "created_at": "2025-01-01T10:30:00Z",
-      "updated_at": "2025-01-15T14:20:00Z"
-    },
-    {
-      "id": 2,
-      "teacher": 1,
-      "teacher_name": "علی محمدی",
-      "day_of_week": 2,
-      "day_of_week_display": "سه‌شنبه",
-      "start_time": "10:00:00",
-      "end_time": "11:00:00",
-      "capacity": 3,
-      "booked": 2,
-      "available_slots": 1,
-      "hourly_rate": 100000,
-      "is_active": true,
+      "price": "100000.00",
+      "discount_price": null,
+      "is_available": true,
+      "is_booked": false,
+      "notes": "کلاس آنلاین",
       "created_at": "2025-01-01T10:30:00Z",
       "updated_at": "2025-01-15T14:20:00Z"
     }
@@ -85,584 +89,681 @@ curl -X GET 'http://localhost:8000/api/teacher/availability/?day_of_week=1&is_ac
 }
 ```
 
-#### کدهای خطا
-
-| کد | معنی |
-|------|------|
-| 200 | موفق |
-| 401 | عدم احراز هویت (توکن مورد نیاز) |
-| 403 | دسترسی ممنوع (نه معلم) |
+**Errors:**
+- `401` - معتبر نشده
+- `400` - تاریخ نادرست
 
 ---
 
-### 2. ایجاد شکاف زمانی
+### 2️⃣ ایجاد بازه تکی
 
-```
+```http
 POST /api/teacher/availability/create/
 ```
 
-#### توضیح
-- ایجاد یک شکاف زمانی جدید
-- فقط معلمان می‌توانند اینکار کنند
-- یک شکاف برای یک روز خاص در هفته
-
-#### مجوز
-```
-Authorization: Bearer TEACHER_TOKEN
-```
-
-#### جسم درخواست (JSON)
-
-**مورد اجباری:**
-
-| فیلد | نوع | توضیح | مثال |
-|------|------|-------|------|
-| `day_of_week` | integer | روز هفته (0=شنبه، 6=جمعه) | `1` |
-| `start_time` | string | ساعت شروع (HH:MM:SS) | `"09:00:00"` |
-| `end_time` | string | ساعت پایان (HH:MM:SS) | `"10:00:00"` |
-| `capacity` | integer | ظرفیت (تعداد دانش‌آموز) | `2` |
-
-**اختیاری:**
-
-| فیلد | نوع | پیش‌فرض | توضیح |
-|------|------|----------|-------|
-| `hourly_rate` | integer | 100000 | قیمت ساعتی |
-| `is_active` | boolean | true | فعال بودن |
-| `description` | string | "" | توضیح شکاف |
-
-#### مثال درخواست
-
-```bash
-curl -X POST 'http://localhost:8000/api/teacher/availability/create/' \
-  -H 'Authorization: Bearer TOKEN' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "day_of_week": 1,
-    "start_time": "09:00:00",
-    "end_time": "10:00:00",
-    "capacity": 2,
-    "hourly_rate": 100000,
-    "is_active": true,
-    "description": "کلاس انگلیسی"
-  }'
-```
-
-#### پاسخ موفق (201)
-
+**بدنه:**
 ```json
 {
-  "id": 3,
-  "teacher": 1,
-  "teacher_name": "علی محمدی",
-  "day_of_week": 1,
-  "day_of_week_display": "دوشنبه",
-  "start_time": "09:00:00",
-  "end_time": "10:00:00",
-  "capacity": 2,
-  "booked": 0,
-  "available_slots": 2,
-  "hourly_rate": 100000,
-  "is_active": true,
-  "description": "کلاس انگلیسی",
-  "created_at": "2025-01-29T15:30:00Z",
-  "updated_at": "2025-01-29T15:30:00Z"
+  "date": "1403/01/15",
+  "start_time": "09:00",
+  "end_time": "10:00",
+  "price": 100000,
+  "discount_price": null,
+  "notes": "کلاس آنلاین"
 }
 ```
 
-#### کدهای خطا
-
-| کد | معنی |
-|------|------|
-| 201 | ایجاد شده |
-| 400 | داده نامعتبر (مثلاً end_time < start_time) |
-| 401 | عدم احراز هویت |
-| 403 | دسترسی ممنوع (نه معلم) |
+**پاسخ 201:**
+```json
+{
+  "id": 5,
+  "teacher": 1,
+  "teacher_name": "علی محمدی",
+  "date": "1403/01/15",
+  "start_time": "09:00:00",
+  "end_time": "10:00:00",
+  "price": "100000.00",
+  "discount_price": null,
+  "is_available": true,
+  "is_booked": false,
+  "notes": "کلاس آنلاین",
+  "created_at": "2025-01-15T15:30:00Z"
+}
+```
 
 ---
 
-### 3. ایجاد گروهی شکاف‌های زمانی
+### 3️⃣ ایجاد گروهی (محدوده تاریخی)
 
-```
+```http
 POST /api/teacher/availability/bulk-create/
 ```
 
-#### توضیح
-- ایجاد چندین شکاف زمانی به یک‌باره
-- مفید برای تعریف ساعات هفتگی
-- تمام شکاف‌ها یک ساعت است
-
-#### مجوز
-```
-Authorization: Bearer TEACHER_TOKEN
-```
-
-#### جسم درخواست (JSON)
-
+**بدنه:**
 ```json
 {
-  "availabilities": [
-    {
-      "day_of_week": 0,
-      "start_time": "09:00:00",
-      "end_time": "10:00:00",
-      "capacity": 2,
-      "hourly_rate": 100000
-    },
-    {
-      "day_of_week": 1,
-      "start_time": "10:00:00",
-      "end_time": "11:00:00",
-      "capacity": 2,
-      "hourly_rate": 100000
-    },
-    {
-      "day_of_week": 2,
-      "start_time": "15:00:00",
-      "end_time": "16:00:00",
-      "capacity": 3,
-      "hourly_rate": 120000
-    }
-  ]
+  "start_date": "1403/01/01",
+  "end_date": "1403/01/31",
+  "daily_start_time": "09:00",
+  "daily_end_time": "17:00",
+  "session_duration": 30,
+  "break_duration": 10,
+  "price": 50000,
+  "notes": "کلاس‌های آنلاین"
 }
 ```
 
-#### مثال درخواست (cURL)
+**شرح پارامترها:**
 
+| پارامتر | توضیح | مثال |
+|---------|-------|------|
+| `start_date` | تاریخ شروع (YYYY/MM/DD) | "1403/01/01" |
+| `end_date` | تاریخ پایان | "1403/01/31" |
+| `daily_start_time` | شروع روزانه (HH:MM) | "09:00" |
+| `daily_end_time` | پایان روزانه | "17:00" |
+| `session_duration` | مدت جلسه (دقیقه) | 30 |
+| `break_duration` | استراحت بین جلسات | 10 |
+| `price` | قیمت | 50000 |
+| `notes` | یادداشت | "کلاس" |
+
+**مثال:**
 ```bash
 curl -X POST 'http://localhost:8000/api/teacher/availability/bulk-create/' \
   -H 'Authorization: Bearer TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{
-    "availabilities": [
-      {
-        "day_of_week": 1,
-        "start_time": "09:00:00",
-        "end_time": "10:00:00",
-        "capacity": 2,
-        "hourly_rate": 100000
-      },
-      {
-        "day_of_week": 2,
-        "start_time": "10:00:00",
-        "end_time": "11:00:00",
-        "capacity": 2,
-        "hourly_rate": 100000
-      }
-    ]
+    "start_date": "1403/01/01",
+    "end_date": "1403/01/31",
+    "daily_start_time": "09:00",
+    "daily_end_time": "17:00",
+    "session_duration": 30,
+    "break_duration": 10,
+    "price": 50000
   }'
 ```
 
-#### مثال درخواست (Python)
-
-```python
-import requests
-
-url = 'http://localhost:8000/api/teacher/availability/bulk-create/'
-headers = {
-    'Authorization': 'Bearer YOUR_TOKEN',
-    'Content-Type': 'application/json'
-}
-
-data = {
-    'availabilities': [
-        {
-            'day_of_week': 1,
-            'start_time': '09:00:00',
-            'end_time': '10:00:00',
-            'capacity': 2,
-            'hourly_rate': 100000
-        },
-        {
-            'day_of_week': 2,
-            'start_time': '10:00:00',
-            'end_time': '11:00:00',
-            'capacity': 2,
-            'hourly_rate': 100000
-        }
-    ]
-}
-
-response = requests.post(url, json=data, headers=headers)
-print(response.json())
-```
-
-#### پاسخ موفق (201)
-
+**پاسخ 201:**
 ```json
 {
-  "created_count": 2,
-  "results": [
-    {
-      "id": 4,
-      "day_of_week": 1,
-      "start_time": "09:00:00",
-      "end_time": "10:00:00",
-      "capacity": 2,
-      "hourly_rate": 100000,
-      "is_active": true
-    },
-    {
-      "id": 5,
-      "day_of_week": 2,
-      "start_time": "10:00:00",
-      "end_time": "11:00:00",
-      "capacity": 2,
-      "hourly_rate": 100000,
-      "is_active": true
-    }
-  ]
+  "count": 62,
+  "message": "بازه‌های زمانی با موفقیت ایجاد شدند"
 }
 ```
 
-#### کدهای خطا
-
-| کد | معنی |
-|------|------|
-| 201 | ایجاد شده |
-| 400 | داده نامعتبر |
-| 401 | عدم احراز هویت |
-| 403 | دسترسی ممنوع |
+**محاسبه:** 31 روز × (8 ساعت ÷ (30 + 10 دقیقه)) = ۶۲ جلسه
 
 ---
 
-### 4. بروزرسانی شکاف زمانی
+### 4️⃣ ویرایش بازه
 
-```
-POST /api/teacher/availability/{id}/update/
-```
-
-#### توضیح
-- تغییر شکاف زمانی موجود
-- فقط معلم مالک می‌تواند تغییر دهد
-- می‌توان تا حدودی تغییر داد
-
-#### مجوز
-```
-Authorization: Bearer TEACHER_TOKEN
+```http
+PATCH /api/teacher/availability/{id}/update/
 ```
 
-#### پارامترهای مسیر
-
-| پارامتر | نوع | توضیح |
-|---------|------|-------|
-| `id` | integer | شناسه شکاف زمانی |
-
-#### جسم درخواست (JSON)
-
-**فیلدهایی که می‌توان تغییر داد:**
-
-| فیلد | نوع | توضیح |
-|------|------|-------|
-| `capacity` | integer | تغییر ظرفیت |
-| `hourly_rate` | integer | تغییر قیمت |
-| `is_active` | boolean | فعال/غیرفعال کردن |
-| `description` | string | تغییر توضیح |
-| `start_time` | string | تغییر ساعت شروع |
-| `end_time` | string | تغییر ساعت پایان |
-
-#### مثال درخواست
-
-```bash
-curl -X POST 'http://localhost:8000/api/teacher/availability/1/update/' \
-  -H 'Authorization: Bearer TOKEN' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "capacity": 3,
-    "hourly_rate": 120000,
-    "is_active": true
-  }'
+**بدنه:**
+```json
+{
+  "price": 120000,
+  "discount_price": 100000,
+  "is_available": true,
+  "notes": "قیمت افزایش یافت"
+}
 ```
 
-#### پاسخ موفق (200)
-
+**پاسخ 200:**
 ```json
 {
   "id": 1,
   "teacher": 1,
-  "teacher_name": "علی محمدی",
-  "day_of_week": 1,
-  "day_of_week_display": "دوشنبه",
+  "date": "1403/01/15",
   "start_time": "09:00:00",
   "end_time": "10:00:00",
-  "capacity": 3,
-  "booked": 1,
-  "available_slots": 2,
-  "hourly_rate": 120000,
-  "is_active": true,
-  "updated_at": "2025-01-29T16:45:00Z"
+  "price": "120000.00",
+  "discount_price": "100000.00",
+  "is_available": true,
+  "is_booked": false,
+  "notes": "قیمت افزایش یافت",
+  "message": "بازه زمانی با موفقیت ویرایش شد"
 }
 ```
 
-#### کدهای خطا
-
-| کد | معنی |
-|------|------|
-| 200 | موفق |
-| 400 | داده نامعتبر |
-| 401 | عدم احراز هویت |
-| 403 | دسترسی ممنوع (نه مالک) |
-| 404 | شکاف یافت نشد |
+⚠️ **محدودیت:** نمی‌توان بازه رزرو شده را تغییر داد
 
 ---
 
-### 5. حذف شکاف زمانی
+### 5️⃣ حذف بازه
 
-```
-POST /api/teacher/availability/{id}/delete/
-```
-
-#### توضیح
-- حذف شکاف زمانی
-- فقط معلم مالک می‌تواند حذف کند
-- اگر رزرو داشت حذف نمی‌شود
-
-#### مجوز
-```
-Authorization: Bearer TEACHER_TOKEN
+```http
+DELETE /api/teacher/availability/{id}/delete/
 ```
 
-#### پارامترهای مسیر
-
-| پارامتر | نوع | توضیح |
-|---------|------|-------|
-| `id` | integer | شناسه شکاف زمانی |
-
-#### مثال درخواست
-
+**درخواست:**
 ```bash
-curl -X POST 'http://localhost:8000/api/teacher/availability/1/delete/' \
+curl -X DELETE 'http://localhost:8000/api/teacher/availability/1/delete/' \
   -H 'Authorization: Bearer TOKEN'
 ```
 
-#### پاسخ موفق (204)
+**پاسخ 204** (بدون محتوا)
 
-```json
-{
-  "message": "شکاف زمانی حذف شد"
-}
-```
-
-#### کدهای خطا
-
-| کد | معنی |
-|------|------|
-| 204 | حذف شده |
-| 400 | نمی‌توان حذف کرد (دارای رزرو) |
-| 401 | عدم احراز هویت |
-| 403 | دسترسی ممنوع (نه مالک) |
-| 404 | شکاف یافت نشد |
+⚠️ **محدودیت:** نمی‌توان بازه رزرو شده را حذف کرد
 
 ---
 
-## مثال‌های عملی
+## Model Methods
 
-### سناریو 1: معلم جدید - تعریف ساعات هفتگی
+```python
+# رزرو کردن بازه
+availability.reserve()  # is_booked = True
 
-**مرحله 1:** وارد شوید و توکن بگیرید
-```bash
-POST /api/teacher/login-password/
+# آزاد کردن بازه (لغو رزرو)
+availability.release()  # is_booked = False
+
+# تاریخ شمسی
+print(availability.get_jalali_date())  # "1403/01/15"
 ```
 
-**مرحله 2:** ساعات خود را تعریف کنید
-```bash
-POST /api/teacher/availability/bulk-create/
+---
 
-جسم:
-{
-  "availabilities": [
-    {"day_of_week": 1, "start_time": "09:00", "end_time": "10:00", "capacity": 2},
-    {"day_of_week": 1, "start_time": "16:00", "end_time": "17:00", "capacity": 2},
-    {"day_of_week": 2, "start_time": "10:00", "end_time": "11:00", "capacity": 3},
-    {"day_of_week": 3, "start_time": "15:00", "end_time": "16:00", "capacity": 2},
-    {"day_of_week": 5, "start_time": "18:00", "end_time": "19:00", "capacity": 2}
-  ]
-}
+## Database Indexes
+
+```python
+indexes = [
+    models.Index(fields=['teacher', 'date']),
+    models.Index(fields=['teacher', 'is_available']),
+    models.Index(fields=['date', 'is_available']),
+]
 ```
 
-**مرحله 3:** ببینید چه شکاف‌هایی ایجاد شد
+**فائده:** جستجو سریع‌تر برای:
+- فیلتر بر حسب معلم و تاریخ
+- فیلتر بر حسب دسترسی‌پذیری
+
+---
+
+## Unique Constraints
+
+```
+unique_together = ('teacher', 'date', 'start_time', 'end_time')
+```
+
+🔒 **معنی:** یک معلم نمی‌تواند در یک تاریخ و ساعت خاص بیش از یک بازه زمانی داشته باشد.
+
+---
+
+## کد نمونه (Python/Django)
+
+### دریافت بازه‌های یک معلم
+
+```python
+from classroom.models import TeacherAvailability
+from datetime import date
+
+# تمام بازه‌های معلم شماره 1
+slots = TeacherAvailability.objects.filter(teacher_id=1)
+
+# فقط برای امروز
+today = date.today()
+today_slots = TeacherAvailability.objects.filter(
+    teacher_id=1,
+    date=today
+)
+
+# فقط موجود (رزرو نشده)
+available_slots = TeacherAvailability.objects.filter(
+    teacher_id=1,
+    is_available=True,
+    is_booked=False
+)
+
+# محدوده تاریخی
+from datetime import date
+start = date(1403, 1, 1)
+end = date(1403, 1, 31)
+
+monthly_slots = TeacherAvailability.objects.filter(
+    teacher_id=1,
+    date__gte=start,
+    date__lte=end
+)
+```
+
+### ایجاد بازه‌های گروهی
+
+```python
+from classroom.models import TeacherAvailability
+from datetime import datetime, timedelta
+from decimal import Decimal
+import jdatetime
+
+# تاریخ‌های شمسی را به میلادی تبدیل کنید
+start_date = jdatetime.datetime.strptime('1403/01/01', '%Y/%m/%d').togregorian().date()
+end_date = jdatetime.datetime.strptime('1403/01/31', '%Y/%m/%d').togregorian().date()
+
+# زمان‌ها
+daily_start = datetime.strptime('09:00', '%H:%M').time()
+daily_end = datetime.strptime('17:00', '%H:%M').time()
+
+# جلسات ۳۰ دقیقه‌ای با ۱۰ دقیقه استراحت
+session_duration = 30
+break_duration = 10
+price = Decimal('50000')
+
+# ایجاد جلسات
+cur_date = start_date
+while cur_date <= end_date:
+    cursor = datetime.combine(cur_date, daily_start)
+    day_end = datetime.combine(cur_date, daily_end)
+    
+    while cursor + timedelta(minutes=session_duration) <= day_end:
+        slot_start = cursor.time()
+        slot_end = (cursor + timedelta(minutes=session_duration)).time()
+        
+        # بررسی تکراری نبودن
+        if not TeacherAvailability.objects.filter(
+            teacher_id=1,
+            date=cur_date,
+            start_time=slot_start,
+            end_time=slot_end
+        ).exists():
+            TeacherAvailability.objects.create(
+                teacher_id=1,
+                date=cur_date,
+                start_time=slot_start,
+                end_time=slot_end,
+                price=price,
+                is_available=True,
+                notes='کلاس آنلاین'
+            )
+        
+        cursor += timedelta(minutes=session_duration + break_duration)
+    
+    cur_date += timedelta(days=1)
+```
+
+### رزرو و لغو رزرو
+
+```python
+# رزرو کردن بازه
+slot = TeacherAvailability.objects.get(id=5)
+slot.reserve()  # is_booked = True
+
+# لغو رزرو
+slot.release()  # is_booked = False
+```
+
+### ویرایش قیمت
+
+```python
+from decimal import Decimal
+
+# تغییر قیمت یک بازه
+slot = TeacherAvailability.objects.get(id=5)
+slot.price = Decimal('120000')
+slot.discount_price = Decimal('100000')
+slot.save()
+
+# تغییر قیمت تمام بازه‌های یک معلم
+TeacherAvailability.objects.filter(teacher_id=1).update(
+    price=Decimal('150000')
+)
+```
+
+---
+
+## کد نمونه (React Native)
+
+### دریافت بازه‌ها
+
+```javascript
+const fetchAvailability = async (teacherId, date) => {
+  try {
+    const response = await fetch(
+      `http://localhost:8000/api/teacher/availability/?teacher_id=${teacherId}&date=${date}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    const data = await response.json();
+    setSlots(data.results);
+    return data.results;
+  } catch (error) {
+    console.error('Error:', error);
+    showError('خطا در دریافت بازه‌ها');
+  }
+};
+```
+
+### ایجاد بازه‌های گروهی
+
+```javascript
+const createBulkSlots = async (startDate, endDate, startTime, endTime) => {
+  try {
+    const response = await fetch(
+      'http://localhost:8000/api/teacher/availability/bulk-create/',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          start_date: startDate,  // "1403/01/01"
+          end_date: endDate,      // "1403/01/31"
+          daily_start_time: startTime,  // "09:00"
+          daily_end_time: endTime,      // "17:00"
+          session_duration: 30,
+          break_duration: 10,
+          price: 50000,
+          notes: 'کلاس آنلاین'
+        })
+      }
+    );
+    
+    const result = await response.json();
+    showSuccess(`${result.count} جلسه ایجاد شد`);
+    return result;
+  } catch (error) {
+    console.error('Error:', error);
+    showError('خطا در ایجاد بازه‌ها');
+  }
+};
+```
+
+### ویرایش قیمت
+
+```javascript
+const updatePrice = async (slotId, newPrice) => {
+  try {
+    const response = await fetch(
+      `http://localhost:8000/api/teacher/availability/${slotId}/update/`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          price: newPrice
+        })
+      }
+    );
+    
+    const result = await response.json();
+    showSuccess('قیمت تغییر کرد');
+    return result;
+  } catch (error) {
+    console.error('Error:', error);
+    showError('خطا در تغییر قیمت');
+  }
+};
+```
+
+### حذف بازه
+
+```javascript
+const deleteSlot = async (slotId) => {
+  try {
+    const response = await fetch(
+      `http://localhost:8000/api/teacher/availability/${slotId}/delete/`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }
+    );
+    
+    if (response.status === 204) {
+      showSuccess('بازه حذف شد');
+      // رفرش لیست
+      fetchAvailability();
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    showError('خطا در حذف بازه');
+  }
+};
+```
+
+---
+
+---
+
+## خطاهای معمول و حل‌ها
+
+### ❌ خطا: 400 Bad Request - Invalid date format
+
+```
+Error: فرمت تاریخ نادرست است. لطفاً از فرمت YYYY/MM/DD استفاده کنید
+```
+
+**علت:** تاریخ بدون "/" فرستاده شده
+
+**درخواست اشتباه:**
 ```bash
+curl -X POST /api/teacher/availability/bulk-create/ \
+  -d '{"start_date": "14030101", ...}'  # ❌ غلط
+```
+
+**درخواست درست:**
+```bash
+curl -X POST /api/teacher/availability/bulk-create/ \
+  -d '{"start_date": "1403/01/01", ...}'  # ✅ درست
+```
+
+---
+
+### ❌ خطا: 400 Bad Request - Cannot update booked slot
+
+```
+Error: این بازه زمانی رزرو شده است و نمی‌تواند تغییر کند
+```
+
+**علت:** تلاش برای تغییر بازه رزرو شده
+
+**راه حل:**
+1. اگر غیر ضروری است، بازه را حذف کنید (اگر ممکن باشد)
+2. بازه جدید ایجاد کنید
+3. رزرو را لغو کنید (اگر مالک رزرو باشید)
+
+```python
+# تا زمانی که رزرو شده است، نمی‌توان تغییر داد
+slot = TeacherAvailability.objects.get(id=5)
+if slot.is_booked:
+    slot.release()  # لغو رزرو
+    slot.price = 120000  # سپس تغییر دهید
+    slot.save()
+```
+
+---
+
+### ❌ خطا: 403 Forbidden - Not slot owner
+
+```
+Error: شما دسترسی به این بازه زمانی ندارید
+```
+
+**علت:** تلاش برای تغییر/حذف بازه معلم دیگری
+
+**راه حل:**
+- تنها بازه‌های خود را تغییر دهید
+- اگر معلم دیگری هستید، نمی‌توانید ویرایش کنید
+
+```python
+# بررسی مالکیت
+slot = TeacherAvailability.objects.get(id=5)
+if slot.teacher_id == current_user.id:
+    # می‌توانید تغییر دهید
+    slot.price = 120000
+    slot.save()
+else:
+    # خطا: شما مالک نیستید
+    print("You are not the owner")
+```
+
+---
+
+### ❌ خطا: 404 Not Found
+
+```
+Error: بازه زمانی یافت نشد
+```
+
+**علت:** شناسه نادرست یا بازه حذف شده
+
+**راه حل:**
+```bash
+# ابتدا لیست بازه‌ها را ببینید
 GET /api/teacher/availability/
+
+# سپس شناسه درست را استفاده کنید
+PATCH /api/teacher/availability/5/update/
 ```
 
 ---
 
-### سناریو 2: معلم - تغییر قیمت
+### ❌ خطا: 401 Unauthorized
 
-**قیمت را برای شکاف 1 تغییر دهید:**
+```
+Error: Token required / توکن مورد نیاز است
+```
+
+**علت:** توکن فرستاده نشده یا منقضی شده
+
+**راه حل:**
 ```bash
-POST /api/teacher/availability/1/update/
-
-جسم:
+# توکن را دوباره دریافت کنید
+POST /api/verify-otp/
 {
-  "hourly_rate": 150000
+  "identifier": "09121234567",
+  "code": "123456"
 }
+
+# سپس با توکن جدید درخواست بفرستید
+curl -H "Authorization: Bearer NEW_TOKEN" \
+  http://localhost:8000/api/teacher/availability/
 ```
 
 ---
 
-### سناریو 3: معلم - حذف شکاف
+## بهترین شیوه‌ها
 
-**حذف شکاف 5 (اگر نرزرو شده باشد):**
-```bash
-POST /api/teacher/availability/5/delete/
+✅ **نکات مثبت:**
+1. **محاسبه صحیح:** session_duration و break_duration را درست تنظیم کنید
+2. **قیمت معقول:** قیمت‌های رقابتی قرار دهید
+3. **یادداشت واضح:** مشخص کنید چه نوع کلاسی است
+4. **تحدیث منظم:** ساعات خود را بروز نگاه دارید
+5. **محدوده کافی:** حداقل یک ماه قبل از وقت تعریف کنید
+
+❌ **اشتباع‌های معمول:**
+1. ❌ فراموش کردن break_duration → جلسات متداخل
+2. ❌ قیمت خیلی کم → کیفیت کمتر
+3. ❌ بدون یادداشت → دانش‌آموزان نمی‌فهمند
+4. ❌ ساعات غیرمنطقی → دانش‌آموزان نمی‌توانند رزرو کنند
+5. ❌ فراموش کردن اپدیت → بازه‌های قدیمی باقی می‌ماند
+
+---
+
+## محاسبه‌های مثال
+
+### مثال 1: جلسات ۳۰ دقیقه‌ای
+
+```
+start_date: 1403/01/01
+end_date: 1403/01/31
+daily_start_time: 09:00
+daily_end_time: 17:00
+session_duration: 30 دقیقه
+break_duration: 10 دقیقه
+
+محاسبه:
+- هر روز: 8 ساعت = 480 دقیقه
+- هر چرخه: 30 + 10 = 40 دقیقه
+- تعداد جلسات در روز: 480 ÷ 40 = 12 جلسه
+- تعداد کل: 31 روز × 12 جلسه = 372 جلسه
+
+جلسات:
+09:00-09:30, 09:40-10:10, 10:20-10:50, 11:00-11:30,
+11:40-12:10, 12:20-12:50, 13:00-13:30, 13:40-14:10,
+14:20-14:50, 15:00-15:30, 15:40-16:10, 16:20-16:50
+```
+
+### مثال 2: جلسات ۴۵ دقیقه‌ای
+
+```
+session_duration: 45 دقیقه
+break_duration: 15 دقیقه
+
+محاسبه:
+- هر چرخه: 45 + 15 = 60 دقیقه = 1 ساعت
+- تعداد جلسات در روز: 480 ÷ 60 = 8 جلسه
+- تعداد کل: 31 روز × 8 جلسه = 248 جلسه
+
+جلسات:
+09:00-09:45, 10:00-10:45, 11:00-11:45, 12:00-12:45,
+13:00-13:45, 14:00-14:45, 15:00-15:45, 16:00-16:45
+```
+
+### مثال 3: جلسات ۶۰ دقیقه‌ای (یک ساعت)
+
+```
+session_duration: 60 دقیقه
+break_duration: 20 دقیقه
+
+محاسبه:
+- هر چرخه: 60 + 20 = 80 دقیقه
+- تعداد جلسات در روز: 480 ÷ 80 = 6 جلسه
+- تعداد کل: 31 روز × 6 جلسه = 186 جلسه
+
+جلسات:
+09:00-10:00, 10:20-11:20, 11:40-12:40, 13:00-14:00,
+14:20-15:20, 15:40-16:40
 ```
 
 ---
 
-### سناریو 4: دانش‌آموز - جستجو شکاف‌های موجود
+## Swagger/OpenAPI
 
-**شکاف‌های دوشنبه را ببینید:**
-```bash
-GET /api/teacher/availability/?day_of_week=1
+تمام endpoints در Swagger قابل دسترس هستند:
 
-نتیجه: تمام شکاف‌های فعال دوشنبه
+```
+http://localhost:8000/api/swagger/
+```
+
+یا ReDoc:
+
+```
+http://localhost:8000/api/redoc/
 ```
 
 ---
 
-## روزهای هفته
+## مراجع و لینک‌ها
 
-| عدد | نام فارسی | نام انگلیسی |
-|------|----------|----------|
-| 0 | شنبه | Saturday |
-| 1 | دوشنبه | Monday |
-| 2 | سه‌شنبه | Tuesday |
-| 3 | چهارشنبه | Wednesday |
-| 4 | پنج‌شنبه | Thursday |
-| 5 | جمعه | Friday |
+### کد منبع
+- **Model:** [classroom/models.py](classroom/models.py#L14)
+- **Views:** [api/views.py](api/views.py#L2161)
+- **Serializer:** [api/classroom_serializers.py](api/classroom_serializers.py#L36)
+- **URLs:** [api/urls.py](api/urls.py#L65)
 
----
-
-## نکات مهم
-
-### ✅ بهترین شیوه‌ها
-
-1. **ظرفیت واقعی**: ظرفیت را بیش از توان خود نکنید
-2. **قیمت منطقی**: قیمت‌های رقابتی قرار دهید
-3. **تحدیث منظم**: ساعات خود را به‌روز نگاه دارید
-4. **توضیح واضح**: توضیح شکاف را خوب نوشتید
-5. **زمان‌بندی**: بین کلاس‌ها وقت استراحت قرار دهید
-
-### ❌ اشتباع‌های رایج
-
-1. ❌ شکاف‌هایی بدون توضیح
-2. ❌ ظرفیت بیش از حد
-3. ❌ قیمت غیرمعقول
-4. ❌ شکاف‌های متداخل
-5. ❌ فراموش کردن فعال کردن شکاف
-
----
-
-## خطاهای رایج
-
-### خطا: 400 Bad Request
-
-**مسئله:** ساعت پایان قبل از ساعت شروع است
-```
-start_time: "10:00:00"
-end_time: "09:00:00"  # ❌ غلط
-```
-**حل:**
-```
-end_time: "11:00:00"  # ✅ درست
-```
-
----
-
-### خطا: 403 Forbidden
-
-**مسئله:** می‌خواهید شکاف معلم دیگر را تغییر دهید
-```
-❌ نمی‌توانید
-```
-**حل:**
-```
-✅ فقط شکاف‌های خود را تغییر دهید
-```
-
----
-
-### خطا: 404 Not Found
-
-**مسئله:** شناسه شکاف اشتباه است
-```
-/api/teacher/availability/999/update/  # ❌ وجود ندارد
-```
-**حل:**
-```
-# ابتدا تمام شکاف‌ها را ببینید
-GET /api/teacher/availability/
-# سپس شناسه صحیح را استفاده کنید
-```
-
----
-
-## پاسخ‌های معمول
-
-### 200 - موفق
-```json
-{"message": "شکاف زمانی بروز شد"}
-```
-
-### 201 - ایجاد شده
-```json
-{"id": 5, "message": "شکاف زمانی ایجاد شد"}
-```
-
-### 204 - بدون محتوا
-```
-(بدون جسم)
-```
-
-### 400 - درخواست نامعتبر
-```json
-{
-  "field_name": ["خطا: توضیح خطا"]
-}
-```
-
-### 401 - عدم احراز هویت
-```json
-{"detail": "توکن مورد نیاز است"}
-```
-
-### 403 - دسترسی ممنوع
-```json
-{"detail": "شما مجاز نیستید"}
-```
-
-### 404 - یافت نشد
-```json
-{"detail": "شکاف یافت نشد"}
-```
-
----
-
-## محدودیت‌ها
-
-| محدودیت | مقدار |
-|---------|-------|
-| حداکثر شکاف‌ها | بدون حد |
-| حداقل ساعت | 30 دقیقه |
-| حداکثر ساعت | 8 ساعت |
-| حداقل ظرفیت | 1 نفر |
-| حداکثر ظرفیت | 10 نفر |
-| حداقل قیمت | 10,000 تومان |
-
----
-
-## نکات امنیتی
-
-1. **توکن محافظت‌شده**: توکن را ایمن نگاه دارید
-2. **HTTPS**: همیشه HTTPS استفاده کنید
-3. **تأیید مالکیت**: فقط شکاف‌های خود را مدیریت کنید
-4. **مجوزها**: سیستم خودکار مجوزها را بررسی می‌کند
+### الگوهای مرتبط
+- [Teaching Subject Management](TEACHING_SUBJECT_API.md)
+- [Exercise API](MOBILE_APP_API_INTEGRATION.md)
 
 ---
 
 ## پشتیبانی
 
-برای مشکلات:
-- Email: support@fofofish.com
-- Chat: در اپلیکیشن
-- Phone: +98-21-XXXX-XXXX
+برای سوال‌ها و مشکلات:
+- 📧 **Email:** support@fofofish.com
+- 💬 **Chat:** در اپلیکیشن
+- 📞 **Phone:** +98-21-XXXX-XXXX
+- 📖 **Documentation:** https://docs.fofofish.com
+
+---
+
+**آخرین به‌روز رسانی:** December 30, 2025

@@ -8,7 +8,8 @@ from django.contrib import messages
 from .models import (
     TeacherAvailability, TeachingSubject, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
-    StudentTransaction, PlatformSettings
+    StudentTransaction, PlatformSettings,
+    ChatRoom, ChatParticipant, Message, MessageReaction
 )
 import jdatetime
 from datetime import datetime
@@ -622,3 +623,136 @@ class PlatformSettingsAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+
+# ===== Chat System Admin =====
+@admin.register(ChatRoom)
+class ChatRoomAdmin(admin.ModelAdmin):
+    list_display = ['id', 'get_type_display', 'get_teaching_subject', 'participants_count', 'messages_count', 'created_at']
+    list_filter = ['type', 'created_at']
+    search_fields = ['teaching_subject__title', 'id']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        (_('اطلاعات چت'), {
+            'fields': ('type', 'teaching_subject')
+        }),
+        (_('سیستم'), {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_teaching_subject(self, obj):
+        """نمایش موضوع تدریس برای Classroom Chat"""
+        if obj.teaching_subject:
+            return f"{obj.teaching_subject.title}"
+        return _('چت پشتیبانی')
+    get_teaching_subject.short_description = _('کلاس/موضوع')
+    
+    def participants_count(self, obj):
+        """تعداد شرکت‌کنندگان"""
+        return obj.participants.count()
+    participants_count.short_description = _('شرکت‌کنندگان')
+    
+    def messages_count(self, obj):
+        """تعداد پیام‌های غیرحذف‌شده"""
+        return obj.messages.filter(is_deleted=False).count()
+    messages_count.short_description = _('پیام‌ها')
+
+
+@admin.register(ChatParticipant)
+class ChatParticipantAdmin(admin.ModelAdmin):
+    list_display = ['get_user_name', 'get_role', 'get_chat_type', 'joined_at']
+    list_filter = ['role', 'chat_room__type', 'joined_at']
+    search_fields = ['user__name', 'user__username', 'chat_room__id']
+    readonly_fields = ['joined_at', 'updated_at']
+    
+    fieldsets = (
+        (_('شرکت‌کنندگی'), {
+            'fields': ('chat_room', 'user', 'role')
+        }),
+        (_('سیستم'), {
+            'fields': ('joined_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_user_name(self, obj):
+        return obj.user.name
+    get_user_name.short_description = _('کاربر')
+    
+    def get_role(self, obj):
+        return obj.get_role_display()
+    get_role.short_description = _('نقش')
+    
+    def get_chat_type(self, obj):
+        return obj.chat_room.get_type_display()
+    get_chat_type.short_description = _('نوع چت')
+
+
+@admin.register(Message)
+class MessageAdmin(admin.ModelAdmin):
+    list_display = ['id', 'get_sender_name', 'message_type', 'get_preview', 'is_deleted', 'created_at']
+    list_filter = ['message_type', 'is_deleted', 'created_at', 'chat_room__type']
+    search_fields = ['sender__name', 'text', 'chat_room__id']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        (_('پیام'), {
+            'fields': ('chat_room', 'sender', 'message_type')
+        }),
+        (_('محتوا'), {
+            'fields': ('text', 'file')
+        }),
+        (_('وضعیت'), {
+            'fields': ('is_deleted',)
+        }),
+        (_('سیستم'), {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_sender_name(self, obj):
+        return obj.sender.name if obj.sender else _('کاربر حذف‌شده')
+    get_sender_name.short_description = _('فرستنده')
+    
+    def get_preview(self, obj):
+        """پیش‌نمایش متن یا نوع فایل"""
+        if obj.message_type == 'text':
+            return obj.text[:50] + ('...' if len(obj.text or '') > 50 else '')
+        elif obj.message_type == 'sticker':
+            return _('استیکر')
+        else:
+            return f"📎 {obj.message_type.upper()}"
+    get_preview.short_description = _('محتوا')
+
+
+@admin.register(MessageReaction)
+class MessageReactionAdmin(admin.ModelAdmin):
+    list_display = ['get_emoji', 'get_user_name', 'get_message_id', 'created_at']
+    list_filter = ['reaction_type', 'created_at']
+    search_fields = ['user__name', 'message__id']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        (_('واکنش'), {
+            'fields': ('message', 'user', 'reaction_type')
+        }),
+        (_('سیستم'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_emoji(self, obj):
+        return dict(obj.REACTION_TYPES).get(obj.reaction_type, obj.reaction_type)
+    get_emoji.short_description = _('نوع')
+    
+    def get_user_name(self, obj):
+        return obj.user.name
+    get_user_name.short_description = _('کاربر')
+    
+    def get_message_id(self, obj):
+        return f"پیام #{obj.message.id}"
+    get_message_id.short_description = _('پیام')

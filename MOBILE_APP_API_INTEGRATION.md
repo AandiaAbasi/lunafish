@@ -1,6 +1,15 @@
 # 🔌 Exercise API - Mobile App Integration Guide
 
+**فقط برای توسعه‌دهندگان و کیپ تیم فنی**
+
 سازگار با React Native، Flutter، و سایر فریمورک‌های موبایل
+
+---
+
+**📌 نکته:** 
+- اگر معلم هستید ➜ [TEACHER_GUIDE_FA.md](TEACHER_GUIDE_FA.md) را بخوانید
+- اگر دانش‌آموز هستید ➜ [STUDENT_GUIDE_FA.md](STUDENT_GUIDE_FA.md) را بخوانید
+- اگر توسعه‌دهنده هستید ➜ ادامه بخوانید!
 
 ---
 

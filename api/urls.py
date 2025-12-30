@@ -80,4 +80,10 @@ urlpatterns = [
     path('exercise/exam/<int:subject_id>/submit/', views.SubmitExamAPIView.as_view(), name='exam_submit'),
     path('exercise/results/', views.GetExamResultsAPIView.as_view(), name='exam_results_list'),
     path('exercise/results/<int:attempt_id>/', views.GetExamAttemptDetailAPIView.as_view(), name='exam_results_detail'),
+    
+    # ========== Chat APIs ==========
+    path('chat/<int:chat_room_id>/', views.GetChatHistoryAPIView.as_view(), name='chat_history'),
+    path('chat/<int:chat_room_id>/send/', views.SendMessageAPIView.as_view(), name='send_message'),
+    path('chat/message/<int:message_id>/react/', views.AddReactionAPIView.as_view(), name='add_reaction'),
+    path('chat/<int:chat_room_id>/participants/', views.ListParticipantsAPIView.as_view(), name='list_participants'),
 ]

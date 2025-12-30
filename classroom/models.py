@@ -493,3 +493,201 @@ class PlatformSettings(models.Model):
         """دریافت تنظیمات (یا ایجاد اگر وجود ندارد)"""
         obj, created = PlatformSettings.objects.get_or_create(pk=1)
         return obj
+
+
+# ===== CHAT SYSTEM =====
+
+class ChatRoom(BaseModel):
+    """
+    اتاق چت - فضای تبادل پیام
+    
+    دو نوع:
+    1. Support Chat: بین معلم و ادمین (support)
+    2. Classroom Chat: بین معلم و دانش‌آموزان در یک کلاس
+    """
+    CHAT_TYPES = [
+        ('support', _('Support Chat')),
+        ('classroom', _('Classroom Chat')),
+    ]
+    
+    type = models.CharField(
+        max_length=20,
+        choices=CHAT_TYPES,
+        verbose_name=_('نوع چت')
+    )
+    teaching_subject = models.OneToOneField(
+        TeachingSubject,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='chat_room',
+        verbose_name=_('موضوع تدریس'),
+        help_text=_('فقط برای Classroom Chat - الزامی')
+    )
+    
+    class Meta:
+        verbose_name = _('اتاق چت')
+        verbose_name_plural = _('اتاق‌های چت')
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(type='support', teaching_subject__isnull=True) | models.Q(type='classroom', teaching_subject__isnull=False),
+                name='valid_chat_type_teaching_subject'
+            )
+        ]
+    
+    def __str__(self):
+        if self.type == 'support':
+            return f'Support Chat (ID: {self.id})'
+        else:
+            return f'Classroom Chat - {self.teaching_subject.title}'
+
+
+class ChatParticipant(BaseModel):
+    """
+    شرکت‌کننده در چت
+    
+    تعریف می‌کند که کدام کاربر در کدام اتاق چت است و نقش آن کیست
+    """
+    ROLES = [
+        ('teacher', _('معلم')),
+        ('student', _('دانش‌آموز')),
+        ('admin', _('ادمین')),
+    ]
+    
+    chat_room = models.ForeignKey(
+        ChatRoom,
+        on_delete=models.CASCADE,
+        related_name='participants',
+        verbose_name=_('اتاق چت')
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='chat_participations',
+        verbose_name=_('کاربر')
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=ROLES,
+        verbose_name=_('نقش')
+    )
+    
+    class Meta:
+        verbose_name = _('شرکت‌کننده چت')
+        verbose_name_plural = _('شرکت‌کنندگان چت')
+        unique_together = ('chat_room', 'user')
+    
+    def __str__(self):
+        return f'{self.user.name} ({self.role}) در {self.chat_room}'
+
+
+class Message(BaseModel):
+    """
+    پیام - محتوای تبادل‌شده در چت
+    
+    می‌تواند متن، تصویر، ویدیو، صدا، PDF یا استیکر باشد
+    """
+    MESSAGE_TYPES = [
+        ('text', _('متن')),
+        ('image', _('تصویر')),
+        ('video', _('ویدیو')),
+        ('audio', _('صدا')),
+        ('pdf', _('PDF')),
+        ('sticker', _('استیکر')),
+    ]
+    
+    chat_room = models.ForeignKey(
+        ChatRoom,
+        on_delete=models.CASCADE,
+        related_name='messages',
+        verbose_name=_('اتاق چت')
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='sent_messages',
+        verbose_name=_('فرستنده')
+    )
+    message_type = models.CharField(
+        max_length=20,
+        choices=MESSAGE_TYPES,
+        verbose_name=_('نوع پیام')
+    )
+    text = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_('متن')
+    )
+    file = models.FileField(
+        upload_to='chat/files/%Y/%m/%d/',
+        null=True,
+        blank=True,
+        verbose_name=_('فایل')
+    )
+    is_deleted = models.BooleanField(
+        default=False,
+        verbose_name=_('حذف‌شده')
+    )
+    
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = _('پیام')
+        verbose_name_plural = _('پیام‌ها')
+        indexes = [
+            models.Index(fields=['chat_room', 'created_at']),
+            models.Index(fields=['sender']),
+        ]
+    
+    def __str__(self):
+        sender_name = self.sender.name if self.sender else 'Unknown'
+        return f'{sender_name}: {self.message_type} ({self.created_at})'
+    
+    def soft_delete(self):
+        """حذف نرم - پیام پنهان شود اما حذف نشود"""
+        self.is_deleted = True
+        self.save()
+
+
+class MessageReaction(BaseModel):
+    """
+    واکنش به پیام - Emoji reaction
+    
+    کاربران می‌توانند به پیام‌ها واکنش نشان دهند
+    هر کاربر فقط یک واکنش از هر نوع می‌تواند به یک پیام داشته باشد
+    """
+    REACTION_TYPES = [
+        ('like', '👍'),
+        ('dislike', '👎'),
+        ('heart', '❤️'),
+        ('clap', '👏'),
+        ('star', '⭐'),
+    ]
+    
+    message = models.ForeignKey(
+        Message,
+        on_delete=models.CASCADE,
+        related_name='reactions',
+        verbose_name=_('پیام')
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='message_reactions',
+        verbose_name=_('کاربر')
+    )
+    reaction_type = models.CharField(
+        max_length=20,
+        choices=REACTION_TYPES,
+        verbose_name=_('نوع واکنش')
+    )
+    
+    class Meta:
+        verbose_name = _('واکنش پیام')
+        verbose_name_plural = _('واکنش‌های پیام')
+        unique_together = ('message', 'user', 'reaction_type')
+    
+    def __str__(self):
+        emoji = dict(self.REACTION_TYPES).get(self.reaction_type, '')
+        return f'{self.user.name} {emoji} {self.message.id}'
+
