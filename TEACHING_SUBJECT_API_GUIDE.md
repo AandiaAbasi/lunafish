@@ -58,7 +58,7 @@ curl -X GET "http://localhost:8000/api/teaching-subjects/?level=beginner" \
       "level": "beginner",
       "level_display": "مبتدی",
       "cover_image": "https://example.com/subjects/images/english.jpg",
-      "demo_video": "https://youtube.com/...",
+      "demo_video": "https://example.com/subjects/videos/english-demo.mp4",
       "min_age": 5,
       "max_age": 10,
       "is_active": true,
@@ -103,7 +103,7 @@ POST /api/teaching-subjects/
   "description": "یادگیری الفبای انگلیسی برای کودکان",
   "level": "beginner",
   "cover_image": "<image_file>",
-  "demo_video": "https://youtube.com/watch?v=...",
+  "demo_video": "<video_file>",
   "min_age": 5,
   "max_age": 10,
   "is_active": true
@@ -117,7 +117,7 @@ POST /api/teaching-subjects/
 | description | text | Yes | توضیح مفصل |
 | level | choice | Yes | سطح: `beginner`, `intermediate`, `advanced` |
 | cover_image | image | No | عکس کاور |
-| demo_video | URL | No | لینک ویدیوی نمونه |
+| demo_video | file | No | فیلم نمونه (MP4, WebM, etc) |
 | min_age | integer | No | حداقل سن دانش‌آموز |
 | max_age | integer | No | حداکثر سن دانش‌آموز |
 | is_active | boolean | No | وضعیت فعال (پیش‌فرض: true) |
@@ -131,7 +131,8 @@ curl -X POST "http://localhost:8000/api/teaching-subjects/" \
   -F "level=beginner" \
   -F "min_age=5" \
   -F "max_age=10" \
-  -F "cover_image=@path/to/image.jpg"
+  -F "cover_image=@path/to/image.jpg" \
+  -F "demo_video=@path/to/video.mp4"
 ```
 
 **Example Request (Python/Requests):**
@@ -150,7 +151,8 @@ data = {
 }
 
 files = {
-    "cover_image": open("image.jpg", "rb")
+    "cover_image": open("image.jpg", "rb"),
+    "demo_video": open("video.mp4", "rb")
 }
 
 response = requests.post(
@@ -232,7 +234,7 @@ curl -X GET "http://localhost:8000/api/teaching-subjects/1/" \
   "level": "beginner",
   "level_display": "مبتدی",
   "cover_image": "https://example.com/subjects/images/english.jpg",
-  "demo_video": "https://youtube.com/watch?v=...",
+  "demo_video": "https://example.com/subjects/videos/english-demo.mp4",
   "min_age": 5,
   "max_age": 10,
   "is_active": true,
@@ -282,7 +284,7 @@ PUT /api/teaching-subjects/{id}/
   "description": "یادگیری الفبا و اعداد انگلیسی برای کودکان",
   "level": "beginner",
   "cover_image": "<image_file>",
-  "demo_video": "https://youtube.com/watch?v=...",
+  "demo_video": "<video_file>",
   "min_age": 4,
   "max_age": 11,
   "is_active": true
@@ -311,7 +313,7 @@ curl -X PUT "http://localhost:8000/api/teaching-subjects/1/" \
   "level": "beginner",
   "level_display": "مبتدی",
   "cover_image": "https://example.com/subjects/images/english_updated.jpg",
-  "demo_video": "https://youtube.com/watch?v=...",
+  "demo_video": "https://example.com/subjects/videos/english-demo-v2.mp4",
   "min_age": 4,
   "max_age": 11,
   "is_active": true,
@@ -510,8 +512,8 @@ curl -X GET "http://localhost:8000/api/teaching-subjects/?is_active=true" \
 ## Notes
 
 1. **Image Upload**: فقط JPG, PNG, GIF قابل قبول است
-2. **Video URL**: باید URL معتبر باشد (http:// یا https://)
+2. **Video Upload**: فقط MP4, WebM, OGG قابل قبول است (size limit: 500MB)
 3. **Age Ranges**: می‌تواند null باشد
 4. **Permission Check**: سیستم اتوماتیک teacher ID را از درخواست‌کننده تعیین می‌کند
-5. **Soft Delete**: حذف موضوع به صورت دائمی انجام می‌شود
+5. **File Storage**: فایل‌ها در `/subjects/videos/` و `/subjects/images/` ذخیره می‌شوند
 
