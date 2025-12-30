@@ -3349,17 +3349,16 @@ class TeachingSubjectListAPIView(APIView):
 class TeachingSubjectCreateAPIView(APIView):
     """
     Create Teaching Subject
-    
-    ایجاد موضوع تدریس جدید
+    ایجاد موضوع تدریس جدید (فقط برای معلمان)
     """
+
     permission_classes = [IsAuthenticated]
-    parser_classes = (MultiPartParser, FormParser, JSONParser)
-    
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
     @extend_schema(
         tags=['Teaching Subject'],
         summary='Create Teaching Subject',
         description='ایجاد موضوع تدریس جدید (فقط برای معلمان)',
-        request=None,
         responses={
             201: OpenApiResponse(description="Subject created successfully"),
             400: OpenApiResponse(description="Invalid data"),
@@ -3367,51 +3366,30 @@ class TeachingSubjectCreateAPIView(APIView):
         }
     )
     def post(self, request):
-        from classroom.models import TeachingSubject
-        from .classroom_serializers import TeachingSubjectSerializer
-        
-        # فقط معلمان می‌توانند موضوع ایجاد کنند
+
+        # فقط معلم
         if request.user.role != 'teacher':
             return Response(
                 {'error': _('تنها معلمان می‌توانند موضوع تدریس ایجاد کنند')},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
-        # Build data dict and fix common type issues
-        data = request.data.copy()
-        
-        # Fix: Convert string "true"/"false" to boolean
-        if 'is_active' in data:
-            if isinstance(data['is_active'], str):
-                data['is_active'] = data['is_active'].lower() in ['true', '1', 'yes']
-        
-        # Fix: Convert string numbers to integers
-        if 'min_age' in data and data['min_age']:
-            try:
-                data['min_age'] = int(data['min_age'])
-            except (ValueError, TypeError):
-                pass
-        
-        if 'max_age' in data and data['max_age']:
-            try:
-                data['max_age'] = int(data['max_age'])
-            except (ValueError, TypeError):
-                pass
-        
-        # Fix: If level is array, extract first element
-        if 'level' in data and isinstance(data['level'], (list, tuple)):
-            data['level'] = data['level'][0] if data['level'] else 'beginner'
-        
-        serializer = TeachingSubjectSerializer(data=data)
+
+        serializer = TeachingSubjectSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+
         if serializer.is_valid():
             serializer.save(teacher=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
-        # Return detailed error messages for debugging
-        return Response({
-            'error': 'Invalid data',
-            'details': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                'message': _('Invalid data provided'),
+                'details': serializer.errors
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class TeachingSubjectRetrieveAPIView(APIView):
