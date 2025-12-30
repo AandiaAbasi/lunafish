@@ -2409,7 +2409,18 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
 
             session_minutes = int(request.data.get('session_duration', 45))
             break_minutes = int(request.data.get('break_duration', 15))
-            price = Decimal(request.data.get('price', 0))
+            
+            # Handle price - convert to Decimal
+            price_str = request.data.get('price')
+            if not price_str:
+                return Response(
+                    {
+                        'error': _('قیمت الزامی است'),
+                        'details': 'price field is required'
+                    },
+                    status=400
+                )
+            price = Decimal(str(price_str))
             
             # Handle discount_price - can be null, empty string, or a value
             discount_price_str = request.data.get('discount_price')
@@ -2422,7 +2433,15 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
             return Response(
                 {
                     'error': _('داده‌های ورودی نامعتبر است'),
-                    'details': str(e)
+                    'details': f'Error: {str(e)}'
+                },
+                status=400
+            )
+        except KeyError as e:
+            return Response(
+                {
+                    'error': _('فیلدهای الزامی گم شده است'),
+                    'details': f'Missing field: {str(e)}'
                 },
                 status=400
             )
