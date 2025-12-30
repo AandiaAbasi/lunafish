@@ -63,6 +63,7 @@ urlpatterns = [
     path('teacher/availability/', views.TeacherAvailabilityListAPIView.as_view(), name='availability_list'),
     path('teacher/availability/create/', views.CreateTeacherAvailabilityAPIView.as_view(), name='availability_create'),
     path('teacher/availability/bulk-create/', views.BulkCreateTeacherAvailabilityAPIView.as_view(), name='availability_bulk_create'),
+    path('teacher/availability/<int:id>/', views.TeacherAvailabilityDetailAPIView.as_view(), name='availability_detail'),
     path('teacher/availability/<int:id>/update/', views.UpdateTeacherAvailabilityAPIView.as_view(), name='availability_update'),
     path('teacher/availability/<int:id>/delete/', views.DeleteTeacherAvailabilityAPIView.as_view(), name='availability_delete'),
     
