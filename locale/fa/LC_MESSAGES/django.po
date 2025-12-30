@@ -1172,10 +1172,10 @@ msgid "Incorrect"
 msgstr "غلط"
 
 msgid "Attempt"
-msgstr "تلاش"
+msgstr "نتیجه آزمون"
 
 msgid "Attempts"
-msgstr "تلاش‌ها"
+msgstr "نتایج آزمون"
 
 msgid "Answer"
 msgstr "پاسخ"
