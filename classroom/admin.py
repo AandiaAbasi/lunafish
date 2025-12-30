@@ -136,7 +136,7 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
                     slot_start = cursor.time()
                     slot_end = (cursor + _dt.timedelta(minutes=session_minutes)).time()
                     
-                    # بررسی تکراری نبودن
+                    # بررسی تکراری نبودن - اگر موجود باشد skip می‌کنیم
                     if not TeacherAvailability.objects.filter(
                         teacher_id=teacher_id,
                         date=cur_date,
@@ -158,7 +158,12 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
                 
                 cur_date = cur_date + _dt.timedelta(days=1)
             
-            messages.success(request, _(f'ایجاد شد: {created} بازه زمانی'))
+            # پیام خوب حتی اگر 0 بازه اضافه شود
+            if created == 0:
+                messages.warning(request, _(f'هیچ بازه زمانی جدیدی اضافه نشد. احتمالاً تمام این بازه‌ها قبلاً ثبت شده بودند.'))
+            else:
+                messages.success(request, _(f'ایجاد شد: {created} بازه زمانی'))
+            
             return redirect('admin:classroom_teacheravailability_changelist')
         
         from account.models import User

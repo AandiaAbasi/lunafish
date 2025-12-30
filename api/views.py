@@ -2329,7 +2329,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
                 slot_start = cursor.time()
                 slot_end = (cursor + timedelta(minutes=session_minutes)).time()
                 
-                # بررسی تکراری نبودن
+                # بررسی تکراری نبودن - اگر موجود باشد skip می‌کنیم
                 if not TeacherAvailability.objects.filter(
                     teacher_id=request.user.id,
                     date=cur_date,
@@ -2352,29 +2352,29 @@ class CreateTeacherAvailabilityAPIView(APIView):
             
             cur_date = cur_date + timedelta(days=1)
         
+        # بازگشت پیام - حتی اگر تعداد 0 باشد
+        message = _('بازه‌های زمانی با موفقیت ایجاد شدند')
         if created == 0:
-            return Response(
-                {'error': _('هیچ بازه زمانی جدیدی ایجاد نشد. شاید همه بازه‌ها قبلاً وجود دارند.')},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            message = _('هیچ بازه زمانی جدیدی اضافه نشد. احتمالاً تمام این بازه‌ها قبلاً ثبت شده بودند.')
         
-        # بازیابی و بازگشت بازه‌های ایجاد شده
-        new_slots = TeacherAvailability.objects.filter(
+        # بازیابی و بازگشت بازه‌های موجود
+        slots = TeacherAvailability.objects.filter(
             teacher_id=request.user.id,
             date__gte=start_date,
             date__lte=end_date
         ).order_by('date', 'start_time')
         
         from .classroom_serializers import TeacherAvailabilitySerializer
-        serializer = TeacherAvailabilitySerializer(new_slots, many=True)
+        serializer = TeacherAvailabilitySerializer(slots, many=True)
         
         return Response(
             {
                 'data': serializer.data,
                 'created_count': created,
-                'message': _('بازه‌های زمانی با موفقیت ایجاد شدند')
+                'total_count': slots.count(),
+                'message': message
             },
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_201_CREATED if created > 0 else status.HTTP_200_OK
         )
 
 
@@ -2457,6 +2457,7 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
                 slot_start = cursor.time()
                 slot_end = (cursor + dt.timedelta(minutes=session_minutes)).time()
 
+                # بررسی تکراری نبودن - اگر موجود باشد skip می‌کنیم
                 exists = TeacherAvailability.objects.filter(
                     teacher=request.user,
                     date=cur_date,
@@ -2481,10 +2482,18 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
 
             cur_date += dt.timedelta(days=1)
 
+        # بازگشت پیام - حتی اگر تعداد 0 باشد
+        message = _('بازه‌های زمانی با موفقیت ایجاد شدند')
+        status_code = status.HTTP_201_CREATED
+        
+        if created == 0:
+            message = _('هیچ بازه زمانی جدیدی اضافه نشد. احتمالاً تمام این بازه‌ها قبلاً ثبت شده بودند.')
+            status_code = status.HTTP_200_OK
+
         return Response({
             'count': created,
-            'message': _('بازه‌های زمانی با موفقیت ایجاد شدند')
-        }, status=201)
+            'message': message
+        }, status=status_code)
 
 
 class TeacherAvailabilityListAPIView(generics.ListAPIView):
