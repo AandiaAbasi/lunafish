@@ -71,6 +71,13 @@ class Field(BaseModel):
         verbose_name=_("Description")
     )
 
+    correct_answer = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("Correct Answer"),
+        help_text=_("For text/input questions - teacher's answer key for grading")
+    )
+
     class Meta:
         verbose_name = _("Question")
         verbose_name_plural = _("Questions")
