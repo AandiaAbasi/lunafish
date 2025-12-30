@@ -387,4 +387,164 @@ class AvatarTemplate(BaseModel):
     
     def __str__(self):
         return f"Avatar {self.id}"
+
+
+class ParentProfile(BaseModel):
+    """
+    والدین می‌توانند با student_id + parent_password وارد شوند
+    هر دانش‌آموز می‌تواند چند والد داشته باشد
+    """
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'user'},
+        related_name='parents',
+        verbose_name=_("Student")
+    )
+    parent_name = models.CharField(
+        max_length=200,
+        verbose_name=_("Parent full name"),
+        help_text=_("نام کامل والد")
+    )
+    phone = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name=_("Phone number")
+    )
+    email = models.EmailField(
+        null=True,
+        blank=True,
+        verbose_name=_("Email")
+    )
+    # Hashed password for parent login
+    parent_password_hash = models.CharField(
+        max_length=255,
+        verbose_name=_("Parent password (hashed)"),
+        help_text=_("Hashed password for parent portal login")
+    )
+    
+    # Parent access permissions
+    can_view_class_history = models.BooleanField(
+        default=True,
+        verbose_name=_("Can view class history"),
+        help_text=_("آیا والد می‌تواند تاریخچه کلاس‌ها را مشاهده کند؟")
+    )
+    can_view_payments = models.BooleanField(
+        default=True,
+        verbose_name=_("Can view payments"),
+        help_text=_("آیا والد می‌تواند پرداخت‌ها را مشاهده کند؟")
+    )
+    can_select_teacher = models.BooleanField(
+        default=False,
+        verbose_name=_("Can select teacher"),
+        help_text=_("آیا والد می‌تواند معلم برای کودک انتخاب کند؟")
+    )
+    can_set_usage_time = models.BooleanField(
+        default=True,
+        verbose_name=_("Can set app usage time"),
+        help_text=_("آیا والد می‌تواند محدودیت زمان استفاده اپلیکیشن را تنظیم کند؟")
+    )
+    
+    # Usage time limits
+    daily_usage_limit_minutes = models.IntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Daily usage limit (minutes)"),
+        help_text=_("حداکثر دقایق استفاده روزانه از اپلیکیشن")
+    )
+    allowed_start_time = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Allowed start time"),
+        help_text=_("ساعت شروع مجاز استفاده (مثال: 08:00)")
+    )
+    allowed_end_time = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Allowed end time"),
+        help_text=_("ساعت پایان مجاز استفاده (مثال: 22:00)")
+    )
+    
+    # Status
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Is active"),
+        help_text=_("آیا دسترسی والد فعال است؟")
+    )
+    
+    last_login_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Last login at"),
+        help_text=_("آخرین بار ورود والد")
+    )
+    
+    class Meta:
+        db_table = 'parent_profiles'
+        verbose_name = _("Parent Profile")
+        verbose_name_plural = _("Parent Profiles")
+        ordering = ['student', '-created_at']
+        indexes = [
+            models.Index(fields=['student']),
+            models.Index(fields=['is_active']),
+        ]
+        unique_together = ('student', 'parent_name')  # یک والد به ازای هر دانش‌آموز
+
+    def __str__(self):
+        return f"{self.parent_name} (Parent of {self.student.name or self.student.username})"
+    
+    def verify_password(self, raw_password):
+        """تایید رمز والد"""
+        from django.contrib.auth.hashers import check_password
+        return check_password(raw_password, self.parent_password_hash)
+    
+    def set_password(self, raw_password):
+        """تنظیم و هش رمز والد"""
+        from django.contrib.auth.hashers import make_password
+        self.parent_password_hash = make_password(raw_password)
+    
+    def save(self, *args, **kwargs):
+        """ذخیره والدین"""
+        super().save(*args, **kwargs)
+
+
+class ParentAppUsageLog(BaseModel):
+    """
+    ثبت استفاده روزانه دانش‌آموز از اپلیکیشن برای والدین
+    """
+    parent = models.ForeignKey(
+        ParentProfile,
+        on_delete=models.CASCADE,
+        related_name='usage_logs',
+        verbose_name=_("Parent")
+    )
+    date = models.DateField(
+        verbose_name=_("Date"),
+        help_text=_("تاریخ استفاده")
+    )
+    total_minutes = models.IntegerField(
+        default=0,
+        verbose_name=_("Total minutes used"),
+        help_text=_("کل دقایق استفاده در این روز")
+    )
+    session_count = models.IntegerField(
+        default=0,
+        verbose_name=_("Number of sessions"),
+        help_text=_("تعداد جلسات استفاده در این روز")
+    )
+    
+    class Meta:
+        db_table = 'parent_app_usage_logs'
+        verbose_name = _("Parent App Usage Log")
+        verbose_name_plural = _("Parent App Usage Logs")
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['parent', '-date']),
+            models.Index(fields=['date']),
+        ]
+        unique_together = ('parent', 'date')
+    
+    def __str__(self):
+        return f"{self.parent.student.name} - {self.date} - {self.total_minutes} min"
     

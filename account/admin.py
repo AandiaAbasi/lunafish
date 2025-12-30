@@ -5,7 +5,7 @@ from django.utils.html import format_html
 from django.shortcuts import redirect
 from django.contrib import messages
 from django import forms
-from .models import User, OTP, VerificationToken, AvatarTemplate
+from .models import User, OTP, VerificationToken, AvatarTemplate, ParentProfile, ParentAppUsageLog
 from .utils import send_sms, format_phone_display, send_sms_general
 import random
 import string
@@ -299,3 +299,96 @@ class AvatarTemplateAdmin(admin.ModelAdmin):
         )
     admin_actions.short_description = _("Actions")
 
+
+# ========== Parent Portal Admin ==========
+class ParentProfileInline(admin.TabularInline):
+    """Inline admin for parent profiles (for student's parents)"""
+    model = ParentProfile
+    extra = 0
+    fields = ('parent_name', 'phone', 'email', 'can_view_class_history', 'can_view_payments', 'can_select_teacher', 'can_set_usage_time', 'is_active')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+class ParentProfileAdmin(admin.ModelAdmin):
+    """Admin for managing parent profiles"""
+    list_display = ('parent_name', 'student_link', 'phone', 'is_active', 'last_login_at', 'created_at')
+    list_filter = ('is_active', 'can_view_class_history', 'can_view_payments', 'can_select_teacher', 'can_set_usage_time', 'created_at')
+    search_fields = ('parent_name', 'phone', 'email', 'student__name', 'student__username')
+    readonly_fields = ('created_at', 'updated_at', 'last_login_at')
+    
+    fieldsets = (
+        (_('Student & Contact'), {
+            'fields': ('student', 'parent_name', 'phone', 'email')
+        }),
+        (_('Permissions'), {
+            'fields': ('can_view_class_history', 'can_view_payments', 'can_select_teacher', 'can_set_usage_time')
+        }),
+        (_('Usage Time Control'), {
+            'fields': ('daily_usage_limit_minutes', 'allowed_start_time', 'allowed_end_time'),
+            'classes': ('collapse',)
+        }),
+        (_('Status'), {
+            'fields': ('is_active', 'last_login_at')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def student_link(self, obj):
+        """Link to student"""
+        url = reverse('admin:account_user_change', args=[obj.student.id])
+        return format_html('<a href="{}">{}</a>', url, obj.student.name or obj.student.username)
+    student_link.short_description = _('Student')
+    
+    actions = ['activate_parents', 'deactivate_parents']
+    
+    def activate_parents(self, request, queryset):
+        """Activate selected parents"""
+        count = queryset.update(is_active=True)
+        messages.success(request, _("{} parent profiles activated").format(count))
+    activate_parents.short_description = _("Activate selected parents")
+    
+    def deactivate_parents(self, request, queryset):
+        """Deactivate selected parents"""
+        count = queryset.update(is_active=False)
+        messages.success(request, _("{} parent profiles deactivated").format(count))
+    deactivate_parents.short_description = _("Deactivate selected parents")
+
+
+class ParentAppUsageLogAdmin(admin.ModelAdmin):
+    """Admin for viewing parent usage logs"""
+    list_display = ('parent_link', 'date', 'total_minutes', 'session_count')
+    list_filter = ('date', 'created_at')
+    search_fields = ('parent__parent_name', 'parent__student__name', 'parent__student__username')
+    readonly_fields = ('created_at', 'updated_at')
+    date_hierarchy = 'date'
+    
+    fieldsets = (
+        (_('Parent'), {
+            'fields': ('parent',)
+        }),
+        (_('Usage'), {
+            'fields': ('date', 'total_minutes', 'session_count')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def parent_link(self, obj):
+        """Link to parent"""
+        url = reverse('admin:account_parentprofile_change', args=[obj.parent.id])
+        return format_html('<a href="{}">{}</a>', url, obj.parent.parent_name)
+    parent_link.short_description = _('Parent')
+    
+    def has_add_permission(self, request):
+        """Usage logs are created automatically"""
+        return False
+
+
+# Register Parent Admin
+admin.site.register(ParentProfile, ParentProfileAdmin)
+admin.site.register(ParentAppUsageLog, ParentAppUsageLogAdmin)

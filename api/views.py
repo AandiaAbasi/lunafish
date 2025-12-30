@@ -28,7 +28,8 @@ import jdatetime
 import datetime as dt
 from account.serializers import *
 from account.services import *
-from account.models import OTP, VerificationToken
+from account.models import OTP, VerificationToken, ParentProfile
+from classroom.models import ClassBooking, StudentTransaction, TeacherAvailability
 from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail
 from .exercise_serializers import (
     FieldCreateUpdateSerializer, FieldRetrieveSerializer,
@@ -37,6 +38,10 @@ from .exercise_serializers import (
     OrderDetailRetrieveSerializer
 )
 from .classroom_serializers import TeachingSubjectSerializer
+from .parent_serializers import (
+    ParentLoginSerializer, ParentProfileSerializer, ParentUpdateUsageTimeSerializer,
+    ChildClassHistorySerializer, ChildPaymentHistorySerializer
+)
 
 # Import email function with fallback
 try:
@@ -4423,3 +4428,483 @@ class TeacherDetailAPIView(APIView):
         serializer = TeacherDetailSerializer(teacher)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+# ========== Parent Portal APIs ==========
+
+class ParentLoginAPIView(APIView):
+    """
+    والدین می‌توانند با شماره تماس، ایمیل یا شناسه دانش‌آموز + رمز والد وارد شوند
+    
+    post:
+        Login with student identifier (ID, phone, or email) and parent password
+        
+        Request body:
+        - identifier: string (required) - شناسه دانش‌آموز (شناسه، شماره تماس یا ایمیل)
+        - parent_password: string (required) - رمز والدین
+        
+        Returns:
+            200 OK:
+                - parent_token: string - Token for parent
+                - parent_id: integer
+                - parent_name: string
+                - student_id: integer
+                - student_name: string
+                - can_view_class_history: boolean
+                - can_view_payments: boolean
+                - can_select_teacher: boolean
+                - can_set_usage_time: boolean
+                
+            400 Bad Request:
+                - Student not found
+                - Parent profile not found
+                - Invalid password
+    """
+    permission_classes = [AllowAny]
+    
+    @extend_schema(
+        tags=['Parent Portal'],
+        summary='Parent Login',
+        description='والدین می‌توانند با شماره تماس، ایمیل یا شناسه دانش‌آموز + رمز والد وارد شوند',
+        request=inline_serializer(
+            name='ParentLoginRequest',
+            fields={
+                'identifier': serializers.CharField(help_text='شناسه دانش‌آموز (شناسه، شماره تماس یا ایمیل)'),
+                'parent_password': serializers.CharField(help_text='رمز والدین', style={'input_type': 'password'})
+            }
+        ),
+        responses={
+            200: inline_serializer(
+                name='ParentLoginResponse',
+                fields={
+                    'parent_token': serializers.CharField(),
+                    'parent_id': serializers.IntegerField(),
+                    'parent_name': serializers.CharField(),
+                    'student_id': serializers.IntegerField(),
+                    'student_name': serializers.CharField(),
+                    'can_view_class_history': serializers.BooleanField(),
+                    'can_view_payments': serializers.BooleanField(),
+                    'can_select_teacher': serializers.BooleanField(),
+                    'can_set_usage_time': serializers.BooleanField()
+                }
+            )
+        }
+    )
+    def post(self, request):
+        """Parent login"""
+        from .parent_serializers import ParentLoginSerializer
+        
+        serializer = ParentLoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        parent = serializer.validated_data['parent']
+        
+        # Update last login
+        parent.last_login_at = timezone.now()
+        parent.save()
+        
+        # Generate token
+        import secrets
+        parent_token = secrets.token_urlsafe(32)
+        
+        return Response({
+            'parent_token': parent_token,
+            'parent_id': parent.id,
+            'parent_name': parent.parent_name,
+            'student_id': parent.student.id,
+            'student_name': parent.student.name or parent.student.username,
+            'can_view_class_history': parent.can_view_class_history,
+            'can_view_payments': parent.can_view_payments,
+            'can_select_teacher': parent.can_select_teacher,
+            'can_set_usage_time': parent.can_set_usage_time
+        }, status=status.HTTP_200_OK)
+
+
+class ParentDashboardAPIView(APIView):
+    """
+    داشبورد والد - نمایش خلاصه‌ای از وضعیت کودک
+    
+    get:
+        Get parent dashboard overview for child
+        
+        Query parameters:
+        - child_id: integer (optional) - اگر والد بیش از یک فرزند دارد
+        
+        Returns:
+            200 OK:
+                - child: object
+                    - id, name, username, birth_date, gender, bio
+                    - profile_photo_path, selected_avatar_image
+                - total_classes: integer
+                - completed_classes: integer
+                - cancelled_classes: integer
+                - no_show_classes: integer
+                - upcoming_classes: integer
+                - total_spent: decimal
+                - total_pending_payment: decimal
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parent Portal'],
+        summary='Parent Dashboard',
+        description='داشبورد والد - نمایش خلاصه وضعیت کودک'
+    )
+    def get(self, request):
+        """Get parent dashboard"""
+        # Get parent profile
+        try:
+            # والد می‌تواند از parent_id query param یا user's parent profile استفاده کند
+            student_id = request.query_params.get('child_id')
+            
+            if student_id:
+                # والد می‌خواهد داشبورد یک کودک خاص را ببیند
+                try:
+                    student = User.objects.get(id=student_id, role='user')
+                    parent = ParentProfile.objects.get(student=student, is_active=True)
+                except (User.DoesNotExist, ParentProfile.DoesNotExist):
+                    return Response(
+                        {'error': _('Student not found')},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            else:
+                # اگر parent profile موجود نیست
+                return Response(
+                    {'error': _('Parent profile not found')},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        except ParentProfile.DoesNotExist:
+            return Response(
+                {'error': _('Parent profile not found')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get class statistics
+        from classroom.models import ClassBooking
+        student = parent.student
+        
+        total_classes = ClassBooking.objects.filter(student=student).count()
+        completed_classes = ClassBooking.objects.filter(student=student, status='completed').count()
+        cancelled_classes = ClassBooking.objects.filter(student=student, status='cancelled').count()
+        no_show_classes = ClassBooking.objects.filter(student=student, status='no_show').count()
+        
+        # Upcoming classes (reserved and not expired)
+        from classroom.models import TeacherAvailability
+        upcoming_classes = ClassBooking.objects.filter(
+            student=student,
+            status='reserved',
+            availability__is_expired=False
+        ).count()
+        
+        # Get payment statistics
+        from classroom.models import StudentTransaction
+        total_spent = StudentTransaction.objects.filter(
+            student=student,
+            transaction_type='class_payment',
+            status='completed'
+        ).aggregate(models.Sum('amount'))['amount__sum'] or 0
+        
+        total_pending_payment = StudentTransaction.objects.filter(
+            student=student,
+            transaction_type='class_payment',
+            status='pending'
+        ).aggregate(models.Sum('amount'))['amount__sum'] or 0
+        
+        # Build response
+        from .parent_serializers import ChildProfileForParentSerializer
+        child_serializer = ChildProfileForParentSerializer(student)
+        
+        response_data = {
+            'child': child_serializer.data,
+            'total_classes': total_classes,
+            'completed_classes': completed_classes,
+            'cancelled_classes': cancelled_classes,
+            'no_show_classes': no_show_classes,
+            'upcoming_classes': upcoming_classes,
+            'total_spent': str(total_spent),
+            'total_pending_payment': str(total_pending_payment)
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class ChildClassHistoryAPIView(generics.ListAPIView):
+    """
+    تاریخچه کلاس‌های کودک
+    والد می‌تواند تاریخچه کلاس‌های کودک را ببیند
+    
+    get:
+        Get child's class history
+        
+        Query parameters:
+        - child_id: integer (optional)
+        - status: string (optional) - reserved, completed, cancelled, no_show
+        - ordering: string (optional) - default: -created_at (newest first)
+        
+        Returns:
+            200 OK: List of classes with pagination
+                - id, class_date, start_time, end_time
+                - teacher_name, teacher_id
+                - subject_title, subject_id
+                - status, price, discount_amount, final_price
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parent Portal'],
+        summary='Child Class History',
+        description='تاریخچه کلاس‌های کودک'
+    )
+    def get_queryset(self):
+        """Get child's classes"""
+        student_id = self.request.query_params.get('child_id')
+        
+        if not student_id:
+            return ClassBooking.objects.none()
+        
+        try:
+            student = User.objects.get(id=student_id, role='user')
+        except User.DoesNotExist:
+            return ClassBooking.objects.none()
+        
+        queryset = ClassBooking.objects.filter(student=student).select_related(
+            'teacher', 'subject', 'availability'
+        ).order_by('-created_at')
+        
+        # Filter by status if provided
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        return queryset
+    
+    serializer_class = ChildClassHistorySerializer
+
+
+class ChildPaymentHistoryAPIView(generics.ListAPIView):
+    """
+    ریز پرداخت‌های کودک
+    والد می‌تواند ریز پرداخت‌های کودک را مشاهده کند
+    
+    get:
+        Get child's payment history
+        
+        Query parameters:
+        - child_id: integer (optional)
+        - transaction_type: string (optional) - class_payment, refund
+        - status: string (optional) - pending, completed, failed, refunded
+        - ordering: string (optional) - default: -created_at
+        
+        Returns:
+            200 OK: List of transactions with pagination
+                - id, transaction_type, amount
+                - booking_id, class_title, teacher_name
+                - description, status, payment_date
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parent Portal'],
+        summary='Child Payment History',
+        description='ریز پرداخت‌های کودک'
+    )
+    def get_queryset(self):
+        """Get child's transactions"""
+        student_id = self.request.query_params.get('child_id')
+        
+        if not student_id:
+            return StudentTransaction.objects.none()
+        
+        try:
+            student = User.objects.get(id=student_id, role='user')
+        except User.DoesNotExist:
+            return StudentTransaction.objects.none()
+        
+        queryset = StudentTransaction.objects.filter(student=student).select_related(
+            'booking', 'booking__teacher', 'booking__subject'
+        ).order_by('-created_at')
+        
+        # Filter by type and status if provided
+        transaction_type = self.request.query_params.get('transaction_type')
+        if transaction_type:
+            queryset = queryset.filter(transaction_type=transaction_type)
+        
+        trans_status = self.request.query_params.get('status')
+        if trans_status:
+            queryset = queryset.filter(status=trans_status)
+        
+        return queryset
+    
+    serializer_class = ChildPaymentHistorySerializer
+
+
+class ChildPaymentSummaryAPIView(APIView):
+    """
+    خلاصه وضعیت مالی کودک
+    والد می‌تواند مجموع پرداخت‌ها و وضعیت مالی را ببیند
+    
+    get:
+        Get payment summary
+        
+        Query parameters:
+        - child_id: integer (optional)
+        
+        Returns:
+            200 OK:
+                - total_paid: decimal
+                - total_pending: decimal
+                - total_refunded: decimal
+                - total_failed: decimal
+                - transaction_count: integer
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parent Portal'],
+        summary='Payment Summary',
+        description='خلاصه وضعیت مالی کودک'
+    )
+    def get(self, request):
+        """Get payment summary"""
+        student_id = request.query_params.get('child_id')
+        
+        if not student_id:
+            return Response(
+                {'error': _('Child ID is required')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            student = User.objects.get(id=student_id, role='user')
+        except User.DoesNotExist:
+            return Response(
+                {'error': _('Student not found')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        from classroom.models import StudentTransaction
+        from django.db.models import Sum
+        
+        transactions = StudentTransaction.objects.filter(student=student)
+        
+        total_paid = transactions.filter(status='completed').aggregate(Sum('amount'))['amount__sum'] or 0
+        total_pending = transactions.filter(status='pending').aggregate(Sum('amount'))['amount__sum'] or 0
+        total_refunded = transactions.filter(status='refunded').aggregate(Sum('amount'))['amount__sum'] or 0
+        total_failed = transactions.filter(status='failed').aggregate(Sum('amount'))['amount__sum'] or 0
+        transaction_count = transactions.count()
+        
+        return Response({
+            'total_paid': str(total_paid),
+            'total_pending': str(total_pending),
+            'total_refunded': str(total_refunded),
+            'total_failed': str(total_failed),
+            'transaction_count': transaction_count
+        }, status=status.HTTP_200_OK)
+
+
+class ParentUpdateUsageTimeAPIView(APIView):
+    """
+    به‌روزرسانی محدودیت زمان استفاده کودک
+    والد می‌تواند محدودیت زمان روزانه و بازه زمانی مجاز را تعیین کند
+    
+    post:
+        Update usage time restrictions
+        
+        Request body:
+        - daily_usage_limit_minutes: integer (optional) - حداکثر دقایق روزانه (0-1440)
+        - allowed_start_time: time (optional) - شروع بازه مجاز (HH:MM)
+        - allowed_end_time: time (optional) - پایان بازه مجاز (HH:MM)
+        
+        Returns:
+            200 OK:
+                - id, parent_name, student_id
+                - daily_usage_limit_minutes
+                - allowed_start_time, allowed_end_time
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parent Portal'],
+        summary='Update App Usage Time',
+        description='به‌روزرسانی محدودیت زمان استفاده کودک'
+    )
+    def post(self, request):
+        """Update usage time"""
+        student_id = request.data.get('child_id')
+        
+        if not student_id:
+            return Response(
+                {'error': _('Child ID is required')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            student = User.objects.get(id=student_id, role='user')
+            parent = ParentProfile.objects.get(student=student, is_active=True)
+        except (User.DoesNotExist, ParentProfile.DoesNotExist):
+            return Response(
+                {'error': _('Student or parent not found')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check permission
+        if not parent.can_set_usage_time:
+            return Response(
+                {'error': _('You do not have permission to set usage time')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        from .parent_serializers import ParentUpdateUsageTimeSerializer
+        serializer = ParentUpdateUsageTimeSerializer(parent, data=request.data, partial=True)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ParentProfileAPIView(APIView):
+    """
+    نمایش اطلاعات والد و مجوزهایش
+    
+    get:
+        Get parent profile information
+        
+        Returns:
+            200 OK:
+                - id, parent_name, phone, email
+                - student_id, student_name
+                - can_view_class_history, can_view_payments
+                - can_select_teacher, can_set_usage_time
+                - is_active, last_login_at
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parent Portal'],
+        summary='Parent Profile',
+        description='نمایش اطلاعات والد'
+    )
+    def get(self, request):
+        """Get parent profile"""
+        student_id = request.query_params.get('child_id')
+        
+        if not student_id:
+            return Response(
+                {'error': _('Child ID is required')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            student = User.objects.get(id=student_id, role='user')
+            parent = ParentProfile.objects.get(student=student, is_active=True)
+        except (User.DoesNotExist, ParentProfile.DoesNotExist):
+            return Response(
+                {'error': _('Student or parent not found')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        from .parent_serializers import ParentProfileSerializer
+        serializer = ParentProfileSerializer(parent)
+        return Response(serializer.data, status=status.HTTP_200_OK)
