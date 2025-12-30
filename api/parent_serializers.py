@@ -8,6 +8,7 @@ Serializers for Parent Portal - Class History, Payments, Teacher Selection, Usag
 """
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
+from django.db import models
 from account.models import ParentProfile, ParentAppUsageLog, User
 from classroom.models import ClassBooking, StudentTransaction, TeachingSubject, TeacherAvailability
 import jdatetime
