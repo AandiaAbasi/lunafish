@@ -252,7 +252,9 @@ class OrderDetail(BaseModel):
         FieldDetail,
         on_delete=models.CASCADE,
         related_name='order_details',
-        verbose_name=_("Option")
+        verbose_name=_("Option"),
+        null=True,
+        blank=True
     )
 
     value = models.CharField(
