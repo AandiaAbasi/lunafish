@@ -80,21 +80,10 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    cover_image = serializers.ImageField(
-        required=False,
-        allow_null=True
-    )
-
-    demo_video = serializers.FileField(
-        required=False,
-        allow_null=True
-    )
-
     class Meta:
         model = TeachingSubject
         fields = [
             'id',
-            'teacher',
             'teacher_name',
             'title',
             'description',
@@ -106,35 +95,14 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
             'max_age',
             'is_active',
             'created_at',
-            'updated_at',
         ]
 
         read_only_fields = [
             'id',
-            'teacher',
             'teacher_name',
             'level_display',
             'created_at',
-            'updated_at',
         ]
-
-    def validate(self, attrs):
-        min_age = attrs.get('min_age')
-        max_age = attrs.get('max_age')
-
-        if min_age and max_age and min_age > max_age:
-            raise serializers.ValidationError(
-                {'max_age': 'max_age must be greater than min_age'}
-            )
-
-        return attrs
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['students_count'] = instance.bookings.filter(
-            status='completed'
-        ).count()
-        return data
 
 class ClassBookingSerializer(serializers.ModelSerializer):
     """Serializer for ClassBooking - List & Detail"""
