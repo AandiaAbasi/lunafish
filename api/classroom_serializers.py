@@ -73,7 +73,8 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
     """Serializer for TeachingSubject"""
     teacher_name = serializers.CharField(source='teacher.name', read_only=True)
     level_display = serializers.CharField(source='get_level_display', read_only=True)
-    demo_video = serializers.FileField(required=False, allow_null=True, help_text="فیلم نمونه (MP4, WebM, etc)")
+    cover_image = serializers.ImageField(required=False, allow_null=True)
+    demo_video = serializers.FileField(required=False, allow_null=True)
     
     class Meta:
         model = TeachingSubject
@@ -81,14 +82,13 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
             'id', 'teacher', 'teacher_name', 'title', 'description', 'level', 'level_display',
             'cover_image', 'demo_video', 'min_age', 'max_age', 'is_active', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'teacher', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'teacher', 'teacher_name', 'level_display', 'created_at', 'updated_at']
     
     def to_representation(self, instance):
         """اضافه کردن تعداد student‌ها و rating"""
         data = super().to_representation(instance)
         data['students_count'] = instance.bookings.filter(status='completed').count()
         return data
-        
 
 class ClassBookingSerializer(serializers.ModelSerializer):
     """Serializer for ClassBooking - List & Detail"""
