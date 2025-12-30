@@ -26,6 +26,21 @@ def get_jalali_date(date_obj):
     return jalali.strftime('%Y/%m/%d')
 
 
+class BilingualModelAdmin(admin.ModelAdmin):
+    """Base class برای مدل‌های دوزبانه - فیلدهای انگلیسی را خودکار readonly می‌کند"""
+    
+    def get_readonly_fields(self, request, obj=None):
+        """فیلدهای انگلیسی را خودکار readonly کن"""
+        readonly = list(super().get_readonly_fields(request, obj))
+        if obj:  # فقط هنگام ویرایش
+            # تمام فیلدهای با پسوند _en را readonly کن
+            for field in self.model._meta.get_fields():
+                if field.name.endswith('_en'):
+                    if field.name not in readonly:
+                        readonly.append(field.name)
+        return readonly
+
+
 # ===== TeacherAvailability Admin =====
 @admin.register(TeacherAvailability)
 class TeacherAvailabilityAdmin(admin.ModelAdmin):
@@ -202,7 +217,7 @@ class TeacherAvailabilityAdmin(admin.ModelAdmin):
 
 # ===== TeachingSubject Admin =====
 @admin.register(TeachingSubject)
-class TeachingSubjectAdmin(admin.ModelAdmin):
+class TeachingSubjectAdmin(BilingualModelAdmin):
     list_display = ['title', 'teacher', 'level', 'is_active_badge']
     list_filter = ['level', 'is_active', 'created_at']
     search_fields = ['title', 'teacher__name', 'teacher__username']
@@ -336,7 +351,7 @@ class TeacherWalletAdmin(admin.ModelAdmin):
 
 # ===== ClassRevenue Admin =====
 @admin.register(ClassRevenue)
-class ClassRevenueAdmin(admin.ModelAdmin):
+class ClassRevenueAdmin(BilingualModelAdmin):
     list_display = ['teacher', 'booking', 'total_amount_display', 'teacher_share_display', 'is_confirmed_badge']
     list_filter = ['is_confirmed', 'is_settled', 'created_at']
     search_fields = ['teacher__name', 'booking__subject__title']
@@ -390,7 +405,7 @@ class ClassRevenueAdmin(admin.ModelAdmin):
 
 # ===== WithdrawalRequest Admin =====
 @admin.register(WithdrawalRequest)
-class WithdrawalRequestAdmin(admin.ModelAdmin):
+class WithdrawalRequestAdmin(BilingualModelAdmin):
     list_display = ['teacher', 'amount_display', 'status_badge', 'payment_method_display', 'jalali_created']
     list_filter = ['status', 'payment_method', 'created_at']
     search_fields = ['teacher__name']
@@ -462,7 +477,7 @@ class WithdrawalRequestAdmin(admin.ModelAdmin):
 
 # ===== WalletTransaction Admin =====
 @admin.register(WalletTransaction)
-class WalletTransactionAdmin(admin.ModelAdmin):
+class WalletTransactionAdmin(BilingualModelAdmin):
     list_display = ['wallet', 'transaction_type_badge', 'amount_display', 'jalali_created']
     list_filter = ['transaction_type', 'created_at']
     search_fields = ['wallet__teacher__name', 'description']
@@ -524,7 +539,7 @@ class WalletTransactionAdmin(admin.ModelAdmin):
 
 # ===== StudentTransaction Admin =====
 @admin.register(StudentTransaction)
-class StudentTransactionAdmin(admin.ModelAdmin):
+class StudentTransactionAdmin(BilingualModelAdmin):
     list_display = ['student', 'transaction_type_badge', 'amount_display', 'status_badge']
     list_filter = ['transaction_type', 'status', 'created_at']
     search_fields = ['student__name', 'student__username']

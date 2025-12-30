@@ -8,9 +8,24 @@ from .models import Field, FieldDetail, CategoryField, Order, OrderDetail
 import json
 
 
+class BilingualModelAdmin(admin.ModelAdmin):
+    """Base class برای مدل‌های دوزبانه - فیلدهای انگلیسی را خودکار readonly می‌کند"""
+    
+    def get_readonly_fields(self, request, obj=None):
+        """فیلدهای انگلیسی را خودکار readonly کن"""
+        readonly = list(super().get_readonly_fields(request, obj))
+        if obj:  # فقط هنگام ویرایش
+            # تمام فیلدهای با پسوند _en را readonly کن
+            for field in self.model._meta.get_fields():
+                if field.name.endswith('_en'):
+                    if field.name not in readonly:
+                        readonly.append(field.name)
+        return readonly
+
+
 # ===== Field Admin (سؤال) =====
 @admin.register(Field)
-class FieldAdmin(admin.ModelAdmin):
+class FieldAdmin(BilingualModelAdmin):
     list_display = ['title', 'type_badge', 'is_required_badge', 'sort']
     list_filter = ['type', 'is_required', 'created_at']
     search_fields = ['title', 'des']
