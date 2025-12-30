@@ -2240,6 +2240,13 @@ class CreateTeacherAvailabilityAPIView(APIView):
                     decimal_places=2,
                     help_text='Price per session in currency units'
                 ),
+                'discount_price': serializers.DecimalField(
+                    max_digits=10,
+                    decimal_places=2,
+                    required=False,
+                    allow_null=True,
+                    help_text='Discounted price per session (optional)'
+                ),
                 'notes': serializers.CharField(
                     required=False,
                     allow_blank=True,
@@ -2273,6 +2280,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
         session_minutes_str = request.data.get('session_duration', '30')
         break_minutes_str = request.data.get('break_duration', '10')
         price_str = request.data.get('price', '')
+        discount_price_str = request.data.get('discount_price', '')
         notes = request.data.get('notes', '').strip()
         
         # اعتبارسنجی پارامترهای الزامی
@@ -2299,6 +2307,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
             session_minutes = int(session_minutes_str) if session_minutes_str else 30
             break_minutes = int(break_minutes_str) if break_minutes_str else 10
             price = float(price_str) if price_str else 0
+            discount_price = float(discount_price_str) if discount_price_str else None
             
             if session_minutes <= 0 or break_minutes < 0 or price <= 0:
                 raise ValueError(_('مقادیر باید مثبت باشند'))
@@ -2333,6 +2342,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
                         start_time=slot_start,
                         end_time=slot_end,
                         price=price,
+                        discount_price=discount_price,
                         is_available=True,
                         notes=notes
                     )
@@ -2400,7 +2410,8 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
             session_minutes = int(request.data.get('session_duration', 45))
             break_minutes = int(request.data.get('break_duration', 15))
             price = Decimal(request.data.get('price', 0))
-            discount_price = Decimal(request.data.get('discount_price', 0))
+            discount_price_str = request.data.get('discount_price', '')
+            discount_price = Decimal(discount_price_str) if discount_price_str else None
 
         except Exception:
             return Response({'error': _('داده‌های ورودی نامعتبر است')}, status=400)
