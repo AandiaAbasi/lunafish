@@ -1722,3 +1722,87 @@ msgstr "Parent App Usage Log"
 
 msgid "Parent App Usage Logs"
 msgstr "Parent App Usage Logs"
+
+msgid "Support Message"
+msgstr "Support Message"
+
+msgid "Support Messages"
+msgstr "Support Messages"
+
+msgid "Support Message Attachment"
+msgstr "Support Message Attachment"
+
+msgid "Support Message Attachments"
+msgstr "Support Message Attachments"
+
+msgid "Send Support Message"
+msgstr "Send Support Message"
+
+msgid "List Support Messages"
+msgstr "List Support Messages"
+
+msgid "Mark Message as Read"
+msgstr "Mark Message as Read"
+
+msgid "Teacher not found"
+msgstr "Teacher not found"
+
+msgid "Sender not found"
+msgstr "Sender not found"
+
+msgid "Message text or attachment is required"
+msgstr "Message text or attachment is required"
+
+msgid "Message not found"
+msgstr "Message not found"
+
+msgid "Sent"
+msgstr "Sent"
+
+msgid "Read"
+msgstr "Read"
+
+msgid "Message text"
+msgstr "Message text"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Read at"
+msgstr "Read at"
+
+msgid "Sender"
+msgstr "Sender"
+
+msgid "Message preview"
+msgstr "Message preview"
+
+msgid "Attachment"
+msgstr "Attachment"
+
+msgid "Attachments"
+msgstr "Attachments"
+
+msgid "File"
+msgstr "File"
+
+msgid "Message status: sent or read"
+msgstr "Message status: sent or read"
+
+msgid "Page number"
+msgstr "Page number"
+
+msgid "Teacher ID to filter messages"
+msgstr "Teacher ID to filter messages"
+
+msgid "Send a message to support team with optional file attachments"
+msgstr "Send a message to support team with optional file attachments"
+
+msgid "Get list of support messages for a teacher"
+msgstr "Get list of support messages for a teacher"
+
+msgid "Mark a support message as read"
+msgstr "Mark a support message as read"
+
+msgid "without text ({} files)"
+msgstr "without text ({} files)"

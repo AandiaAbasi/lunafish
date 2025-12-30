@@ -105,4 +105,8 @@ urlpatterns = [
     path('exercise/exam/<int:subject_id>/submit/', views.SubmitExamAPIView.as_view(), name='exam_submit'),
     path('exercise/results/', views.GetExamResultsAPIView.as_view(), name='exam_results_list'),
     path('exercise/results/<int:attempt_id>/', views.GetExamAttemptDetailAPIView.as_view(), name='exam_results_detail'),
+    
+    # ========== Support Message APIs (پیام‌های پشتیبانی) ==========
+    path('support-messages/', views.SupportMessageAPIView.as_view(), name='support_messages'),
+    path('support-messages/<int:message_id>/', views.SupportMessageDetailAPIView.as_view(), name='support_message_detail'),
 ]

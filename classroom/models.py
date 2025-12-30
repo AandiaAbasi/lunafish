@@ -550,3 +550,92 @@ class PlatformSettings(models.Model):
         return obj
 
 
+# ===== Support Message Model =====
+class SupportMessageAttachment(BaseModel):
+    """
+    فایل‌های پیوست شده به پیام‌های پشتیبانی
+    """
+    message = models.ForeignKey(
+        'SupportMessage',
+        on_delete=models.CASCADE,
+        related_name='attachments',
+        verbose_name=_("Support Message")
+    )
+    file = models.FileField(
+        upload_to=upload_to_dynamic,
+        verbose_name=_("Attachment file"),
+        help_text=_("فایل پیوست (عکس، PDF، صدا، و غیره)")
+    )
+    
+    class Meta:
+        verbose_name = _("Support Message Attachment")
+        verbose_name_plural = _("Support Message Attachments")
+    
+    def __str__(self):
+        return f"{self.message.id} - {self.file.name}"
+
+
+class SupportMessage(BaseModel):
+    """
+    پیام‌های پشتیبانی معلمان به تیم پشتیبانی پلتفرم
+    """
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'teacher'},
+        related_name='support_messages',
+        verbose_name=_("Teacher"),
+        help_text=_("معلمی که پیام را ارسال کرد")
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sent_support_messages',
+        verbose_name=_("Sender"),
+        help_text=_("فردی که پیام را فرستاد (معلم یا پشتیبان)")
+    )
+    message_text = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("Message text"),
+        help_text=_("متن پیام")
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('sent', _("Sent")),
+            ('read', _("Read"))
+        ],
+        default='sent',
+        verbose_name=_("Status"),
+        help_text=_("وضعیت پیام")
+    )
+    read_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Read at"),
+        help_text=_("زمان خواندن پیام")
+    )
+    
+    class Meta:
+        verbose_name = _("Support Message")
+        verbose_name_plural = _("Support Messages")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['teacher', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.teacher.name} - {self.created_at_display()}"
+    
+    def mark_as_read(self):
+        """پیام را به عنوان خوانده شده علامت‌گذاری کنید"""
+        if self.status != 'read':
+            self.status = 'read'
+            self.read_at = timezone.now()
+            self.save()
+            return True
+        return False

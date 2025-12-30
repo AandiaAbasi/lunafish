@@ -448,6 +448,76 @@ class TeacherDetailSerializer(serializers.Serializer):
         return serializer.data
 
 
+# ===== Support Message Serializers =====
+class SupportMessageAttachmentSerializer(serializers.Serializer):
+    """Serializer for Support Message Attachments"""
+    id = serializers.IntegerField(read_only=True)
+    file_url = serializers.SerializerMethodField()
+    file_name = serializers.SerializerMethodField()
+    
+    def get_file_url(self, obj):
+        """دریافت URL فایل"""
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        return None
+    
+    def get_file_name(self, obj):
+        """دریافت نام فایل"""
+        if obj.file:
+            return obj.file.name.split('/')[-1]
+        return None
+
+
+class SupportMessageSerializer(serializers.Serializer):
+    """Serializer for Support Messages"""
+    id = serializers.IntegerField(read_only=True)
+    teacher_id = serializers.IntegerField(write_only=True)
+    sender_id = serializers.IntegerField(write_only=True)
+    message_text = serializers.CharField(required=False, allow_blank=True)
+    status = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    read_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    attachments = serializers.SerializerMethodField(read_only=True)
+    
+    def get_attachments(self, obj):
+        """دریافت فایل‌های پیوست"""
+        attachments = obj.attachments.all()
+        serializer = SupportMessageAttachmentSerializer(
+            attachments,
+            many=True,
+            context=self.context
+        )
+        return serializer.data
+
+
+class SupportMessageCreateSerializer(serializers.Serializer):
+    """Serializer for Creating Support Messages"""
+    teacher_id = serializers.IntegerField()
+    sender_id = serializers.IntegerField()
+    message_text = serializers.CharField(required=False, allow_blank=True)
+    attachments = serializers.ListField(
+        child=serializers.FileField(),
+        required=False,
+        allow_empty=True
+    )
+    
+    def validate(self, data):
+        """بررسی صحت داده‌ها"""
+        message_text = data.get('message_text', '').strip()
+        attachments = data.get('attachments', [])
+        
+        # حداقل یکی از پیام یا فایل باید وجود داشته باشد
+        if not message_text and not attachments:
+            raise serializers.ValidationError(
+                _("Message text or attachment is required")
+            )
+        
+        return data
+
+
 # ===== Attendance Serializer =====
 class AttendanceSerializer(serializers.Serializer):
     """Serializer for Attendance"""

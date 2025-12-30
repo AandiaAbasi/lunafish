@@ -1828,3 +1828,87 @@ msgstr "ثبت استفاده اپ والدین"
 
 msgid "Parent App Usage Logs"
 msgstr "ثبت‌های استفاده اپ والدین"
+
+msgid "Support Message"
+msgstr "پیام پشتیبانی"
+
+msgid "Support Messages"
+msgstr "پیام‌های پشتیبانی"
+
+msgid "Support Message Attachment"
+msgstr "فایل پیوست پیام پشتیبانی"
+
+msgid "Support Message Attachments"
+msgstr "فایل‌های پیوست پیام‌های پشتیبانی"
+
+msgid "Send Support Message"
+msgstr "ارسال پیام به پشتیبانی"
+
+msgid "List Support Messages"
+msgstr "لیست پیام‌های پشتیبانی"
+
+msgid "Mark Message as Read"
+msgstr "علامت‌گذاری پیام به‌عنوان خوانده‌شده"
+
+msgid "Teacher not found"
+msgstr "معلم یافت نشد"
+
+msgid "Sender not found"
+msgstr "فرستنده یافت نشد"
+
+msgid "Message text or attachment is required"
+msgstr "متن پیام یا فایل پیوست الزامی است"
+
+msgid "Message not found"
+msgstr "پیام یافت نشد"
+
+msgid "Sent"
+msgstr "ارسال‌شده"
+
+msgid "Read"
+msgstr "خوانده‌شده"
+
+msgid "Message text"
+msgstr "متن پیام"
+
+msgid "Status"
+msgstr "وضعیت"
+
+msgid "Read at"
+msgstr "خوانده‌شده در"
+
+msgid "Sender"
+msgstr "فرستنده"
+
+msgid "Message preview"
+msgstr "پیش‌نمایش پیام"
+
+msgid "Attachment"
+msgstr "فایل پیوست"
+
+msgid "Attachments"
+msgstr "فایل‌های پیوست"
+
+msgid "File"
+msgstr "فایل"
+
+msgid "Message status: sent or read"
+msgstr "وضعیت پیام: ارسال‌شده یا خوانده‌شده"
+
+msgid "Page number"
+msgstr "شماره صفحه"
+
+msgid "Teacher ID to filter messages"
+msgstr "شناسه معلم برای فیلتر کردن پیام‌ها"
+
+msgid "Send a message to support team with optional file attachments"
+msgstr "ارسال پیام به تیم پشتیبانی با فایل‌های پیوست اختیاری"
+
+msgid "Get list of support messages for a teacher"
+msgstr "دریافت لیست پیام‌های پشتیبانی برای معلم"
+
+msgid "Mark a support message as read"
+msgstr "علامت‌گذاری پیام پشتیبانی به‌عنوان خوانده‌شده"
+
+msgid "without text ({} files)"
+msgstr "بدون متن ({} فایل)"

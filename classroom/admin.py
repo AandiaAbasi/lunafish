@@ -8,7 +8,7 @@ from django.contrib import messages
 from .models import (
     TeacherAvailability, TeachingSubject, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
-    StudentTransaction, PlatformSettings, Attendance
+    StudentTransaction, PlatformSettings, Attendance, SupportMessage, SupportMessageAttachment
 )
 import jdatetime
 from datetime import datetime
@@ -654,3 +654,80 @@ class AttendanceAdmin(admin.ModelAdmin):
     def subject_title(self, obj):
         return obj.booking.subject.title
     subject_title.short_description = _('موضوع')
+
+# ===== Support Message Attachments Inline =====
+class SupportMessageAttachmentInline(admin.TabularInline):
+    model = SupportMessageAttachment
+    extra = 1
+    readonly_fields = ['created_at', 'file_preview']
+    fields = ['file', 'file_preview', 'created_at']
+    
+    def file_preview(self, obj):
+        """نمایش پیوند دانلود فایل"""
+        if obj.file:
+            return format_html(
+                '<a href="{}" target="_blank">{}</a>',
+                obj.file.url,
+                obj.file.name.split('/')[-1]
+            )
+        return '-'
+    file_preview.short_description = _('فایل')
+
+
+# ===== Support Message Admin =====
+@admin.register(SupportMessage)
+class SupportMessageAdmin(admin.ModelAdmin):
+    list_display = ['teacher_name', 'sender_name', 'status_badge', 'message_preview', 'created_at']
+    list_filter = ['status', 'created_at', 'teacher', 'read_at']
+    search_fields = ['teacher__name', 'teacher__username', 'sender__name', 'sender__username', 'message_text']
+    readonly_fields = ['created_at', 'read_at', 'status']
+    inlines = [SupportMessageAttachmentInline]
+    ordering = ['-created_at']
+    
+    fieldsets = (
+        (_('اطلاعات پیام'), {
+            'fields': ('teacher', 'sender', 'message_text', 'status')
+        }),
+        (_('زمان‌ها'), {
+            'fields': ('created_at', 'read_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def teacher_name(self, obj):
+        return obj.teacher.name or obj.teacher.username
+    teacher_name.short_description = _('معلم')
+    
+    def sender_name(self, obj):
+        if obj.sender:
+            return obj.sender.name or obj.sender.username
+        return '-'
+    sender_name.short_description = _('فرستنده')
+    
+    def status_badge(self, obj):
+        """نمایش وضعیت با رنگ‌بندی"""
+        if obj.status == 'read':
+            color = 'green'
+            label = _('خوانده‌شده')
+        else:
+            color = 'blue'
+            label = _('ارسال‌شده')
+        
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px;">{}</span>',
+            color,
+            label
+        )
+    status_badge.short_description = _('وضعیت')
+    
+    def message_preview(self, obj):
+        """نمایش پیش‌نمایش پیام"""
+        if obj.message_text:
+            preview = obj.message_text[:50]
+            if len(obj.message_text) > 50:
+                preview += '...'
+            return preview
+        else:
+            attachments_count = obj.attachments.count()
+            return _('بدون متن ({} فایل)').format(attachments_count)
+    message_preview.short_description = _('پیام')

@@ -5020,6 +5020,261 @@ class AttendanceAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# ===== Support Message Views =====
+class SupportMessageAPIView(APIView):
+    """API View for Support Messages"""
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    
+    @extend_schema(
+        summary=_("Send Support Message"),
+        description=_("Send a message to support team with optional file attachments"),
+        request=inline_serializer(
+            name='SupportMessageCreateRequest',
+            fields={
+                'teacher_id': serializers.IntegerField(),
+                'sender_id': serializers.IntegerField(),
+                'message_text': serializers.CharField(required=False, allow_blank=True),
+                'attachments': serializers.ListField(child=serializers.FileField(), required=False)
+            }
+        ),
+        responses={
+            201: inline_serializer(
+                name='SupportMessageCreateResponse',
+                fields={
+                    'id': serializers.IntegerField(),
+                    'teacher_id': serializers.IntegerField(),
+                    'sender_id': serializers.IntegerField(),
+                    'sender_name': serializers.CharField(),
+                    'message_text': serializers.CharField(),
+                    'status': serializers.CharField(),
+                    'created_at': serializers.DateTimeField(),
+                    'attachments': serializers.ListField(child=serializers.DictField())
+                }
+            ),
+            400: inline_serializer(
+                name='ErrorResponse',
+                fields={'error': serializers.CharField()}
+            ),
+        }
+    )
+    def post(self, request):
+        """ارسال پیام به تیم پشتیبانی"""
+        from classroom.models import SupportMessage, SupportMessageAttachment
+        from account.models import User
+        
+        try:
+            teacher_id = request.data.get('teacher_id')
+            sender_id = request.data.get('sender_id')
+            message_text = request.data.get('message_text', '').strip()
+            
+            # بررسی معلم
+            try:
+                teacher = User.objects.get(id=teacher_id, role='teacher')
+            except User.DoesNotExist:
+                return Response(
+                    {'error': _("Teacher not found")},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # بررسی فرستنده (معلم یا Admin)
+            try:
+                sender = User.objects.get(id=sender_id, role__in=['teacher', 'admin'])
+            except User.DoesNotExist:
+                return Response(
+                    {'error': _("Sender not found")},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # حداقل یک پیام یا فایل باید وجود داشته باشد
+            files = request.FILES.getlist('attachments')
+            if not message_text and not files:
+                return Response(
+                    {'error': _("Message text or attachment is required")},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # ایجاد پیام
+            support_message = SupportMessage.objects.create(
+                teacher=teacher,
+                sender=sender,
+                message_text=message_text if message_text else None,
+                status='sent'
+            )
+            
+            # اضافه کردن فایل‌های پیوست
+            for file in files:
+                SupportMessageAttachment.objects.create(
+                    message=support_message,
+                    file=file
+                )
+            
+            # دریافت فایل‌های پیوست
+            attachments_data = []
+            for attachment in support_message.attachments.all():
+                attachments_data.append({
+                    'id': attachment.id,
+                    'file_url': request.build_absolute_uri(attachment.file.url),
+                    'file_name': attachment.file.name.split('/')[-1]
+                })
+            
+            return Response({
+                'id': support_message.id,
+                'teacher_id': teacher.id,
+                'sender_id': sender.id,
+                'sender_name': sender.get_full_name() or sender.username,
+                'message_text': support_message.message_text,
+                'status': support_message.status,
+                'created_at': support_message.created_at,
+                'attachments': attachments_data
+            }, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @extend_schema(
+        summary=_("List Support Messages"),
+        description=_("Get list of support messages for a teacher"),
+        parameters=[
+            OpenApiParameter(
+                'teacher_id',
+                OpenApiTypes.INT,
+                OpenApiParameter.QUERY,
+                description=_("Teacher ID to filter messages")
+            ),
+            OpenApiParameter(
+                'status',
+                OpenApiTypes.STR,
+                OpenApiParameter.QUERY,
+                description=_("Message status: sent or read")
+            ),
+            OpenApiParameter(
+                'page',
+                OpenApiTypes.INT,
+                OpenApiParameter.QUERY,
+                description=_("Page number")
+            ),
+        ],
+        responses={
+            200: inline_serializer(
+                name='SupportMessageListResponse',
+                fields={
+                    'count': serializers.IntegerField(),
+                    'next': serializers.CharField(allow_null=True),
+                    'previous': serializers.CharField(allow_null=True),
+                    'results': serializers.ListField(child=serializers.DictField())
+                }
+            ),
+        }
+    )
+    def get(self, request):
+        """دریافت لیست پیام‌های پشتیبانی"""
+        from classroom.models import SupportMessage
+        
+        teacher_id = request.query_params.get('teacher_id')
+        status_filter = request.query_params.get('status')
+        
+        # فیلتر کردن پیام‌ها
+        messages = SupportMessage.objects.all()
+        
+        if teacher_id:
+            messages = messages.filter(teacher_id=teacher_id)
+        
+        if status_filter in ['sent', 'read']:
+            messages = messages.filter(status=status_filter)
+        
+        # ترتیب‌دهی
+        messages = messages.order_by('-created_at')
+        
+        # صفحه‌بندی
+        paginator = Paginator(messages, 10)
+        page_number = request.query_params.get('page', 1)
+        
+        try:
+            page_obj = paginator.page(page_number)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+        
+        # تبدیل به سریالایزر
+        messages_data = []
+        for msg in page_obj.object_list:
+            attachments_data = []
+            for attachment in msg.attachments.all():
+                attachments_data.append({
+                    'id': attachment.id,
+                    'file_url': request.build_absolute_uri(attachment.file.url),
+                    'file_name': attachment.file.name.split('/')[-1]
+                })
+            
+            messages_data.append({
+                'id': msg.id,
+                'teacher_id': msg.teacher.id,
+                'sender_id': msg.sender.id if msg.sender else None,
+                'sender_name': msg.sender.get_full_name() or msg.sender.username if msg.sender else None,
+                'message_text': msg.message_text,
+                'status': msg.status,
+                'created_at': msg.created_at,
+                'read_at': msg.read_at,
+                'attachments': attachments_data
+            })
+        
+        return Response({
+            'count': paginator.count,
+            'next': f"/api/support-messages/?page={page_number + 1}" if page_obj.has_next() else None,
+            'previous': f"/api/support-messages/?page={page_number - 1}" if page_obj.has_previous() else None,
+            'results': messages_data
+        }, status=status.HTTP_200_OK)
+
+
+class SupportMessageDetailAPIView(APIView):
+    """API View for Support Message Details and Actions"""
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary=_("Mark Message as Read"),
+        description=_("Mark a support message as read"),
+        responses={
+            200: inline_serializer(
+                name='MarkAsReadResponse',
+                fields={
+                    'id': serializers.IntegerField(),
+                    'status': serializers.CharField(),
+                    'read_at': serializers.DateTimeField()
+                }
+            ),
+        }
+    )
+    def patch(self, request, message_id):
+        """علامت‌گذاری پیام به‌عنوان خوانده‌شده"""
+        from classroom.models import SupportMessage
+        
+        try:
+            message = SupportMessage.objects.get(id=message_id)
+            message.mark_as_read()
+            
+            return Response({
+                'id': message.id,
+                'status': message.status,
+                'read_at': message.read_at
+            }, status=status.HTTP_200_OK)
+        
+        except SupportMessage.DoesNotExist:
+            return Response(
+                {'error': _("Message not found")},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class AttendanceListAPIView(APIView):
     """
     دریافت لیست حضور و غیاب برای یک جلسه (کلاس)
