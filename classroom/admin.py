@@ -8,7 +8,7 @@ from django.contrib import messages
 from .models import (
     TeacherAvailability, TeachingSubject, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
-    StudentTransaction, PlatformSettings
+    StudentTransaction, PlatformSettings, Attendance
 )
 import jdatetime
 from datetime import datetime
@@ -627,3 +627,30 @@ class PlatformSettingsAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+
+# ===== Attendance Admin =====
+@admin.register(Attendance)
+class AttendanceAdmin(admin.ModelAdmin):
+    list_display = ['student_name', 'subject_title', 'status', 'marked_at']
+    list_filter = ['status', 'marked_at', 'student']
+    search_fields = ['student__name', 'student__username', 'booking__subject__title']
+    readonly_fields = ['marked_at']
+    ordering = ['-marked_at']
+    
+    fieldsets = (
+        (_('اطلاعات'), {
+            'fields': ('booking', 'student', 'status')
+        }),
+        (_('سیستم'), {
+            'fields': ('marked_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def student_name(self, obj):
+        return obj.student.name or obj.student.username
+    student_name.short_description = _('دانش‌آموز')
+    
+    def subject_title(self, obj):
+        return obj.booking.subject.title
+    subject_title.short_description = _('موضوع')

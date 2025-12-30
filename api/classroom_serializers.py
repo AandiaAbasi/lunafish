@@ -446,3 +446,12 @@ class TeacherDetailSerializer(serializers.Serializer):
         
         serializer = TeacherAvailabilityDetailSerializer(slots, many=True)
         return serializer.data
+
+
+# ===== Attendance Serializer =====
+class AttendanceSerializer(serializers.Serializer):
+    """Serializer for Attendance"""
+    student_id = serializers.IntegerField()
+    booking_id = serializers.IntegerField()
+    status = serializers.CharField(max_length=10)
+    created = serializers.BooleanField(read_only=True)

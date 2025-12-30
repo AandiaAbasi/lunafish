@@ -94,6 +94,9 @@ urlpatterns = [
     path('parent/update-usage-time/', views.ParentUpdateUsageTimeAPIView.as_view(), name='update_usage_time'),
     path('parent/profile/', views.ParentProfileAPIView.as_view(), name='parent_profile'),
     
+    # ========== Attendance APIs ==========
+    path('attendance/<int:booking_id>/', views.AttendanceAPIView.as_view(), name='attendance'),
+    
     # ========== Exercise APIs (آزمون‌ها) ==========
     path('exercise/field/create/', views.CreateFieldAPIView.as_view(), name='field_create'),
     path('exercise/exam/create/', views.CreateExamAPIView.as_view(), name='exam_create'),

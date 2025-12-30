@@ -1556,6 +1556,44 @@ msgstr "Updated At"
 msgid "Platform Settings"
 msgstr "Platform Settings"
 
+#: classroom/models.py
+msgid "حضور و غیاب"
+msgstr "Attendance"
+
+msgid "رزرو کلاس"
+msgstr "Class Booking"
+
+msgid "دانش‌آموز"
+msgstr "Student"
+
+msgid "وضعیت"
+msgstr "Status"
+
+msgid "حاضر"
+msgstr "Present"
+
+msgid "غایب"
+msgstr "Absent"
+
+msgid "تاریخ ثبت"
+msgstr "Marked At"
+
+#: api/views.py classroom/admin.py
+msgid "student_id and status are required"
+msgstr "student_id and status are required"
+
+msgid "status must be \"present\" or \"absent\""
+msgstr "status must be \"present\" or \"absent\""
+
+msgid "Booking not found"
+msgstr "Booking not found"
+
+msgid "Student not found"
+msgstr "Student not found"
+
+msgid "موضوع"
+msgstr "Subject"
+
 #: api/parent_serializers.py
 msgid "شناسه دانش‌آموز یا شماره تماس یا ایمیل"
 msgstr "Student ID or Phone or Email"

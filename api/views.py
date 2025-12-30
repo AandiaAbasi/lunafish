@@ -4908,3 +4908,113 @@ class ParentProfileAPIView(APIView):
         from .parent_serializers import ParentProfileSerializer
         serializer = ParentProfileSerializer(parent)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# ===== Attendance API =====
+class AttendanceAPIView(APIView):
+    """
+    ثبت و بروزرسانی حضور و غیاب دانش‌آموز در کلاس‌ها
+    
+    post:
+        Mark attendance for a student in a class
+        
+        URL: /api/attendance/<booking_id>/
+        
+        Request body:
+            - student_id: integer
+            - status: string ('present' or 'absent')
+        
+        Returns:
+            200 OK:
+                - student_id: integer
+                - booking_id: integer
+                - status: string
+                - created: boolean (True if new, False if updated)
+            
+            400 Bad Request:
+                - Invalid student_id
+                - Invalid status
+                - Booking not found
+                - Student not found
+            
+            404 Not Found:
+                - Booking not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Attendance'],
+        summary='Mark Attendance',
+        description='ثبت یا بروزرسانی حضور و غیاب دانش‌آموز',
+        request=inline_serializer(
+            name='AttendanceRequest',
+            fields={
+                'student_id': serializers.IntegerField(help_text='شناسه دانش‌آموز'),
+                'status': serializers.ChoiceField(choices=['present', 'absent'], help_text='وضعیت (حاضر یا غایب)')
+            }
+        ),
+        responses={
+            200: inline_serializer(
+                name='AttendanceResponse',
+                fields={
+                    'student_id': serializers.IntegerField(),
+                    'booking_id': serializers.IntegerField(),
+                    'status': serializers.CharField(),
+                    'created': serializers.BooleanField()
+                }
+            )
+        }
+    )
+    def post(self, request, booking_id):
+        """Mark attendance"""
+        from .classroom_serializers import AttendanceSerializer
+        from classroom.models import Attendance
+        
+        # دریافت student_id و status
+        student_id = request.data.get('student_id')
+        status_value = request.data.get('status')
+        
+        # بررسی داده‌های ورودی
+        if not student_id or not status_value:
+            return Response(
+                {'error': _('student_id and status are required')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if status_value not in ['present', 'absent']:
+            return Response(
+                {'error': _('status must be "present" or "absent"')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # بررسی وجود کلاس
+        try:
+            booking = ClassBooking.objects.get(id=booking_id)
+        except ClassBooking.DoesNotExist:
+            return Response(
+                {'error': _('Booking not found')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی وجود دانش‌آموز
+        try:
+            student = User.objects.get(id=student_id, role='user')
+        except User.DoesNotExist:
+            return Response(
+                {'error': _('Student not found')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # ثبت یا بروزرسانی حضور و غیاب
+        attendance, created = Attendance.objects.update_or_create(
+            booking=booking,
+            student=student,
+            defaults={'status': status_value}
+        )
+        
+        return Response({
+            'student_id': attendance.student.id,
+            'booking_id': attendance.booking.id,
+            'status': attendance.status,
+            'created': created
+        }, status=status.HTTP_200_OK)

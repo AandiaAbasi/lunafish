@@ -493,6 +493,37 @@ class StudentTransaction(BaseModel):
         return f"{self.student.username} - {self.get_transaction_type_display()}: {self.amount:,} T"
 
 
+# ===== Attendance Model =====
+class Attendance(BaseModel):
+    """
+    ثبت حضور و غیاب دانش‌آموز در کلاس‌ها
+    هر دانش‌آموز برای هر کلاس یک رکورد حضور/غیاب دارد
+    """
+    booking = models.OneToOneField(ClassBooking, on_delete=models.CASCADE, verbose_name=_("رزرو کلاس"), related_name='attendance')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'user'}, verbose_name=_("دانش‌آموز"), related_name='attendances')
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('present', _("حاضر")),
+            ('absent', _("غایب"))
+        ],
+        verbose_name=_("وضعیت")
+    )
+    marked_at = models.DateTimeField(auto_now=True, verbose_name=_("تاریخ ثبت"))
+    
+    class Meta:
+        verbose_name = _("حضور و غیاب")
+        verbose_name_plural = _("حضور و غیاب")
+        unique_together = ('booking', 'student')
+        indexes = [
+            models.Index(fields=['student', 'marked_at']),
+            models.Index(fields=['booking', 'student']),
+        ]
+    
+    def __str__(self):
+        return f"{self.student.name} - {self.booking.subject.title} - {self.status}"
+
+
 # ===== Platform Settings (Commission Configuration) =====
 class PlatformSettings(models.Model):
     """

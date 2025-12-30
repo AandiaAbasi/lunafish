@@ -1662,6 +1662,44 @@ msgstr "پاسخ"
 msgid "نتیجه"
 msgstr "نتیجه"
 
+#: classroom/models.py
+msgid "حضور و غیاب"
+msgstr "حضور و غیاب"
+
+msgid "رزرو کلاس"
+msgstr "رزرو کلاس"
+
+msgid "دانش‌آموز"
+msgstr "دانش‌آموز"
+
+msgid "وضعیت"
+msgstr "وضعیت"
+
+msgid "حاضر"
+msgstr "حاضر"
+
+msgid "غایب"
+msgstr "غایب"
+
+msgid "تاریخ ثبت"
+msgstr "تاریخ ثبت"
+
+#: api/views.py classroom/admin.py
+msgid "student_id and status are required"
+msgstr "student_id و status ضروری است"
+
+msgid "status must be \"present\" or \"absent\""
+msgstr "status باید \"present\" یا \"absent\" باشد"
+
+msgid "Booking not found"
+msgstr "رزرو پیدا نشد"
+
+msgid "Student not found"
+msgstr "دانش‌آموز پیدا نشد"
+
+msgid "موضوع"
+msgstr "موضوع"
+
 #: api/parent_serializers.py
 msgid "شناسه دانش‌آموز یا شماره تماس یا ایمیل"
 msgstr "شناسه دانش‌آموز یا شماره تماس یا ایمیل"
