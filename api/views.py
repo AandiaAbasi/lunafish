@@ -2410,11 +2410,22 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
             session_minutes = int(request.data.get('session_duration', 45))
             break_minutes = int(request.data.get('break_duration', 15))
             price = Decimal(request.data.get('price', 0))
-            discount_price_str = request.data.get('discount_price', '')
-            discount_price = Decimal(discount_price_str) if discount_price_str else None
+            
+            # Handle discount_price - can be null, empty string, or a value
+            discount_price_str = request.data.get('discount_price')
+            if discount_price_str is None or discount_price_str == '':
+                discount_price = None
+            else:
+                discount_price = Decimal(str(discount_price_str))
 
-        except Exception:
-            return Response({'error': _('داده‌های ورودی نامعتبر است')}, status=400)
+        except (ValueError, TypeError, Decimal.InvalidOperation) as e:
+            return Response(
+                {
+                    'error': _('داده‌های ورودی نامعتبر است'),
+                    'details': str(e)
+                },
+                status=400
+            )
 
         created = 0
         cur_date = start_date
