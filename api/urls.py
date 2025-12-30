@@ -67,6 +67,13 @@ urlpatterns = [
     path('teacher/availability/<int:id>/update/', views.UpdateTeacherAvailabilityAPIView.as_view(), name='availability_update'),
     path('teacher/availability/<int:id>/delete/', views.DeleteTeacherAvailabilityAPIView.as_view(), name='availability_delete'),
     
+    # ========== Class Booking (خرید کلاس) ==========
+    path('class-booking/create/', views.CreateClassBookingAPIView.as_view(), name='class_booking_create'),
+    path('my-bookings/', views.StudentBookingsListAPIView.as_view(), name='student_bookings_list'),
+    path('teacher/bookings/', views.TeacherBookingsListAPIView.as_view(), name='teacher_bookings_list'),
+    path('class-booking/<int:id>/status/', views.UpdateBookingStatusAPIView.as_view(), name='booking_status_update'),
+    path('class-booking/<int:id>/cancel/', views.CancelBookingAPIView.as_view(), name='booking_cancel'),
+    
     # ========== Teaching Subjects (کلاس‌ها) ==========
     path('teaching-subjects/', views.TeachingSubjectListAPIView.as_view(), name='teaching_subject_list'),
     path('teaching-subjects/create/', views.TeachingSubjectCreateAPIView.as_view(), name='teaching_subject_create'),

@@ -2906,6 +2906,341 @@ class DeleteTeacherAvailabilityAPIView(APIView):
         )
 
 
+# ========== Class Booking APIs (خریدن کلاس) ==========
+
+class CreateClassBookingAPIView(APIView):
+    """
+    Create Class Booking (Purchase Class) API
+    
+    خریدن کلاس - دانش‌آموز یک بازه زمانی را رزرو و خریداری می‌کند
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Class Booking'],
+        summary='Book/Purchase a Class',
+        description='دانش‌آموز یک بازه زمانی از معلم را خریداری می‌کند',
+        request=None,
+        responses={
+            201: OpenApiResponse(description="Class booked successfully"),
+            400: OpenApiResponse(description="Invalid data or unavailable slot"),
+            403: OpenApiResponse(description="Only students can book classes"),
+            404: OpenApiResponse(description="Slot or subject not found"),
+        }
+    )
+    def post(self, request):
+        from classroom.models import ClassBooking, TeacherAvailability, TeachingSubject
+        from .classroom_serializers import ClassBookingSerializer, CreateClassBookingSerializer
+        
+        # فقط دانش‌آموزان می‌توانند کلاس خریداری کنند
+        if request.user.role != 'student':
+            return Response(
+                {'error': _('تنها دانش‌آموزان می‌توانند کلاس خریداری کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # تایید داده‌های ورودی
+        serializer = CreateClassBookingSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {
+                    'error': _('داده‌های نامعتبر'),
+                    'details': serializer.errors
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        availability_id = serializer.validated_data['availability']
+        subject_id = serializer.validated_data['subject']
+        discount_code = serializer.validated_data.get('discount_code')
+        
+        # دریافت بازه زمانی و موضوع
+        try:
+            availability = TeacherAvailability.objects.get(id=availability_id)
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except (TeacherAvailability.DoesNotExist, TeachingSubject.DoesNotExist):
+            return Response(
+                {'error': _('بازه زمانی یا درس یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # ایجاد رزرو کلاس
+        try:
+            # قیمت نهایی: اگر قیمت تخفیف وجود دارد از آن استفاده شود، وگرنه قیمت اصلی
+            final_price = availability.discount_price if availability.discount_price else availability.price
+            
+            booking = ClassBooking.objects.create(
+                availability=availability,
+                teacher=availability.teacher,
+                student=request.user,
+                subject=subject,
+                status='reserved',
+                price=availability.price,
+                discount_amount=0,
+                final_price=final_price
+            )
+            
+            # علامت‌گذاری بازه زمانی به عنوان رزرو شده
+            availability.is_booked = True
+            availability.is_available = False
+            availability.save()
+            
+            # بازگشت داده‌های رزرو
+            response_serializer = ClassBookingSerializer(booking)
+            
+            return Response({
+                'data': response_serializer.data,
+                'message': _('کلاس با موفقیت خریداری شد')
+            }, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            return Response(
+                {'error': f'خطا: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class StudentBookingsListAPIView(APIView):
+    """
+    Get My Bookings (Purchased Classes) API
+    
+    دریافت لیست کلاس‌های خریداری شده توسط دانش‌آموز
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Class Booking'],
+        summary='Get My Bookings',
+        description='دریافت لیست کلاس‌های خریداری شده',
+        parameters=[
+            OpenApiParameter('status', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Filter by status: reserved, completed, cancelled, no_show'),
+            OpenApiParameter('teacher', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Filter by teacher ID'),
+        ],
+        responses={
+            200: OpenApiResponse(description="List of student bookings"),
+            403: OpenApiResponse(description="Students can only view their own bookings"),
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        from classroom.models import ClassBooking
+        from .classroom_serializers import ClassBookingSerializer
+        from rest_framework.pagination import PageNumberPagination
+        
+        # دریافت کتاب‌های دانش‌آموز
+        # فقط دانش‌آموزان می‌توانند رزروهای خود را ببینند
+        if request.user.role != 'student':
+            return Response(
+                {'error': _('فقط دانش‌آموزان می‌توانند این endpoint رو استفاده کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        bookings = ClassBooking.objects.filter(student=request.user)
+        
+        # فیلتر بر اساس وضعیت
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            bookings = bookings.filter(status=status_filter)
+        
+        # فیلتر بر اساس معلم
+        teacher_id = request.query_params.get('teacher')
+        if teacher_id:
+            bookings = bookings.filter(teacher_id=teacher_id)
+        
+        # مرتب‌سازی
+        bookings = bookings.select_related('availability', 'subject', 'teacher').order_by('-created_at')
+        
+        # Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = int(request.query_params.get('page_size', 20))
+        paginated_bookings = paginator.paginate_queryset(bookings, request)
+        
+        serializer = ClassBookingSerializer(paginated_bookings, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class TeacherBookingsListAPIView(APIView):
+    """
+    Get Students Who Booked My Classes API
+    
+    دریافت لیست دانش‌آموزانی که از کلاس‌های معلم خریداری کردند
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Class Booking'],
+        summary='Get My Bookings',
+        description='دریافت لیست دانش‌آموزانی که از کلاس‌های معلم خریداری کردند',
+        parameters=[
+            OpenApiParameter('status', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Filter by status: reserved, completed, cancelled, no_show'),
+            OpenApiParameter('subject', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Filter by subject ID'),
+        ],
+        responses={
+            200: OpenApiResponse(description="List of bookings for teacher classes"),
+            403: OpenApiResponse(description="Teachers can only view bookings for their classes"),
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        from classroom.models import ClassBooking, TeachingSubject
+        from .classroom_serializers import ClassBookingSerializer
+        from rest_framework.pagination import PageNumberPagination
+        
+        # معلم تنها می‌تواند رزروهای کلاس‌های خود را ببیند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('معلمان می‌توانند تنها رزروهای خود را ببینند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # دریافت کلاس‌های معلم
+        subjects = TeachingSubject.objects.filter(teacher=request.user).values_list('id', flat=True)
+        bookings = ClassBooking.objects.filter(subject_id__in=subjects)
+        
+        # فیلتر بر اساس وضعیت
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            bookings = bookings.filter(status=status_filter)
+        
+        # فیلتر بر اساس موضوع
+        subject_id = request.query_params.get('subject')
+        if subject_id:
+            bookings = bookings.filter(subject_id=subject_id)
+        
+        # مرتب‌سازی
+        bookings = bookings.select_related('availability', 'subject', 'student').order_by('-created_at')
+        
+        # Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = int(request.query_params.get('page_size', 20))
+        paginated_bookings = paginator.paginate_queryset(bookings, request)
+        
+        serializer = ClassBookingSerializer(paginated_bookings, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class UpdateBookingStatusAPIView(APIView):
+    """
+    Update Booking Status API
+    
+    تغییر وضعیت رزرو - معلم می‌تواند وضعیت را تکمیل/لغو کند
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Class Booking'],
+        summary='Update Booking Status',
+        description='تغییر وضعیت رزرو (فقط معلم)',
+        parameters=[
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Booking ID')
+        ],
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Booking status updated"),
+            400: OpenApiResponse(description="Invalid status"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Booking not found"),
+        }
+    )
+    def patch(self, request, id):
+        from classroom.models import ClassBooking
+        from .classroom_serializers import ClassBookingSerializer
+        
+        try:
+            booking = ClassBooking.objects.get(id=id)
+        except ClassBooking.DoesNotExist:
+            return Response(
+                {'error': _('رزرو یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # فقط معلم می‌تواند وضعیت را تغییر دهد
+        if request.user.role != 'teacher' or booking.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        new_status = request.data.get('status')
+        valid_statuses = ['reserved', 'completed', 'cancelled', 'no_show']
+        
+        if not new_status or new_status not in valid_statuses:
+            return Response(
+                {'error': _('وضعیت نامعتبر است')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        booking.status = new_status
+        booking.save()
+        
+        serializer = ClassBookingSerializer(booking)
+        return Response({
+            'data': serializer.data,
+            'message': _('وضعیت رزرو با موفقیت به‌روزرسانی شد')
+        }, status=status.HTTP_200_OK)
+
+
+class CancelBookingAPIView(APIView):
+    """
+    Cancel Booking API
+    
+    لغو رزرو - دانش‌آموز می‌تواند رزرو را لغو کند
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Class Booking'],
+        summary='Cancel Booking',
+        description='لغو رزرو کلاس (فقط دانش‌آموز)',
+        parameters=[
+            OpenApiParameter('id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Booking ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Booking cancelled"),
+            403: OpenApiResponse(description="Permission denied or booking cannot be cancelled"),
+            404: OpenApiResponse(description="Booking not found"),
+        }
+    )
+    def post(self, request, id):
+        from classroom.models import ClassBooking
+        from .classroom_serializers import ClassBookingSerializer
+        
+        try:
+            booking = ClassBooking.objects.get(id=id)
+        except ClassBooking.DoesNotExist:
+            return Response(
+                {'error': _('رزرو یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # فقط دانش‌آموز می‌تواند رزرو خود را لغو کند
+        if request.user.role != 'student' or booking.student_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # تنها رزروهای "reserved" می‌توانند لغو شوند
+        if booking.status != 'reserved':
+            return Response(
+                {'error': _('این رزرو نمی‌تواند لغو شود')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # علامت‌گذاری به عنوان لغو شده
+        booking.status = 'cancelled'
+        booking.save()
+        
+        # آزاد کردن بازه زمانی
+        booking.availability.is_booked = False
+        booking.availability.is_available = True
+        booking.availability.save()
+        
+        serializer = ClassBookingSerializer(booking)
+        return Response({
+            'data': serializer.data,
+            'message': _('رزرو با موفقیت لغو شد')
+        }, status=status.HTTP_200_OK)
+
+
 # ========== Teaching Subject APIs (کلاس‌های معلم) ==========
 
 class TeachingSubjectListAPIView(APIView):

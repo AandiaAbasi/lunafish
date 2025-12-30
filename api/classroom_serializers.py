@@ -90,20 +90,80 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
         
 
 class ClassBookingSerializer(serializers.ModelSerializer):
-    """Serializer for ClassBooking"""
+    """Serializer for ClassBooking - List & Detail"""
     subject_title = serializers.CharField(source='subject.title', read_only=True)
     teacher_name = serializers.CharField(source='teacher.name', read_only=True)
     student_name = serializers.CharField(source='student.name', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    availability_date = serializers.DateField(source='availability.date', read_only=True)
+    availability_time = serializers.SerializerMethodField()
     
     class Meta:
         model = ClassBooking
         fields = [
-            'id', 'availability', 'teacher', 'teacher_name', 'student', 'student_name',
+            'id', 'availability', 'availability_date', 'availability_time',
+            'teacher', 'teacher_name', 'student', 'student_name',
             'subject', 'subject_title', 'status', 'status_display', 'price',
-            'discount_code', 'discount_amount', 'final_price', 'created_at', 'updated_at'
+            'discount_amount', 'final_price', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'student', 'teacher', 'created_at', 'updated_at', 'discount_amount', 'final_price']
+    
+    def get_availability_time(self, obj):
+        """Get formatted time range"""
+        return f"{obj.availability.start_time.strftime('%H:%M')} - {obj.availability.end_time.strftime('%H:%M')}"
+
+
+class CreateClassBookingSerializer(serializers.Serializer):
+    """Serializer for Creating/Purchasing a Class"""
+    availability = serializers.IntegerField(help_text="ID of the TeacherAvailability slot")
+    subject = serializers.IntegerField(help_text="ID of the TeachingSubject")
+    discount_code = serializers.CharField(required=False, allow_blank=True, help_text="Optional discount code")
+    
+    def validate_availability(self, value):
+        """Validate that availability exists and is available"""
+        try:
+            availability = TeacherAvailability.objects.get(id=value)
+        except TeacherAvailability.DoesNotExist:
+            raise serializers.ValidationError(_("زمان‌بندی یافت نشد"))
+        
+        if not availability.is_available:
+            raise serializers.ValidationError(_("این زمان‌بندی دیگر در دسترس نیست"))
+        
+        if availability.is_booked:
+            raise serializers.ValidationError(_("این زمان‌بندی قبلاً رزرو شده است"))
+        
+        if availability.is_expired or availability.is_past():
+            raise serializers.ValidationError(_("این زمان‌بندی منقضی شده است"))
+        
+        return value
+    
+    def validate_subject(self, value):
+        """Validate that subject exists"""
+        try:
+            subject = TeachingSubject.objects.get(id=value)
+        except TeachingSubject.DoesNotExist:
+            raise serializers.ValidationError(_("درس یافت نشد"))
+        
+        if not subject.is_active:
+            raise serializers.ValidationError(_("این درس فعال نیست"))
+        
+        return value
+    
+    def validate(self, data):
+        """Validate that subject belongs to teacher of availability"""
+        availability_id = data.get('availability')
+        subject_id = data.get('subject')
+        
+        try:
+            availability = TeacherAvailability.objects.get(id=availability_id)
+            subject = TeachingSubject.objects.get(id=subject_id)
+            
+            if availability.teacher != subject.teacher:
+                raise serializers.ValidationError(_("درس باید متعلق به همان معلم باشد"))
+        except (TeacherAvailability.DoesNotExist, TeachingSubject.DoesNotExist):
+            pass
+        
+        return data
 
 
 class TeacherWalletSerializer(serializers.ModelSerializer):
