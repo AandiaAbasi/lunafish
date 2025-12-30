@@ -711,8 +711,9 @@ class SupportMessageAdmin(admin.ModelAdmin):
     def chat_link(self, obj):
         """دکمه لینک به صفحه چت"""
         return format_html(
-            '<a class="button" href="/admin/classroom/supportmessage/chat/" style="background-color: #417690; color: white; text-decoration: none; padding: 5px 12px; border-radius: 4px; display: inline-block;">'
-            '💬 جزئیات چت</a>'
+            '<a class="button" href="{}" style="background-color: #417690; color: white; text-decoration: none; padding: 5px 12px; border-radius: 4px; display: inline-block;">'
+            '💬 جزئیات چت</a>',
+            '/admin/classroom/supportmessage/chat/'
         )
     chat_link.short_description = _('مدیریت')
     
