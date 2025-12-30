@@ -1183,6 +1183,15 @@ msgstr "پاسخ"
 msgid "Answers"
 msgstr "پاسخ‌ها"
 
+msgid "Correct Answer"
+msgstr "پاسخ صحیح"
+
+msgid "For text/input questions - teacher's answer key for grading"
+msgstr "برای سوالات تایپی: پاسخ درست را وارد کنید"
+
+msgid "برای سوالات تایپی: پاسخ درست را وارد کنید"
+msgstr "برای سوالات تایپی: پاسخ درست را وارد کنید"
+
 #: classroom/models.py
 msgid "Teacher"
 msgstr "معلم"
@@ -1558,3 +1567,97 @@ msgstr "تاریخ به‌روزرسانی"
 
 msgid "Platform Settings"
 msgstr "تنظیمات پلتفرم"
+
+#: exercise/admin.py
+msgid "اطلاعات پایه"
+msgstr "اطلاعات پایه"
+
+msgid "نیاز"
+msgstr "نیاز"
+
+msgid "توصیف"
+msgstr "توصیف"
+
+msgid "پاسخ صحیح"
+msgstr "پاسخ صحیح"
+
+msgid "رسانه"
+msgstr "رسانه"
+
+msgid "اطلاعات سیستم"
+msgstr "اطلاعات سیستم"
+
+msgid "نوع سؤال"
+msgstr "نوع سؤال"
+
+msgid "الزامی"
+msgstr "الزامی"
+
+msgid "اختیاری"
+msgstr "اختیاری"
+
+msgid "الزامی/اختیاری"
+msgstr "الزامی/اختیاری"
+
+msgid "صحیح"
+msgstr "صحیح"
+
+msgid "غلط"
+msgstr "غلط"
+
+msgid "صحیح؟"
+msgstr "صحیح؟"
+
+msgid "سؤال"
+msgstr "سؤال"
+
+msgid "عنوان و توصیف"
+msgstr "عنوان و توصیف"
+
+msgid "درستی"
+msgstr "درستی"
+
+msgid "راهنمایی"
+msgstr "راهنمایی"
+
+msgid "ترتیب"
+msgstr "ترتیب"
+
+msgid "شرط"
+msgstr "شرط"
+
+msgid "شرطی"
+msgstr "شرطی"
+
+msgid "عادی"
+msgstr "عادی"
+
+msgid "نوع"
+msgstr "نوع"
+
+msgid "دانش‌آموز"
+msgstr "دانش‌آموز"
+
+msgid "کلاس"
+msgstr "کلاس"
+
+msgid "نتایج"
+msgstr "نتایج"
+
+msgid "امتیاز"
+msgstr "امتیاز"
+
+msgid "پیشرفت"
+msgstr "پیشرفت"
+
+msgid "درصد"
+msgstr "درصد"
+
+msgid "تلاش"
+msgstr "تلاش"
+
+msgid "پاسخ"
+msgstr "پاسخ"
+
+msgid "نتیجه"
+msgstr "نتیجه"
