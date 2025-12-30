@@ -21,6 +21,7 @@ class TeacherAvailability(BaseModel):
     end_time = models.TimeField(verbose_name=_("ساعت پایان"), help_text=_("زمانی که معلم تدریس را پایان می‌دهد (مثال: 17:00)"))
     is_available = models.BooleanField(default=True, verbose_name=_("در دسترس"), help_text=_("آیا این بازه زمانی برای رزرو در دسترس است؟"))
     is_booked = models.BooleanField(default=False, verbose_name=_("رزرو شده"), help_text=_("آیا این بازه زمانی قبلاً رزرو شده است؟"))
+    is_expired = models.BooleanField(default=False, verbose_name=_("منقضی شده"), help_text=_("آیا این بازه زمانی منقضی شده است؟"))
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("قیمت"), help_text=_("قیمت تدریس برای این بازه زمانی"))
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("قیمت با تخفیف"), help_text=_("قیمت تدریس با تخفیف برای این بازه زمانی"))
     notes = models.TextField(blank=True, null=True, verbose_name=_("یادداشت‌ها"), help_text=_("یادداشت‌های اضافی درباره این دسترسی"))
@@ -34,13 +35,15 @@ class TeacherAvailability(BaseModel):
             models.Index(fields=['teacher', 'date']),
             models.Index(fields=['teacher', 'is_available']),
             models.Index(fields=['date', 'is_available']),
+            models.Index(fields=['is_expired']),
         ]
     
     def __str__(self):
         date_str = jdatetime.datetime.fromgregorian(
             datetime=datetime.combine(self.date, self.start_time)
         ).strftime('%Y/%m/%d')
-        return f"{self.teacher.name} - {date_str} {self.start_time}-{self.end_time}"
+        status = "منقضی" if self.is_expired else "فعال"
+        return f"{self.teacher.name} - {date_str} {self.start_time}-{self.end_time} ({status})"
     
     def get_jalali_date(self):
         """نمایش تاریخ شمسی"""
@@ -48,9 +51,29 @@ class TeacherAvailability(BaseModel):
             datetime=datetime.combine(self.date, self.start_time)
         ).strftime('%Y/%m/%d')
     
+    def check_and_expire(self):
+        """بررسی و منقضی کردن اگر زمان گذشته باشد"""
+        from datetime import datetime as dt
+        now = dt.now()
+        slot_datetime = datetime.combine(self.date, self.end_time)
+        
+        if now > slot_datetime and not self.is_expired:
+            self.is_expired = True
+            self.is_available = False
+            self.save()
+            return True
+        return False
+    
+    def is_past(self):
+        """بررسی اینکه آیا زمان گذشته است"""
+        from datetime import datetime as dt
+        now = dt.now()
+        slot_datetime = datetime.combine(self.date, self.end_time)
+        return now > slot_datetime
+    
     def reserve(self):
         """رزرو این بازه زمانی"""
-        if not self.is_booked:
+        if not self.is_booked and not self.is_expired:
             self.is_booked = True
             self.save()
             return True

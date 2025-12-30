@@ -44,14 +44,20 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
         allow_null=True,
         help_text='Discounted price (optional)'
     )
+    is_expired = serializers.SerializerMethodField()
     
     class Meta:
         model = TeacherAvailability
         fields = [
             'id', 'teacher', 'teacher_name', 'date', 'start_time', 'end_time',
-            'price', 'discount_price', 'is_available', 'is_booked', 'notes', 'created_at', 'updated_at'
+            'price', 'discount_price', 'is_available', 'is_booked', 'is_expired', 
+            'notes', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'is_expired']
+    
+    def get_is_expired(self, obj):
+        """Check if slot has expired"""
+        return obj.is_expired or obj.is_past()
 
 
 class BulkTeacherAvailabilitySerializer(serializers.ListSerializer):
