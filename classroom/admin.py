@@ -1,10 +1,11 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
-from django.urls import path
+from django.urls import path, reverse
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 from django.contrib import messages
+from django.utils import timezone
 from .models import (
     TeacherAvailability, TeachingSubject, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
@@ -677,80 +678,159 @@ class SupportMessageAttachmentInline(admin.TabularInline):
 # ===== Support Message Admin =====
 @admin.register(SupportMessage)
 class SupportMessageAdmin(admin.ModelAdmin):
-    list_display = ['teacher_name', 'sender_name', 'status_badge', 'message_preview', 'created_at', 'chat_link']
-    list_filter = ['status', 'created_at', 'teacher', 'read_at']
-    search_fields = ['teacher__name', 'teacher__username', 'sender__name', 'sender__username', 'message_text']
-    readonly_fields = ['created_at', 'read_at', 'status']
-    inlines = [SupportMessageAttachmentInline]
+    list_display = ['teacher_name', 'unread_count', 'last_message_preview', 'last_message_time', 'open_chat']
+    list_filter = ['status', 'created_at', 'teacher']
+    search_fields = ['teacher__name', 'teacher__username', 'message_text']
     ordering = ['-created_at']
+    change_list_template = 'admin/support_message_grouped_list.html'
     
-    fieldsets = (
-        (_('اطلاعات پیام'), {
-            'fields': ('teacher', 'sender', 'message_text', 'status')
-        }),
-        (_('زمان‌ها'), {
-            'fields': ('created_at', 'read_at'),
-            'classes': ('collapse',)
-        }),
-    )
+    def changelist_view(self, request, extra_context=None):
+        """نمایش پیام‌ها گروپ‌شده بر اساس معلم"""
+        from django.db.models import Count, Max, Q
+        from account.models import User
+        
+        teachers = User.objects.filter(role='teacher').annotate(
+            message_count=Count('support_messages'),
+            unread_count=Count('support_messages', filter=Q(support_messages__status='sent')),
+            last_message_time=Max('support_messages__created_at')
+        ).filter(message_count__gt=0).order_by('-last_message_time')
+        
+        extra_context = extra_context or {}
+        extra_context['teachers'] = teachers
+        extra_context['title'] = _('مدیریت پیام‌های پشتیبانی')
+        return super().changelist_view(request, extra_context)
     
     def get_urls(self):
-        """اضافه کردن URL برای صفحه مدیریت چت"""
+        """اضافه کردن URL برای صفحه چت و API"""
+        from django.urls import reverse
         urls = super().get_urls()
         custom_urls = [
-            path('chat/', self.admin_site.admin_view(self.chat_view), name='supportmessage_chat'),
+            path('chat/<int:teacher_id>/', self.admin_site.admin_view(self.chat_detail_view), name='supportmessage_chat_detail'),
+            path('api/messages/<int:teacher_id>/', self.admin_site.admin_view(self.api_get_messages), name='supportmessage_api_messages'),
+            path('api/reply/', self.admin_site.admin_view(self.api_send_reply), name='supportmessage_api_reply'),
         ]
         return custom_urls + urls
     
-    def chat_view(self, request):
-        """نمایش صفحه مدیریت چت"""
+    def chat_detail_view(self, request, teacher_id):
+        """نمایش صفحه چت برای یک معلم خاص"""
+        from account.models import User
+        try:
+            teacher = User.objects.get(id=teacher_id, role='teacher')
+        except User.DoesNotExist:
+            from django.http import Http404
+            raise Http404(_("معلم یافت نشد"))
+        
+        SupportMessage.objects.filter(teacher=teacher, status='sent').update(status='read', read_at=timezone.now())
+        
         context = self.admin_site.each_context(request)
-        context['title'] = _('مدیریت پیام‌های پشتیبانی')
-        return render(request, 'admin/support_message_chat.html', context)
+        context['title'] = _('چت با {}').format(teacher.name or teacher.username)
+        context['teacher'] = teacher
+        context['messages'] = SupportMessage.objects.filter(teacher=teacher).order_by('created_at')
+        return render(request, 'admin/support_message_detail_chat.html', context)
     
-    def chat_link(self, obj):
-        """دکمه لینک به صفحه چت"""
-        return format_html(
-            '<a class="button" href="{}" style="background-color: #417690; color: white; text-decoration: none; padding: 5px 12px; border-radius: 4px; display: inline-block;">'
-            '💬 جزئیات چت</a>',
-            '/admin/classroom/supportmessage/chat/'
-        )
-    chat_link.short_description = _('مدیریت')
+    def api_get_messages(self, request, teacher_id):
+        """API برای دریافت پیام‌های چت"""
+        from django.http import JsonResponse
+        from account.models import User
+        import json
+        
+        try:
+            teacher = User.objects.get(id=teacher_id, role='teacher')
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'Teacher not found'}, status=404)
+        
+        messages = SupportMessage.objects.filter(teacher=teacher).order_by('created_at')
+        data = []
+        for msg in messages:
+            data.append({
+                'id': msg.id,
+                'sender_name': msg.sender.name if msg.sender else teacher.name,
+                'sender_role': msg.sender.role if msg.sender else 'teacher',
+                'message': msg.message_text,
+                'created_at': msg.created_at.isoformat(),
+                'attachments': [{'id': att.id, 'url': att.file.url} for att in msg.attachments.all()]
+            })
+        
+        return JsonResponse({'messages': data})
+    
+    def api_send_reply(self, request):
+        """API برای ارسال پاسخ"""
+        from django.http import JsonResponse
+        from account.models import User
+        import json
+        
+        if request.method != 'POST':
+            return JsonResponse({'error': 'Method not allowed'}, status=405)
+        
+        try:
+            data = json.loads(request.body)
+            teacher_id = data.get('teacher_id')
+            message_text = data.get('message')
+            
+            teacher = User.objects.get(id=teacher_id, role='teacher')
+            
+            msg = SupportMessage.objects.create(
+                teacher=teacher,
+                sender=request.user,
+                message_text=message_text,
+                status='sent'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message_id': msg.id,
+                'created_at': msg.created_at.isoformat()
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
     
     def teacher_name(self, obj):
-        return obj.teacher.name or obj.teacher.username
+        """نام معلم"""
+        return obj.name or obj.username
     teacher_name.short_description = _('معلم')
     
-    def sender_name(self, obj):
-        if obj.sender:
-            return obj.sender.name or obj.sender.username
+    def unread_count(self, obj):
+        """تعداد پیام‌های خوانده‌نشده"""
+        unread = obj.support_messages.filter(status='sent').count()
+        if unread > 0:
+            return format_html(
+                '<span style="background-color: red; color: white; padding: 3px 8px; border-radius: 3px; font-weight: bold;">{}</span>',
+                unread
+            )
+        return '0'
+    unread_count.short_description = _('پیام‌های جدید')
+    
+    def last_message_preview(self, obj):
+        """پیش‌نمایش آخرین پیام"""
+        last_msg = obj.support_messages.order_by('-created_at').first()
+        if last_msg:
+            if last_msg.message_text:
+                text = last_msg.message_text[:40]
+                if len(last_msg.message_text) > 40:
+                    text += '...'
+                return text
+            else:
+                return _('(فقط فایل)')
         return '-'
-    sender_name.short_description = _('فرستنده')
+    last_message_preview.short_description = _('آخرین پیام')
     
-    def status_badge(self, obj):
-        """نمایش وضعیت با رنگ‌بندی"""
-        if obj.status == 'read':
-            color = 'green'
-            label = _('خوانده‌شده')
-        else:
-            color = 'blue'
-            label = _('ارسال‌شده')
-        
+    def last_message_time(self, obj):
+        """زمان آخرین پیام"""
+        last_msg = obj.support_messages.order_by('-created_at').first()
+        if last_msg:
+            import jdatetime
+            created = jdatetime.datetime.fromgregorian(
+                datetime=last_msg.created_at.replace(tzinfo=None)
+            ).strftime('%H:%M %Y/%m/%d')
+            return created
+        return '-'
+    last_message_time.short_description = _('آخرین فعالیت')
+    
+    def open_chat(self, obj):
+        """دکمه باز کردن چت"""
         return format_html(
-            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px;">{}</span>',
-            color,
-            label
+            '<a class="button" href="{}" style="background-color: #417690; color: white; text-decoration: none; padding: 5px 12px; border-radius: 4px; display: inline-block;">' 
+            '💬 باز کردن چت</a>',
+            reverse('admin:supportmessage_chat_detail', args=[obj.id])
         )
-    status_badge.short_description = _('وضعیت')
-    
-    def message_preview(self, obj):
-        """نمایش پیش‌نمایش پیام"""
-        if obj.message_text:
-            preview = obj.message_text[:50]
-            if len(obj.message_text) > 50:
-                preview += '...'
-            return preview
-        else:
-            attachments_count = obj.attachments.count()
-            return _('بدون متن ({} فایل)').format(attachments_count)
-    message_preview.short_description = _('پیام')
+    open_chat.short_description = _('عملیات')
