@@ -3259,6 +3259,7 @@ class TeachingSubjectListAPIView(APIView):
     دریافت لیست موضوعات تدریس
     """
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
     
     def get_queryset(self):
         """Filter by teacher if requested"""
@@ -3311,6 +3312,37 @@ class TeachingSubjectListAPIView(APIView):
         
         serializer = TeachingSubjectSerializer(queryset, many=True)
         return Response({'results': serializer.data}, status=status.HTTP_200_OK)
+    
+    @extend_schema(
+        tags=['Teaching Subject'],
+        summary='Create Teaching Subject',
+        description='ایجاد موضوع تدریس جدید (فقط برای معلمان)',
+        request=None,
+        responses={
+            201: OpenApiResponse(description="Subject created successfully"),
+            400: OpenApiResponse(description="Invalid data"),
+            403: OpenApiResponse(description="Only teachers can create subjects"),
+        }
+    )
+    def post(self, request):
+        from classroom.models import TeachingSubject
+        from .classroom_serializers import TeachingSubjectSerializer
+        
+        # فقط معلمان می‌توانند موضوع ایجاد کنند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('تنها معلمان می‌توانند موضوع تدریس ایجاد کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        data = request.data.copy()
+        data['teacher'] = request.user.id
+        
+        serializer = TeachingSubjectSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TeachingSubjectCreateAPIView(APIView):
