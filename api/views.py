@@ -36,6 +36,10 @@ from .exercise_serializers import (
     OrderCreateSubmitSerializer, OrderRetrieveSerializer, OrderListSerializer,
     OrderDetailRetrieveSerializer
 )
+from .chat_serializers import (
+    ChatRoomSerializer, ChatParticipantSerializer, MessageSerializer,
+    MessageReactionSerializer, ChatRoomDetailSerializer
+)
 
 # Import email function with fallback
 try:
