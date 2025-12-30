@@ -32,8 +32,8 @@ class ChatParticipantSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ChatParticipant
-        fields = ['id', 'user', 'user_name', 'user_avatar', 'role', 'joined_at']
-        read_only_fields = ['id', 'joined_at']
+        fields = ['id', 'user', 'user_name', 'user_avatar', 'role', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
 class MessageReactionSerializer(serializers.ModelSerializer):

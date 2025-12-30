@@ -662,17 +662,17 @@ class ChatRoomAdmin(admin.ModelAdmin):
 
 @admin.register(ChatParticipant)
 class ChatParticipantAdmin(admin.ModelAdmin):
-    list_display = ['get_user_name', 'get_role', 'get_chat_type', 'joined_at']
-    list_filter = ['role', 'chat_room__type', 'joined_at']
+    list_display = ['get_user_name', 'get_role', 'get_chat_type', 'created_at']
+    list_filter = ['role', 'chat_room__type', 'created_at']
     search_fields = ['user__name', 'user__username', 'chat_room__id']
-    readonly_fields = ['joined_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
         (_('شرکت‌کنندگی'), {
             'fields': ('chat_room', 'user', 'role')
         }),
         (_('سیستم'), {
-            'fields': ('joined_at', 'updated_at'),
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
