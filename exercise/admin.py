@@ -214,9 +214,10 @@ class OrderAdmin(admin.ModelAdmin):
             return '-'
         percentage = (obj.correct / total) * 100
         color = '#28a745' if percentage >= 70 else '#ffc107' if percentage >= 50 else '#dc3545'
+        percentage_str = f'{percentage:.0f}'
         return format_html(
-            '<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{:.0f}% ({}/{})</span>',
-            color, percentage, obj.correct, total
+            '<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}% ({}/{})</span>',
+            color, percentage_str, obj.correct, total
         )
     progress_display.short_description = _('پیشرفت')
     
@@ -226,9 +227,10 @@ class OrderAdmin(admin.ModelAdmin):
             return '-'
         percentage = (obj.correct / total) * 100
         color = '#28a745' if percentage >= 70 else '#ffc107' if percentage >= 50 else '#dc3545'
+        percentage_str = f'{percentage:.0f}'
         return format_html(
-            '<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{:.0f}%</span>',
-            color, percentage
+            '<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}%</span>',
+            color, percentage_str
         )
     progress_badge.short_description = _('درصد')
 
