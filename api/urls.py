@@ -72,4 +72,12 @@ urlpatterns = [
     path('teaching-subjects/<int:id>/', views.TeachingSubjectRetrieveAPIView.as_view(), name='teaching_subject_retrieve'),
     path('teaching-subjects/<int:id>/update/', views.TeachingSubjectUpdateAPIView.as_view(), name='teaching_subject_update'),
     path('teaching-subjects/<int:id>/delete/', views.TeachingSubjectDeleteAPIView.as_view(), name='teaching_subject_delete'),
+    
+    # ========== Exercise APIs (آزمون‌ها) ==========
+    path('exercise/field/create/', views.CreateFieldAPIView.as_view(), name='field_create'),
+    path('exercise/exam/create/', views.CreateExamAPIView.as_view(), name='exam_create'),
+    path('exercise/exam/<int:subject_id>/', views.GetExamAPIView.as_view(), name='exam_get'),
+    path('exercise/exam/<int:subject_id>/submit/', views.SubmitExamAPIView.as_view(), name='exam_submit'),
+    path('exercise/results/', views.GetExamResultsAPIView.as_view(), name='exam_results_list'),
+    path('exercise/results/<int:attempt_id>/', views.GetExamAttemptDetailAPIView.as_view(), name='exam_results_detail'),
 ]

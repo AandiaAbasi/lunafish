@@ -29,6 +29,13 @@ import datetime as dt
 from account.serializers import *
 from account.services import *
 from account.models import OTP, VerificationToken
+from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail
+from .exercise_serializers import (
+    FieldCreateUpdateSerializer, FieldRetrieveSerializer,
+    CategoryFieldCreateSerializer, CategoryFieldRetrieveSerializer,
+    OrderCreateSubmitSerializer, OrderRetrieveSerializer, OrderListSerializer,
+    OrderDetailRetrieveSerializer
+)
 
 # Import email function with fallback
 try:
@@ -2970,3 +2977,671 @@ class TeachingSubjectDeleteAPIView(APIView):
             {'message': _('موضوع تدریسی با موفقیت حذف شد')},
             status=status.HTTP_204_NO_CONTENT
         )
+
+# ========== Exercise APIs (آزمون‌ها) ==========
+
+class CreateFieldAPIView(APIView):
+    """
+    Create Question (Field) API
+    
+    Create a new question with optional answer options.
+    Supports multiple question types:
+    - input (تایپی) - Typing/text questions
+    - checkbox (چند گزینه‌ای) - Multiple choice questions
+    - radioButton (تک گزینه‌ای) - Single choice questions
+    
+    Only teachers can create questions.
+    Requires authentication.
+    
+    post:
+        Create a new question with answer details.
+        
+        Request body parameters:
+        - title: string (required) - Question text/title
+        - type: string (required) - Question type: 'input', 'checkbox', or 'radioButton'
+        - is_required: integer (optional) - 0 or 1 - Whether answer is required
+        - image_path: string (optional) - Path to question image
+        - audio_path: string (optional) - Path to question audio
+        - video_path: string (optional) - Path to question video
+        - guide: string (optional) - Question guide/hint
+        - des: string (optional) - Question description
+        - sort: integer (optional, default: 0) - Sort order
+        - details: array (optional) - Answer options for choice questions
+            - title: string - Option text
+            - is_correct: integer - 1 if correct, 0 if incorrect, -1 for text
+            - image_path: string (optional) - Option image
+            - guide: string (optional) - Explanation for this option
+            
+        Returns:
+            201 Created:
+                - id: integer - Question ID
+                - title: string
+                - type: string
+                - is_required: integer
+                - details: array - Answer options
+                - message: string - "Question created successfully"
+                
+            400 Bad Request - Invalid data
+            403 Forbidden - User is not a teacher
+    
+    Example Request - Multiple Choice:
+    ```json
+    {
+        "title": "What is 2+2?",
+        "type": "radioButton",
+        "is_required": 1,
+        "guide": "Choose the correct answer",
+        "details": [
+            {
+                "title": "3",
+                "is_correct": 0
+            },
+            {
+                "title": "4",
+                "is_correct": 1
+            },
+            {
+                "title": "5",
+                "is_correct": 0
+            }
+        ]
+    }
+    ```
+    
+    Example Request - Typing:
+    ```json
+    {
+        "title": "Write your name",
+        "type": "input",
+        "is_required": 1,
+        "guide": "Enter your full name"
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Questions'],
+        summary='Create Question',
+        description='Create new question with optional answer options. Only for teachers.',
+        request=None,
+        responses={
+            201: OpenApiResponse(description="Question created successfully"),
+            400: OpenApiResponse(description="Invalid data"),
+            403: OpenApiResponse(description="Only teachers can create questions"),
+        }
+    )
+    def post(self, request):
+        from exercise.models import Field
+        from .exercise_serializers import FieldCreateUpdateSerializer
+        
+        # فقط معلمان می‌توانند سؤال ایجاد کنند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('تنها معلمان می‌توانند سؤال ایجاد کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = FieldCreateUpdateSerializer(data=request.data)
+        if serializer.is_valid():
+            field = serializer.save()
+            response_serializer = FieldRetrieveSerializer(field)
+            return Response({
+                'data': response_serializer.data,
+                'message': _('سؤال با موفقیت ایجاد شد')
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'error': _('داده‌های نامعتبر'),
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateExamAPIView(APIView):
+    """
+    Create Exam API
+    
+    Create an exam (CategoryField) by adding questions to a teaching subject.
+    Teachers add one or more questions to their class.
+    
+    post:
+        Create new exam by linking questions to a teaching subject.
+        
+        Request body parameters:
+        - teachingsubject_id: integer (required) - ID of the class/subject
+        - questions: array (required) - List of questions to add
+            - field_id: integer - Question ID (from create-field endpoint)
+            - step: integer - Question step/group number (0, 1, 2, ...)
+            - sort: integer - Order within step (0, 1, 2, ...)
+            - type: string - Question type (from Field type)
+            - is_conditional: boolean (optional) - Is this conditional question
+        
+        Returns:
+            201 Created:
+                - id: integer - Exam ID
+                - subject: object
+                - questions: array - All questions in exam
+                - total_questions: integer
+                - message: string - "Exam created successfully"
+                
+            400 Bad Request - Invalid data or non-existent subject
+            403 Forbidden - Teacher can only create exam for their own subject
+            404 Not Found - Teaching subject not found
+    
+    Example Request:
+    ```json
+    {
+        "teachingsubject_id": 5,
+        "questions": [
+            {
+                "field_id": 1,
+                "step": 0,
+                "sort": 0,
+                "type": "radioButton"
+            },
+            {
+                "field_id": 2,
+                "step": 0,
+                "sort": 1,
+                "type": "input"
+            },
+            {
+                "field_id": 3,
+                "step": 1,
+                "sort": 0,
+                "type": "checkbox"
+            }
+        ]
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Exams'],
+        summary='Create Exam',
+        description='Create new exam by adding questions to a teaching subject',
+        request=None,
+        responses={
+            201: OpenApiResponse(description="Exam created successfully"),
+            400: OpenApiResponse(description="Invalid data or non-existent subject"),
+            403: OpenApiResponse(description="Can only create exam for own subject"),
+            404: OpenApiResponse(description="Teaching subject not found"),
+        }
+    )
+    def post(self, request):
+        from exercise.models import CategoryField, Field
+        from classroom.models import TeachingSubject
+        from .exercise_serializers import ExamSerializer
+        
+        # فقط معلمان می‌توانند آزمون ایجاد کنند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('تنها معلمان می‌توانند آزمون ایجاد کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        subject_id = request.data.get('teachingsubject_id')
+        questions = request.data.get('questions', [])
+        
+        if not subject_id:
+            return Response(
+                {'error': _('شناسه موضوع الزامی است')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not questions:
+            return Response(
+                {'error': _('حداقل یک سؤال الزامی است')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی اینکه معلم صاحب این موضوع است
+        if subject.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما می‌توانید تنها برای موضوعات خود آزمون ایجاد کنید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # ایجاد سؤالات برای آزمون
+        created_questions = []
+        try:
+            for question_data in questions:
+                field_id = question_data.get('field_id')
+                
+                try:
+                    field = Field.objects.get(id=field_id)
+                except Field.DoesNotExist:
+                    return Response(
+                        {'error': f"سؤال با شناسه {field_id} یافت نشد"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                exam_question = CategoryField.objects.create(
+                    teachingsubject=subject,
+                    field=field,
+                    step=question_data.get('step', 0),
+                    sort=question_data.get('sort', 0),
+                    type=question_data.get('type', field.type),
+                    is_conditional=question_data.get('is_conditional', False)
+                )
+                created_questions.append(exam_question)
+            
+            # بازگشت داده‌های آزمون
+            exam_questions = CategoryField.objects.filter(teachingsubject=subject).select_related('field')
+            
+            return Response({
+                'data': {
+                    'id': subject.id,
+                    'subject_id': subject.id,
+                    'subject_title': subject.title,
+                    'questions': [{
+                        'id': q.id,
+                        'field_id': q.field_id,
+                        'field_title': q.field.title,
+                        'type': q.type,
+                        'step': q.step,
+                        'sort': q.sort,
+                        'is_conditional': q.is_conditional,
+                        'details': [{
+                            'id': d.id,
+                            'title': d.title,
+                            'is_correct': d.is_correct
+                        } for d in q.field.details.all()]
+                    } for q in exam_questions],
+                    'total_questions': exam_questions.count()
+                },
+                'message': _('آزمون با موفقیت ایجاد شد')
+            }, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            return Response(
+                {'error': f"خطا: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class GetExamAPIView(APIView):
+    """
+    Get Exam API
+    
+    Retrieve complete exam with all questions and options.
+    Students and teachers can access their exams.
+    
+    get:
+        Get exam questions and options.
+        
+        Path parameters:
+        - subject_id: integer - Teaching subject (exam) ID
+        
+        Returns:
+            200 OK:
+                - id: integer - Exam ID
+                - subject_id: integer
+                - subject_title: string
+                - questions: array - All questions in exam
+                    - id: integer
+                    - title: string
+                    - type: string - input, checkbox, radioButton
+                    - guide: string
+                    - des: string
+                    - details: array - Answer options (for choice questions)
+                        - id: integer
+                        - title: string
+                        - image_path: string
+                - total_questions: integer
+                
+            404 Not Found - Exam/subject not found
+            403 Forbidden - User does not have access
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Exams'],
+        summary='Get Exam Questions',
+        description='Retrieve complete exam with all questions and options',
+        parameters=[
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Teaching subject (exam) ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Exam questions and options"),
+            403: OpenApiResponse(description="User does not have access to this exam"),
+            404: OpenApiResponse(description="Exam/subject not found"),
+        }
+    )
+    def get(self, request, subject_id):
+        from exercise.models import CategoryField
+        from classroom.models import TeachingSubject
+        from .exercise_serializers import FieldRetrieveSerializer
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی دسترسی
+        # معلم تنها می‌تواند موضوع خود را ببیند
+        # دانش‌آموز می‌تواند موضوع فعال را ببیند
+        if request.user.role == 'teacher' and subject.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به این موضوع ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        elif request.user.role == 'student' and not subject.is_active:
+            return Response(
+                {'error': _('این موضوع دسترس پذیر نیست')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # دریافت تمام سؤالات آزمون
+        exam_questions = CategoryField.objects.filter(
+            teachingsubject=subject
+        ).select_related('field').order_by('step', 'sort')
+        
+        questions_data = []
+        for eq in exam_questions:
+            field = eq.field
+            field_data = FieldRetrieveSerializer(field).data
+            field_data['exam_question_id'] = eq.id
+            field_data['step'] = eq.step
+            field_data['sort'] = eq.sort
+            questions_data.append(field_data)
+        
+        return Response({
+            'id': subject.id,
+            'subject_id': subject.id,
+            'subject_title': subject.title,
+            'questions': questions_data,
+            'total_questions': exam_questions.count()
+        }, status=status.HTTP_200_OK)
+
+
+class SubmitExamAPIView(APIView):
+    """
+    Submit Exam Answers API
+    
+    Student submits exam answers and receives score.
+    Calculates correctness and generates result.
+    
+    post:
+        Submit exam answers.
+        
+        Request body parameters:
+        - teachingsubject_id: integer (required) - Exam/subject ID
+        - answers: array (required) - Student answers
+            - field_id: integer - Question ID
+            - field_detail_id: integer (optional) - Selected option ID (for choice questions)
+            - value: string (optional) - Text answer (for typing questions)
+        
+        Returns:
+            201 Created:
+                - id: integer - Attempt/Order ID
+                - subject_title: string
+                - score: integer - Number of correct answers
+                - correct: integer - Count of correct answers
+                - incorrect: integer - Count of incorrect answers
+                - total_questions: integer
+                - percentage: float - Percentage score
+                - details: array - Answer details with scoring
+                - created_at: datetime
+                
+            400 Bad Request - Invalid answers or subject not found
+            403 Forbidden - User cannot submit exam
+            404 Not Found - Subject not found
+    
+    Example Request:
+    ```json
+    {
+        "teachingsubject_id": 5,
+        "answers": [
+            {
+                "field_id": 1,
+                "field_detail_id": 10
+            },
+            {
+                "field_id": 2,
+                "value": "My answer text"
+            },
+            {
+                "field_id": 3,
+                "field_detail_id": 25
+            }
+        ]
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Submissions'],
+        summary='Submit Exam Answers',
+        description='Submit exam answers and receive score',
+        request=None,
+        responses={
+            201: OpenApiResponse(description="Exam answers submitted, score calculated"),
+            400: OpenApiResponse(description="Invalid answers or subject not found"),
+            403: OpenApiResponse(description="Cannot submit exam"),
+            404: OpenApiResponse(description="Subject not found"),
+        }
+    )
+    def post(self, request):
+        from classroom.models import TeachingSubject
+        from .exercise_serializers import OrderCreateSubmitSerializer, OrderRetrieveSerializer
+        
+        subject_id = request.data.get('teachingsubject_id')
+        answers = request.data.get('answers', [])
+        
+        if not subject_id or not answers:
+            return Response(
+                {'error': _('شناسه موضوع و جوابات الزامی هستند')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # ایجاد شیء با داده‌های تایید شده
+        serializer = OrderCreateSubmitSerializer(
+            data={
+                'teachingsubject_id': subject_id,
+                'answers': answers
+            },
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            order = serializer.save()
+            response_serializer = OrderRetrieveSerializer(order)
+            
+            return Response({
+                'data': response_serializer.data,
+                'message': _('پاسخ‌ها با موفقیت ثبت شدند')
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'error': _('داده‌های نامعتبر'),
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetExamResultsAPIView(APIView):
+    """
+    Get Exam Results API
+    
+    Get all exam attempts and scores for a specific subject or student.
+    Teachers see all student results for their subject.
+    Students see only their own results.
+    
+    get:
+        Get exam results.
+        
+        Query parameters:
+        - subject_id: integer (optional) - Filter by subject
+        - page: integer (optional) - Page number
+        - page_size: integer (optional) - Items per page
+        
+        Returns:
+            200 OK:
+                - results: array - List of exam attempts
+                    - id: integer
+                    - subject_title: string
+                    - score: integer
+                    - correct: integer
+                    - incorrect: integer
+                    - total_questions: integer
+                    - percentage: float
+                    - created_at: datetime
+                - pagination: object
+                
+            403 Forbidden - User cannot view these results
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Results'],
+        summary='Get Exam Results',
+        description='Get exam attempts and scores. Teachers see student results, students see own results.',
+        parameters=[
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Filter by subject ID'),
+            OpenApiParameter('page', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Page number'),
+            OpenApiParameter('page_size', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Items per page'),
+        ],
+        responses={
+            200: OpenApiResponse(description="List of exam results"),
+            403: OpenApiResponse(description="User cannot view these results"),
+        }
+    )
+    def get(self, request):
+        from exercise.models import Order
+        from .exercise_serializers import OrderListSerializer
+        
+        # دانش‌آموز تنها نتایج خود را می‌بیند
+        if request.user.role == 'student':
+            queryset = Order.objects.filter(user=request.user)
+        # معلم نتایج موضوعات خود را می‌بیند
+        elif request.user.role == 'teacher':
+            from classroom.models import TeachingSubject
+            subject_ids = TeachingSubject.objects.filter(teacher=request.user).values_list('id', flat=True)
+            queryset = Order.objects.filter(teachingsubject_id__in=subject_ids)
+        # ادمین تمام نتایج را می‌بیند
+        else:
+            queryset = Order.objects.all()
+        
+        # فیلتر بر اساس موضوع
+        subject_id = request.query_params.get('subject_id')
+        if subject_id:
+            queryset = queryset.filter(teachingsubject_id=subject_id)
+        
+        # مرتب‌سازی
+        queryset = queryset.order_by('-created_at')
+        
+        # Pagination
+        page_size = int(request.query_params.get('page_size', 20))
+        page = int(request.query_params.get('page', 1))
+        
+        start = (page - 1) * page_size
+        end = start + page_size
+        
+        total_count = queryset.count()
+        paginated = queryset[start:end]
+        
+        serializer = OrderListSerializer(paginated, many=True)
+        
+        return Response({
+            'count': total_count,
+            'page': page,
+            'page_size': page_size,
+            'results': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class GetExamAttemptDetailAPIView(APIView):
+    """
+    Get Exam Attempt Details API
+    
+    Get detailed results of a single exam attempt with all answers.
+    Shows which answers were correct/incorrect.
+    
+    get:
+        Get complete attempt details.
+        
+        Path parameters:
+        - attempt_id: integer - Exam attempt ID
+        
+        Returns:
+            200 OK:
+                - id: integer - Attempt ID
+                - user_name: string
+                - subject_title: string
+                - score: integer
+                - correct: integer
+                - incorrect: integer
+                - details: array - Each answer with its correctness
+                    - field_id: integer
+                    - field_title: string
+                    - student_answer: string or option title
+                    - is_correct: boolean
+                    - score: integer
+                - created_at: datetime
+                
+            403 Forbidden - User cannot view this attempt
+            404 Not Found - Attempt not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Results'],
+        summary='Get Exam Attempt Details',
+        description='Get detailed results of a single exam attempt with all answers',
+        parameters=[
+            OpenApiParameter('attempt_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Attempt ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Attempt details with answers and scoring"),
+            403: OpenApiResponse(description="User cannot view this attempt"),
+            404: OpenApiResponse(description="Attempt not found"),
+        }
+    )
+    def get(self, request, attempt_id):
+        from exercise.models import Order
+        from .exercise_serializers import OrderRetrieveSerializer
+        
+        try:
+            order = Order.objects.get(id=attempt_id)
+        except Order.DoesNotExist:
+            return Response(
+                {'error': _('تلاش برای امتحان یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی دسترسی
+        if request.user.role == 'student' and order.user_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به این نتایج ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        elif request.user.role == 'teacher':
+            if order.teachingsubject.teacher_id != request.user.id:
+                return Response(
+                    {'error': _('شما دسترسی به این نتایج ندارید')},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        
+        serializer = OrderRetrieveSerializer(order)
+        return Response(serializer.data, status=status.HTTP_200_OK)
