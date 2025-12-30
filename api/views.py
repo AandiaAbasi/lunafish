@@ -3378,7 +3378,7 @@ class TeachingSubjectCreateAPIView(APIView):
             )
         
         # Build data dict and fix common type issues
-        data = dict(request.data)
+        data = request.data.copy()
         data['teacher'] = request.user.id
         
         # Fix: Convert string "true"/"false" to boolean
