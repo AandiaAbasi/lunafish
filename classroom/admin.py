@@ -694,6 +694,10 @@ class SupportMessageAdmin(admin.ModelAdmin):
         }),
     )
     
+    def changelist_view(self, request, extra_context=None):
+        """هدایت نمایش لیست به صفحه چت"""
+        return HttpResponseRedirect('/admin/classroom/supportmessage/chat/')
+    
     def get_urls(self):
         """اضافه کردن URL برای صفحه مدیریت چت"""
         urls = super().get_urls()
