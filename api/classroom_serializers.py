@@ -340,6 +340,7 @@ class TeacherListSerializer(serializers.Serializer):
     """Serializer for Teacher List - Basic information for discovery"""
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(max_length=200, read_only=True)
+    gender = serializers.CharField(max_length=20, read_only=True, allow_blank=True)
     qualifications = serializers.CharField(max_length=500, read_only=True, allow_blank=True)
     languages_taught = serializers.CharField(max_length=500, read_only=True, allow_blank=True)
     profile_photo_path = serializers.ImageField(read_only=True, allow_null=True)
