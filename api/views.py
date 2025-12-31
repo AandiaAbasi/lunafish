@@ -1215,31 +1215,6 @@ class CheckUsernameAPIView(APIView):
 # ========== Profile Management APIs ==========
 
 class FetchUserAPIView(APIView):
-    """
-    Fetch Current User Data API
-    
-    Retrieve current authenticated user's complete profile information.
-    Requires valid JWT authentication token.
-    
-    get:
-        Get current user information based on authentication token.
-        
-        Returns:
-            200 OK:
-                - success: boolean (true)
-                - user: object containing:
-                    - id: integer
-                    - username: string
-                    - email: string
-                    - phone: string
-                    - first_name: string
-                    - last_name: string
-                    - bio: string
-                    - role: string (user or teacher)
-                    - avatar: string (URL)
-                    
-            401 Unauthorized - Invalid or missing authentication token
-    """
     permission_classes = [IsAuthenticated]
     
     @extend_schema(
@@ -1261,47 +1236,6 @@ class FetchUserAPIView(APIView):
 
 
 class UserProfileAPIView(APIView):
-    """
-    User Profile Management API
-    
-    Manage user and teacher profile information including personal details,
-    avatar, and role-specific settings. Requires authentication.
-    
-    post:
-        Update the current user's profile information.
-        Supports both regular users and teachers with role-specific fields.
-        
-        Request body parameters for regular users:
-            - first_name: string (optional) - User's first name
-            - last_name: string (optional) - User's last name  
-            - email: string (optional, unique) - Email address
-            - phone: string (optional, unique) - Phone number
-            - bio: string (optional) - User biography
-            - avatar_url: string (optional) - Avatar URL
-            
-        Request body parameters for teachers:
-            - first_name: string (optional) - Teacher's first name
-            - last_name: string (optional) - Teacher's last name
-            - email: string (optional, unique) - Email address
-            - phone: string (optional, unique) - Phone number
-            - bio: string (optional) - Biography
-            - specialization: string (optional) - Area of specialization (e.g., "Mathematics", "English")
-            - experience_years: integer (optional) - Years of teaching experience
-            - qualifications: string (optional) - Professional qualifications and certifications
-        
-        Returns:
-            200 OK:
-                - success: boolean (true)
-                - message: string - "Profile updated successfully" or "Teacher profile updated successfully"
-                - user or teacher: object - Updated profile data
-                
-            400 Bad Request:
-                - Invalid data provided
-                - Email already in use
-                - Phone already in use
-                
-            401 Unauthorized - User not authenticated
-    """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, MultiPartParser, FormParser)
     
@@ -1431,7 +1365,7 @@ class CompleteTeacherProfileAPIView(APIView):
         - **languages_taught** (string, optional): Languages that can be taught (comma-separated)
         - **specialization** (string, optional): Area of specialization/expertise
         - **resume_summary** (string, optional): Brief professional background summary
-        - **introduction_video** (string/URL, optional): YouTube/video URL for introduction
+        - **introduction_video** (file, optional): Video file for introduction (MP4, AVI, MOV, WebM, FLV, MKV, 3GP, M4V, OGV)
         - **hourly_rate** (decimal, optional): Suggested hourly teaching rate (e.g., 15.50)
         - **available_times** (JSON, optional): JSON object with available teaching times
         - **experience_years** (integer, optional): Years of teaching experience
@@ -1457,25 +1391,6 @@ class CompleteTeacherProfileAPIView(APIView):
         - **403 Forbidden**: User is not a teacher
             - message: "Only teachers can use this endpoint"
     
-    **Example Request (JSON):**
-    ```json
-    {
-        "name": "Dr. Sarah Johnson",
-        "qualifications": "PhD in Linguistics, TEFL Certified",
-        "languages_taught": "English, Spanish, French",
-        "specialization": "Business English, Test Preparation",
-        "resume_summary": "10+ years teaching experience in international schools",
-        "introduction_video": "https://youtube.com/watch?v=abc123",
-        "hourly_rate": 25.50,
-        "experience_years": 12,
-        "available_times": {
-            "monday": ["09:00-12:00", "14:00-17:00"],
-            "wednesday": ["10:00-13:00"],
-            "friday": ["15:00-19:00"]
-        }
-    }
-    ```
-    
     **Example Request (form-data):**
     ```
     name: Dr. Sarah Johnson
@@ -1483,12 +1398,14 @@ class CompleteTeacherProfileAPIView(APIView):
     languages_taught: English, Spanish, French
     specialization: Business English
     resume_summary: 10+ years experience
-    introduction_video: https://youtube.com/watch?v=abc123
+    introduction_video: <file> (video file - MP4, AVI, MOV, etc.)
     hourly_rate: 25.50
     experience_years: 12
     available_times: {...}
-    profile_photo_path: <file>
+    profile_photo_path: <file> (image file - JPG, PNG, GIF)
     ```
+    
+    **Note:** When uploading files, use form-data instead of JSON. The introduction_video field now expects a video file upload instead of a URL.
     """
     permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, MultiPartParser, FormParser)
@@ -4383,7 +4300,7 @@ class TeacherDetailAPIView(APIView):
             - experience_years: integer
             - is_teacher_verified: boolean
             - resume_summary: string (full resume)
-            - introduction_video: string (video URL or null)
+            - introduction_video: string (video file URL or null)
             - bio: string
             - profile_photo_path: string (image URL or null)
             - hourly_rate: decimal (price per hour)
@@ -5488,3 +5405,1087 @@ class AttendanceListAPIView(APIView):
             'present_count': present_count,
             'absent_count': absent_count
         }, status=status.HTTP_200_OK)
+
+
+# ========== Financial System APIs ==========
+
+class TeacherWalletDetailAPIView(APIView):
+    """
+    Get Teacher Wallet Details API
+    
+    Retrieve complete wallet information for authenticated teacher.
+    Teachers see only their own wallet. Admins can view any teacher's wallet.
+    Requires authentication.
+    
+    get:
+        Get wallet details with balance information.
+        
+        Returns:
+            200 OK:
+                - id: integer - Wallet ID
+                - teacher: integer - Teacher user ID
+                - teacher_name: string - Teacher's full name
+                - balance: decimal - Total available balance
+                - available_balance: decimal - Balance ready to withdraw
+                - pending_balance: decimal - Balance waiting for confirmation
+                - total_earned: decimal - Total income earned
+                - total_withdrawn: decimal - Total amount withdrawn
+                - bank_name: string - Bank name (optional)
+                - account_number: string - Bank account number (optional)
+                - iban: string - IBAN (optional)
+                - card_number: string - Bank card number (optional)
+                - account_holder_name: string - Account holder name (optional)
+                - minimum_settlement_amount: decimal - Minimum withdrawal amount
+                - is_verified: boolean - Is bank info verified
+                - verified_at: datetime - When bank info was verified
+                - created_at: datetime
+                - updated_at: datetime
+                
+            403 Forbidden - User is not a teacher or trying to access others' wallet
+            404 Not Found - Wallet not found
+    
+    Example GET Request:
+    ```
+    GET /api/wallet/
+    Authorization: Bearer <teacher_token>
+    ```
+    
+    Example GET Response:
+    ```json
+    {
+        "id": 1,
+        "teacher": 42,
+        "teacher_name": "علی محمدی",
+        "balance": "150000.00",
+        "available_balance": "100000.00",
+        "pending_balance": "50000.00",
+        "total_earned": "500000.00",
+        "total_withdrawn": "350000.00",
+        "bank_name": "بانک ملی",
+        "account_number": "1234567890",
+        "iban": "IR123456789",
+        "card_number": "6037691234567890",
+        "account_holder_name": "علی محمدی",
+        "minimum_settlement_amount": "50000.00",
+        "is_verified": true,
+        "verified_at": "2024-12-15T10:30:00Z",
+        "created_at": "2024-01-01T08:00:00Z",
+        "updated_at": "2024-12-20T15:45:00Z"
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Financial - Wallet'],
+        summary='Get Teacher Wallet Details',
+        description='Get complete wallet information including balance and bank details',
+        responses={
+            200: OpenApiResponse(description="Wallet details retrieved successfully"),
+            403: OpenApiResponse(description="Cannot access this wallet"),
+            404: OpenApiResponse(description="Wallet not found"),
+        }
+    )
+    def get(self, request):
+        from classroom.models import TeacherWallet
+        from .classroom_serializers import TeacherWalletSerializer
+        
+        # فقط معلمان و ادمین
+        if request.user.role not in ['teacher', 'admin']:
+            return Response({
+                'error': _('فقط معلمان می‌توانند کیف پول خود را ببینند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            # اگر معلم باشد، کیف پول خود را ببیند
+            if request.user.role == 'teacher':
+                wallet = TeacherWallet.objects.get(teacher=request.user)
+            else:
+                # ادمین می‌تواند teacher_id از query param دریافت کند
+                teacher_id = request.query_params.get('teacher_id')
+                if not teacher_id:
+                    return Response({
+                        'error': _('teacher_id الزامی است')
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                wallet = TeacherWallet.objects.get(teacher_id=teacher_id)
+        
+        except TeacherWallet.DoesNotExist:
+            return Response({
+                'error': _('کیف پول یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = TeacherWalletSerializer(wallet)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class WithdrawalRequestListAPIView(APIView):
+    """
+    Get Withdrawal Requests List API
+    
+    List withdrawal requests with optional filters.
+    Teachers see only their own requests. Admins see all requests.
+    Requires authentication.
+    
+    get:
+        Get list of withdrawal requests with pagination.
+        
+        Query parameters:
+        - status: string (optional) - Filter by status: pending, processing, completed, failed, cancelled
+        - teacher_id: integer (optional, admin only) - Filter by teacher
+        - date_from: string (optional) - Start date in YYYY-MM-DD format
+        - date_to: string (optional) - End date in YYYY-MM-DD format
+        - page: integer (optional, default: 1) - Page number
+        - page_size: integer (optional, default: 20) - Items per page
+        
+        Returns:
+            200 OK:
+                - count: integer - Total number of requests
+                - next: string - URL to next page (or null)
+                - previous: string - URL to previous page (or null)
+                - results: array - List of withdrawal requests
+                    - id: integer
+                    - teacher_id: integer
+                    - teacher_name: string
+                    - amount: decimal
+                    - status: string
+                    - status_display: string (Farsi)
+                    - payment_method: string
+                    - payment_method_display: string
+                    - account_info: object - Bank details
+                    - transaction_id: string - Payment gateway transaction ID
+                    - notes: string
+                    - admin_notes: string
+                    - created_at: datetime
+                    - updated_at: datetime
+                    - completed_at: datetime (if completed)
+                    
+            403 Forbidden - User cannot view these requests
+    
+    Example GET Request:
+    ```
+    GET /api/withdrawal-requests/?status=pending&page=1&page_size=20
+    Authorization: Bearer <teacher_token>
+    ```
+    
+    Example GET Response:
+    ```json
+    {
+        "count": 5,
+        "next": "/api/withdrawal-requests/?page=2",
+        "previous": null,
+        "results": [
+            {
+                "id": 1,
+                "teacher_id": 42,
+                "teacher_name": "علی محمدی",
+                "amount": "500000.00",
+                "status": "pending",
+                "status_display": "در انتظار تأیید",
+                "payment_method": "bank_transfer",
+                "payment_method_display": "انتقال بانکی",
+                "account_info": {
+                    "bank_name": "بانک ملی",
+                    "account_number": "1234567890",
+                    "iban": "IR123456789"
+                },
+                "transaction_id": null,
+                "notes": "تقاضای کسب درآمد",
+                "admin_notes": null,
+                "created_at": "2024-12-15T10:00:00Z",
+                "updated_at": "2024-12-15T10:00:00Z",
+                "completed_at": null
+            }
+        ]
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Financial - Withdrawal'],
+        summary='List Withdrawal Requests',
+        description='Get list of withdrawal requests with optional filters and pagination',
+        parameters=[
+            OpenApiParameter('status', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Filter by status: pending, processing, completed, failed, cancelled'),
+            OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Filter by teacher (admin only)'),
+            OpenApiParameter('date_from', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Start date (YYYY-MM-DD)'),
+            OpenApiParameter('date_to', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='End date (YYYY-MM-DD)'),
+            OpenApiParameter('page', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Page number'),
+            OpenApiParameter('page_size', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Items per page'),
+        ],
+        responses={
+            200: OpenApiResponse(description="List of withdrawal requests"),
+            403: OpenApiResponse(description="User cannot view these requests"),
+        }
+    )
+    def get(self, request):
+        from classroom.models import WithdrawalRequest
+        from .classroom_serializers import WithdrawalRequestSerializer
+        from rest_framework.pagination import PageNumberPagination
+        
+        # فقط معلمان و ادمین
+        if request.user.role not in ['teacher', 'admin']:
+            return Response({
+                'error': _('فقط معلمان و مدیران می‌توانند این endpoint را استفاده کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # فیلتر بر اساس role
+        if request.user.role == 'teacher':
+            queryset = WithdrawalRequest.objects.filter(teacher=request.user)
+        else:
+            # ادمین
+            queryset = WithdrawalRequest.objects.all()
+        
+        # فیلتر بر اساس معلم (فقط ادمین)
+        teacher_id = request.query_params.get('teacher_id')
+        if teacher_id and request.user.role == 'admin':
+            queryset = queryset.filter(teacher_id=teacher_id)
+        
+        # فیلتر بر اساس وضعیت
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        # فیلتر بر اساس بازه تاریخی
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        
+        if date_from:
+            try:
+                from datetime import datetime
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                queryset = queryset.filter(created_at__date__gte=date_from_obj)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                from datetime import datetime
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                queryset = queryset.filter(created_at__date__lte=date_to_obj)
+            except ValueError:
+                pass
+        
+        # مرتب‌سازی
+        queryset = queryset.order_by('-created_at')
+        
+        # صفحه‌بندی
+        paginator = PageNumberPagination()
+        paginator.page_size = int(request.query_params.get('page_size', 20))
+        
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        serializer = WithdrawalRequestSerializer(paginated_queryset, many=True)
+        
+        return paginator.get_paginated_response(serializer.data)
+
+
+class WithdrawalRequestCreateAPIView(APIView):
+    """
+    Create Withdrawal Request API
+    
+    Teacher requests to withdraw money from their wallet.
+    Validates that available_balance >= amount and minimum_settlement_amount is met.
+    Requires authentication (teacher only).
+    
+    post:
+        Create new withdrawal request.
+        
+        Request body parameters:
+        - amount: decimal (required) - Amount to withdraw
+        - payment_method: string (required) - Payment method: bank_transfer, card_transfer
+        - account_info: object (optional) - Bank details (overrides default if provided)
+            - bank_name: string - Bank name
+            - account_number: string - Account number
+            - iban: string - IBAN
+            - card_number: string - Card number
+        - notes: string (optional) - Request notes/description
+        
+        Returns:
+            201 Created:
+                - id: integer - Withdrawal request ID
+                - teacher_id: integer
+                - amount: decimal
+                - payment_method: string
+                - payment_method_display: string
+                - account_info: object
+                - status: string (default: pending)
+                - created_at: datetime
+                - message: string - "درخواست تسویه حساب ایجاد شد"
+                
+            400 Bad Request:
+                - Invalid amount (must be positive)
+                - Insufficient balance
+                - Amount below minimum settlement
+                - Invalid payment method
+                - Account info missing
+                
+            403 Forbidden - User is not a teacher
+            404 Not Found - Wallet not found
+    
+    Example POST Request:
+    ```json
+    {
+        "amount": "100000.00",
+        "payment_method": "bank_transfer",
+        "notes": "تقاضای کسب درآمد از دوره‌های آنلاین"
+    }
+    ```
+    
+    Example POST Response:
+    ```json
+    {
+        "id": 5,
+        "teacher_id": 42,
+        "amount": "100000.00",
+        "payment_method": "bank_transfer",
+        "payment_method_display": "انتقال بانکی",
+        "account_info": {
+            "bank_name": "بانک ملی",
+            "account_number": "1234567890",
+            "iban": "IR123456789"
+        },
+        "status": "pending",
+        "notes": "تقاضای کسب درآمد",
+        "created_at": "2024-12-20T12:00:00Z",
+        "message": "درخواست تسویه حساب ایجاد شد"
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Financial - Withdrawal'],
+        summary='Create Withdrawal Request',
+        description='Create new withdrawal request from teacher wallet',
+        request=inline_serializer(
+            name='CreateWithdrawalRequest',
+            fields={
+                'amount': serializers.DecimalField(max_digits=12, decimal_places=2, help_text='مبلغ درخواستی'),
+                'payment_method': serializers.ChoiceField(choices=['bank_transfer', 'card_transfer'], help_text='روش پرداخت'),
+                'notes': serializers.CharField(required=False, allow_blank=True, help_text='یادداشت‌های اضافی'),
+                'account_info': serializers.JSONField(required=False, help_text='اطلاعات حساب بانکی'),
+            }
+        ),
+        responses={
+            201: OpenApiResponse(description="Withdrawal request created successfully"),
+            400: OpenApiResponse(description="Invalid amount, insufficient balance, or invalid data"),
+            403: OpenApiResponse(description="User is not a teacher"),
+            404: OpenApiResponse(description="Wallet not found"),
+        }
+    )
+    def post(self, request):
+        from classroom.models import TeacherWallet, WithdrawalRequest
+        from .classroom_serializers import WithdrawalRequestSerializer
+        from decimal import Decimal
+        from django.db import transaction
+        
+        # فقط معلمان
+        if request.user.role != 'teacher':
+            return Response({
+                'error': _('فقط معلمان می‌توانند درخواست تسویه حساب کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # دریافت داده‌ها
+        amount_str = request.data.get('amount')
+        payment_method = request.data.get('payment_method')
+        notes = request.data.get('notes', '').strip()
+        account_info = request.data.get('account_info')
+        
+        # اعتبارسنجی
+        if not amount_str or not payment_method:
+            return Response({
+                'error': _('مبلغ و روش پرداخت الزامی هستند')
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # تبدیل مبلغ
+        try:
+            amount = Decimal(str(amount_str))
+            if amount <= 0:
+                raise ValueError("Amount must be positive")
+        except (ValueError, TypeError):
+            return Response({
+                'error': _('مبلغ نامعتبر است')
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # دریافت کیف پول معلم
+        try:
+            wallet = TeacherWallet.objects.get(teacher=request.user)
+        except TeacherWallet.DoesNotExist:
+            return Response({
+                'error': _('کیف پول یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # بررسی موجودی
+        if wallet.available_balance < amount:
+            return Response({
+                'error': _('موجودی کافی نیست'),
+                'available': str(wallet.available_balance)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # بررسی حداقل مبلغ
+        if amount < wallet.minimum_settlement_amount:
+            return Response({
+                'error': _('مبلغ از حداقل درخواست (%(min)s) کمتر است') % {
+                    'min': wallet.minimum_settlement_amount
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # بررسی روش پرداخت
+        if payment_method not in ['bank_transfer', 'card_transfer']:
+            return Response({
+                'error': _('روش پرداخت نامعتبر است')
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # استفاده از account_info ارائه شده یا اطلاعات بانکی کیف پول
+        if not account_info:
+            account_info = {
+                'bank_name': wallet.bank_name,
+                'account_number': wallet.account_number,
+                'iban': wallet.iban,
+                'card_number': wallet.card_number,
+                'account_holder_name': wallet.account_holder_name
+            }
+            # فیلتر کردن مقادیر خالی
+            account_info = {k: v for k, v in account_info.items() if v}
+        
+        if not account_info:
+            return Response({
+                'error': _('اطلاعات حساب بانکی مورد نیاز است')
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # ایجاد درخواست تسویه حساب با استفاده از transaction.atomic
+        try:
+            with transaction.atomic():
+                # قفل کردن کیف پول برای جلوگیری از تغییرات همزمان
+                wallet = TeacherWallet.objects.select_for_update().get(teacher=request.user)
+                
+                # بررسی دوباره موجودی (در صورت تغییر توسط درخواست دیگری)
+                if wallet.available_balance < amount:
+                    raise ValueError(_('موجودی کافی نیست'))
+                
+                # کاهش available_balance
+                wallet.available_balance -= amount
+                wallet.save()
+                
+                # ایجاد درخواست
+                withdrawal = WithdrawalRequest.objects.create(
+                    teacher=request.user,
+                    amount=amount,
+                    payment_method=payment_method,
+                    account_info=account_info,
+                    notes=notes,
+                    status='pending'
+                )
+                
+                # ثبت تراکنش
+                from classroom.models import WalletTransaction
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    transaction_type='withdrawal',
+                    amount=amount,
+                    balance_before=wallet.available_balance + amount,
+                    balance_after=wallet.available_balance,
+                    withdrawal=withdrawal,
+                    description=f'درخواست تسویه حساب - {payment_method}'
+                )
+            
+            serializer = WithdrawalRequestSerializer(withdrawal)
+            return Response({
+                'data': serializer.data,
+                'message': _('درخواست تسویه حساب ایجاد شد')
+            }, status=status.HTTP_201_CREATED)
+        
+        except ValueError as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                'error': f'خطا: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class WalletTransactionListAPIView(APIView):
+    """
+    Get Wallet Transaction History API
+    
+    List all transactions for a teacher's wallet with optional filters.
+    Teachers see only their own transactions. Admins see all transactions.
+    Requires authentication.
+    
+    get:
+        Get list of wallet transactions with pagination.
+        
+        Query parameters:
+        - transaction_type: string (optional) - Filter by type: revenue, confirmation, withdrawal, refund, adjustment, bonus, penalty
+        - date_from: string (optional) - Start date in YYYY-MM-DD format
+        - date_to: string (optional) - End date in YYYY-MM-DD format
+        - teacher_id: integer (optional, admin only) - Filter by teacher
+        - page: integer (optional, default: 1) - Page number
+        - page_size: integer (optional, default: 20) - Items per page
+        
+        Returns:
+            200 OK:
+                - count: integer - Total number of transactions
+                - next: string - URL to next page (or null)
+                - previous: string - URL to previous page (or null)
+                - results: array - List of transactions
+                    - id: integer
+                    - wallet_id: integer
+                    - wallet_teacher_name: string
+                    - transaction_type: string
+                    - transaction_type_display: string (Farsi)
+                    - amount: decimal
+                    - balance_before: decimal
+                    - balance_after: decimal
+                    - description: string
+                    - admin_note: string
+                    - revenue_id: integer (if related to revenue)
+                    - withdrawal_id: integer (if related to withdrawal)
+                    - created_at: datetime
+                    
+            403 Forbidden - User cannot view these transactions
+    
+    Example GET Request:
+    ```
+    GET /api/transactions/?transaction_type=revenue&date_from=2024-01-01&page=1
+    Authorization: Bearer <teacher_token>
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Financial - Transactions'],
+        summary='List Wallet Transactions',
+        description='Get wallet transaction history with optional filters and pagination',
+        parameters=[
+            OpenApiParameter('transaction_type', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Filter by type: revenue, confirmation, withdrawal, refund, adjustment, bonus, penalty'),
+            OpenApiParameter('date_from', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Start date (YYYY-MM-DD)'),
+            OpenApiParameter('date_to', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='End date (YYYY-MM-DD)'),
+            OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Filter by teacher (admin only)'),
+            OpenApiParameter('page', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Page number'),
+            OpenApiParameter('page_size', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Items per page'),
+        ],
+        responses={
+            200: OpenApiResponse(description="List of wallet transactions"),
+            403: OpenApiResponse(description="User cannot view these transactions"),
+        }
+    )
+    def get(self, request):
+        from classroom.models import WalletTransaction
+        from .classroom_serializers import WalletTransactionSerializer
+        from rest_framework.pagination import PageNumberPagination
+        
+        # فقط معلمان و ادمین
+        if request.user.role not in ['teacher', 'admin']:
+            return Response({
+                'error': _('فقط معلمان و مدیران می‌توانند این endpoint را استفاده کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # فیلتر بر اساس role
+        if request.user.role == 'teacher':
+            queryset = WalletTransaction.objects.filter(wallet__teacher=request.user)
+        else:
+            # ادمین
+            queryset = WalletTransaction.objects.all()
+        
+        # فیلتر بر اساس معلم (فقط ادمین)
+        teacher_id = request.query_params.get('teacher_id')
+        if teacher_id and request.user.role == 'admin':
+            queryset = queryset.filter(wallet__teacher_id=teacher_id)
+        
+        # فیلتر بر اساس نوع تراکنش
+        transaction_type = request.query_params.get('transaction_type')
+        if transaction_type:
+            queryset = queryset.filter(transaction_type=transaction_type)
+        
+        # فیلتر بر اساس بازه تاریخی
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        
+        if date_from:
+            try:
+                from datetime import datetime
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                queryset = queryset.filter(created_at__date__gte=date_from_obj)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                from datetime import datetime
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                queryset = queryset.filter(created_at__date__lte=date_to_obj)
+            except ValueError:
+                pass
+        
+        # مرتب‌سازی
+        queryset = queryset.order_by('-created_at').select_related('wallet', 'revenue', 'withdrawal')
+        
+        # صفحه‌بندی
+        paginator = PageNumberPagination()
+        paginator.page_size = int(request.query_params.get('page_size', 20))
+        
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        serializer = WalletTransactionSerializer(paginated_queryset, many=True)
+        
+        return paginator.get_paginated_response(serializer.data)
+
+
+class FinancialSummaryAPIView(APIView):
+    """
+    Get Financial Summary API
+    
+    Get summary of financial data for a teacher or admin overview.
+    Teachers see their own summary. Admins can request any teacher's summary.
+    Requires authentication.
+    
+    get:
+        Get financial summary statistics.
+        
+        Query parameters:
+        - teacher_id: integer (optional, admin only) - Get summary for specific teacher
+        - date_from: string (optional) - Period start date (YYYY-MM-DD)
+        - date_to: string (optional) - Period end date (YYYY-MM-DD)
+        
+        Returns:
+            200 OK:
+                - wallet: object
+                    - total_balance: decimal - Current total balance
+                    - available_balance: decimal - Amount ready to withdraw
+                    - pending_balance: decimal - Amount in confirmation process
+                    - total_earned: decimal - Cumulative lifetime earnings
+                    - total_withdrawn: decimal - Cumulative lifetime withdrawals
+                    - is_verified: boolean - Is bank info verified
+                    
+                - statistics: object
+                    - total_bookings: integer - Total class bookings
+                    - completed_bookings: integer - Completed classes
+                    - pending_bookings: integer - Awaiting completion
+                    - revenue_items: integer - Number of revenue transactions
+                    - average_price_per_class: decimal - Average class price
+                    
+                - transactions: object
+                    - revenue_count: integer - Number of class revenues
+                    - withdrawal_count: integer - Number of withdrawals
+                    - refund_count: integer - Number of refunds
+                    - total_transactions: integer
+                    
+                - period: object (if date filters applied)
+                    - start_date: string
+                    - end_date: string
+                    - earned_this_period: decimal
+                    - withdrawn_this_period: decimal
+                    
+            403 Forbidden - User cannot view this summary
+            404 Not Found - Teacher or wallet not found
+    
+    Example GET Request:
+    ```
+    GET /api/financial-summary/?teacher_id=42&date_from=2024-01-01&date_to=2024-12-31
+    Authorization: Bearer <admin_token>
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Financial - Summary'],
+        summary='Get Financial Summary',
+        description='Get financial summary statistics for teacher or admin',
+        parameters=[
+            OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Teacher ID (admin only)'),
+            OpenApiParameter('date_from', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Period start date (YYYY-MM-DD)'),
+            OpenApiParameter('date_to', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Period end date (YYYY-MM-DD)'),
+        ],
+        responses={
+            200: OpenApiResponse(description="Financial summary retrieved successfully"),
+            403: OpenApiResponse(description="User cannot view this summary"),
+            404: OpenApiResponse(description="Teacher or wallet not found"),
+        }
+    )
+    def get(self, request):
+        from classroom.models import (
+            TeacherWallet, ClassBooking, ClassRevenue,
+            WithdrawalRequest, WalletTransaction
+        )
+        from django.db.models import Count, Sum, Avg
+        from datetime import datetime
+        
+        # فقط معلمان و ادمین
+        if request.user.role not in ['teacher', 'admin']:
+            return Response({
+                'error': _('فقط معلمان و مدیران می‌توانند این endpoint را استفاده کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # تعیین معلم
+        if request.user.role == 'teacher':
+            teacher = request.user
+        else:
+            # ادمین
+            teacher_id = request.query_params.get('teacher_id')
+            if not teacher_id:
+                return Response({
+                    'error': _('teacher_id الزامی است')
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                teacher = User.objects.get(id=teacher_id, role='teacher')
+            except User.DoesNotExist:
+                return Response({
+                    'error': _('معلم یافت نشد')
+                }, status=status.HTTP_404_NOT_FOUND)
+        
+        # دریافت کیف پول
+        try:
+            wallet = TeacherWallet.objects.get(teacher=teacher)
+        except TeacherWallet.DoesNotExist:
+            return Response({
+                'error': _('کیف پول یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # داده‌های بازه تاریخی
+        date_from_str = request.query_params.get('date_from')
+        date_to_str = request.query_params.get('date_to')
+        
+        date_from = None
+        date_to = None
+        
+        if date_from_str:
+            try:
+                date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        if date_to_str:
+            try:
+                date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        # جمع‌آوری اطلاعات کلی
+        wallet_data = {
+            'total_balance': str(wallet.balance),
+            'available_balance': str(wallet.available_balance),
+            'pending_balance': str(wallet.pending_balance),
+            'total_earned': str(wallet.total_earned),
+            'total_withdrawn': str(wallet.total_withdrawn),
+            'is_verified': wallet.is_verified
+        }
+        
+        # آمار کلاس‌ها
+        bookings = ClassBooking.objects.filter(teacher=teacher)
+        
+        if date_from:
+            bookings = bookings.filter(created_at__date__gte=date_from)
+        if date_to:
+            bookings = bookings.filter(created_at__date__lte=date_to)
+        
+        total_bookings = bookings.count()
+        completed_bookings = bookings.filter(status='completed').count()
+        pending_bookings = bookings.filter(status='reserved').count()
+        
+        avg_price = bookings.aggregate(Avg('final_price'))['final_price__avg'] or 0
+        
+        statistics_data = {
+            'total_bookings': total_bookings,
+            'completed_bookings': completed_bookings,
+            'pending_bookings': pending_bookings,
+            'revenue_items': ClassRevenue.objects.filter(teacher=teacher).count(),
+            'average_price_per_class': str(avg_price)
+        }
+        
+        # آمار تراکنش‌ها
+        transactions = WalletTransaction.objects.filter(wallet=wallet)
+        
+        if date_from:
+            transactions = transactions.filter(created_at__date__gte=date_from)
+        if date_to:
+            transactions = transactions.filter(created_at__date__lte=date_to)
+        
+        revenue_count = transactions.filter(transaction_type='revenue').count()
+        withdrawal_count = transactions.filter(transaction_type='withdrawal').count()
+        refund_count = transactions.filter(transaction_type='refund').count()
+        
+        transactions_data = {
+            'revenue_count': revenue_count,
+            'withdrawal_count': withdrawal_count,
+            'refund_count': refund_count,
+            'total_transactions': transactions.count()
+        }
+        
+        # داده‌های بازه‌ای (اگر تاریخ مشخص شده)
+        period_data = None
+        
+        if date_from or date_to:
+            revenues = ClassRevenue.objects.filter(teacher=teacher)
+            if date_from:
+                revenues = revenues.filter(created_at__date__gte=date_from)
+            if date_to:
+                revenues = revenues.filter(created_at__date__lte=date_to)
+            
+            earned = revenues.aggregate(Sum('teacher_share'))['teacher_share__sum'] or 0
+            
+            withdrawals = WithdrawalRequest.objects.filter(teacher=teacher, status='completed')
+            if date_from:
+                withdrawals = withdrawals.filter(updated_at__date__gte=date_from)
+            if date_to:
+                withdrawals = withdrawals.filter(updated_at__date__lte=date_to)
+            
+            withdrawn = withdrawals.aggregate(Sum('amount'))['amount__sum'] or 0
+            
+            period_data = {
+                'start_date': date_from_str,
+                'end_date': date_to_str,
+                'earned_this_period': str(earned),
+                'withdrawn_this_period': str(withdrawn)
+            }
+        
+        return Response({
+            'wallet': wallet_data,
+            'statistics': statistics_data,
+            'transactions': transactions_data,
+            'period': period_data
+        }, status=status.HTTP_200_OK)
+
+
+class WithdrawalApproveAPIView(APIView):
+    """
+    Approve Withdrawal Request API (Admin Only)
+    
+    Admin approves a pending withdrawal request and updates transaction status.
+    Only admins can approve withdrawal requests.
+    Requires authentication with admin role.
+    
+    post:
+        Approve pending withdrawal request.
+        
+        Path parameters:
+        - request_id: integer (required) - Withdrawal request ID
+        
+        Request body parameters:
+        - transaction_id: string (optional) - Payment gateway transaction ID
+        - notes: string (optional) - Admin notes about approval
+        
+        Returns:
+            200 OK:
+                - id: integer - Request ID
+                - teacher_id: integer
+                - amount: decimal
+                - status: string (set to: processing or completed)
+                - transaction_id: string - Payment transaction ID
+                - approved_at: datetime
+                - admin_notes: string
+                - message: string - "درخواست تسویه حساب تأیید شد"
+                
+            403 Forbidden - User is not admin
+            404 Not Found - Withdrawal request not found
+            400 Bad Request - Request is not in pending status
+    
+    Example POST Request:
+    ```json
+    {
+        "transaction_id": "TXN123456789",
+        "notes": "تأیید شده و در حال پردازش"
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Financial - Admin'],
+        summary='Approve Withdrawal Request',
+        description='Admin approves withdrawal request (admin only)',
+        parameters=[
+            OpenApiParameter('request_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Request ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Withdrawal request approved successfully"),
+            400: OpenApiResponse(description="Request is not in pending status"),
+            403: OpenApiResponse(description="User is not an admin"),
+            404: OpenApiResponse(description="Withdrawal request not found"),
+        }
+    )
+    def post(self, request, request_id):
+        from classroom.models import WithdrawalRequest
+        from .classroom_serializers import WithdrawalRequestSerializer
+        from django.db import transaction
+        
+        # فقط ادمین
+        if request.user.role != 'admin':
+            return Response({
+                'error': _('فقط مدیران می‌توانند درخواست‌ها را تأیید کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            withdrawal = WithdrawalRequest.objects.get(id=request_id)
+        except WithdrawalRequest.DoesNotExist:
+            return Response({
+                'error': _('درخواست تسویه حساب یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # بررسی وضعیت
+        if withdrawal.status != 'pending':
+            return Response({
+                'error': _('تنها درخواست‌های در انتظار تأیید را می‌توان تأیید کرد')
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # دریافت داده‌ها
+        transaction_id = request.data.get('transaction_id')
+        notes = request.data.get('notes', '').strip()
+        
+        # آپدیت درخواست
+        try:
+            with transaction.atomic():
+                withdrawal.status = 'processing'  # یا completed
+                if transaction_id:
+                    withdrawal.transaction_id = transaction_id
+                if notes:
+                    withdrawal.admin_notes = notes
+                withdrawal.save()
+        
+        except Exception as e:
+            return Response({
+                'error': f'خطا: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        serializer = WithdrawalRequestSerializer(withdrawal)
+        return Response({
+            'data': serializer.data,
+            'message': _('درخواست تسویه حساب تأیید شد')
+        }, status=status.HTTP_200_OK)
+
+
+class StudentTransactionListAPIView(APIView):
+    """
+    Get Student Transaction History API
+    
+    List student transactions (class payments, refunds, etc.).
+    Students see only their own transactions. Admins see all transactions.
+    Requires authentication.
+    
+    get:
+        Get list of student transactions with pagination.
+        
+        Query parameters:
+        - transaction_type: string (optional) - Filter by type: class_payment, refund
+        - status: string (optional) - Filter by status: pending, completed, failed, refunded
+        - student_id: integer (optional, admin only) - Filter by student
+        - date_from: string (optional) - Start date in YYYY-MM-DD format
+        - date_to: string (optional) - End date in YYYY-MM-DD format
+        - page: integer (optional, default: 1) - Page number
+        - page_size: integer (optional, default: 20) - Items per page
+        
+        Returns:
+            200 OK:
+                - count: integer - Total number of transactions
+                - next: string - URL to next page (or null)
+                - previous: string - URL to previous page (or null)
+                - results: array - List of transactions
+                    - id: integer
+                    - student_id: integer
+                    - student_name: string
+                    - transaction_type: string
+                    - transaction_type_display: string (Farsi)
+                    - amount: decimal
+                    - booking_id: integer
+                    - class_title: string
+                    - teacher_name: string
+                    - status: string
+                    - status_display: string (Farsi)
+                    - description: string
+                    - payment_date: datetime
+                    - created_at: datetime
+                    
+            403 Forbidden - User cannot view these transactions
+    
+    Example GET Request:
+    ```
+    GET /api/student-transactions/?status=completed&page=1
+    Authorization: Bearer <student_token>
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Financial - Student'],
+        summary='List Student Transactions',
+        description='Get student transaction history with optional filters and pagination',
+        parameters=[
+            OpenApiParameter('transaction_type', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Filter by type: class_payment, refund'),
+            OpenApiParameter('status', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Filter by status: pending, completed, failed, refunded'),
+            OpenApiParameter('student_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Filter by student (admin only)'),
+            OpenApiParameter('date_from', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Start date (YYYY-MM-DD)'),
+            OpenApiParameter('date_to', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='End date (YYYY-MM-DD)'),
+            OpenApiParameter('page', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Page number'),
+            OpenApiParameter('page_size', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Items per page'),
+        ],
+        responses={
+            200: OpenApiResponse(description="List of student transactions"),
+            403: OpenApiResponse(description="User cannot view these transactions"),
+        }
+    )
+    def get(self, request):
+        from classroom.models import StudentTransaction
+        from .classroom_serializers import StudentTransactionSerializer
+        from rest_framework.pagination import PageNumberPagination
+        
+        # فقط دانش‌آموزان و ادمین
+        if request.user.role not in ['user', 'admin']:
+            return Response({
+                'error': _('فقط دانش‌آموزان و مدیران می‌توانند این endpoint را استفاده کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # فیلتر بر اساس role
+        if request.user.role == 'user':
+            queryset = StudentTransaction.objects.filter(student=request.user)
+        else:
+            # ادمین
+            queryset = StudentTransaction.objects.all()
+        
+        # فیلتر بر اساس دانش‌آموز (فقط ادمین)
+        student_id = request.query_params.get('student_id')
+        if student_id and request.user.role == 'admin':
+            queryset = queryset.filter(student_id=student_id)
+        
+        # فیلتر بر اساس نوع تراکنش
+        transaction_type = request.query_params.get('transaction_type')
+        if transaction_type:
+            queryset = queryset.filter(transaction_type=transaction_type)
+        
+        # فیلتر بر اساس وضعیت
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        # فیلتر بر اساس بازه تاریخی
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        
+        if date_from:
+            try:
+                from datetime import datetime
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                queryset = queryset.filter(created_at__date__gte=date_from_obj)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                from datetime import datetime
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                queryset = queryset.filter(created_at__date__lte=date_to_obj)
+            except ValueError:
+                pass
+        
+        # مرتب‌سازی
+        queryset = queryset.order_by('-created_at').select_related('student', 'booking', 'booking__teacher')
+        
+        # صفحه‌بندی
+        paginator = PageNumberPagination()
+        paginator.page_size = int(request.query_params.get('page_size', 20))
+        
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        serializer = StudentTransactionSerializer(paginated_queryset, many=True)
+        
+        return paginator.get_paginated_response(serializer.data)

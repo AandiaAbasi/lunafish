@@ -99,6 +99,22 @@ urlpatterns = [
     path('attendance/<int:booking_id>/', views.AttendanceAPIView.as_view(), name='attendance'),
     path('attendance/<int:booking_id>/list/', views.AttendanceListAPIView.as_view(), name='attendance_list'),
     
+    # ========== Financial System APIs ==========
+    # Wallet endpoints
+    path('wallet/', views.TeacherWalletDetailAPIView.as_view(), name='teacher_wallet'),
+    
+    # Withdrawal request endpoints
+    path('withdrawal-requests/', views.WithdrawalRequestListAPIView.as_view(), name='withdrawal_requests_list'),
+    path('withdrawal-requests/create/', views.WithdrawalRequestCreateAPIView.as_view(), name='withdrawal_request_create'),
+    path('withdrawal-requests/<int:request_id>/approve/', views.WithdrawalApproveAPIView.as_view(), name='withdrawal_request_approve'),
+    
+    # Transaction endpoints
+    path('transactions/', views.WalletTransactionListAPIView.as_view(), name='wallet_transactions'),
+    path('student-transactions/', views.StudentTransactionListAPIView.as_view(), name='student_transactions'),
+    
+    # Financial summary endpoint
+    path('financial-summary/', views.FinancialSummaryAPIView.as_view(), name='financial_summary'),
+    
     # ========== Exercise APIs (آزمون‌ها) ==========
     path('exercise/field/create/', views.CreateFieldAPIView.as_view(), name='field_create'),
     path('exercise/exam/create/', views.CreateExamAPIView.as_view(), name='exam_create'),

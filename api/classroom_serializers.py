@@ -399,7 +399,7 @@ class TeacherDetailSerializer(serializers.Serializer):
     
     # Introduction Section
     resume_summary = serializers.CharField(read_only=True, allow_blank=True)
-    introduction_video = serializers.URLField(read_only=True, allow_null=True)
+    introduction_video = serializers.FileField(read_only=True, allow_null=True)
     bio = serializers.CharField(read_only=True, allow_blank=True)
     profile_photo_path = serializers.ImageField(read_only=True, allow_null=True)
     

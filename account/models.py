@@ -191,11 +191,13 @@ class User(AbstractUser, BaseModel):
     )
     
     # Introduction & Media
-    introduction_video = models.URLField(
+    introduction_video = models.FileField(
+        upload_to=upload_to_dynamic,
+        validators=[FileExtensionValidator(allowed_extensions=['mp4', 'avi', 'mov', 'webm', 'flv', 'mkv', '3gp', 'm4v', 'ogv'])],
         null=True,
         blank=True,
-        verbose_name=_("Introduction video URL"),
-        help_text=_("YouTube or video URL for teacher introduction")
+        verbose_name=_("Introduction video"),
+        help_text=_("Video file for teacher introduction (MP4, AVI, MOV, WebM, FLV, MKV, 3GP, M4V, OGV)")
     )
     
     # Pricing Information
