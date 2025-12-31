@@ -4242,6 +4242,7 @@ class TeacherListAPIView(generics.ListAPIView):
     Query Parameters:
         - page: int (default=1) - Page number for pagination
         - page_size: int (default=10) - Number of teachers per page
+        - search: string - Search by name, qualifications, or languages taught
     
     Returns:
         200 OK:
@@ -4264,8 +4265,22 @@ class TeacherListAPIView(generics.ListAPIView):
     pagination_class = None  # Will be set dynamically
     
     def get_queryset(self):
-        """Get all verified teachers, ordered by creation date"""
-        return User.objects.filter(role='teacher', is_teacher_verified=True).order_by('-created_at')
+        """Get all verified teachers, ordered by creation date, with search support"""
+        queryset = User.objects.filter(role='teacher', is_teacher_verified=True).order_by('-created_at')
+        
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(qualifications__icontains=search_query) |
+                Q(languages_taught__icontains=search_query) |
+                Q(specialization__icontains=search_query) |
+                Q(resume_summary__icontains=search_query)
+            )
+        
+        return queryset
     
     def get_serializer_class(self):
         from .classroom_serializers import TeacherListSerializer

@@ -19,6 +19,7 @@ Browse all available and verified teachers.
 |-----------|------|----------|-------------|
 | page | integer | No | Page number (default: 1) |
 | page_size | integer | No | Teachers per page (default: 10) |
+| search | string | No | Search by name, qualifications, languages, or specialization |
 
 **Response:** `200 OK`
 ```json
@@ -41,6 +42,21 @@ Browse all available and verified teachers.
     }
   ]
 }
+```
+
+**Search Examples:**
+```bash
+# Search by name
+GET /api/teachers/?search=علی
+
+# Search by language
+GET /api/teachers/?search=انگلیسی
+
+# Search by specialization
+GET /api/teachers/?search=ریاضیات
+
+# Search with pagination
+GET /api/teachers/?search=معلم&page=2&page_size=20
 ```
 
 ---
