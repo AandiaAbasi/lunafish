@@ -832,23 +832,69 @@
         return cookieValue;
     }
 
+    // تبدیل تاریخ میلادی به شمسی
+    function toJalali(date) {
+        const gy = date.getFullYear();
+        const gm = date.getMonth() + 1;
+        const gd = date.getDate();
+        
+        let g_d_n = 365 * gy + Math.floor((gy + 3) / 4) - Math.floor((gy + 99) / 100) + Math.floor((gy + 399) / 400);
+        for (let i = 0; i < gm; ++i) {
+            g_d_n += [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][i];
+        }
+        if (gm > 2) g_d_n += Math.floor(gy / 4) - Math.floor(gy / 100) + Math.floor(gy / 400) - Math.floor((gy - 1) / 4) + Math.floor((gy - 1) / 100) - Math.floor((gy - 1) / 400);
+        g_d_n += gd;
+        
+        let j_d_n = g_d_n - 79;
+        
+        let j_np = Math.floor(j_d_n / 12053);
+        j_d_n = j_d_n % 12053;
+        
+        let jy = 979 + 33 * j_np + 4 * Math.floor(j_d_n / 1461);
+        j_d_n %= 1461;
+        
+        if (j_d_n >= 366) {
+            jy += Math.floor((j_d_n - 1) / 365);
+            j_d_n = (j_d_n - 1) % 365;
+        }
+        
+        let jm = 1;
+        let jd = j_d_n + 1;
+        
+        if (jd <= 186) {
+            jm = 1 + Math.floor((jd - 1) / 31);
+            jd = 1 + (jd - 1) % 31;
+        } else {
+            jm = 7 + Math.floor((jd - 187) / 30);
+            jd = 1 + (jd - 187) % 30;
+        }
+        
+        return { year: jy, month: jm, day: jd };
+    }
+
     function formatDate(dateString) {
         const date = new Date(dateString);
         const today = new Date();
+        const jalali = toJalali(date);
+        
         if (date.toDateString() === today.toDateString()) {
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
         }
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const month = String(jalali.month).padStart(2, '0');
+        const day = String(jalali.day).padStart(2, '0');
+        return `${jalali.year}/${month}/${day}`;
     }
 
     function formatDateTime(dateString) {
         const date = new Date(dateString);
-        return date.toLocaleString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
+        const jalali = toJalali(date);
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const month = String(jalali.month).padStart(2, '0');
+        const day = String(jalali.day).padStart(2, '0');
+        return `${jalali.year}/${month}/${day} ${hours}:${minutes}`
     }
 
     function escapeHtml(text) {
