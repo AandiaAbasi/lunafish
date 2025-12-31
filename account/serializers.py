@@ -307,6 +307,9 @@ class CompleteStudentProfileSerializer(serializers.ModelSerializer):
 
 class EditTeacherProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=False, min_length=3, max_length=150)
+    # Allow explicit null to remove files
+    introduction_video = serializers.FileField(required=False, allow_null=True)
+    profile_photo_path = serializers.ImageField(required=False, allow_null=True)
     
     class Meta:
         model = User
@@ -319,8 +322,8 @@ class EditTeacherProfileSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['is_teacher_verified']
         extra_kwargs = {
-            'profile_photo_path': {'required': False},
-            'introduction_video': {'required': False},
+            'profile_photo_path': {'required': False, 'allow_null': True},
+            'introduction_video': {'required': False, 'allow_null': True},
             'email': {'required': False},
             'phone': {'required': False},
             'bio': {'required': False},
