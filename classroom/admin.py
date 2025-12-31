@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.utils import timezone
+from django.template.response import TemplateResponse
 from .models import (
     TeacherAvailability, TeachingSubject, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
@@ -688,6 +689,7 @@ class SupportMessageAdmin(admin.ModelAdmin):
         """نمایش پیام‌ها گروپ‌شده بر اساس معلم"""
         from django.db.models import Count, Max, Q
         from account.models import User
+        from django.template.response import TemplateResponse
         
         teachers = User.objects.filter(role='teacher').annotate(
             message_count=Count('support_messages'),
@@ -695,10 +697,17 @@ class SupportMessageAdmin(admin.ModelAdmin):
             last_message_time=Max('support_messages__created_at')
         ).filter(message_count__gt=0).order_by('-last_message_time')
         
-        extra_context = extra_context or {}
-        extra_context['teachers'] = teachers
-        extra_context['title'] = _('مدیریت پیام‌های پشتیبانی')
-        return super().changelist_view(request, extra_context)
+        context = self.admin_site.each_context(request)
+        context.update({
+            'teachers': teachers,
+            'title': _('مدیریت پیام‌های پشتیبانی'),
+        })
+        
+        return TemplateResponse(
+            request,
+            'admin/support_message_grouped_list.html',
+            context
+        )
     
     def get_urls(self):
         """اضافه کردن URL برای صفحه چت و API"""
