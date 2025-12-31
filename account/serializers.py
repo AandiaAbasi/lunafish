@@ -550,6 +550,15 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'non_field_errors': [_('User is not a teacher')]})
         return attrs
     
+    def update(self, instance, validated_data):
+        """Update only the fields that are provided and not empty"""
+        # فقط فیلدهای موجود در validated_data را به‌روزرسانی کنیم
+        for field, value in validated_data.items():
+            if value is not None:  # فقط اگر مقدار موجود باشد
+                setattr(instance, field, value)
+        instance.save()
+        return instance
+    
 
 class PromoteToTeacherSerializer(serializers.Serializer):
     bio = serializers.CharField(required=False)
