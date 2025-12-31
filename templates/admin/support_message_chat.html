@@ -669,7 +669,7 @@
                         ${!isAdminMessage ? `<div class="message-sender">${escapeHtml(msg.sender_name || 'Unknown')}</div>` : ''}
                         <div>${escapeHtml(msg.message_text || 'No text')}</div>
                         ${attachmentsHtml}
-                        <div class="message-time">${formatDateTime(msg.created_at_display)}</div>
+                        <div class="message-time">${escapeHtml(msg.created_at_display || '')}</div>
                     </div>
                 </div>
             `;
