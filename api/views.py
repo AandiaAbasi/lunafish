@@ -1268,7 +1268,7 @@ class UserProfileAPIView(APIView):
     @extend_schema(
         tags=['Profile Management'],
         summary='Update User/Teacher Profile',
-        description='Update user or teacher profile information based on role',
+        description='Update user or teacher profile information based on role. Teachers can edit: gender, bio, birth_date, and qualifications.',
         request=EditUserProfileSerializer,
         responses={
             200: OpenApiResponse(description="Profile updated successfully"),
@@ -1384,7 +1384,7 @@ class CompleteTeacherProfileAPIView(APIView):
     
     Allow teachers to complete their professional profile with detailed information.
     Teachers can set: name, qualifications, languages taught, introduction video,
-    resume summary, hourly rate, and available teaching times.
+    resume summary, hourly rate, available teaching times, gender, bio, and birth date.
     Requires authentication and teacher role.
     
     post:
@@ -1402,6 +1402,9 @@ class CompleteTeacherProfileAPIView(APIView):
         - **available_times** (JSON, optional): JSON object with available teaching times
         - **experience_years** (integer, optional): Years of teaching experience
         - **profile_photo_path** (file, optional): Teacher profile photo/picture (image file)
+        - **gender** (string, optional): Gender (m/f/male/female/custom/prefer_not_to_say)
+        - **bio** (string, optional): User biography/bio
+        - **birth_date** (string, optional): Birth date in Jalali format (YYYY-MM-DD or YYYY/MM/DD)
         
         **Returns:**
         
@@ -1414,7 +1417,8 @@ class CompleteTeacherProfileAPIView(APIView):
             - Invalid data provided
             - Invalid hourly rate (must be positive)
             - Invalid experience years (cannot be negative)
-            - Invalid video URL
+            - Invalid gender value
+            - Invalid birth date format
             - File too large or invalid format
                 
         - **401 Unauthorized**: User not authenticated
@@ -1435,6 +1439,9 @@ class CompleteTeacherProfileAPIView(APIView):
     experience_years: 12
     available_times: {...}
     profile_photo_path: <file> (image file - JPG, PNG, GIF)
+    gender: female
+    bio: Experienced English teacher with passion for education
+    birth_date: 1372/05/15
     ```
     
     **Note:** When uploading files, use form-data instead of JSON. The introduction_video field now expects a video file upload instead of a URL.

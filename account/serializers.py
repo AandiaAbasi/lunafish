@@ -458,6 +458,7 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
     Serializer for completing teacher profile with professional information.
     Teachers can set: name, qualifications, languages, introduction video, 
     resume summary, hourly rate, and available times.
+    Teachers can also set: gender, bio, birth_date
     """
     profile_photo_path = serializers.ImageField(required=False, allow_null=True, help_text=_("Teacher profile photo"))
     qualifications = serializers.CharField(required=False, allow_blank=True, help_text=_("Educational qualifications and certifications"))
@@ -468,6 +469,9 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
     hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True, help_text=_("Hourly teaching rate"))
     available_times = serializers.JSONField(required=False, allow_null=True, help_text=_("Available teaching times (JSON format)"))
     experience_years = serializers.IntegerField(required=False, allow_null=True, help_text=_("Years of teaching experience"))
+    gender = serializers.CharField(required=False, allow_blank=True, max_length=20, help_text=_("Gender (m/f/male/female/custom/prefer_not_to_say)"))
+    bio = serializers.CharField(required=False, allow_blank=True, help_text=_("User bio/biography"))
+    birth_date = serializers.CharField(required=False, allow_blank=True, max_length=10, help_text=_("Birth date in Jalali format (YYYY-MM-DD or YYYY/MM/DD)"))
     
     class Meta:
         model = User
@@ -481,7 +485,10 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
             'hourly_rate',
             'available_times',
             'experience_years',
-            'profile_photo_path'
+            'profile_photo_path',
+            'gender',
+            'bio',
+            'birth_date'
         ]
         extra_kwargs = {
             'name': {'required': False, 'help_text': _("Teacher full name")},
@@ -498,6 +505,45 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
         if value is not None and value < 0:
             raise serializers.ValidationError(_("Experience years cannot be negative"))
         return value
+    
+    def validate_birth_date(self, value):
+        """Validate birth date format - accept both YYYY-MM-DD and YYYY/MM/DD"""
+        if not value:
+            return value
+        
+        import re
+        # Convert slash to dash for consistency
+        if '/' in value:
+            value = value.replace('/', '-')
+        
+        if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
+            raise serializers.ValidationError(
+                _("Birth date must be in YYYY-MM-DD or YYYY/MM/DD format (Jalali calendar)")
+            )
+        return value
+    
+    def validate_gender(self, value):
+        """Normalize gender codes - accept 'm'/'f' and convert to full names"""
+        if not value:
+            return value
+        
+        value_lower = value.lower()
+        # Map short codes to full gender values
+        gender_map = {
+            'm': 'male',
+            'f': 'female',
+            'male': 'male',
+            'female': 'female',
+            'custom': 'custom',
+            'prefer_not_to_say': 'prefer_not_to_say',
+        }
+        
+        if value_lower not in gender_map:
+            raise serializers.ValidationError(
+                _("Gender must be: m, f, male, female, custom, or prefer_not_to_say")
+            )
+        
+        return gender_map[value_lower]
     
     def validate(self, attrs):
         if self.instance and self.instance.role != 'teacher':
