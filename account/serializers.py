@@ -545,6 +545,12 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
         
         return gender_map[value_lower]
     
+    def validate_introduction_video(self, value):
+        """Handle video deletion - if empty string, return None"""
+        if value == '' or value == 'null' or value == 'false':
+            return None
+        return value
+    
     def validate(self, attrs):
         if self.instance and self.instance.role != 'teacher':
             raise serializers.ValidationError({'non_field_errors': [_('User is not a teacher')]})
