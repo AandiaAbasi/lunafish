@@ -303,7 +303,144 @@
         background-color: var(--error);
     }
 
-    .status-unread {
+    .message-bubble {
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+
+    .message-bubble.incoming {
+        background-color: var(--light-gray);
+        color: var(--darker-gray);
+        margin-right: auto;
+        border-left: 4px solid var(--blue);
+    }
+
+    .message-bubble.outgoing {
+        background-color: var(--blue);
+        color: var(--white);
+        margin-left: auto;
+    }
+
+    .message-time {
+        font-size: 11px;
+        opacity: 0.7;
+        margin-top: 4px;
+    }
+
+    .message-sender {
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        opacity: 0.8;
+    }
+
+    .reply-box {
+        padding: 16px;
+        border-top: 1px solid var(--gray);
+        background-color: var(--light-gray);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .reply-input-wrapper {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+    }
+
+    .reply-textarea {
+        flex: 1;
+        padding: 10px 12px;
+        border: 1px solid var(--gray);
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: inherit;
+        color: var(--darker-gray);
+        resize: none;
+        max-height: 100px;
+        min-height: 40px;
+    }
+
+    .reply-textarea:focus {
+        outline: none;
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .attach-btn {
+        width: 40px;
+        height: 40px;
+        border: 1px solid var(--gray);
+        background-color: var(--white);
+        color: var(--dark-gray);
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.2s ease;
+    }
+
+    .attach-btn:hover {
+        background-color: var(--light-blue);
+        border-color: var(--blue);
+        color: var(--blue);
+    }
+
+    .send-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background-color: var(--blue);
+        color: var(--white);
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.2s ease;
+    }
+
+    .send-btn:hover {
+        background-color: var(--dark-blue);
+    }
+
+    .send-btn:disabled {
+        background-color: var(--gray);
+        cursor: not-allowed;
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .attached-files {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 0;
+    }
+
+    .attached-file {
+        background-color: var(--white);
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--dark-gray);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--gray);
+    }
+
+    .attached-file-remove {
+        cursor: pointer;
         color: var(--error);
         font-weight: 600;
     }
@@ -488,108 +625,132 @@
 
     function selectMessage(message) {
         state.selectedMessage = message;
-        renderMessages(state.conversations.find(c => c.teacher_id === state.selectedTeacherId)?.teacher_name || 'Unknown');
-        renderDetailPanel(message);
+        renderChatView(state.conversations.find(c => c.teacher_id === state.selectedTeacherId)?.teacher_name || 'Unknown');
     }
 
-    function renderDetailPanel(message) {
+    function renderChatView(teacherName) {
         const messagesContainer = document.getElementById('messagesContainer');
-        
-        const attachmentsHtml = message.attachments && message.attachments.length > 0
-            ? `
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--gray);">
-                    <div style="font-size: 12px; font-weight: 600; color: var(--darker-gray); margin-bottom: 10px; text-transform: uppercase;">Files</div>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        ${message.attachments.map(att => `
-                            <a href="${att.file}" target="_blank" style="display: flex; align-items: center; gap: 10px; padding: 10px; background-color: var(--light-gray); border-radius: 6px; text-decoration: none; color: var(--blue);">
-                                <span style="flex: 1; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(att.name || 'File')}</span>
-                                <span>⬇️</span>
+        const selectedTeacher = state.conversations.find(c => c.teacher_id === state.selectedTeacherId);
+
+        if (state.selectedTeacherMessages.length === 0) {
+            messagesContainer.innerHTML = `
+                <div class="messages-container">
+                    <div class="messages-header">
+                        <h2 class="messages-title">${escapeHtml(teacherName)}</h2>
+                    </div>
+                    <div class="empty-state">
+                        <div class="empty-icon">💬</div>
+                        <div>No messages in this conversation</div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Create chat messages view
+        const messagesHtml = state.selectedTeacherMessages.map((msg, index) => {
+            const isAdminMessage = msg.sender_id === {{ user.id }};
+            const attachmentsHtml = msg.attachments && msg.attachments.length > 0
+                ? `
+                    <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                        ${msg.attachments.map(att => `
+                            <a href="${att.file}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background-color: rgba(255,255,255,0.2); border-radius: 4px; text-decoration: none; color: inherit; font-size: 11px; width: fit-content;">
+                                <span>📎</span>
+                                <span>${escapeHtml((att.name || 'File').substring(0, 30))}</span>
                             </a>
                         `).join('')}
                     </div>
-                </div>
-            `
-            : '';
+                `
+                : '';
 
-        const contentHtml = `
-            <div style="padding: 20px; border-bottom: 1px solid var(--gray);">
-                <div style="font-weight: 600; color: var(--darker-gray); margin-bottom: 8px; font-size: 14px;">From: ${escapeHtml(message.sender_name || 'Unknown')}</div>
-                <div style="font-size: 12px; color: var(--dark-gray); margin-bottom: 12px;">
-                    ${message.status === 'read' ? '✓ Read' : '📨 Sent'} • ${formatDateTime(message.created_at)}
+            return `
+                <div style="display: flex; margin-bottom: 16px; ${isAdminMessage ? 'justify-content: flex-end;' : 'justify-content: flex-start;'}">
+                    <div class="message-bubble ${isAdminMessage ? 'outgoing' : 'incoming'}">
+                        ${!isAdminMessage ? `<div class="message-sender">${escapeHtml(msg.sender_name || 'Unknown')}</div>` : ''}
+                        <div>${escapeHtml(msg.message_text || 'No text')}</div>
+                        ${attachmentsHtml}
+                        <div class="message-time">${formatDateTime(msg.created_at)}</div>
+                    </div>
                 </div>
-                <div style="background-color: var(--light-gray); padding: 12px; border-radius: 6px; white-space: pre-wrap; word-break: break-word; font-size: 13px; line-height: 1.6; color: var(--darker-gray); margin-bottom: 15px;">
-                    ${escapeHtml(message.message_text || 'No text')}
-                </div>
-                ${attachmentsHtml}
-            </div>
-
-            <div style="padding: 20px;">
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-size: 13px; font-weight: 600; color: var(--darker-gray); margin-bottom: 8px;">Your Reply</label>
-                    <textarea id="replyText" placeholder="Write your reply..." style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray); border-radius: 6px; font-size: 13px; font-family: inherit; color: var(--darker-gray); min-height: 100px; resize: vertical; direction: rtl;"></textarea>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-size: 13px; font-weight: 600; color: var(--darker-gray); margin-bottom: 8px;">Attach Files (Optional)</label>
-                    <input type="file" id="replyAttachments" multiple style="padding: 10px 12px; border: 1px solid var(--gray); border-radius: 6px; width: 100%; font-size: 12px;">
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button id="sendReplyBtn" style="flex: 1; padding: 10px 16px; background-color: var(--blue); color: var(--white); border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
-                        ✈️ Send Reply
-                    </button>
-                    <button id="clearReplyBtn" style="padding: 10px 16px; background-color: var(--gray); color: var(--darker-gray); border: none; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease;">
-                        Clear
-                    </button>
-                </div>
-            </div>
-        `;
-
-        // Update the messages list to show only the selected message
-        const selectedTeacher = state.conversations.find(c => c.teacher_id === state.selectedTeacherId);
-        const messagesHtml = state.selectedTeacherMessages.map((msg, index) => `
-            <div class="message-row ${msg.status === 'sent' ? 'unread' : ''} ${state.selectedMessage?.id === msg.id ? 'active' : ''}"
-                 data-message-id="${msg.id}" style="cursor: pointer;">
-                <div class="msg-sender">
-                    ${msg.sender_name ? escapeHtml(msg.sender_name) : 'Unknown'}
-                    ${msg.status === 'sent' ? '<span class="status-unread">• Unread</span>' : ''}
-                </div>
-                <div class="msg-text">${msg.message_text ? escapeHtml(msg.message_text.substring(0, 80)) : 'No text'}</div>
-                <div class="msg-time">${formatDateTime(msg.created_at)}</div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         messagesContainer.innerHTML = `
-            <div class="messages-container" style="display: grid; grid-template-columns: 1fr 1fr; height: 100%; gap: 0;">
-                <div style="border-left: 1px solid var(--gray); overflow-y: auto; display: flex; flex-direction: column;">
-                    <div class="messages-header">
-                        <h2 class="messages-title">${escapeHtml(selectedTeacher?.teacher_name || 'Unknown')}</h2>
-                        <p class="messages-subtitle">${state.selectedTeacherMessages.length} messages</p>
-                    </div>
-                    <div class="messages-list" style="flex: 1; padding: 10px;">
-                        ${messagesHtml}
-                    </div>
+            <div class="messages-container" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="messages-header">
+                    <h2 class="messages-title">${escapeHtml(teacherName)}</h2>
+                    <p class="messages-subtitle">${state.selectedTeacherMessages.length} messages</p>
                 </div>
-                <div style="overflow-y: auto; display: flex; flex-direction: column;">
-                    ${contentHtml}
+                <div class="messages-list" style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column;">
+                    ${messagesHtml}
+                    <div id="messagesEnd"></div>
+                </div>
+                <div class="reply-box">
+                    <div class="attached-files" id="attachedFilesList"></div>
+                    <div class="reply-input-wrapper">
+                        <input type="file" id="replyFileInput" class="file-input" multiple>
+                        <button class="attach-btn" id="attachBtn" title="Attach files">📎</button>
+                        <textarea id="replyText" class="reply-textarea" placeholder="Type your reply..." rows="1"></textarea>
+                        <button class="send-btn" id="sendReplyBtn" title="Send">✈️</button>
+                    </div>
                 </div>
             </div>
         `;
 
-        // Re-attach event listeners for message rows
-        document.querySelectorAll('.message-row').forEach(row => {
-            row.addEventListener('click', (e) => {
-                const msgId = parseInt(row.dataset.messageId);
-                const msg = state.selectedTeacherMessages.find(m => m.id === msgId);
-                if (msg) {
-                    selectMessage(msg);
-                }
-            });
+        // Auto-scroll to bottom
+        setTimeout(() => {
+            const messagesEnd = document.getElementById('messagesEnd');
+            messagesEnd?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+
+        // Setup event listeners
+        const replyTextarea = document.getElementById('replyText');
+        const attachBtn = document.getElementById('attachBtn');
+        const fileInput = document.getElementById('replyFileInput');
+        const sendBtn = document.getElementById('sendReplyBtn');
+
+        // Auto-resize textarea
+        replyTextarea.addEventListener('input', () => {
+            replyTextarea.style.height = 'auto';
+            replyTextarea.style.height = Math.min(replyTextarea.scrollHeight, 100) + 'px';
         });
 
-        // Attach reply handlers
-        document.getElementById('sendReplyBtn').addEventListener('click', sendReply);
-        document.getElementById('clearReplyBtn').addEventListener('click', () => {
-            document.getElementById('replyText').value = '';
-            document.getElementById('replyAttachments').value = '';
+        attachBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', updateAttachedFiles);
+        sendBtn.addEventListener('click', sendReply);
+
+        // Send on Enter (but allow Shift+Enter for newline)
+        replyTextarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendReply();
+            }
+        });
+    }
+
+    function updateAttachedFiles() {
+        const fileInput = document.getElementById('replyFileInput');
+        const filesList = document.getElementById('attachedFilesList');
+        filesList.innerHTML = '';
+
+        Array.from(fileInput.files).forEach((file, index) => {
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'attached-file';
+            fileDiv.innerHTML = `
+                <span>📄 ${escapeHtml(file.name)}</span>
+                <span class="attached-file-remove" data-index="${index}">✕</span>
+            `;
+            filesList.appendChild(fileDiv);
+
+            fileDiv.querySelector('.attached-file-remove').addEventListener('click', () => {
+                const dataTransfer = new DataTransfer();
+                Array.from(fileInput.files).forEach((f, i) => {
+                    if (i !== index) dataTransfer.items.add(f);
+                });
+                fileInput.files = dataTransfer.files;
+                updateAttachedFiles();
+            });
         });
     }
 
@@ -600,20 +761,23 @@
         }
 
         const replyText = document.getElementById('replyText').value.trim();
-        const attachmentsInput = document.getElementById('replyAttachments');
+        const fileInput = document.getElementById('replyFileInput');
 
-        if (!replyText && attachmentsInput.files.length === 0) {
+        if (!replyText && fileInput.files.length === 0) {
             showToast('Please add text or files', 'error');
             return;
         }
 
         try {
+            const sendBtn = document.getElementById('sendReplyBtn');
+            sendBtn.disabled = true;
+
             const formData = new FormData();
             formData.append('teacher_id', state.selectedTeacherId);
             formData.append('sender_id', {{ user.id }});
             if (replyText) formData.append('message_text', replyText);
 
-            for (const file of attachmentsInput.files) {
+            for (const file of fileInput.files) {
                 formData.append('attachments', file);
             }
 
@@ -632,16 +796,17 @@
 
             showToast('Reply sent successfully!', 'success');
             document.getElementById('replyText').value = '';
-            document.getElementById('replyAttachments').value = '';
+            fileInput.value = '';
+            updateAttachedFiles();
             
             // Reload messages
-            await loadConversations();
-            const selectedTeacher = state.selectedTeacherId;
-            await selectTeacher(selectedTeacher);
+            await selectTeacher(state.selectedTeacherId);
 
         } catch (error) {
             console.error('Error:', error);
             showToast('Error sending reply: ' + error.message, 'error');
+        } finally {
+            document.getElementById('sendReplyBtn').disabled = false;
         }
     }
 
