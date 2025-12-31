@@ -167,6 +167,8 @@ class TeacherRatingSerializer(serializers.ModelSerializer):
     سریالایزر برای نمایش امتیاز معلم
     """
     rater_name = serializers.SerializerMethodField()
+    rater_profile_photo = serializers.SerializerMethodField()
+    rater_id = serializers.CharField(source='rater.id', read_only=True)
     rater_type_display = serializers.CharField(source='get_rater_type_display', read_only=True)
     teacher_name = serializers.CharField(source='teacher.name', read_only=True, allow_blank=True)
     teacher_username = serializers.CharField(source='teacher.username', read_only=True)
@@ -174,12 +176,12 @@ class TeacherRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherRating
         fields = [
-            'id', 'rater_name', 'rater_type', 'rater_type_display',
+            'id', 'rater_name', 'rater_id', 'rater_profile_photo', 'rater_type', 'rater_type_display',
             'teacher_name', 'teacher_username', 'stars', 'comment',
             'is_anonymous', 'is_verified', 'created_at'
         ]
         read_only_fields = [
-            'id', 'rater_name', 'rater_type_display', 'teacher_name',
+            'id', 'rater_name', 'rater_id', 'rater_profile_photo', 'rater_type_display', 'teacher_name',
             'teacher_username', 'is_verified', 'created_at'
         ]
     
@@ -187,6 +189,14 @@ class TeacherRatingSerializer(serializers.ModelSerializer):
         if obj.is_anonymous:
             return "Anonymous"
         return obj.rater.name or obj.rater.username
+    
+    def get_rater_profile_photo(self, obj):
+        """نمایش عکس پروفایل فردی که نظر داده است"""
+        if obj.is_anonymous:
+            return None
+        if obj.rater.profile_photo_path:
+            return obj.rater.profile_photo_path.url
+        return None
 
 
 class TeacherRatingStatsSerializer(serializers.Serializer):
