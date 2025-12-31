@@ -351,6 +351,8 @@ class EditTeacherProfileSerializer(serializers.ModelSerializer):
             'resume_summary': {'required': False},
             'hourly_rate': {'required': False},
             'experience_years': {'required': False},
+            'educational_qualifications': {'required': False},
+            'years_of_experience': {'required': False},
         }
     
     def validate_birth_date(self, value):
