@@ -353,7 +353,7 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
     languages_taught = serializers.CharField(required=False, allow_blank=True, help_text=_("Languages that can be taught"))
     specialization = serializers.CharField(required=False, allow_blank=True, help_text=_("Area of specialization"))
     resume_summary = serializers.CharField(required=False, allow_blank=True, help_text=_("Brief professional summary"))
-    introduction_video = serializers.URLField(required=False, allow_blank=True, help_text=_("Introduction video URL"))
+    introduction_video = serializers.FileField(required=False, allow_null=True, help_text=_("Introduction video file"))
     hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True, help_text=_("Hourly teaching rate"))
     available_times = serializers.JSONField(required=False, allow_null=True, help_text=_("Available teaching times (JSON format)"))
     experience_years = serializers.IntegerField(required=False, allow_null=True, help_text=_("Years of teaching experience"))
@@ -386,16 +386,6 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
         """Validate experience years is non-negative"""
         if value is not None and value < 0:
             raise serializers.ValidationError(_("Experience years cannot be negative"))
-        return value
-    
-    def validate_introduction_video(self, value):
-        """Validate introduction video URL"""
-        if value:
-            # Basic URL validation
-            if not value.startswith(('http://', 'https://')):
-                raise serializers.ValidationError(_("Introduction video must be a valid URL"))
-            if len(value) > 500:
-                raise serializers.ValidationError(_("Introduction video URL is too long"))
         return value
     
     def validate(self, attrs):

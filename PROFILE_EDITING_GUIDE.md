@@ -23,22 +23,20 @@ POST /api/profile/
 
 | فیلد | نوع | توصیف | مثال |
 |-----|------|-------|------|
-| `first_name` | string | نام | علی |
-| `last_name` | string | نام خانوادگی | محمدی |
 | `name` | string | نام نمایشی | علی محمدی |
 | `email` | string | ایمیل | ali@example.com |
 | `phone` | string | شماره تماس | 09123456789 |
 | `bio` | string | درباره من | معلومات شخصی |
 | `birth_date` | string | تاریخ تولد (شمسی) | 1403-05-24 |
 | `gender` | string | جنسیت | male, female, custom, prefer_not_to_say |
+| `profile_photo_path` | file | عکس پروفایل | (JPG, PNG, GIF) |
 
 ### نمونه درخواست
 
 **بدون فایل:**
 ```json
 {
-    "first_name": "علی",
-    "last_name": "محمدی",
+    "name": "علی محمدی",
     "email": "ali@example.com",
     "phone": "09123456789",
     "bio": "دانش‌آموز جدی و متعهد",
@@ -55,8 +53,6 @@ POST /api/profile/
     "user": {
         "id": 42,
         "username": "ali.mohammad",
-        "first_name": "علی",
-        "last_name": "محمدی",
         "name": "علی محمدی",
         "email": "ali@example.com",
         "phone": "09123456789",
@@ -75,8 +71,7 @@ curl -X POST https://api.example.com/api/profile/ \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "first_name": "علی",
-    "last_name": "محمدی",
+    "name": "علی محمدی",
     "email": "ali@example.com",
     "phone": "09123456789",
     "bio": "دانش‌آموز جدی و متعهد",
@@ -101,8 +96,7 @@ POST /api/profile/
 
 | فیلد | نوع | توصیف | مثال |
 |-----|------|-------|------|
-| `first_name` | string | نام | علی |
-| `last_name` | string | نام خانوادگی | محمدی |
+| `name` | string | نام نمایشی | علی محمدی |
 | `email` | string | ایمیل | teacher@example.com |
 | `phone` | string | شماره تماس | 09123456789 |
 | `bio` | string | درباره من | معلم باتجربه |
@@ -110,27 +104,26 @@ POST /api/profile/
 | `languages_taught` | string | زبان‌های تدریس‌شده | انگلیسی, فرانسوی |
 | `specialization` | string | تخصص | تدریس مکالمه |
 | `resume_summary` | string | خلاصه رزومه | 15 سال تجربه تدریس |
-| `introduction_video` | string | لینک ویدئوی معرفی | https://youtube.com/... |
+| `introduction_video` | file | فایل ویدئوی معرفی | (MP4, AVI, MOV, ...) |
 | `hourly_rate` | decimal | قیمت ساعتی | 250000 |
 | `experience_years` | integer | سال‌های تجربه | 15 |
+| `profile_photo_path` | file | عکس پروفایل | (JPG, PNG, GIF) |
 
 ### نمونه درخواست
 
-```json
-{
-    "first_name": "علی",
-    "last_name": "محمدی",
-    "email": "teacher@example.com",
-    "phone": "09123456789",
-    "bio": "معلم انگلیسی با تجربه",
-    "qualifications": "کارشناسی ارشد زبان انگلیسی، مدرک TEFL",
-    "languages_taught": "انگلیسی, فرانسوی",
-    "specialization": "تدریس مکالمه و مهارت‌های تجاری",
-    "resume_summary": "15 سال تجربه تدریس در دبیرستان و دانشگاه",
-    "introduction_video": "https://youtube.com/watch?v=abc123",
-    "hourly_rate": 250000,
-    "experience_years": 15
-}
+```
+name: علی محمدی
+email: teacher@example.com
+phone: 09123456789
+bio: معلم انگلیسی با تجربه
+qualifications: کارشناسی ارشد زبان انگلیسی، مدرک TEFL
+languages_taught: انگلیسی, فرانسوی
+specialization: تدریس مکالمه و مهارت‌های تجاری
+resume_summary: 15 سال تجربه تدریس در دبیرستان و دانشگاه
+introduction_video: <file> (فایل ویدئو)
+hourly_rate: 250000
+experience_years: 15
+profile_photo_path: <file> (عکس پروفایل)
 ```
 
 ### نمونه پاسخ موفق (200 OK)
@@ -141,8 +134,7 @@ POST /api/profile/
     "teacher": {
         "id": 42,
         "username": "ali.teacher",
-        "first_name": "علی",
-        "last_name": "محمدی",
+        "name": "علی محمدی",
         "email": "teacher@example.com",
         "phone": "09123456789",
         "bio": "معلم انگلیسی با تجربه",
@@ -151,7 +143,7 @@ POST /api/profile/
         "languages_taught": "انگلیسی, فرانسوی",
         "specialization": "تدریس مکالمه",
         "resume_summary": "15 سال تجربه",
-        "introduction_video": "https://youtube.com/watch?v=abc123",
+        "introduction_video": "/media/videos/intro_12345.mp4",
         "hourly_rate": "250000.00",
         "experience_years": 15,
         "is_teacher_verified": true
@@ -163,12 +155,17 @@ POST /api/profile/
 ```bash
 curl -X POST https://api.example.com/api/profile/ \
   -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "qualifications": "کارشناسی ارشد زبان انگلیسی",
-    "hourly_rate": 250000,
-    "experience_years": 15
-  }'
+  -F "name=علی محمدی" \
+  -F "email=teacher@example.com" \
+  -F "phone=09123456789" \
+  -F "bio=معلم انگلیسی با تجربه" \
+  -F "qualifications=کارشناسی ارشد" \
+  -F "languages_taught=انگلیسی, فرانسوی" \
+  -F "specialization=تدریس مکالمه" \
+  -F "introduction_video=@/path/to/video.mp4" \
+  -F "hourly_rate=250000" \
+  -F "experience_years=15" \
+  -F "profile_photo_path=@/path/to/photo.jpg"
 ```
 
 ---
@@ -298,14 +295,39 @@ POST /api/profile/
 ```bash
 curl -X POST https://api.example.com/api/profile/ \
   -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "first_name=علی" \
-  -F "last_name=محمدی" \
+  -F "name=علی محمدی" \
+  -F "email=ali@example.com" \
+  -F "phone=09123456789" \
   -F "profile_photo_path=@/path/to/image.jpg"
 ```
 
 ### محدودیت‌های فایل
 - **فرمت‌های مجاز:** JPG, JPEG, PNG, GIF
 - **حداکثر اندازه:** معمولاً 5MB
+
+---
+
+## آپلود ویدئوی معرفی
+
+### Endpoint
+```
+POST /api/profile/
+```
+
+### توضیح
+معلمان می‌توانند از `form-data` برای آپلود ویدئوی معرفی استفاده کنند.
+
+### نمونه cURL
+```bash
+curl -X POST https://api.example.com/api/profile/ \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "name=علی محمدی" \
+  -F "introduction_video=@/path/to/video.mp4"
+```
+
+### محدودیت‌های فایل
+- **فرمت‌های مجاز:** MP4, AVI, MOV, WebM, FLV, MKV, 3GP, M4V, OGV
+- **حداکثر اندازه:** معمولاً 100MB
 
 ---
 
@@ -419,15 +441,12 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```bash
 curl -X POST https://api.example.com/api/profile/ \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "علی محمدی",
-    "email": "ali@example.com",
-    "phone": "09123456789",
-    "bio": "دانش‌آموز فعال",
-    "birth_date": "1403-05-24",
-    "gender": "male"
-  }'
+  -F "name=علی محمدی" \
+  -F "email=ali@example.com" \
+  -F "phone=09123456789" \
+  -F "bio=دانش‌آموز فعال" \
+  -F "birth_date=1403-05-24" \
+  -F "gender=male"
 ```
 
 ### مرحله 3: پاسخ
