@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 import os
 import uuid
-from django.core.validators import FileExtensionValidator, RegexValidator
+from django.core.validators import FileExtensionValidator, RegexValidator, MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 import hashlib
 import jdatetime
@@ -707,8 +707,8 @@ class TeacherRating(BaseModel):
     stars = models.IntegerField(
         default=5,
         validators=[
-            models.MinValueValidator(1),
-            models.MaxValueValidator(5)
+            MinValueValidator(1),
+            MaxValueValidator(5)
         ],
         verbose_name=_("Stars"),
         help_text=_("ستاره (1-5)")

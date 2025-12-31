@@ -3,6 +3,7 @@ from django.conf import settings
 from safedelete import SOFT_DELETE_CASCADE
 from core.abstract_models import BaseModel
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Field(BaseModel):
@@ -377,8 +378,8 @@ class StudentRating(BaseModel):
     score = models.IntegerField(
         default=0,
         validators=[
-            models.MinValueValidator(0),
-            models.MaxValueValidator(100)
+            MinValueValidator(0),
+            MaxValueValidator(100)
         ],
         verbose_name=_("Score"),
         help_text=_("امتیاز (0-100)")
@@ -387,8 +388,8 @@ class StudentRating(BaseModel):
     stars = models.IntegerField(
         default=0,
         validators=[
-            models.MinValueValidator(0),
-            models.MaxValueValidator(5)
+            MinValueValidator(0),
+            MaxValueValidator(5)
         ],
         verbose_name=_("Stars"),
         help_text=_("ستاره (0-5)")
