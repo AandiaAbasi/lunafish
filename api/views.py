@@ -1241,6 +1241,29 @@ class UserProfileAPIView(APIView):
     
     @extend_schema(
         tags=['Profile Management'],
+        summary='Get User/Teacher Profile',
+        description='Get current user or teacher profile information',
+        responses={
+            200: OpenApiResponse(description="Profile retrieved successfully"),
+            401: OpenApiResponse(description="User not authenticated"),
+        }
+    )
+    def get(self, request):
+        """Get user profile"""
+        if request.user.role == 'teacher':
+            serializer = EditTeacherProfileSerializer(request.user)
+            key = 'teacher'
+        else:
+            serializer = EditUserProfileSerializer(request.user)
+            key = 'user'
+            
+        return Response({
+            "success": True,
+            key: serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    @extend_schema(
+        tags=['Profile Management'],
         summary='Update User/Teacher Profile',
         description='Update user or teacher profile information based on role',
         request=EditUserProfileSerializer,
