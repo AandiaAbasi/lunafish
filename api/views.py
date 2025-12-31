@@ -6854,13 +6854,22 @@ class TeacherProfileRatingAPIView(APIView):
     دریافت امتیازات معلم برای پروفایل
     
     GET /api/teacher/{teacher_id}/rating-profile/
+    
+    اگر معلم rating نداشته باشد، 200 OK با داده‌های خالی برگردانید (404 ندهید)
     """
     permission_classes = [AllowAny]
     
     def get(self, request, teacher_id):
         from account.models import TeacherRating
         
-        teacher = get_object_or_404(User, id=teacher_id, role='teacher')
+        # Check if teacher exists
+        try:
+            teacher = User.objects.get(id=teacher_id, role='teacher')
+        except User.DoesNotExist:
+            return Response(
+                {'error': _('معلم یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
         
         # دریافت آمار امتیازات
         rating_stats = teacher.get_teacher_rating_stats()
@@ -6891,6 +6900,8 @@ class TeacherRatingsListAPIView(APIView):
     دریافت تمام امتیازات معلم
     
     GET /api/teacher/{teacher_id}/ratings/
+    
+    اگر معلم rating نداشته باشد، 200 OK با لیست خالی برگردانید (404 ندهید)
     """
     permission_classes = [AllowAny]
     
@@ -6898,7 +6909,14 @@ class TeacherRatingsListAPIView(APIView):
         from account.models import TeacherRating
         from rest_framework.pagination import PageNumberPagination
         
-        teacher = get_object_or_404(User, id=teacher_id, role='teacher')
+        # Check if teacher exists
+        try:
+            teacher = User.objects.get(id=teacher_id, role='teacher')
+        except User.DoesNotExist:
+            return Response(
+                {'error': _('معلم یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
         
         # دریافت امتیازات تایید شده
         queryset = TeacherRating.objects.filter(
