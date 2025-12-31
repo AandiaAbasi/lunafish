@@ -465,7 +465,7 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
     languages_taught = serializers.CharField(required=False, allow_blank=True, help_text=_("Languages that can be taught"))
     specialization = serializers.CharField(required=False, allow_blank=True, help_text=_("Area of specialization"))
     resume_summary = serializers.CharField(required=False, allow_blank=True, help_text=_("Brief professional summary"))
-    introduction_video = serializers.FileField(required=False, allow_null=True, help_text=_("Introduction video file"))
+    introduction_video = serializers.FileField(required=False, allow_null=True, allow_empty_file=False, help_text=_("Introduction video file"))
     hourly_rate = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True, help_text=_("Hourly teaching rate"))
     available_times = serializers.JSONField(required=False, allow_null=True, help_text=_("Available teaching times (JSON format)"))
     experience_years = serializers.IntegerField(required=False, allow_null=True, help_text=_("Years of teaching experience"))
@@ -546,8 +546,8 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
         return gender_map[value_lower]
     
     def validate_introduction_video(self, value):
-        """Handle video deletion - if empty string, return None"""
-        if value == '' or value == 'null' or value == 'false':
+        """Handle video deletion and empty values"""
+        if not value:
             return None
         return value
     
@@ -558,9 +558,8 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         """Update only the fields that are provided and not empty"""
-        # فقط فیلدهای موجود در validated_data را به‌روزرسانی کنیم
         for field, value in validated_data.items():
-            if value is not None:  # فقط اگر مقدار موجود باشد
+            if value is not None:
                 setattr(instance, field, value)
         instance.save()
         return instance
