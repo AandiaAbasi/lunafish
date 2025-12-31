@@ -4380,7 +4380,7 @@ class TeacherDetailAPIView(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request, id):
-        """Get teacher detail with all related data"""
+        """Get teacher detail with all related data and rating stats"""
         try:
             teacher = User.objects.get(id=id, role='teacher', is_teacher_verified=True)
         except User.DoesNotExist:
@@ -4390,8 +4390,29 @@ class TeacherDetailAPIView(APIView):
             )
         
         from .classroom_serializers import TeacherDetailSerializer
-        serializer = TeacherDetailSerializer(teacher)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        from account.serializers import TeacherProfileWithStatsSerializer
+        
+        # Get base teacher details
+        base_serializer = TeacherDetailSerializer(teacher)
+        base_data = base_serializer.data
+        
+        # Add rating and medal statistics
+        stats_serializer = TeacherProfileWithStatsSerializer(teacher, context={'request': request})
+        
+        # Merge stats into response
+        base_data['rating_stats'] = {
+            'total_ratings': stats_serializer.data.get('total_ratings'),
+            'total_rating_stars': stats_serializer.data.get('total_rating_stars'),
+            'average_rating_stars': stats_serializer.data.get('average_rating_stars'),
+            'total_comments': stats_serializer.data.get('total_comments'),
+            'ratings_by_type': stats_serializer.data.get('ratings_by_type'),
+        }
+        base_data['student_stats'] = {
+            'students_given_ratings': stats_serializer.data.get('students_given_ratings'),
+            'total_student_ratings_given': stats_serializer.data.get('total_student_ratings_given'),
+        }
+        
+        return Response(base_data, status=status.HTTP_200_OK)
 
 
 # ========== Parent Portal APIs ==========
