@@ -537,3 +537,220 @@ class SelectAvatarSerializer(serializers.Serializer):
             return value
         except AvatarTemplate.DoesNotExist:
             raise serializers.ValidationError(_("Selected avatar does not exist"))
+
+
+class StudentProfileWithStatsSerializer(serializers.ModelSerializer):
+    """
+    سریالایزر برای نمایش پروفایل دانش‌آموز با آمار امتیازات و مدال‌ها
+    """
+    profile_photo_url = serializers.SerializerMethodField()
+    
+    # آمار امتیازات
+    total_ratings = serializers.SerializerMethodField()
+    total_rating_score = serializers.SerializerMethodField()
+    total_rating_stars = serializers.SerializerMethodField()
+    average_rating_score = serializers.SerializerMethodField()
+    average_rating_stars = serializers.SerializerMethodField()
+    
+    # آمار مدال‌ها
+    total_medals = serializers.SerializerMethodField()
+    medals_by_type = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'name', 'email', 'phone', 'bio',
+            'profile_photo_path', 'profile_photo_url',
+            'gender', 'birth_date',
+            'total_ratings', 'total_rating_score', 'total_rating_stars',
+            'average_rating_score', 'average_rating_stars',
+            'total_medals', 'medals_by_type'
+        ]
+        read_only_fields = [
+            'id', 'username', 'profile_photo_path', 'profile_photo_url',
+            'total_ratings', 'total_rating_score', 'total_rating_stars',
+            'average_rating_score', 'average_rating_stars',
+            'total_medals', 'medals_by_type'
+        ]
+    
+    def get_profile_photo_url(self, obj):
+        if obj.profile_photo_path:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_photo_path.url)
+            return obj.profile_photo_path.url
+        return None
+    
+    def get_total_ratings(self, obj):
+        """تعداد کل امتیازات دریافت شده"""
+        from exercise.models import StudentRating
+        return StudentRating.objects.filter(student=obj).count()
+    
+    def get_total_rating_score(self, obj):
+        """جمع تمام امتیازات (0-100)"""
+        from exercise.models import StudentRating
+        from django.db.models import Sum
+        result = StudentRating.objects.filter(student=obj).aggregate(
+            total=Sum('score')
+        )
+        return result['total'] or 0
+    
+    def get_total_rating_stars(self, obj):
+        """جمع تمام ستاره‌ها (0-5)"""
+        from exercise.models import StudentRating
+        from django.db.models import Sum
+        result = StudentRating.objects.filter(student=obj).aggregate(
+            total=Sum('stars')
+        )
+        return result['total'] or 0
+    
+    def get_average_rating_score(self, obj):
+        """میانگین امتیازات"""
+        from exercise.models import StudentRating
+        from django.db.models import Avg
+        result = StudentRating.objects.filter(student=obj).aggregate(
+            average=Avg('score')
+        )
+        return round(result['average'] or 0, 2)
+    
+    def get_average_rating_stars(self, obj):
+        """میانگین ستاره‌ها"""
+        from exercise.models import StudentRating
+        from django.db.models import Avg
+        result = StudentRating.objects.filter(student=obj).aggregate(
+            average=Avg('stars')
+        )
+        return round(result['average'] or 0, 2)
+    
+    def get_total_medals(self, obj):
+        """تعداد کل مدال‌های دریافت شده"""
+        from exercise.models import StudentMedal
+        return StudentMedal.objects.filter(student=obj).count()
+    
+    def get_medals_by_type(self, obj):
+        """تقسیم‌بندی مدال‌ها بر اساس نوع"""
+        from exercise.models import StudentMedal
+        from django.db.models import Count
+        medals = StudentMedal.objects.filter(student=obj).values('medal_type').annotate(
+            count=Count('id')
+        )
+        return {item['medal_type']: item['count'] for item in medals}
+
+
+class TeacherProfileWithStatsSerializer(serializers.ModelSerializer):
+    """
+    سریالایزر برای نمایش پروفایل معلم با آمار امتیازات
+    """
+    profile_photo_url = serializers.SerializerMethodField()
+    introduction_video_url = serializers.SerializerMethodField()
+    
+    # آمار امتیازات معلم
+    total_ratings = serializers.SerializerMethodField()
+    total_rating_stars = serializers.SerializerMethodField()
+    average_rating_stars = serializers.SerializerMethodField()
+    total_comments = serializers.SerializerMethodField()
+    ratings_by_type = serializers.SerializerMethodField()
+    
+    # آمار امتیازات دانش‌آموزان
+    students_given_ratings = serializers.SerializerMethodField()
+    total_student_ratings_given = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'name', 'email', 'phone', 'bio',
+            'profile_photo_path', 'profile_photo_url',
+            'introduction_video', 'introduction_video_url',
+            'qualifications', 'languages_taught', 'specialization',
+            'experience_years', 'hourly_rate', 'gender', 'birth_date',
+            'is_teacher_verified',
+            'total_ratings', 'total_rating_stars', 'average_rating_stars',
+            'total_comments', 'ratings_by_type',
+            'students_given_ratings', 'total_student_ratings_given'
+        ]
+        read_only_fields = [
+            'id', 'username', 'profile_photo_path', 'profile_photo_url',
+            'introduction_video', 'introduction_video_url',
+            'is_teacher_verified',
+            'total_ratings', 'total_rating_stars', 'average_rating_stars',
+            'total_comments', 'ratings_by_type',
+            'students_given_ratings', 'total_student_ratings_given'
+        ]
+    
+    def get_profile_photo_url(self, obj):
+        if obj.profile_photo_path:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_photo_path.url)
+            return obj.profile_photo_path.url
+        return None
+    
+    def get_introduction_video_url(self, obj):
+        if obj.introduction_video:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.introduction_video.url)
+            return obj.introduction_video.url
+        return None
+    
+    def get_total_ratings(self, obj):
+        """تعداد کل امتیازاتی که این معلم دریافت کرده"""
+        from account.models import TeacherRating
+        return TeacherRating.objects.filter(teacher=obj, is_verified=True).count()
+    
+    def get_total_rating_stars(self, obj):
+        """جمع تمام ستاره‌هایی که این معلم دریافت کرده"""
+        from account.models import TeacherRating
+        from django.db.models import Sum
+        result = TeacherRating.objects.filter(teacher=obj, is_verified=True).aggregate(
+            total=Sum('stars')
+        )
+        return result['total'] or 0
+    
+    def get_average_rating_stars(self, obj):
+        """میانگین ستاره‌های این معلم"""
+        from account.models import TeacherRating
+        from django.db.models import Avg
+        result = TeacherRating.objects.filter(teacher=obj, is_verified=True).aggregate(
+            average=Avg('stars')
+        )
+        return round(result['average'] or 0, 2)
+    
+    def get_total_comments(self, obj):
+        """تعداد نظرات برای این معلم"""
+        from account.models import TeacherRating
+        return TeacherRating.objects.filter(
+            teacher=obj,
+            is_verified=True
+        ).exclude(comment='').exclude(comment__isnull=True).count()
+    
+    def get_ratings_by_type(self, obj):
+        """تقسیم‌بندی امتیازات بر اساس نوع ارائه‌دهنده"""
+        from account.models import TeacherRating
+        from django.db.models import Count, Avg
+        ratings = TeacherRating.objects.filter(
+            teacher=obj,
+            is_verified=True
+        ).values('rater_type').annotate(
+            count=Count('id'),
+            avg_stars=Avg('stars')
+        )
+        return {item['rater_type']: {
+            'count': item['count'],
+            'average_stars': round(item['avg_stars'], 2)
+        } for item in ratings}
+    
+    def get_students_given_ratings(self, obj):
+        """تعداد دانش‌آموزانی که این معلم برایشان امتیاز داده"""
+        from exercise.models import StudentRating
+        return StudentRating.objects.filter(teacher=obj).values('student').distinct().count()
+    
+    def get_total_student_ratings_given(self, obj):
+        """جمع کل امتیازاتی که این معلم به دانش‌آموزان داده"""
+        from exercise.models import StudentRating
+        from django.db.models import Sum
+        result = StudentRating.objects.filter(teacher=obj).aggregate(
+            total=Sum('score')
+        )
+        return result['total'] or 0
+

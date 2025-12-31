@@ -1243,19 +1243,21 @@ class UserProfileAPIView(APIView):
     @extend_schema(
         tags=['Profile Management'],
         summary='Get User/Teacher Profile',
-        description='Get current user or teacher profile information',
+        description='Get current user or teacher profile information with stats',
         responses={
             200: OpenApiResponse(description="Profile retrieved successfully"),
             401: OpenApiResponse(description="User not authenticated"),
         }
     )
     def get(self, request):
-        """Get user profile"""
+        """Get user profile with stats"""
+        from account.serializers import StudentProfileWithStatsSerializer, TeacherProfileWithStatsSerializer
+        
         if request.user.role == 'teacher':
-            serializer = EditTeacherProfileSerializer(request.user)
+            serializer = TeacherProfileWithStatsSerializer(request.user, context={'request': request})
             key = 'teacher'
         else:
-            serializer = EditUserProfileSerializer(request.user)
+            serializer = StudentProfileWithStatsSerializer(request.user, context={'request': request})
             key = 'user'
             
         return Response({
@@ -1276,22 +1278,28 @@ class UserProfileAPIView(APIView):
     )
     def post(self, request):
         """Update user profile via POST"""
+        from account.serializers import StudentProfileWithStatsSerializer, TeacherProfileWithStatsSerializer
+        
         # Use appropriate serializer based on role
         if request.user.role == 'teacher':
             serializer = EditTeacherProfileSerializer(request.user, data=request.data, partial=True)
             key = 'teacher'
             message = _("Teacher profile updated successfully")
+            display_serializer = TeacherProfileWithStatsSerializer
         else:
             serializer = EditUserProfileSerializer(request.user, data=request.data, partial=True)
             key = 'user'
             message = _("Profile updated successfully")
+            display_serializer = StudentProfileWithStatsSerializer
             
         if serializer.is_valid():
             serializer.save()
+            # Return profile with stats after update
+            result_serializer = display_serializer(request.user, context={'request': request})
             return Response({
                 "success": True,
                 "message": message,
-                key: serializer.__class__(request.user).data
+                key: result_serializer.data
             }, status=status.HTTP_200_OK)
         
         return Response({
