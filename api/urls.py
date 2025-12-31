@@ -111,5 +111,5 @@ urlpatterns = [
     path('support-messages/', views.SupportMessageAPIView.as_view(), name='support_messages'),
     path('support-messages/<int:message_id>/', views.SupportMessageDetailAPIView.as_view(), name='support_message_detail'),
     path('teacher-conversations/', views.TeacherConversationsAPIView.as_view(), name='teacher_conversations'),
-    path('teacher-conversations/<int:teacher_id>/', views.TeacherConversationsAPIView.as_view(), name='teacher_conversation_detail'),
+    path('teacher-conversations/<int:teacher_id>/', views.TeacherConversationDetailAPIView.as_view(), name='teacher_conversation_detail'),
 ]
