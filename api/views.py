@@ -6933,3 +6933,48 @@ class TeacherRatingsListAPIView(APIView):
         serializer = TeacherRatingSerializer(paginated_queryset, many=True)
         
         return paginator.get_paginated_response(serializer.data)
+
+
+class MyTeacherRatingAPIView(APIView):
+    """
+    دریافت نظری که خود دانش‌آموز به معلم داده است
+    
+    GET /api/my-rating/teacher/{teacher_id}/
+    
+    دانش‌آموز می‌تواند نظری که خودش به معلم داده را ببیند
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, teacher_id):
+        from account.models import TeacherRating
+        
+        # بررسی وجود معلم
+        try:
+            teacher = User.objects.get(id=teacher_id, role='teacher')
+        except User.DoesNotExist:
+            return Response(
+                {'error': _('معلم یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # دریافت نظر دانش‌آموز فعلی برای این معلم
+        try:
+            rating = TeacherRating.objects.get(
+                teacher=teacher,
+                rater=request.user
+            )
+        except TeacherRating.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': _('شما هنوز برای این معلم نظری ثبت نکرده‌اید'),
+                'rating': None
+            }, status=status.HTTP_200_OK)
+        
+        from .rating_medal_serializers import TeacherRatingSerializer
+        serializer = TeacherRatingSerializer(rating)
+        
+        return Response({
+            'success': True,
+            'message': _('نظر شما برای این معلم'),
+            'rating': serializer.data
+        }, status=status.HTTP_200_OK)

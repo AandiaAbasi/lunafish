@@ -135,6 +135,7 @@ urlpatterns = [
     path('rating/teacher/', views.GiveTeacherRatingAPIView.as_view(), name='give_teacher_rating'),
     path('teacher/<int:teacher_id>/rating-profile/', views.TeacherProfileRatingAPIView.as_view(), name='teacher_rating_profile'),
     path('teacher/<int:teacher_id>/ratings/', views.TeacherRatingsListAPIView.as_view(), name='teacher_ratings_list'),
+    path('my-rating/teacher/<int:teacher_id>/', views.MyTeacherRatingAPIView.as_view(), name='my_teacher_rating'),
     
     # ========== Support Message APIs (پیام‌های پشتیبانی) ==========
     path('support-messages/', views.SupportMessageAPIView.as_view(), name='support_messages'),
