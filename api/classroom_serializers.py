@@ -350,11 +350,29 @@ class TeacherListSerializer(serializers.Serializer):
     is_teacher_verified = serializers.BooleanField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     
+    # Rating stats
+    total_ratings = serializers.SerializerMethodField()
+    average_rating_stars = serializers.SerializerMethodField()
+    
     def get_resume_summary(self, obj):
         """Return truncated resume summary (first 200 characters)"""
         if hasattr(obj, 'resume_summary') and obj.resume_summary:
             return obj.resume_summary[:200] + ('...' if len(obj.resume_summary) > 200 else '')
         return ''
+    
+    def get_total_ratings(self, obj):
+        """تعداد کل امتیازاتی که این معلم دریافت کرده"""
+        from account.models import TeacherRating
+        return TeacherRating.objects.filter(teacher=obj, is_verified=True).count()
+    
+    def get_average_rating_stars(self, obj):
+        """میانگین ستاره‌های این معلم"""
+        from account.models import TeacherRating
+        from django.db.models import Avg
+        result = TeacherRating.objects.filter(teacher=obj, is_verified=True).aggregate(
+            average=Avg('stars')
+        )
+        return round(result['average'] or 0, 2)
 
 
 class TeachingSubjectDetailSerializer(serializers.ModelSerializer):

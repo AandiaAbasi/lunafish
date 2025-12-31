@@ -4246,11 +4246,11 @@ class GetExamAttemptDetailAPIView(APIView):
 
 class TeacherListAPIView(generics.ListAPIView):
     """
-    API: List all teachers with basic information
+    API: List all teachers with basic information and ratings
     
     Description:
         Returns a paginated list of all verified teachers with their basic
-        information for discovery and browsing.
+        information and rating statistics for discovery and browsing.
     
     Permissions:
         - Allow any user (public access)
@@ -4276,6 +4276,8 @@ class TeacherListAPIView(generics.ListAPIView):
                 - experience_years: integer
                 - is_teacher_verified: boolean
                 - created_at: string (ISO datetime)
+                - total_ratings: integer - تعداد امتیازات
+                - average_rating_stars: decimal - میانگین امتیاز (0-5)
     """
     permission_classes = [AllowAny]
     pagination_class = None  # Will be set dynamically
