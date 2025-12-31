@@ -310,8 +310,29 @@ class EditTeacherProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['username','name','bio','profile_photo_path']
-        extra_kwargs = {'profile_photo_path': {'required': False}}
+        fields = [
+            'username', 'name', 'email', 'phone', 'bio', 'profile_photo_path',
+            'gender', 'birth_date',
+            'qualifications', 'languages_taught', 'specialization', 
+            'resume_summary', 'introduction_video', 'hourly_rate', 'experience_years',
+            'is_teacher_verified'
+        ]
+        read_only_fields = ['is_teacher_verified']
+        extra_kwargs = {
+            'profile_photo_path': {'required': False},
+            'introduction_video': {'required': False},
+            'email': {'required': False},
+            'phone': {'required': False},
+            'bio': {'required': False},
+            'gender': {'required': False},
+            'birth_date': {'required': False},
+            'qualifications': {'required': False},
+            'languages_taught': {'required': False},
+            'specialization': {'required': False},
+            'resume_summary': {'required': False},
+            'hourly_rate': {'required': False},
+            'experience_years': {'required': False},
+        }
     
     def validate_username(self, value):
         """Validate username format and uniqueness"""
@@ -333,6 +354,28 @@ class EditTeacherProfileSerializer(serializers.ModelSerializer):
         if self.instance and value != self.instance.username:
             if User.objects.filter(username=value).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError(_("This username is already taken. Please choose another one."))
+        
+        return value
+    
+    def validate_email(self, value):
+        """Validate email uniqueness"""
+        if not value:
+            return value
+        
+        if self.instance and value != self.instance.email:
+            if User.objects.filter(email=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError(_("This email is already registered."))
+        
+        return value
+    
+    def validate_phone(self, value):
+        """Validate phone uniqueness"""
+        if not value:
+            return value
+        
+        if self.instance and value != self.instance.phone:
+            if User.objects.filter(phone=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError(_("This phone number is already registered."))
         
         return value
     
