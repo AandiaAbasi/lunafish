@@ -721,7 +721,7 @@ class TeacherProfileWithStatsSerializer(serializers.ModelSerializer):
             'is_teacher_verified',
             'total_ratings', 'total_rating_stars', 'average_rating_stars',
             'total_comments', 'ratings_by_type',
-            'students_given_ratings', 'total_student_ratings_given'
+            'students_given_ratings', 'total_student_ratings_given', 'resume_summary'
         ]
         read_only_fields = [
             'id', 'username', 'profile_photo_path', 'profile_photo_url',
