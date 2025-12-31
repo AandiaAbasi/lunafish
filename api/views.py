@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, generics, parsers, serializers
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
@@ -6525,5 +6526,354 @@ class StudentTransactionListAPIView(APIView):
         
         paginated_queryset = paginator.paginate_queryset(queryset, request)
         serializer = StudentTransactionSerializer(paginated_queryset, many=True)
+        
+        return paginator.get_paginated_response(serializer.data)
+
+
+# ========== Student Rating & Medal APIs ==========
+
+class GiveStudentRatingAPIView(APIView):
+    """
+    اعطای امتیاز و ستاره به دانش‌آموز توسط معلم
+    
+    POST /api/rating/student/
+    
+    Request body:
+    {
+        "student": 2,
+        "teachingsubject": 5,
+        "order": 123,  # اختیاری
+        "rating_type": "exercise",
+        "score": 85,
+        "stars": 4,
+        "comment": "خوب انجام دادی"
+    }
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        from exercise.models import StudentRating
+        from .rating_medal_serializers import StudentRatingCreateSerializer
+        
+        # بررسی اینکه معلم است
+        if request.user.role != 'teacher':
+            return Response({
+                'success': False,
+                'error': _("فقط معلمان می‌توانند امتیاز بدهند")
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = StudentRatingCreateSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            rating = serializer.save()
+            result_serializer = StudentRatingCreateSerializer(rating)
+            return Response({
+                'success': True,
+                'message': _("امتیاز ثبت شد"),
+                'rating': result_serializer.data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'success': False,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateStudentRatingAPIView(APIView):
+    """
+    بروزرسانی امتیاز دانش‌آموز توسط معلم
+    
+    PUT /api/rating/student/{rating_id}/
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request, rating_id):
+        from exercise.models import StudentRating
+        from .rating_medal_serializers import StudentRatingUpdateSerializer, StudentRatingSerializer
+        
+        rating = get_object_or_404(StudentRating, id=rating_id)
+        
+        # بررسی مجوز (فقط معلمی که امتیاز داده)
+        if rating.teacher != request.user:
+            return Response({
+                'success': False,
+                'error': _("شما مجاز نیستید")
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = StudentRatingUpdateSerializer(rating, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            result = StudentRatingSerializer(rating)
+            return Response({
+                'success': True,
+                'message': _("امتیاز بروزرسانی شد"),
+                'rating': result.data
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            'success': False,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class GiveStudentMedalAPIView(APIView):
+    """
+    اعطای مدال به دانش‌آموز توسط معلم
+    
+    POST /api/medal/student/
+    
+    Request body:
+    {
+        "student": 2,
+        "teachingsubject": 5,
+        "order": 123,  # اختیاری
+        "medal_type": "gold",
+        "title": "حل صحیح تمام سؤالات",
+        "description": "دانش‌آموز تمام سؤالات را درست پاسخ داد",
+        "icon_url": "https://..."
+    }
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        from exercise.models import StudentMedal
+        from .rating_medal_serializers import StudentMedalCreateSerializer
+        
+        # بررسی اینکه معلم است
+        if request.user.role != 'teacher':
+            return Response({
+                'success': False,
+                'error': _("فقط معلمان می‌توانند مدال بدهند")
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = StudentMedalCreateSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            medal = serializer.save()
+            result_serializer = StudentMedalCreateSerializer(medal)
+            return Response({
+                'success': True,
+                'message': _("مدال اعطا شد"),
+                'medal': result_serializer.data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'success': False,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteStudentMedalAPIView(APIView):
+    """
+    حذف مدال دانش‌آموز (برای تصحیح اشتباه)
+    
+    DELETE /api/medal/student/{medal_id}/
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request, medal_id):
+        from exercise.models import StudentMedal
+        
+        medal = get_object_or_404(StudentMedal, id=medal_id)
+        
+        # بررسی مجوز
+        if medal.teacher != request.user:
+            return Response({
+                'success': False,
+                'error': _("شما مجاز نیستید")
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        medal.delete()
+        return Response({
+            'success': True,
+            'message': _("مدال حذف شد")
+        }, status=status.HTTP_204_NO_CONTENT)
+
+
+class StudentProfileRatingAPIView(APIView):
+    """
+    دریافت امتیازات و مدال‌های دانش‌آموز برای پروفایل
+    
+    GET /api/student/rating-profile/{student_id}/
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, student_id):
+        from exercise.models import StudentRating, StudentMedal
+        
+        student = get_object_or_404(User, id=student_id, role='user')
+        
+        # دریافت آمار امتیازات
+        rating_stats = student.get_student_rating_stats()
+        total_medals = student.get_received_medals_count()
+        medals_by_type = student.get_received_medals_by_type()
+        
+        # آخرین امتیازات
+        recent_ratings = StudentRating.objects.filter(student=student).order_by('-created_at')[:5]
+        
+        # آخرین مدال‌ها
+        recent_medals = StudentMedal.objects.filter(student=student).order_by('-created_at')[:5]
+        
+        from .rating_medal_serializers import StudentRatingSerializer, StudentMedalSerializer
+        
+        data = {
+            'student_id': student.id,
+            'student_name': student.name or student.username,
+            'rating_stats': rating_stats,
+            'total_medals': total_medals,
+            'medals_by_type': medals_by_type,
+            'recent_ratings': StudentRatingSerializer(recent_ratings, many=True).data,
+            'recent_medals': StudentMedalSerializer(recent_medals, many=True).data
+        }
+        
+        return Response({
+            'success': True,
+            'profile': data
+        }, status=status.HTTP_200_OK)
+
+
+class ExerciseRatingDetailAPIView(APIView):
+    """
+    دریافت امتیاز و مدال یک تمرین
+    
+    GET /api/exercise/{exercise_id}/rating/
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, exercise_id):
+        from exercise.models import StudentRating, StudentMedal
+        
+        order = get_object_or_404(Order, id=exercise_id)
+        
+        # بررسی مجوز (دانش‌آموز خود یا معلم درس)
+        if order.user != request.user and order.teachingsubject.teacher != request.user:
+            return Response({
+                'success': False,
+                'error': _("شما مجاز نیستید")
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        rating = StudentRating.objects.filter(order=order).first()
+        medals = StudentMedal.objects.filter(order=order)
+        
+        from .rating_medal_serializers import StudentRatingSerializer, StudentMedalSerializer
+        
+        data = {
+            'exercise_id': order.id,
+            'has_rating': rating is not None,
+            'has_medals': medals.exists(),
+            'rating': StudentRatingSerializer(rating).data if rating else None,
+            'medals': StudentMedalSerializer(medals, many=True).data
+        }
+        
+        return Response({
+            'success': True,
+            'data': data
+        }, status=status.HTTP_200_OK)
+
+
+# ========== Teacher Rating APIs ==========
+
+class GiveTeacherRatingAPIView(APIView):
+    """
+    اعطای امتیاز به معلم توسط دانش‌آموز یا والدین
+    
+    POST /api/rating/teacher/
+    
+    Request body:
+    {
+        "teacher": 5,
+        "stars": 5,
+        "comment": "معلم خوبی هستید",
+        "is_anonymous": false
+    }
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        from account.models import TeacherRating
+        from .rating_medal_serializers import TeacherRatingCreateSerializer
+        
+        serializer = TeacherRatingCreateSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            rating = serializer.save()
+            result_serializer = TeacherRatingCreateSerializer(rating)
+            return Response({
+                'success': True,
+                'message': _("امتیاز داده شد"),
+                'rating': result_serializer.data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'success': False,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TeacherProfileRatingAPIView(APIView):
+    """
+    دریافت امتیازات معلم برای پروفایل
+    
+    GET /api/teacher/{teacher_id}/rating-profile/
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, teacher_id):
+        from account.models import TeacherRating
+        
+        teacher = get_object_or_404(User, id=teacher_id, role='teacher')
+        
+        # دریافت آمار امتیازات
+        rating_stats = teacher.get_teacher_rating_stats()
+        
+        # دریافت آخرین امتیازات (فقط تایید شده‌ها)
+        recent_ratings = TeacherRating.objects.filter(
+            teacher=teacher,
+            is_verified=True
+        ).order_by('-created_at')[:10]
+        
+        from .rating_medal_serializers import TeacherRatingSerializer
+        
+        data = {
+            'teacher_id': teacher.id,
+            'teacher_name': teacher.name or teacher.username,
+            'rating_stats': rating_stats,
+            'recent_ratings': TeacherRatingSerializer(recent_ratings, many=True).data
+        }
+        
+        return Response({
+            'success': True,
+            'profile': data
+        }, status=status.HTTP_200_OK)
+
+
+class TeacherRatingsListAPIView(APIView):
+    """
+    دریافت تمام امتیازات معلم
+    
+    GET /api/teacher/{teacher_id}/ratings/
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, teacher_id):
+        from account.models import TeacherRating
+        from rest_framework.pagination import PageNumberPagination
+        
+        teacher = get_object_or_404(User, id=teacher_id, role='teacher')
+        
+        # دریافت امتیازات تایید شده
+        queryset = TeacherRating.objects.filter(
+            teacher=teacher,
+            is_verified=True
+        ).order_by('-created_at')
+        
+        # صفحه‌بندی
+        paginator = PageNumberPagination()
+        paginator.page_size = int(request.query_params.get('page_size', 20))
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        
+        from .rating_medal_serializers import TeacherRatingSerializer
+        serializer = TeacherRatingSerializer(paginated_queryset, many=True)
         
         return paginator.get_paginated_response(serializer.data)

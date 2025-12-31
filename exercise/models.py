@@ -231,6 +231,40 @@ class Order(BaseModel):
 
     def __str__(self):
         return f"Attempt #{self.id}"
+    
+    # ========== Rating & Medal Methods ==========
+    
+    def has_rating(self):
+        """بررسی اینکه آیا این تمرین امتیاز داده شده است"""
+        return hasattr(self, 'rating') and self.rating is not None
+    
+    def has_medals(self):
+        """بررسی اینکه آیا این تمرین مدال دریافت کرده است"""
+        return self.medals.exists()
+    
+    def get_rating(self):
+        """دریافت امتیاز این تمرین"""
+        return getattr(self, 'rating', None)
+    
+    def get_medals(self):
+        """دریافت تمام مدال‌های این تمرین"""
+        return self.medals.all()
+    
+    def get_rating_stats(self):
+        """
+        اطلاعات امتیاز و ستاره این تمرین
+        """
+        if self.has_rating():
+            rating = self.get_rating()
+            return {
+                'score': rating.score,
+                'stars': rating.stars,
+                'comment': rating.comment,
+                'rating_type': rating.rating_type,
+                'given_at': rating.created_at,
+                'teacher_name': rating.teacher.name or rating.teacher.username
+            }
+        return None
 
 
 class OrderDetail(BaseModel):
@@ -275,3 +309,210 @@ class OrderDetail(BaseModel):
 
     def __str__(self):
         return f"Answer #{self.id} for Answer #{self.order.id}"
+
+
+# ========== Student Rating & Medal System ==========
+
+class StudentRating(BaseModel):
+    """
+    امتیاز و ستاره‌ای که معلم به دانش‌آموز می‌دهد
+    
+    معلم می‌تواند:
+    - امتیاز (0-100) بدهد
+    - ستاره (1-5) بدهد
+    - این امتیاز برای تمرین یا فعالیت کلاس باشد
+    """
+    RATING_TYPE_CHOICES = [
+        ('exercise', _('Exercise')),           # تمرین
+        ('activity', _('Class Activity')),     # فعالیت کلاس
+        ('participation', _('Participation')), # مشارکت
+        ('behavior', _('Behavior')),           # رفتار
+        ('other', _('Other')),                 # دیگر
+    ]
+    
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='given_ratings',
+        limit_choices_to={'role': 'teacher'},
+        verbose_name=_("Teacher"),
+        help_text=_("معلمی که این امتیاز را داده است")
+    )
+    
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='received_ratings',
+        limit_choices_to={'role': 'user'},
+        verbose_name=_("Student"),
+        help_text=_("دانش‌آموزی که امتیاز دریافت کرده است")
+    )
+    
+    teachingsubject = models.ForeignKey(
+        'classroom.TeachingSubject',
+        on_delete=models.CASCADE,
+        related_name='student_ratings',
+        verbose_name=_("Teaching Subject"),
+        help_text=_("درسی که این امتیاز برای آن است")
+    )
+    
+    order = models.OneToOneField(
+        Order,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='rating',
+        verbose_name=_("Exercise/Attempt"),
+        help_text=_("تمرین یا آزمونی که این امتیاز برای آن است (اختیاری)")
+    )
+    
+    rating_type = models.CharField(
+        max_length=20,
+        choices=RATING_TYPE_CHOICES,
+        default='exercise',
+        verbose_name=_("Rating Type"),
+        help_text=_("نوع امتیازدهی")
+    )
+    
+    score = models.IntegerField(
+        default=0,
+        validators=[
+            models.MinValueValidator(0),
+            models.MaxValueValidator(100)
+        ],
+        verbose_name=_("Score"),
+        help_text=_("امتیاز (0-100)")
+    )
+    
+    stars = models.IntegerField(
+        default=0,
+        validators=[
+            models.MinValueValidator(0),
+            models.MaxValueValidator(5)
+        ],
+        verbose_name=_("Stars"),
+        help_text=_("ستاره (0-5)")
+    )
+    
+    comment = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Comment"),
+        help_text=_("نظر معلم در مورد عملکرد دانش‌آموز")
+    )
+    
+    class Meta:
+        verbose_name = _("Student Rating")
+        verbose_name_plural = _("Student Ratings")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['student', '-created_at']),
+            models.Index(fields=['teacher', '-created_at']),
+            models.Index(fields=['teachingsubject']),
+        ]
+        unique_together = ('student', 'order')  # هر تمرین فقط یک امتیاز
+    
+    def __str__(self):
+        return f"{self.student.name or self.student.username} - {self.score}/100 - {self.stars}⭐"
+
+
+class StudentMedal(BaseModel):
+    """
+    مدال‌هایی که معلم به دانش‌آموز می‌دهد
+    
+    مدال معمولاً به خاطر:
+    - حل درست تمرین
+    - انجام بهتر فعالیت کلاس
+    - بیشتر شرکت کردن
+    - رفتار خوب
+    """
+    MEDAL_TYPE_CHOICES = [
+        ('gold', _('Gold')),          # طلایی
+        ('silver', _('Silver')),      # نقره‌ای
+        ('bronze', _('Bronze')),      # برنزی
+        ('star', _('Star')),          # ستاره
+        ('heart', _('Heart')),        # قلب
+        ('trophy', _('Trophy')),      # جام
+        ('certificate', _('Certificate')),  # گواهی
+        ('badge', _('Badge')),        # نشان
+        ('achievement', _('Achievement')),  # دستاورد
+        ('custom', _('Custom')),      # سفارشی
+    ]
+    
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='given_medals',
+        limit_choices_to={'role': 'teacher'},
+        verbose_name=_("Teacher"),
+        help_text=_("معلمی که این مدال را داده است")
+    )
+    
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='received_medals',
+        limit_choices_to={'role': 'user'},
+        verbose_name=_("Student"),
+        help_text=_("دانش‌آموزی که مدال دریافت کرده است")
+    )
+    
+    teachingsubject = models.ForeignKey(
+        'classroom.TeachingSubject',
+        on_delete=models.CASCADE,
+        related_name='student_medals',
+        verbose_name=_("Teaching Subject"),
+        help_text=_("درسی که این مدال برای آن است")
+    )
+    
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='medals',
+        verbose_name=_("Exercise/Attempt"),
+        help_text=_("تمرین یا آزمونی که این مدال برای آن است (اختیاری)")
+    )
+    
+    medal_type = models.CharField(
+        max_length=20,
+        choices=MEDAL_TYPE_CHOICES,
+        default='gold',
+        verbose_name=_("Medal Type"),
+        help_text=_("نوع مدال")
+    )
+    
+    title = models.CharField(
+        max_length=255,
+        verbose_name=_("Medal Title"),
+        help_text=_("عنوان مدال (مثال: حل صحیح تمام سؤالات)")
+    )
+    
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Description"),
+        help_text=_("توضیح مدال")
+    )
+    
+    icon_url = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name=_("Icon URL"),
+        help_text=_("URL تصویر مدال")
+    )
+    
+    class Meta:
+        verbose_name = _("Student Medal")
+        verbose_name_plural = _("Student Medals")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['student', '-created_at']),
+            models.Index(fields=['teacher']),
+            models.Index(fields=['teachingsubject']),
+        ]
+    
+    def __str__(self):
+        return f"{self.student.name or self.student.username} - {self.title}"

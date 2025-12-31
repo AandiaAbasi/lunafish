@@ -123,6 +123,19 @@ urlpatterns = [
     path('exercise/results/', views.GetExamResultsAPIView.as_view(), name='exam_results_list'),
     path('exercise/results/<int:attempt_id>/', views.GetExamAttemptDetailAPIView.as_view(), name='exam_results_detail'),
     
+    # ========== Student Rating & Medal APIs ==========
+    path('rating/student/', views.GiveStudentRatingAPIView.as_view(), name='give_student_rating'),
+    path('rating/student/<int:rating_id>/', views.UpdateStudentRatingAPIView.as_view(), name='update_student_rating'),
+    path('medal/student/', views.GiveStudentMedalAPIView.as_view(), name='give_student_medal'),
+    path('medal/student/<int:medal_id>/', views.DeleteStudentMedalAPIView.as_view(), name='delete_student_medal'),
+    path('student/<int:student_id>/rating-profile/', views.StudentProfileRatingAPIView.as_view(), name='student_rating_profile'),
+    path('exercise/<int:exercise_id>/rating/', views.ExerciseRatingDetailAPIView.as_view(), name='exercise_rating_detail'),
+    
+    # ========== Teacher Rating APIs ==========
+    path('rating/teacher/', views.GiveTeacherRatingAPIView.as_view(), name='give_teacher_rating'),
+    path('teacher/<int:teacher_id>/rating-profile/', views.TeacherProfileRatingAPIView.as_view(), name='teacher_rating_profile'),
+    path('teacher/<int:teacher_id>/ratings/', views.TeacherRatingsListAPIView.as_view(), name='teacher_ratings_list'),
+    
     # ========== Support Message APIs (پیام‌های پشتیبانی) ==========
     path('support-messages/', views.SupportMessageAPIView.as_view(), name='support_messages'),
     path('support-messages/<int:message_id>/', views.SupportMessageDetailAPIView.as_view(), name='support_message_detail'),

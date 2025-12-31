@@ -278,6 +278,119 @@ class User(AbstractUser, BaseModel):
         """Check if user is a verified teacher"""
         return self.role == 'teacher' and self.is_teacher_verified
     
+    # ========== Teacher Rating Methods ==========
+    
+    def get_teacher_rating_stats(self):
+        """
+        محاسبه آمار امتیازات معلم
+        
+        بازمی‌گرداند:
+        {
+            'average_stars': میانگین ستاره,
+            'total_ratings': تعداد امتیازات,
+            'total_comments': تعداد نظرات,
+            'by_rater_type': تقسیم‌بندی بر اساس نوع ارائه‌دهنده
+        }
+        """
+        from account.models import TeacherRating
+        
+        ratings = TeacherRating.objects.filter(teacher=self, is_verified=True)
+        
+        if not ratings.exists():
+            return {
+                'average_stars': 0,
+                'total_ratings': 0,
+                'total_comments': 0,
+                'by_rater_type': {}
+            }
+        
+        from django.db.models import Avg, Count
+        
+        stats = ratings.aggregate(
+            avg_stars=Avg('stars'),
+            total=Count('id')
+        )
+        
+        by_type = ratings.values('rater_type').annotate(
+            count=Count('id'),
+            avg_stars=Avg('stars')
+        )
+        
+        total_comments = ratings.filter(comment__isnull=False).exclude(comment='').count()
+        
+        return {
+            'average_stars': round(stats['avg_stars'] or 0, 2),
+            'total_ratings': stats['total'],
+            'total_comments': total_comments,
+            'by_rater_type': {item['rater_type']: item for item in by_type}
+        }
+    
+    def get_student_rating_stats(self):
+        """
+        محاسبه آمار امتیازات دانش‌آموز
+        
+        بازمی‌گرداند:
+        {
+            'average_score': میانگین امتیاز,
+            'average_stars': میانگین ستاره,
+            'total_ratings': تعداد امتیازات,
+            'by_subject': تقسیم‌بندی بر اساس درس
+        }
+        """
+        from exercise.models import StudentRating
+        
+        ratings = StudentRating.objects.filter(student=self)
+        
+        if not ratings.exists():
+            return {
+                'average_score': 0,
+                'average_stars': 0,
+                'total_ratings': 0,
+                'by_subject': {}
+            }
+        
+        from django.db.models import Avg, Count
+        
+        stats = ratings.aggregate(
+            avg_score=Avg('score'),
+            avg_stars=Avg('stars'),
+            total=Count('id')
+        )
+        
+        by_subject = ratings.values('teachingsubject__title').annotate(
+            count=Count('id'),
+            avg_score=Avg('score'),
+            avg_stars=Avg('stars')
+        )
+        
+        return {
+            'average_score': round(stats['avg_score'] or 0, 2),
+            'average_stars': round(stats['avg_stars'] or 0, 2),
+            'total_ratings': stats['total'],
+            'by_subject': list(by_subject)
+        }
+    
+    def get_received_medals_count(self):
+        """
+        تعداد مدال‌هایی که دانش‌آموز دریافت کرده است
+        """
+        from exercise.models import StudentMedal
+        
+        return StudentMedal.objects.filter(student=self).count()
+    
+    def get_received_medals_by_type(self):
+        """
+        تعداد مدال‌ها بر اساس نوع
+        """
+        from exercise.models import StudentMedal
+        from django.db.models import Count
+        
+        medals = StudentMedal.objects.filter(student=self).values('medal_type').annotate(
+            count=Count('id')
+        )
+        
+        return {item['medal_type']: item['count'] for item in medals}
+    
     def __str__(self):
         return f"{self.username}"
 
@@ -549,4 +662,88 @@ class ParentAppUsageLog(BaseModel):
     
     def __str__(self):
         return f"{self.parent.student.name} - {self.date} - {self.total_minutes} min"
+
+
+# ========== Teacher Rating System ==========
+
+class TeacherRating(BaseModel):
+    """
+    امتیاز و ستاره‌ای که دانش‌آموز یا والدین به معلم می‌دهند
     
+    دانش‌آموز و والدین می‌توانند:
+    - امتیاز (1-5 ستاره) بدهند
+    - نظر بنویسند
+    """
+    RATER_TYPE_CHOICES = [
+        ('student', _('Student')),
+        ('parent', _('Parent')),
+    ]
+    
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_teacher_ratings',
+        limit_choices_to={'role': 'teacher'},
+        verbose_name=_("Teacher"),
+        help_text=_("معلمی که این امتیاز را دریافت کرده است")
+    )
+    
+    rater = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='given_teacher_ratings',
+        verbose_name=_("Rater"),
+        help_text=_("فردی که این امتیاز را داده است (دانش‌آموز یا والدین)")
+    )
+    
+    rater_type = models.CharField(
+        max_length=20,
+        choices=RATER_TYPE_CHOICES,
+        default='student',
+        verbose_name=_("Rater Type"),
+        help_text=_("نوع فردی که امتیاز می‌دهد")
+    )
+    
+    stars = models.IntegerField(
+        default=5,
+        validators=[
+            models.MinValueValidator(1),
+            models.MaxValueValidator(5)
+        ],
+        verbose_name=_("Stars"),
+        help_text=_("ستاره (1-5)")
+    )
+    
+    comment = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Comment"),
+        help_text=_("نظر و بازخورد در مورد معلم")
+    )
+    
+    is_anonymous = models.BooleanField(
+        default=False,
+        verbose_name=_("Is Anonymous"),
+        help_text=_("آیا نام ارائه‌دهنده نمایش داده شود؟")
+    )
+    
+    is_verified = models.BooleanField(
+        default=True,
+        verbose_name=_("Is Verified"),
+        help_text=_("آیا این امتیاز تایید شده است؟")
+    )
+    
+    class Meta:
+        verbose_name = _("Teacher Rating")
+        verbose_name_plural = _("Teacher Ratings")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['teacher', '-created_at']),
+            models.Index(fields=['rater']),
+            models.Index(fields=['rater_type']),
+        ]
+        unique_together = ('teacher', 'rater')  # هر فرد فقط یک امتیاز برای هر معلم
+    
+    def __str__(self):
+        rater_name = self.rater.name or self.rater.username if not self.is_anonymous else "Anonymous"
+        return f"{rater_name} rated {self.teacher.name or self.teacher.username}: {self.stars}⭐"
