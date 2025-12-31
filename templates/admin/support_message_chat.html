@@ -561,7 +561,7 @@
             const teacherName = data.teacher_name || 'Unknown';
 
             renderTeachers();
-            renderMessages(teacherName);
+            renderChatView(teacherName);
 
         } catch (error) {
             console.error('Error loading messages:', error);
