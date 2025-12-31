@@ -5299,6 +5299,97 @@ class SupportMessageDetailAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+class TeacherConversationsAPIView(APIView):
+    """API View for grouped teacher conversations in support messages"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, teacher_id=None):
+        """Get all teachers with their support message conversations or specific teacher's messages"""
+        from classroom.models import SupportMessage
+        from account.models import User
+        from django.db.models import Count, Max, Q
+        
+        if teacher_id:
+            # دریافت تمام پیام‌های بین یک معلم خاص و ادمین
+            try:
+                teacher = User.objects.get(id=teacher_id, role='teacher')
+                
+                messages = SupportMessage.objects.filter(
+                    teacher_id=teacher_id
+                ).select_related('teacher', 'sender').order_by('created_at')
+                
+                results = []
+                for msg in messages:
+                    results.append({
+                        'id': msg.id,
+                        'teacher_id': msg.teacher_id,
+                        'teacher_name': msg.teacher.name or msg.teacher.username,
+                        'sender_id': msg.sender_id,
+                        'sender_name': msg.sender.name or msg.sender.username if msg.sender else None,
+                        'message_text': msg.message_text,
+                        'status': msg.status,
+                        'created_at': msg.created_at,
+                        'read_at': msg.read_at,
+                        'attachments': [
+                            {
+                                'id': att.id,
+                                'file': att.file.url if att.file else None,
+                                'name': att.file.name if att.file else None
+                            }
+                            for att in msg.attachments.all()
+                        ]
+                    })
+                
+                return Response({
+                    'results': results,
+                    'total': len(results),
+                    'teacher_name': teacher.name or teacher.username
+                }, status=status.HTTP_200_OK)
+            
+            except User.DoesNotExist:
+                return Response(
+                    {'error': _("Teacher not found")},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            except Exception as e:
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        
+        else:
+            # گروپ‌بندی پیام‌ها بر اساس teacher
+            try:
+                conversations = SupportMessage.objects.values('teacher_id').annotate(
+                    teacher_name=models.F('teacher__name'),
+                    teacher_username=models.F('teacher__username'),
+                    message_count=Count('id'),
+                    unread_count=Count('id', filter=Q(status='sent')),
+                    last_message_date=Max('created_at')
+                ).order_by('-last_message_date')
+                
+                results = []
+                for conv in conversations:
+                    results.append({
+                        'teacher_id': conv['teacher_id'],
+                        'teacher_name': conv['teacher_name'] or conv['teacher_username'],
+                        'message_count': conv['message_count'],
+                        'unread_count': conv['unread_count'],
+                        'last_message_date': conv['last_message_date']
+                    })
+                
+                return Response({
+                    'results': results,
+                    'total': len(results)
+                }, status=status.HTTP_200_OK)
+            
+            except Exception as e:
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+
 class AttendanceListAPIView(APIView):
     """
     دریافت لیست حضور و غیاب برای یک جلسه (کلاس)

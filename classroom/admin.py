@@ -706,6 +706,7 @@ class SupportMessageAdmin(admin.ModelAdmin):
         """نمایش صفحه مدیریت چت"""
         context = self.admin_site.each_context(request)
         context['title'] = _('مدیریت پیام‌های پشتیبانی')
+        context['view_type'] = 'conversations'  # نشان‌دهنده نوع نمایش
         return render(request, 'admin/support_message_chat.html', context)
     
     def chat_link(self, obj):
