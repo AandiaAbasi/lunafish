@@ -832,32 +832,42 @@
         return cookieValue;
     }
 
-    // تبدیل تاریخ میلادی به شمسی
-    function toJalali(date) {
-        const gy = date.getFullYear();
-        const gm = date.getMonth() + 1;
-        const gd = date.getDate();
+    // تبدیل تاریخ میلادی به شمسی (مطابق jdatetime)
+    function toJalali(gdate) {
+        const gy = gdate.getFullYear();
+        const gm = gdate.getMonth() + 1;
+        const gd = gdate.getDate();
 
         let jy, jm, jd;
 
-        const gy2 = (gm > 2) ? (gy + 1) : gy;
-        let days = 365 * gy + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) - 80 + gd + [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334][gm - 1];
+        const g_d_n = 365 * gy + Math.floor((gy + 3) / 4) - Math.floor((gy + 99) / 100) + Math.floor((gy + 399) / 400);
+        
+        let gd_n = g_d_n;
+        for (let v = 0; v < gm - 1; v++) {
+            gd_n += [31, 28 + (((gy % 4 === 0) && (gy % 100 !== 0)) || (gy % 400 === 0) ? 1 : 0), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][v];
+        }
+        gd_n += gd;
 
-        jy = -1595 + 33 * Math.floor(days / 12053) + 4 * Math.floor((days % 12053) / 1461);
+        const j_d_n = gd_n - 79;
 
-        days %= 1461;
+        const j_np = Math.floor(j_d_n / 12053);
+        let jd_n = j_d_n % 12053;
 
-        if (days > 365) {
-            jy += Math.floor((days - 1) / 365);
-            days = (days - 1) % 365;
+        jy = 979 + 33 * j_np + 4 * Math.floor(jd_n / 1461);
+        
+        jd_n %= 1461;
+
+        if (jd_n >= 366) {
+            jy += Math.floor((jd_n - 1) / 365);
+            jd_n = (jd_n - 1) % 365;
         }
 
-        if (days < 186) {
-            jm = 1 + Math.floor(days / 31);
-            jd = 1 + (days % 31);
+        if (jd_n < 186) {
+            jm = 1 + Math.floor(jd_n / 31);
+            jd = 1 + (jd_n % 31);
         } else {
-            jm = 7 + Math.floor((days - 186) / 30);
-            jd = 1 + ((days - 186) % 30);
+            jm = 7 + Math.floor((jd_n - 186) / 30);
+            jd = 1 + ((jd_n - 186) % 30);
         }
 
         return { year: jy, month: jm, day: jd };
