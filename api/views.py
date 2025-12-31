@@ -5349,20 +5349,29 @@ class TeacherConversationDetailAPIView(APIView):
         from account.models import User
         
         try:
-            # بررسی وجود معلم
-            teacher = User.objects.get(id=teacher_id, role='teacher')
-            
-            # دریافت تمام پیام‌های بین این معلم و ادمین
+            # دریافت تمام پیام‌های بین این معلم و ادمین (بدون محدودیت role)
             messages = SupportMessage.objects.filter(
                 teacher_id=teacher_id
             ).select_related('teacher', 'sender').order_by('created_at')
             
+            # بررسی اینکه معلم وجود دارد
+            if not messages.exists():
+                try:
+                    teacher = User.objects.get(id=teacher_id)
+                except User.DoesNotExist:
+                    return Response(
+                        {'error': _("Teacher not found")},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            
             results = []
+            teacher_name = None
             for msg in messages:
+                teacher_name = msg.teacher.name or msg.teacher.username
                 results.append({
                     'id': msg.id,
                     'teacher_id': msg.teacher_id,
-                    'teacher_name': msg.teacher.name or msg.teacher.username,
+                    'teacher_name': teacher_name,
                     'sender_id': msg.sender_id,
                     'sender_name': msg.sender.name or msg.sender.username if msg.sender else None,
                     'message_text': msg.message_text,
@@ -5379,17 +5388,20 @@ class TeacherConversationDetailAPIView(APIView):
                     ]
                 })
             
+            # اگر پیامی نیست، حداقل نام معلم را برگردان
+            if not teacher_name:
+                try:
+                    teacher = User.objects.get(id=teacher_id)
+                    teacher_name = teacher.name or teacher.username
+                except:
+                    teacher_name = f"Teacher {teacher_id}"
+            
             return Response({
                 'results': results,
                 'total': len(results),
-                'teacher_name': teacher.name or teacher.username
+                'teacher_name': teacher_name
             }, status=status.HTTP_200_OK)
         
-        except User.DoesNotExist:
-            return Response(
-                {'error': _("Teacher not found")},
-                status=status.HTTP_404_NOT_FOUND
-            )
         except Exception as e:
             return Response(
                 {'error': str(e)},
