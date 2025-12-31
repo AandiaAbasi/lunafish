@@ -5377,6 +5377,7 @@ class TeacherConversationDetailAPIView(APIView):
                     'message_text': msg.message_text,
                     'status': msg.status,
                     'created_at': msg.created_at,
+                    'created_at_display': msg.created_at_display(),
                     'read_at': msg.read_at,
                     'attachments': [
                         {
