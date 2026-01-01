@@ -3283,7 +3283,7 @@ class InitiatePaymentAPIView(APIView):
         # درخواست پرداخت از Zibal
         try:
             zibal_merchant_id = settings.ZIBAL_MERCHANT_ID
-            zibal_api_url = settings.ZIBAL_API_URL
+            zibal_api_url = settings.ZIBAL_REQUEST_URL
             zibal_callback_url = settings.ZIBAL_CALLBACK_URL
             
             # آماده کردن داده‌های درخواست برای Zibal
@@ -3371,7 +3371,22 @@ class PaymentCallbackAPIView(APIView):
             400: OpenApiResponse(description="Invalid data"),
         }
     )
-    def post(self, request):
+    def _get_callback_data(self, request):
+        """Extract callback data from either GET (query_params) or POST (request.data)"""
+        if request.method == 'GET':
+            return {
+                'track_id': request.query_params.get('trackId'),
+                'success': request.query_params.get('success'),
+                'order_id': request.query_params.get('orderId'),
+            }
+        else:
+            return {
+                'track_id': request.data.get('trackId'),
+                'success': request.data.get('success'),
+                'order_id': request.data.get('orderId'),
+            }
+    
+    def _process_callback(self, request):
         from classroom.models import ClassBooking, ClassRevenue
         from django.db import transaction
         import requests
@@ -3379,9 +3394,10 @@ class PaymentCallbackAPIView(APIView):
         
         try:
             # دریافت داده‌های callback از Zibal
-            track_id = request.data.get('trackId')
-            success = request.data.get('success')
-            order_id = request.data.get('orderId')
+            data = self._get_callback_data(request)
+            track_id = data['track_id']
+            success = data['success']
+            order_id = data['order_id']
             
             if not all([track_id, success, order_id]):
                 return Response(
@@ -3397,6 +3413,13 @@ class PaymentCallbackAPIView(APIView):
                     {'error': _('رزرو یافت نشد')},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            
+            # بررسی اگر پرداخت قبلاً تأیید شده (جلوگیری از duplicate)
+            if booking.payment_status == 'paid':
+                return Response({
+                    'success': True,
+                    'message': _('پرداخت قبلاً تأیید شده است')
+                }, status=status.HTTP_200_OK)
             
             # اگر پرداخت ناموفق بود
             if success != 1:
@@ -3494,6 +3517,12 @@ class PaymentCallbackAPIView(APIView):
                 {'error': _('خطای داخلی سرور')},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def get(self, request):
+        return self._process_callback(request)
+    
+    def post(self, request):
+        return self._process_callback(request)
 
 
 class PaymentStatusAPIView(APIView):

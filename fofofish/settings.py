@@ -325,10 +325,20 @@ OTP_LENGTH = 6
 
 # ============ Payment Gateway Configuration ============
 # Zibal Payment Gateway
-ZIBAL_MERCHANT_ID = config('ZIBAL_MERCHANT_ID', default='zibal-merchant-id')
-ZIBAL_API_URL = 'https://api.zibal.ir/v1/request'
-ZIBAL_VERIFY_URL = 'https://api.zibal.ir/v1/verify'
-ZIBAL_CALLBACK_URL = config('ZIBAL_CALLBACK_URL', default='https://fofofish.app/api/payment/callback/')
+
+ZIBAL_MERCHANT_ID = "zibal"  # برای sandbox از 'zibal' استفاده کنید
+ZIBAL_CALLBACK_URL = "fofofish.app/api/payment/callback/"
+USE_SANDBOX = config('USE_SANDBOX', default=True, cast=bool)
+if USE_SANDBOX:
+    ZIBAL_REQUEST_URL = "https://gateway.zibal.ir/v1/request"
+    ZIBAL_VERIFY_URL = "https://gateway.zibal.ir/v1/verify"
+    ZIBAL_START_PAY_URL = "https://gateway.zibal.ir/start/{trackId}"
+    ZIBAL_CALLBACK_URL = config('ZIBAL_CALLBACK_URL', default='https://fofofish.app/api/payment/callback/')
+else:
+    # Production URLs (همون هست)
+    ZIBAL_REQUEST_URL = "https://gateway.zibal.ir/v1/request"
+    ZIBAL_VERIFY_URL = "https://gateway.zibal.ir/v1/verify"
+    ZIBAL_START_PAY_URL = "https://gateway.zibal.ir/start/{trackId}"
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
