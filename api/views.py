@@ -5930,6 +5930,249 @@ class AttendanceListAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class AttendanceGeneralListAPIView(APIView):
+    """
+    دریافت لیست کلی حضور و غیاب همراه با جزئیات کلاس
+    
+    get:
+        Get general attendance list with class details
+        
+        URL: /api/attendance/list/
+        
+        Query Parameters:
+        - student_id: integer (optional) - فیلتر بر اساس دانش‌آموز
+        - teacher_id: integer (optional) - فیلتر بر اساس معلم
+        - subject_id: integer (optional) - فیلتر بر اساس موضوع تدریس
+        - status: string (optional) - فیلتر بر اساس وضعیت (present/absent)
+        - date_from: string (optional) - فیلتر از تاریخ (YYYY-MM-DD)
+        - date_to: string (optional) - فیلتر تا تاریخ (YYYY-MM-DD)
+        - page: integer (optional, default: 1) - شماره صفحه
+        - page_size: integer (optional, default: 20) - تعداد در هر صفحه
+        
+        Returns:
+            200 OK:
+                - count: integer - تعداد کل رکوردها
+                - next: string - لینک صفحه بعد
+                - previous: string - لینک صفحه قبل
+                - results: array - لیست حضور و غیاب با جزئیات کلاس
+                    - id: integer - شناسه حضور/غیاب
+                    - student: object
+                        - id: integer
+                        - name: string
+                        - username: string
+                    - booking: object
+                        - id: integer
+                        - status: string
+                        - price: decimal
+                        - final_price: decimal
+                    - class_details: object
+                        - date: string (Jalali format)
+                        - start_time: string (HH:MM)
+                        - end_time: string (HH:MM)
+                        - subject_title: string
+                        - teacher_name: string
+                        - teacher_id: integer
+                    - status: string (present/absent)
+                    - marked_at: datetime
+                    - created_at: datetime
+                
+            403 Forbidden - دسترسی غیرمجاز
+    
+    Example GET Request:
+    ```
+    GET /api/attendance/list/?student_id=5&status=present&page=1
+    Authorization: Bearer <token>
+    ```
+    
+    Example Response:
+    ```json
+    {
+        "count": 25,
+        "next": "/api/attendance/list/?page=2",
+        "previous": null,
+        "results": [
+            {
+                "id": 1,
+                "student": {
+                    "id": 5,
+                    "name": "محمد رضایی",
+                    "username": "mohammad_r"
+                },
+                "booking": {
+                    "id": 10,
+                    "status": "completed",
+                    "price": "100000.00",
+                    "final_price": "80000.00"
+                },
+                "class_details": {
+                    "date": "1403/10/15",
+                    "start_time": "09:00",
+                    "end_time": "10:00",
+                    "subject_title": "ریاضی پایه نهم",
+                    "teacher_name": "علی محمدی",
+                    "teacher_id": 3
+                },
+                "status": "present",
+                "marked_at": "2024-12-15T09:05:00Z",
+                "created_at": "2024-12-15T09:05:00Z"
+            }
+        ]
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Attendance'],
+        summary='Get General Attendance List with Class Details',
+        description='دریافت لیست کلی حضور و غیاب همراه با جزئیات کامل کلاس',
+        parameters=[
+            OpenApiParameter('student_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='فیلتر بر اساس شناسه دانش‌آموز'),
+            OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='فیلتر بر اساس شناسه معلم'),
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='فیلتر بر اساس شناسه موضوع تدریس'),
+            OpenApiParameter('status', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='فیلتر بر اساس وضعیت: present یا absent'),
+            OpenApiParameter('date_from', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='فیلتر از تاریخ (YYYY-MM-DD)'),
+            OpenApiParameter('date_to', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='فیلتر تا تاریخ (YYYY-MM-DD)'),
+            OpenApiParameter('page', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='شماره صفحه (پیش‌فرض: 1)'),
+            OpenApiParameter('page_size', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='تعداد آیتم در هر صفحه (پیش‌فرض: 20)'),
+        ],
+        responses={
+            200: OpenApiResponse(description="لیست حضور و غیاب با جزئیات کلاس"),
+            403: OpenApiResponse(description="دسترسی غیرمجاز"),
+        }
+    )
+    def get(self, request):
+        """Get general attendance list with complete class details"""
+        from classroom.models import Attendance
+        from rest_framework.pagination import PageNumberPagination
+        from datetime import datetime
+        
+        # دریافت تمام رکوردهای حضور و غیاب
+        attendances = Attendance.objects.all().select_related(
+            'student', 
+            'booking', 
+            'booking__availability',
+            'booking__subject',
+            'booking__teacher'
+        ).order_by('-marked_at')
+        
+        # فیلتر بر اساس دانش‌آموز
+        student_id = request.query_params.get('student_id')
+        if student_id:
+            try:
+                attendances = attendances.filter(student_id=int(student_id))
+            except (ValueError, TypeError):
+                pass
+        
+        # فیلتر بر اساس معلم
+        teacher_id = request.query_params.get('teacher_id')
+        if teacher_id:
+            try:
+                attendances = attendances.filter(booking__teacher_id=int(teacher_id))
+            except (ValueError, TypeError):
+                pass
+        
+        # فیلتر بر اساس موضوع تدریس
+        subject_id = request.query_params.get('subject_id')
+        if subject_id:
+            try:
+                attendances = attendances.filter(booking__subject_id=int(subject_id))
+            except (ValueError, TypeError):
+                pass
+        
+        # فیلتر بر اساس وضعیت
+        status_filter = request.query_params.get('status')
+        if status_filter in ['present', 'absent']:
+            attendances = attendances.filter(status=status_filter)
+        
+        # فیلتر بر اساس بازه تاریخی
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        
+        if date_from:
+            try:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+                attendances = attendances.filter(booking__availability__date__gte=from_date)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+                attendances = attendances.filter(booking__availability__date__lte=to_date)
+            except ValueError:
+                pass
+        
+        # اگر کاربر معلم است، فقط کلاس‌های خودش را ببیند
+        if request.user.role == 'teacher':
+            attendances = attendances.filter(booking__teacher=request.user)
+        
+        # اگر کاربر دانش‌آموز است، فقط حضورهای خودش را ببیند
+        if request.user.role == 'user':
+            attendances = attendances.filter(student=request.user)
+        
+        # Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = int(request.query_params.get('page_size', 20))
+        paginated_attendances = paginator.paginate_queryset(attendances, request)
+        
+        # ساخت پاسخ با جزئیات کامل
+        results = []
+        for attendance in paginated_attendances:
+            # جزئیات دانش‌آموز
+            student_data = {
+                'id': attendance.student.id,
+                'name': attendance.student.name or attendance.student.username,
+                'username': attendance.student.username,
+            }
+            
+            # جزئیات رزرو
+            booking_data = {
+                'id': attendance.booking.id,
+                'status': attendance.booking.status,
+                'price': str(attendance.booking.price),
+                'final_price': str(attendance.booking.final_price),
+            }
+            
+            # جزئیات کلاس (از availability و subject)
+            class_details = {}
+            if attendance.booking.availability:
+                class_details['date'] = attendance.booking.availability.date
+                class_details['start_time'] = str(attendance.booking.availability.start_time)
+                class_details['end_time'] = str(attendance.booking.availability.end_time)
+            else:
+                class_details['date'] = None
+                class_details['start_time'] = None
+                class_details['end_time'] = None
+            
+            if attendance.booking.subject:
+                class_details['subject_title'] = attendance.booking.subject.title
+                class_details['subject_id'] = attendance.booking.subject.id
+            else:
+                class_details['subject_title'] = None
+                class_details['subject_id'] = None
+            
+            if attendance.booking.teacher:
+                class_details['teacher_name'] = attendance.booking.teacher.name or attendance.booking.teacher.username
+                class_details['teacher_id'] = attendance.booking.teacher.id
+            else:
+                class_details['teacher_name'] = None
+                class_details['teacher_id'] = None
+            
+            # ترکیب همه داده‌ها
+            results.append({
+                'id': attendance.id,
+                'student': student_data,
+                'booking': booking_data,
+                'class_details': class_details,
+                'status': attendance.status,
+                'marked_at': attendance.marked_at,
+                'created_at': attendance.created_at,
+            })
+        
+        return paginator.get_paginated_response(results)
+
+
 # ========== Financial System APIs ==========
 
 class TeacherWalletDetailAPIView(APIView):
