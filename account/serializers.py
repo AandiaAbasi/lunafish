@@ -460,6 +460,8 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
     resume summary, hourly rate, and available times.
     Teachers can also set: gender, bio, birth_date
     """
+    introduction_video_delete = serializers.BooleanField(write_only=True, required=False, default=False)
+
     profile_photo_path = serializers.ImageField(required=False, allow_null=True, help_text=_("Teacher profile photo"))
     qualifications = serializers.CharField(required=False, allow_blank=True, help_text=_("Educational qualifications and certifications"))
     languages_taught = serializers.CharField(required=False, allow_blank=True, help_text=_("Languages that can be taught"))
@@ -488,7 +490,8 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
             'profile_photo_path',
             'gender',
             'bio',
-            'birth_date'
+            'birth_date',
+            'introduction_video_delete',
         ]
         extra_kwargs = {
             'name': {'required': False, 'help_text': _("Teacher full name")},
@@ -557,6 +560,12 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
         return attrs
     
     def update(self, instance, validated_data):
+
+        if validated_data.pop('introduction_video_delete', False):
+            if instance.introduction_video:
+                instance.introduction_video.delete(save=False)
+                instance.introduction_video = None
+
         """Update only the fields that are provided and not empty"""
         for field, value in validated_data.items():
             if value is not None:
