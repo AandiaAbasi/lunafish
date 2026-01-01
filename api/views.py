@@ -2902,6 +2902,7 @@ class CreateClassBookingAPIView(APIView):
     def post(self, request):
         from classroom.models import ClassBooking, TeacherAvailability, TeachingSubject
         from .classroom_serializers import ClassBookingSerializer, CreateClassBookingSerializer
+        from django.db import transaction
         
         # فقط دانش‌آموزان می‌توانند کلاس خریداری کنند
         if request.user.role != 'user':
@@ -2925,21 +2926,20 @@ class CreateClassBookingAPIView(APIView):
         subject_id = serializer.validated_data['subject']
         discount_code = serializer.validated_data.get('discount_code')
         
-        # دریافت بازه زمانی و موضوع
+        # ایجاد رزرو کلاس - تمام عملیات باید درون transaction باشد
         try:
-            availability = TeacherAvailability.objects.select_for_update().get(id=availability_id)
-            subject = TeachingSubject.objects.get(id=subject_id)
-        except (TeacherAvailability.DoesNotExist, TeachingSubject.DoesNotExist):
-            return Response(
-                {'error': _('بازه زمانی یا درس یافت نشد')},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        # ایجاد رزرو کلاس
-        try:
-            from django.db import transaction
-            
             with transaction.atomic():
+                # دریافت بازه زمانی با قفل برای جلوگیری از race condition
+                availability = TeacherAvailability.objects.select_for_update().get(id=availability_id)
+                subject = TeachingSubject.objects.get(id=subject_id)
+                
+                # بررسی دوباره وضعیت دسترسی
+                if not availability.is_available or availability.is_booked or availability.is_expired or availability.is_past():
+                    return Response(
+                        {'error': _('این زمان‌بندی دیگر در دسترس نیست')},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
                 # محاسبه قیمت‌ها
                 original_price = availability.price
                 final_price = availability.discount_price if availability.discount_price else original_price
@@ -2968,11 +2968,20 @@ class CreateClassBookingAPIView(APIView):
                     'data': response_serializer.data,
                     'message': _('کلاس با موفقیت خریداری شد')
                 }, status=status.HTTP_201_CREATED)
-        
+        except TeacherAvailability.DoesNotExist:
+            return Response(
+                {'error': _('بازه زمانی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('درس یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
             return Response(
-                {'error': f'خطا: {str(e)}'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'error': _('خطای داخلی سرور')},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 
