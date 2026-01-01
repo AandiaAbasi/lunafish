@@ -3401,6 +3401,8 @@ class PaymentCallbackAPIView(APIView):
     def _process_callback(self, request):
         from classroom.models import ClassBooking, ClassRevenue
         from django.db import transaction
+        from django.utils import timezone
+        from decimal import Decimal
         import requests
         from django.conf import settings
         
@@ -3486,7 +3488,18 @@ class PaymentCallbackAPIView(APIView):
                 amount = verify_data.get('amount')
                 
                 with transaction.atomic():
-                    booking.paid_amount = float(amount) / 100 if amount else booking.final_price
+                    # تبدیل amount به Decimal (handle string/None/int)
+                    try:
+                        if amount:
+                            # Zibal amount را بر حسب ریال برمی‌گرداند (1 unit = 1 ریال)
+                            # و قبلاً divide by 100 می‌شود
+                            paid_amount = Decimal(str(amount)) / Decimal('100')
+                        else:
+                            paid_amount = booking.final_price
+                    except (ValueError, TypeError, Decimal.InvalidOperation):
+                        paid_amount = booking.final_price
+                    
+                    booking.paid_amount = paid_amount
                     booking.payment_status = 'paid'
                     booking.payment_ref = track_id
                     booking.paid_at = timezone.now()
@@ -3501,8 +3514,8 @@ class PaymentCallbackAPIView(APIView):
                             'discount_amount': booking.discount_amount,
                             'total_amount': booking.final_price,
                             'platform_fee_percentage': 30,
-                            'platform_fee': booking.final_price * 0.3,
-                            'teacher_share': booking.final_price * 0.7,
+                            'platform_fee': booking.final_price * Decimal('0.3'),
+                            'teacher_share': booking.final_price * Decimal('0.7'),
                             'is_confirmed': False
                         }
                     )
