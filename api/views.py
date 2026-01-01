@@ -2927,7 +2927,7 @@ class CreateClassBookingAPIView(APIView):
         
         # دریافت بازه زمانی و موضوع
         try:
-            availability = TeacherAvailability.objects.get(id=availability_id)
+            availability = TeacherAvailability.objects.select_for_update().get(id=availability_id)
             subject = TeachingSubject.objects.get(id=subject_id)
         except (TeacherAvailability.DoesNotExist, TeachingSubject.DoesNotExist):
             return Response(
@@ -2937,32 +2937,37 @@ class CreateClassBookingAPIView(APIView):
         
         # ایجاد رزرو کلاس
         try:
-            # قیمت نهایی: اگر قیمت تخفیف وجود دارد از آن استفاده شود، وگرنه قیمت اصلی
-            final_price = availability.discount_price if availability.discount_price else availability.price
+            from django.db import transaction
             
-            booking = ClassBooking.objects.create(
-                availability=availability,
-                teacher=availability.teacher,
-                student=request.user,
-                subject=subject,
-                status='reserved',
-                price=availability.price,
-                discount_amount=0,
-                final_price=final_price
-            )
-            
-            # علامت‌گذاری بازه زمانی به عنوان رزرو شده
-            availability.is_booked = True
-            availability.is_available = False
-            availability.save()
-            
-            # بازگشت داده‌های رزرو
-            response_serializer = ClassBookingSerializer(booking)
-            
-            return Response({
-                'data': response_serializer.data,
-                'message': _('کلاس با موفقیت خریداری شد')
-            }, status=status.HTTP_201_CREATED)
+            with transaction.atomic():
+                # محاسبه قیمت‌ها
+                original_price = availability.price
+                final_price = availability.discount_price if availability.discount_price else original_price
+                discount_amount = original_price - final_price
+                
+                booking = ClassBooking.objects.create(
+                    availability=availability,
+                    teacher=availability.teacher,
+                    student=request.user,
+                    subject=subject,
+                    status='reserved',
+                    price=original_price,
+                    discount_amount=discount_amount,
+                    final_price=final_price
+                )
+                
+                # علامت‌گذاری بازه زمانی به عنوان رزرو شده
+                availability.is_booked = True
+                availability.is_available = False
+                availability.save()
+                
+                # بازگشت داده‌های رزرو
+                response_serializer = ClassBookingSerializer(booking)
+                
+                return Response({
+                    'data': response_serializer.data,
+                    'message': _('کلاس با موفقیت خریداری شد')
+                }, status=status.HTTP_201_CREATED)
         
         except Exception as e:
             return Response(
@@ -3209,6 +3214,234 @@ class CancelBookingAPIView(APIView):
         return Response({
             'data': serializer.data,
             'message': _('رزرو با موفقیت لغو شد')
+        }, status=status.HTTP_200_OK)
+
+
+class InitiatePaymentAPIView(APIView):
+    """
+    Initiate Payment API
+    
+    شروع پرداخت - درخواست token از درگاه پرداخت
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Payment'],
+        summary='Initiate Payment',
+        description='شروع فرایند پرداخت برای کلاس رزرو شده',
+        parameters=[
+            OpenApiParameter('booking_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Booking ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Payment initiated, returns payment token"),
+            400: OpenApiResponse(description="Invalid booking or already paid"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Booking not found"),
+        }
+    )
+    def post(self, request, booking_id):
+        from classroom.models import ClassBooking
+        
+        try:
+            booking = ClassBooking.objects.get(id=booking_id)
+        except ClassBooking.DoesNotExist:
+            return Response(
+                {'error': _('رزرو یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # فقط دانش‌آموز می‌تواند پرداخت کند
+        if request.user.role != 'student' or booking.student_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # بررسی وضعیت
+        if booking.payment_status in ['paid', 'partial']:
+            return Response(
+                {'error': _('این رزرو قبلاً پرداخت شده است')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # درخواست token از درگاه (Placeholder - باید توسط واقعی پیاده‌سازی شود)
+        try:
+            payment_token = f"temp_token_{booking.id}_{timezone.now().timestamp()}"
+            
+            return Response({
+                'success': True,
+                'data': {
+                    'booking_id': booking.id,
+                    'amount': str(booking.final_price),
+                    'currency': 'IRR',
+                    'payment_token': payment_token,
+                    'message': _('پرداخت آغاز شد')
+                }
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': f'خطا در شروع پرداخت: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class PaymentCallbackAPIView(APIView):
+    """
+    Payment Callback API (Webhook)
+    
+    بازخورد از درگاه پرداخت
+    """
+    permission_classes = [AllowAny]
+    
+    @extend_schema(
+        tags=['Payment'],
+        summary='Payment Callback',
+        description='دریافت پاسخ از درگاه پرداخت (Webhook)',
+        responses={
+            200: OpenApiResponse(description="Callback processed"),
+            400: OpenApiResponse(description="Invalid data"),
+        }
+    )
+    def post(self, request):
+        from classroom.models import ClassBooking, ClassRevenue
+        from django.db import transaction
+        
+        try:
+            payment_ref = request.data.get('payment_ref')
+            status_code = request.data.get('status')
+            amount = request.data.get('amount')
+            booking_id = request.data.get('booking_id')
+            
+            if not all([payment_ref, status_code, amount, booking_id]):
+                return Response(
+                    {'error': _('اطلاعات ناقص')},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            booking = ClassBooking.objects.get(id=booking_id)
+            
+            # تطابق مبلغ
+            try:
+                amount_decimal = float(amount)
+                if abs(amount_decimal - float(booking.final_price)) > 0.01:
+                    # مبلغ تطابق ندارد
+                    with transaction.atomic():
+                        booking.payment_status = 'failed'
+                        booking.payment_ref = payment_ref
+                        booking.save()
+                    
+                    return Response({
+                        'success': False,
+                        'message': _('مبلغ تطابق ندارد')
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except (ValueError, TypeError):
+                return Response(
+                    {'error': _('مبلغ نامعتبر')},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # بررسی وضعیت
+            with transaction.atomic():
+                if status_code == 'success' or status_code == '0':
+                    # پرداخت موفق
+                    booking.paid_amount = float(amount)
+                    booking.payment_status = 'paid'
+                    booking.payment_ref = payment_ref
+                    booking.paid_at = timezone.now()
+                    booking.save()
+                    
+                    # فعال‌سازی ClassRevenue اگر هنوز ایجاد نشده
+                    revenue, created = ClassRevenue.objects.get_or_create(
+                        booking=booking,
+                        defaults={
+                            'teacher': booking.teacher,
+                            'original_price': booking.price,
+                            'discount_amount': booking.discount_amount,
+                            'total_amount': booking.final_price,
+                            'platform_fee_percentage': 30,
+                            'platform_fee': booking.final_price * 0.3,
+                            'teacher_share': booking.final_price * 0.7,
+                            'is_confirmed': False
+                        }
+                    )
+                    
+                    return Response({
+                        'success': True,
+                        'message': _('پرداخت تأیید شد')
+                    }, status=status.HTTP_200_OK)
+                else:
+                    # پرداخت ناموفق
+                    booking.payment_status = 'failed'
+                    booking.payment_ref = payment_ref
+                    booking.save()
+                    
+                    return Response({
+                        'success': False,
+                        'message': _('پرداخت ناموفق')
+                    }, status=status.HTTP_200_OK)
+        
+        except ClassBooking.DoesNotExist:
+            return Response(
+                {'error': _('رزرو یافت نشد')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'خطا: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class PaymentStatusAPIView(APIView):
+    """
+    Payment Status API
+    
+    بررسی وضعیت پرداخت
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Payment'],
+        summary='Check Payment Status',
+        description='بررسی وضعیت پرداخت برای یک رزرو',
+        parameters=[
+            OpenApiParameter('booking_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Booking ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Payment status returned"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Booking not found"),
+        }
+    )
+    def get(self, request, booking_id):
+        from classroom.models import ClassBooking
+        
+        try:
+            booking = ClassBooking.objects.get(id=booking_id)
+        except ClassBooking.DoesNotExist:
+            return Response(
+                {'error': _('رزرو یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # فقط دانش‌آموز می‌تواند وضعیت خود را ببیند
+        if request.user.role != 'student' or booking.student_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return Response({
+            'success': True,
+            'data': {
+                'booking_id': booking.id,
+                'payment_status': booking.payment_status,
+                'final_price': str(booking.final_price),
+                'paid_amount': str(booking.paid_amount),
+                'payment_ref': booking.payment_ref,
+                'paid_at': booking.paid_at.isoformat() if booking.paid_at else None,
+                'is_paid': booking.payment_status == 'paid'
+            }
         }, status=status.HTTP_200_OK)
 
 

@@ -120,6 +120,22 @@ class ClassBooking(BaseModel):
     
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name=_("مبلغ تخفیف")) 
     final_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("قیمت نهایی"))
+    
+    # پرداخت
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name=_("مبلغ پرداختی"))
+    payment_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('not_paid', _("پرداخت نشده")),
+            ('partial', _("جزئی")),
+            ('paid', _("پرداخت شده")),
+            ('failed', _("ناموفق"))
+        ],
+        default='not_paid',
+        verbose_name=_("وضعیت پرداخت")
+    )
+    payment_ref = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("شناسه تراکنش"))
+    paid_at = models.DateTimeField(blank=True, null=True, verbose_name=_("تاریخ پرداخت"))
 
     class Meta:
         verbose_name = _("رزرو کلاس")
