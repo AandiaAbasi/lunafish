@@ -3235,7 +3235,7 @@ class InitiatePaymentAPIView(APIView):
     """
     Initiate Payment API
     
-    شروع پرداخت - درخواست token از درگاه پرداخت
+    شروع پرداخت - درخواست URL درگاه پرداخت
     """
     permission_classes = [IsAuthenticated]
     
@@ -3247,7 +3247,7 @@ class InitiatePaymentAPIView(APIView):
             OpenApiParameter('booking_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Booking ID')
         ],
         responses={
-            200: OpenApiResponse(description="Payment initiated, returns payment token"),
+            200: OpenApiResponse(description="Payment initiated, returns payment URL"),
             400: OpenApiResponse(description="Invalid booking or already paid"),
             403: OpenApiResponse(description="Permission denied"),
             404: OpenApiResponse(description="Booking not found"),
@@ -3280,7 +3280,7 @@ class InitiatePaymentAPIView(APIView):
         
         # درخواست token از درگاه (Placeholder - باید توسط واقعی پیاده‌سازی شود)
         try:
-            payment_token = f"temp_token_{booking.id}_{timezone.now().timestamp()}"
+            payment_url = f"https://payment.gateway.com/checkout/{booking.id}/{timezone.now().timestamp()}"
             
             return Response({
                 'success': True,
@@ -3288,7 +3288,7 @@ class InitiatePaymentAPIView(APIView):
                     'booking_id': booking.id,
                     'amount': str(booking.final_price),
                     'currency': 'IRR',
-                    'payment_token': payment_token,
+                    'payment_url': payment_url,
                     'message': _('پرداخت آغاز شد')
                 }
             }, status=status.HTTP_200_OK)
