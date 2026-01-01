@@ -2930,15 +2930,20 @@ class CreateClassBookingAPIView(APIView):
         try:
             with transaction.atomic():
                 # دریافت بازه زمانی با قفل برای جلوگیری از race condition
-                availability = TeacherAvailability.objects.select_for_update().get(id=availability_id)
-                subject = TeachingSubject.objects.get(id=subject_id)
+                try:
+                    availability = TeacherAvailability.objects.select_for_update().get(id=availability_id)
+                except TeacherAvailability.DoesNotExist:
+                    raise
+                
+                try:
+                    subject = TeachingSubject.objects.get(id=subject_id)
+                except TeachingSubject.DoesNotExist:
+                    raise
                 
                 # بررسی دوباره وضعیت دسترسی
                 if not availability.is_available or availability.is_booked or availability.is_expired or availability.is_past():
-                    return Response(
-                        {'error': _('این زمان‌بندی دیگر در دسترس نیست')},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    from django.core.exceptions import ValidationError as DjangoValidationError
+                    raise DjangoValidationError(_('این زمان‌بندی دیگر در دسترس نیست'))
                 
                 # محاسبه قیمت‌ها
                 original_price = availability.price
@@ -2963,11 +2968,11 @@ class CreateClassBookingAPIView(APIView):
                 
                 # بازگشت داده‌های رزرو
                 response_serializer = ClassBookingSerializer(booking)
-                
                 return Response({
                     'data': response_serializer.data,
                     'message': _('کلاس با موفقیت خریداری شد')
                 }, status=status.HTTP_201_CREATED)
+                
         except TeacherAvailability.DoesNotExist:
             return Response(
                 {'error': _('بازه زمانی یافت نشد')},
@@ -2980,7 +2985,7 @@ class CreateClassBookingAPIView(APIView):
             )
         except Exception as e:
             return Response(
-                {'error': _('خطای داخلی سرور')},
+                {'error': _('خطای داخلی سرور: ') + str(type(e).__name__)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
