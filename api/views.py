@@ -4101,11 +4101,13 @@ class CreateFieldAPIView(APIView):
             field = serializer.save()
             response_serializer = FieldRetrieveSerializer(field)
             return Response({
+                'success': True,
                 'data': response_serializer.data,
                 'message': _('سؤال با موفقیت ایجاد شد')
             }, status=status.HTTP_201_CREATED)
         
         return Response({
+            'success': False,
             'error': _('داده‌های نامعتبر'),
             'details': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)

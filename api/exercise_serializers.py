@@ -25,9 +25,9 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
     """Serializer for creating/updating questions (Fields)
     
     Supports:
-    - input (تایپی) - Typing questions
-    - checkbox (چند گزینه‌ای) - Multiple choice
-    - radioButton (تک گزینه‌ای) - Single choice
+    - input (تایپی) - Typing questions (no details needed)
+    - checkbox (چند گزینه‌ای) - Multiple choice (requires details)
+    - radioButton (تک گزینه‌ای) - Single choice (requires details)
     """
     details = FieldDetailSerializer(many=True, required=False, write_only=True)
     
@@ -38,6 +38,26 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             'audio_path', 'video_path', 'guide', 'des', 'sort', 'details', 'correct_answer'
         ]
         read_only_fields = ['id']
+    
+    def validate(self, data):
+        """Validate that choice questions have details and input questions don't"""
+        question_type = data.get('type')
+        details = data.get('details', [])
+        
+        # ✅ سوالات choice باید دارای details باشند
+        if question_type in ['checkbox', 'radioButton']:
+            if not details:
+                raise serializers.ValidationError(
+                    _('سوالات انتخابی باید حداقل یک گزینه داشته باشند')
+                )
+        
+        # ✅ سوالات input نباید details داشته باشند
+        if question_type == 'input':
+            if details:
+                # اگر details ارسال شد، حذفش کن
+                data['details'] = []
+        
+        return data
     
     def create(self, validated_data):
         details_data = validated_data.pop('details', [])
