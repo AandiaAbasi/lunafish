@@ -3293,6 +3293,17 @@ class InitiatePaymentAPIView(APIView):
             booking.paid_at = timezone.now()
             booking.save()
             
+            # ثبت تراکنش دانش‌آموز برای کلاس رایگان
+            StudentTransaction.objects.create(
+                student=booking.student,
+                transaction_type='class_payment',
+                amount=Decimal('0'),
+                booking=booking,
+                description=f'پرداخت کلاس رایگان {booking.subject.title if booking.subject else "نامشخص"} - تاریخ: {booking.availability.date if booking.availability else "نامشخص"}',
+                status='completed',
+                payment_date=timezone.now()
+            )
+            
             return Response({
                 'success': True,
                 'data': {
@@ -3433,7 +3444,7 @@ class PaymentCallbackAPIView(APIView):
             }
     
     def _process_callback(self, request):
-        from classroom.models import ClassBooking, ClassRevenue
+        from classroom.models import ClassBooking, ClassRevenue, StudentTransaction
         from django.db import transaction
         from django.utils import timezone
         from decimal import Decimal
@@ -3548,6 +3559,17 @@ class PaymentCallbackAPIView(APIView):
                             'teacher_share': booking.final_price * Decimal('0.7'),
                             'is_confirmed': False
                         }
+                    )
+                    
+                    # ثبت تراکنش دانش‌آموز (StudentTransaction)
+                    StudentTransaction.objects.create(
+                        student=booking.student,
+                        transaction_type='class_payment',
+                        amount=paid_amount,
+                        booking=booking,
+                        description=f'پرداخت کلاس {booking.subject.title if booking.subject else "نامشخص"} - تاریخ: {booking.availability.date if booking.availability else "نامشخص"}',
+                        status='completed',
+                        payment_date=timezone.now()
                     )
                 
                 # Redirect کاربر به صفحه نتیجه (برای نمایش در مرورگر و سپس redirect به اپ)
