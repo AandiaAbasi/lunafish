@@ -3315,12 +3315,13 @@ class InitiatePaymentAPIView(APIView):
             from django.urls import reverse
             payment_redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
             
-            # آماده کردن داده‌های درخواست برای Zibal (مبلغ نهایی شامل تخفیف)
-            amount_toman = int(float(final_amount) / 10)  # تبدیل ریال به تومان
+            # آماده کردن داده‌های درخواست برای Zibal
+            # final_amount به ریال است، Zibal هم ریال می‌خواهد
+            amount_rial = int(float(final_amount))
             
             payload = {
                 'merchant': zibal_merchant_id,
-                'amount': amount_toman,
+                'amount': amount_rial,  # ✅ ریال برای Zibal
                 'callbackUrl': zibal_callback_url,
                 'description': f'کلاس {booking.subject.title} با معلم {booking.teacher.name}',
                 'orderId': str(booking.id),
@@ -3358,11 +3359,15 @@ class InitiatePaymentAPIView(APIView):
             # ساخت لینک پرداخت Zibal
             payment_url = f'https://gateway.zibal.ir/start/{track_id}'
             
+            # محاسبه مبلغ تومان برای نمایش به کاربر
+            amount_toman = int(float(final_amount) / 10)
+            
             return Response({
                 'success': True,
                 'data': {
                     'booking_id': booking.id,
-                    'amount': str(booking.final_price),
+                    'amount': str(amount_toman),  # ✅ تومان برای نمایش اپ
+                    'amount_rial': str(final_amount),  # ریال خام
                     'currency': 'IRR',
                     'is_free': False,
                     'payment_url': payment_url,
