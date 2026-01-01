@@ -3316,8 +3316,8 @@ class InitiatePaymentAPIView(APIView):
             payment_redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
             
             # آماده کردن داده‌های درخواست برای Zibal
-            # final_amount به ریال است، Zibal هم ریال می‌خواهد
-            amount_rial = int(float(final_amount))
+            # final_amount به تومان است، Zibal می‌خواهد ریال
+            amount_rial = int(float(final_amount) * 10)  # ✅ تومان × 10 = ریال
             
             payload = {
                 'merchant': zibal_merchant_id,
@@ -3359,15 +3359,11 @@ class InitiatePaymentAPIView(APIView):
             # ساخت لینک پرداخت Zibal
             payment_url = f'https://gateway.zibal.ir/start/{track_id}'
             
-            # محاسبه مبلغ تومان برای نمایش به کاربر
-            amount_toman = int(float(final_amount) / 10)
-            
             return Response({
                 'success': True,
                 'data': {
                     'booking_id': booking.id,
-                    'amount': str(amount_toman),  # ✅ تومان برای نمایش اپ
-                    'amount_rial': str(final_amount),  # ریال خام
+                    'amount': str(final_amount),  # ✅ تومان برای نمایش اپ (همانطور که ذخیره شده)
                     'currency': 'IRR',
                     'is_free': False,
                     'payment_url': payment_url,
