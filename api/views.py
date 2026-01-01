@@ -3289,7 +3289,7 @@ class InitiatePaymentAPIView(APIView):
         # اگر مبلغ نهایی 0 است (رایگان)، پرداخت را مستقیم ثبت کن
         if final_amount == 0:
             booking.payment_status = 'paid'
-            booking.paid_amount = 0
+            booking.paid_amount = Decimal('0')
             booking.paid_at = timezone.now()
             booking.save()
             
@@ -3316,7 +3316,7 @@ class InitiatePaymentAPIView(APIView):
             payment_redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
             
             # آماده کردن داده‌های درخواست برای Zibal (مبلغ نهایی شامل تخفیف)
-            amount_toman = int(float(final_amount) / Decimal('10'))  # تبدیل ریال به تومان
+            amount_toman = int(float(final_amount) / 10)  # تبدیل ریال به تومان
             
             payload = {
                 'merchant': zibal_merchant_id,
