@@ -3280,7 +3280,32 @@ class InitiatePaymentAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # درخواست پرداخت از Zibal
+        # ✅ بررسی مبلغ نهایی
+        from decimal import Decimal
+        from django.utils import timezone
+        
+        final_amount = Decimal(str(booking.final_price))
+        
+        # اگر مبلغ نهایی 0 است (رایگان)، پرداخت را مستقیم ثبت کن
+        if final_amount == 0:
+            booking.payment_status = 'paid'
+            booking.paid_amount = 0
+            booking.paid_at = timezone.now()
+            booking.save()
+            
+            return Response({
+                'success': True,
+                'data': {
+                    'booking_id': booking.id,
+                    'amount': '0',
+                    'currency': 'IRR',
+                    'is_free': True,
+                    'payment_url': None,
+                    'message': _('کلاس رایگان است - پرداخت ثبت شد')
+                }
+            }, status=status.HTTP_200_OK)
+        
+        # درخواست پرداخت از Zibal (فقط اگر مبلغ > 0)
         try:
             zibal_merchant_id = settings.ZIBAL_MERCHANT_ID
             zibal_api_url = settings.ZIBAL_REQUEST_URL
@@ -3290,10 +3315,12 @@ class InitiatePaymentAPIView(APIView):
             from django.urls import reverse
             payment_redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
             
-            # آماده کردن داده‌های درخواست برای Zibal
+            # آماده کردن داده‌های درخواست برای Zibal (مبلغ نهایی شامل تخفیف)
+            amount_toman = int(float(final_amount) / Decimal('10'))  # تبدیل ریال به تومان
+            
             payload = {
                 'merchant': zibal_merchant_id,
-                'amount': int(float(booking.final_price)),
+                'amount': amount_toman,
                 'callbackUrl': zibal_callback_url,
                 'description': f'کلاس {booking.subject.title} با معلم {booking.teacher.name}',
                 'orderId': str(booking.id),
@@ -3337,6 +3364,7 @@ class InitiatePaymentAPIView(APIView):
                     'booking_id': booking.id,
                     'amount': str(booking.final_price),
                     'currency': 'IRR',
+                    'is_free': False,
                     'payment_url': payment_url,
                     'message': _('پرداخت آغاز شد')
                 }
