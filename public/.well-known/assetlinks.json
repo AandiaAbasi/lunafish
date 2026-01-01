@@ -1,0 +1,14 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.fofofish.fofofish",
+      "sha256_cert_fingerprints": [
+        "FB:EB:24:AB:FD:C0:BF:B9:7C:DC:D4:92:B3:F8:0F:72:E2:D0:88:9F:51:0B:98:9F:72:8F:CF:E9:33:36:6C:54",
+        "B8:39:20:DC:25:00:C4:15:46:A7:C7:3D:8F:6F:AF:0C:3F:97:42:9E:43:2C:E5:5B:C6:46:D0:67:3A:00:97:75",
+        "45:DF:45:AB:73:DA:3A:5C:85:88:05:87:F9:46:FF:6B:3A:76:95:E8:D2:74:49:00:19:86:87:71:A8:A6:CE:D4"
+      ]
+    }
+  }
+]

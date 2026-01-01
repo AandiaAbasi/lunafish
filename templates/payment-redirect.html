@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>درحال بازگشت به اپلیکیشن...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px 30px;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .status-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: fadeInScale 0.6s ease-out;
+        }
+        
+        .status-icon.success {
+            color: #10b981;
+        }
+        
+        .status-icon.error {
+            color: #ef4444;
+        }
+        
+        h1 {
+            font-size: 24px;
+            color: #111827;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .message {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .countdown {
+            font-size: 36px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .info {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-right: 3px solid #667eea;
+        }
+        
+        .manual-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: background 0.3s ease;
+        }
+        
+        .manual-button:hover {
+            background: #5a67d8;
+        }
+        
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+            margin: 0 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status-icon success" id="statusIcon">✓</div>
+        <h1 id="title">درحال بازگشت...</h1>
+        <p class="message" id="message">لطفاً صبر کنید. شما به‌زودی به اپلیکیشن بازگردانده خواهید شد.</p>
+        
+        <div class="countdown" id="countdown">5</div>
+        
+        <button class="manual-button" id="manualButton" onclick="handleRedirect()">
+            برگشت به اپلیکیشن
+        </button>
+        
+        <div class="info" id="info">
+            اگر به‌طور خودکار بازگردانده نشدید، روی دکمه بالا کلیک کنید.
+        </div>
+    </div>
+
+    <script>
+        // استخراج پارامترهای query string
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+        
+        // تعیین وضعیت پرداخت
+        const status = getQueryParam('status') || 'unknown';
+        const orderId = getQueryParam('orderId') || '';
+        const message = getQueryParam('message') || '';
+        
+        // تنظیم UI بر اساس وضعیت
+        const statusIcon = document.getElementById('statusIcon');
+        const title = document.getElementById('title');
+        const messageEl = document.getElementById('message');
+        
+        if (status === 'success') {
+            statusIcon.textContent = '✓';
+            statusIcon.classList.add('success');
+            title.textContent = 'پرداخت موفق';
+            messageEl.textContent = 'تراکنش شما با موفقیت انجام شد. شما به‌زودی به اپلیکیشن بازگردانده خواهید شد.';
+        } else if (status === 'failed') {
+            statusIcon.textContent = '✕';
+            statusIcon.classList.remove('success');
+            statusIcon.classList.add('error');
+            title.textContent = 'پرداخت ناموفق';
+            messageEl.textContent = message || 'پرداخت شما با خطا روبرو شد. لطفاً دوباره سعی کنید.';
+        } else {
+            statusIcon.textContent = '?';
+            statusIcon.classList.remove('success');
+            statusIcon.classList.add('error');
+            title.textContent = 'وضعیت نامشخص';
+            messageEl.textContent = 'وضعیت تراکنش مشخص نیست.';
+        }
+        
+        // شمارش معکوس
+        let countdown = 5;
+        const countdownEl = document.getElementById('countdown');
+        
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            countdownEl.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                handleRedirect();
+            }
+        }, 1000);
+        
+        // تابع redirect به اپ
+        function handleRedirect() {
+            clearInterval(countdownInterval);
+            
+            // ساخت deep link
+            let deepLink = 'lunafish://payment-result';
+            const params = [];
+            
+            if (status) params.push(`status=${encodeURIComponent(status)}`);
+            if (orderId) params.push(`orderId=${encodeURIComponent(orderId)}`);
+            if (message) params.push(`message=${encodeURIComponent(message)}`);
+            
+            if (params.length > 0) {
+                deepLink += '?' + params.join('&');
+            }
+            
+            // سعی برای redirect
+            // روش 1: Direct window.location
+            window.location.href = deepLink;
+            
+            // روش 2: setTimeout برای fallback (در صورت عدم فعال بودن اپ)
+            setTimeout(() => {
+                // اگر اپ نصب نشده باشد، پیام نشان می‌دهیم
+                alert('اپلیکیشن فوفوفیش نصب نشده است. لطفاً اپلیکیشن را نصب کنید.');
+            }, 2000);
+        }
+        
+        // استفاده از تاریخ و وقت برای کش busting
+        console.log('Payment callback page loaded at:', new Date().toLocaleString('fa-IR'));
+        console.log('Status:', status);
+        console.log('Order ID:', orderId);
+    </script>
+</body>
+</html>

@@ -3286,13 +3286,18 @@ class InitiatePaymentAPIView(APIView):
             zibal_api_url = settings.ZIBAL_REQUEST_URL
             zibal_callback_url = settings.ZIBAL_CALLBACK_URL
             
+            # ساخت بازگشت URL (صفحه redirect به اپ)
+            from django.urls import reverse
+            payment_redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
+            
             # آماده کردن داده‌های درخواست برای Zibal
             payload = {
                 'merchant': zibal_merchant_id,
                 'amount': int(float(booking.final_price)),
                 'callbackUrl': zibal_callback_url,
                 'description': f'کلاس {booking.subject.title} با معلم {booking.teacher.name}',
-                'orderId': str(booking.id)
+                'orderId': str(booking.id),
+                'linkingRef': f'order_{booking.id}'
             }
             
             # ارسال درخواست به Zibal
@@ -3430,10 +3435,9 @@ class PaymentCallbackAPIView(APIView):
             
             # بررسی اگر پرداخت قبلاً تأیید شده (جلوگیری از duplicate)
             if booking.payment_status == 'paid':
-                return Response({
-                    'success': True,
-                    'message': _('پرداخت قبلاً تأیید شده است')
-                }, status=status.HTTP_200_OK)
+                from django.urls import reverse
+                redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
+                return HttpResponseRedirect(redirect_url + f'?status=success&orderId={booking.id}')
             
             # اگر پرداخت ناموفق بود
             if not success:
@@ -3442,10 +3446,9 @@ class PaymentCallbackAPIView(APIView):
                     booking.payment_ref = track_id
                     booking.save()
                 
-                return Response({
-                    'success': False,
-                    'message': _('پرداخت ناموفق')
-                }, status=status.HTTP_200_OK)
+                from django.urls import reverse
+                redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
+                return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={booking.id}&message=Payment+unsuccessful')
             
             # تأیید پرداخت از طریق Zibal Verify API
             zibal_verify_url = settings.ZIBAL_VERIFY_URL
@@ -3465,10 +3468,9 @@ class PaymentCallbackAPIView(APIView):
                         booking.payment_ref = track_id
                         booking.save()
                     
-                    return Response({
-                        'success': False,
-                        'message': _('خطا در تأیید پرداخت')
-                    }, status=status.HTTP_200_OK)
+                    from django.urls import reverse
+                    redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
+                    return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={booking.id}&message=Verification+error')
                 
                 verify_data = verify_response.json()
                 
@@ -3479,10 +3481,9 @@ class PaymentCallbackAPIView(APIView):
                         booking.payment_ref = track_id
                         booking.save()
                     
-                    return Response({
-                        'success': False,
-                        'message': _('تأیید پرداخت ناموفق')
-                    }, status=status.HTTP_200_OK)
+                    from django.urls import reverse
+                    redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
+                    return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={booking.id}&message=Payment+verification+failed')
                 
                 # پرداخت موفق و تأیید شد
                 amount = verify_data.get('amount')
@@ -3520,17 +3521,18 @@ class PaymentCallbackAPIView(APIView):
                         }
                     )
                 
-                return Response({
-                    'success': True,
-                    'message': _('پرداخت تأیید شد')
-                }, status=status.HTTP_200_OK)
+                # Redirect کاربر به صفحه نتیجه (برای نمایش در مرورگر و سپس redirect به اپ)
+                from django.urls import reverse
+                redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
+                redirect_params = f'?status=success&orderId={booking.id}'
+                
+                return HttpResponseRedirect(redirect_url + redirect_params)
             
             except requests.exceptions.RequestException as e:
                 # خطا در اتصال به Zibal Verify
-                return Response({
-                    'success': False,
-                    'message': _('خطا در تأیید پرداخت با درگاه')
-                }, status=status.HTTP_200_OK)
+                from django.urls import reverse
+                redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
+                return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={order_id}&message=Gateway+connection+error')
         
         except ClassBooking.DoesNotExist:
             return Response(
@@ -7369,3 +7371,59 @@ class MyTeacherRatingAPIView(APIView):
             'message': _('نظر شما برای این معلم'),
             'rating': serializer.data
         }, status=status.HTTP_200_OK)
+
+
+# ========== Payment Redirect to App ==========
+
+class PaymentRedirectAPIView(APIView):
+    """
+    Payment Redirect Page API
+    
+    بازگشت به اپلیکیشن بعد از پرداخت
+    
+    دریافت نتیجه پرداخت از Zibal و نمایش صفحه HTML
+    که کاربر را به اپ (deep link) بازگرداند
+    
+    GET:
+        پارامترهای query string:
+        - status: success یا failed
+        - orderId: شناسه سفارش
+        - message: پیام اختیاری
+        
+        خروجی: صفحه HTML با redirect خودکار
+    """
+    permission_classes = [AllowAny]
+    
+    @extend_schema(
+        tags=['Payment'],
+        summary='Payment Redirect Page',
+        description='صفحه بازگشت به اپ بعد از پرداخت',
+        parameters=[
+            OpenApiParameter('status', OpenApiTypes.STR, required=False, description='payment status: success or failed'),
+            OpenApiParameter('orderId', OpenApiTypes.STR, required=False, description='Order ID'),
+            OpenApiParameter('message', OpenApiTypes.STR, required=False, description='Optional message'),
+        ],
+        responses={
+            200: OpenApiResponse(description="Payment redirect page"),
+        }
+    )
+    def get(self, request):
+        from django.template.loader import render_to_string
+        
+        # استخراج پارامترهای query string
+        status_param = request.GET.get('status', 'unknown')
+        order_id = request.GET.get('orderId', '')
+        message = request.GET.get('message', '')
+        
+        # ساخت context برای template
+        context = {
+            'status': status_param,
+            'orderId': order_id,
+            'message': message,
+        }
+        
+        # بارگذاری و render صفحه HTML
+        html_content = render_to_string('payment-redirect.html', context)
+        
+        return HttpResponse(html_content, content_type='text/html')
+
