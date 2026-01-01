@@ -3371,6 +3371,18 @@ class PaymentCallbackAPIView(APIView):
             400: OpenApiResponse(description="Invalid data"),
         }
     )
+    def _normalize_success(self, success):
+        """Normalize success value to boolean (handles string "1"/"0", int 1/0, bool)"""
+        if success is None:
+            return False
+        if isinstance(success, bool):
+            return success
+        if isinstance(success, int):
+            return success == 1
+        if isinstance(success, str):
+            return success.strip() == '1'
+        return False
+    
     def _get_callback_data(self, request):
         """Extract callback data from either GET (query_params) or POST (request.data)"""
         if request.method == 'GET':
@@ -3396,10 +3408,10 @@ class PaymentCallbackAPIView(APIView):
             # دریافت داده‌های callback از Zibal
             data = self._get_callback_data(request)
             track_id = data['track_id']
-            success = data['success']
+            success = self._normalize_success(data['success'])
             order_id = data['order_id']
             
-            if not all([track_id, success, order_id]):
+            if not all([track_id, success is not None, order_id]):
                 return Response(
                     {'error': _('اطلاعات ناقص')},
                     status=status.HTTP_400_BAD_REQUEST
@@ -3422,7 +3434,7 @@ class PaymentCallbackAPIView(APIView):
                 }, status=status.HTTP_200_OK)
             
             # اگر پرداخت ناموفق بود
-            if success != 1:
+            if not success:
                 with transaction.atomic():
                     booking.payment_status = 'failed'
                     booking.payment_ref = track_id
