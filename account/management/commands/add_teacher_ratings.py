@@ -43,7 +43,7 @@ class Command(BaseCommand):
         with_comments = options['with_comments']
 
         # Get all students
-        students = User.objects.filter(role='student')
+        students = User.objects.filter(role='user')
         teachers = User.objects.filter(role='teacher', is_teacher_verified=True)
 
         if not students.exists():

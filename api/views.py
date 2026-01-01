@@ -2904,7 +2904,7 @@ class CreateClassBookingAPIView(APIView):
         from .classroom_serializers import ClassBookingSerializer, CreateClassBookingSerializer
         
         # فقط دانش‌آموزان می‌توانند کلاس خریداری کنند
-        if request.user.role != 'student':
+        if request.user.role != 'user':
             return Response(
                 {'error': _('تنها دانش‌آموزان می‌توانند کلاس خریداری کنند')},
                 status=status.HTTP_403_FORBIDDEN
@@ -3004,7 +3004,7 @@ class StudentBookingsListAPIView(APIView):
         
         # دریافت کتاب‌های دانش‌آموز
         # فقط دانش‌آموزان می‌توانند رزروهای خود را ببینند
-        if request.user.role != 'student':
+        if request.user.role != 'user':
             return Response(
                 {'error': _('فقط دانش‌آموزان می‌توانند این endpoint رو استفاده کنند')},
                 status=status.HTTP_403_FORBIDDEN
@@ -3188,7 +3188,7 @@ class CancelBookingAPIView(APIView):
             )
         
         # فقط دانش‌آموز می‌تواند رزرو خود را لغو کند
-        if request.user.role != 'student' or booking.student_id != request.user.id:
+        if request.user.role != 'user' or booking.student_id != request.user.id:
             return Response(
                 {'error': _('شما دسترسی ندارید')},
                 status=status.HTTP_403_FORBIDDEN
@@ -3251,7 +3251,7 @@ class InitiatePaymentAPIView(APIView):
             )
         
         # فقط دانش‌آموز می‌تواند پرداخت کند
-        if request.user.role != 'student' or booking.student_id != request.user.id:
+        if request.user.role != 'user' or booking.student_id != request.user.id:
             return Response(
                 {'error': _('شما دسترسی ندارید')},
                 status=status.HTTP_403_FORBIDDEN
@@ -3425,7 +3425,7 @@ class PaymentStatusAPIView(APIView):
             )
         
         # فقط دانش‌آموز می‌تواند وضعیت خود را ببیند
-        if request.user.role != 'student' or booking.student_id != request.user.id:
+        if request.user.role != 'user' or booking.student_id != request.user.id:
             return Response(
                 {'error': _('شما دسترسی ندارید')},
                 status=status.HTTP_403_FORBIDDEN
@@ -3617,7 +3617,7 @@ class TeachingSubjectRetrieveAPIView(APIView):
             )
         
         # بررسی دسترسی
-        if request.user.role != 'admin' and request.user.role == 'student':
+        if request.user.role != 'admin' and request.user.role == 'user':
             if not subject.is_active:
                 return Response(
                     {'error': _('دسترسی محدود است')},
@@ -4163,7 +4163,7 @@ class GetExamAPIView(APIView):
                 {'error': _('شما دسترسی به این موضوع ندارید')},
                 status=status.HTTP_403_FORBIDDEN
             )
-        elif request.user.role == 'student' and not subject.is_active:
+        elif request.user.role == 'user' and not subject.is_active:
             return Response(
                 {'error': _('این موضوع دسترس پذیر نیست')},
                 status=status.HTTP_403_FORBIDDEN
@@ -4360,7 +4360,7 @@ class GetExamResultsAPIView(APIView):
         from .exercise_serializers import OrderListSerializer
         
         # دانش‌آموز تنها نتایج خود را می‌بیند
-        if request.user.role == 'student':
+        if request.user.role == 'user':
             queryset = Order.objects.filter(user=request.user)
         # معلم نتایج موضوعات خود را می‌بیند
         elif request.user.role == 'teacher':
@@ -4459,7 +4459,7 @@ class GetExamAttemptDetailAPIView(APIView):
             )
         
         # بررسی دسترسی
-        if request.user.role == 'student' and order.user_id != request.user.id:
+        if request.user.role == 'user' and order.user_id != request.user.id:
             return Response(
                 {'error': _('شما دسترسی به این نتایج ندارید')},
                 status=status.HTTP_403_FORBIDDEN

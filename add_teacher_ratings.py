@@ -20,7 +20,7 @@ def main():
     """Add teacher ratings from students"""
     
     # Get all students and teachers
-    students = list(User.objects.filter(role='student'))
+    students = list(User.objects.filter(role='user'))
     teachers = list(User.objects.filter(role='teacher', is_teacher_verified=True))
     
     if not students:
@@ -67,7 +67,7 @@ def main():
                 # Generate random rating
                 stars = random.randint(1, 5)
                 comment = random.choice(sample_comments)
-                rater_type = random.choice(['student', 'parent'])
+                rater_type = random.choice(['user', 'parent'])
                 
                 # Create or get rating
                 rating, created = TeacherRating.objects.get_or_create(

@@ -487,7 +487,7 @@ class StudentTransaction(BaseModel):
         ('failed', _("ناموفق")),
         ('refunded', _("بازگشت‌شده")),
     ]
-    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'}, related_name='class_transactions', verbose_name=_("دانش‌آموز"))
+    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'user'}, related_name='class_transactions', verbose_name=_("دانش‌آموز"))
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE_CHOICES, verbose_name=_("نوع تراکنش"))
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("مبلغ"))
     booking = models.ForeignKey(ClassBooking, on_delete=models.SET_NULL, null=True, blank=True, related_name='student_transactions', verbose_name=_("رزرو کلاس")) 
