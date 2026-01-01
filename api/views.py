@@ -3255,6 +3255,8 @@ class InitiatePaymentAPIView(APIView):
     )
     def post(self, request, booking_id):
         from classroom.models import ClassBooking
+        import requests
+        from django.conf import settings
         
         try:
             booking = ClassBooking.objects.get(id=booking_id)
@@ -3278,9 +3280,51 @@ class InitiatePaymentAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # درخواست token از درگاه (Placeholder - باید توسط واقعی پیاده‌سازی شود)
+        # درخواست پرداخت از Zibal
         try:
-            payment_url = f"https://payment.gateway.com/checkout/{booking.id}/{timezone.now().timestamp()}"
+            zibal_merchant_id = settings.ZIBAL_MERCHANT_ID
+            zibal_api_url = settings.ZIBAL_API_URL
+            zibal_callback_url = settings.ZIBAL_CALLBACK_URL
+            
+            # آماده کردن داده‌های درخواست برای Zibal
+            payload = {
+                'merchant': zibal_merchant_id,
+                'amount': int(float(booking.final_price)),
+                'callbackUrl': zibal_callback_url,
+                'description': f'کلاس {booking.subject.title} با معلم {booking.teacher.name}',
+                'orderId': str(booking.id)
+            }
+            
+            # ارسال درخواست به Zibal
+            response = requests.post(zibal_api_url, json=payload, timeout=10)
+            
+            # بررسی موفقیت درخواست
+            if response.status_code != 200:
+                return Response(
+                    {'error': _('خطا در اتصال به درگاه پرداخت')},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            response_data = response.json()
+            
+            # بررسی پاسخ Zibal
+            if response_data.get('result') != 100:
+                error_message = response_data.get('message', _('خطای نامشخص'))
+                return Response(
+                    {'error': f'درگاه پرداخت: {error_message}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # دریافت track ID از Zibal
+            track_id = response_data.get('trackId')
+            if not track_id:
+                return Response(
+                    {'error': _('خطا در دریافت شناسه پرداخت')},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            # ساخت لینک پرداخت Zibal
+            payment_url = f'https://gateway.zibal.ir/start/{track_id}'
             
             return Response({
                 'success': True,
@@ -3292,9 +3336,20 @@ class InitiatePaymentAPIView(APIView):
                     'message': _('پرداخت آغاز شد')
                 }
             }, status=status.HTTP_200_OK)
+        
+        except requests.exceptions.Timeout:
+            return Response(
+                {'error': _('درخواست به درگاه پرداخت تایم‌اوت شد')},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except requests.exceptions.RequestException as e:
+            return Response(
+                {'error': _('خطا در برقراری ارتباط با درگاه پرداخت')},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
         except Exception as e:
             return Response(
-                {'error': f'خطا در شروع پرداخت: {str(e)}'},
+                {'error': _('خطای داخلی سرور')},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -3319,48 +3374,86 @@ class PaymentCallbackAPIView(APIView):
     def post(self, request):
         from classroom.models import ClassBooking, ClassRevenue
         from django.db import transaction
+        import requests
+        from django.conf import settings
         
         try:
-            payment_ref = request.data.get('payment_ref')
-            status_code = request.data.get('status')
-            amount = request.data.get('amount')
-            booking_id = request.data.get('booking_id')
+            # دریافت داده‌های callback از Zibal
+            track_id = request.data.get('trackId')
+            success = request.data.get('success')
+            order_id = request.data.get('orderId')
             
-            if not all([payment_ref, status_code, amount, booking_id]):
+            if not all([track_id, success, order_id]):
                 return Response(
                     {'error': _('اطلاعات ناقص')},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            booking = ClassBooking.objects.get(id=booking_id)
-            
-            # تطابق مبلغ
+            # دریافت رزرو بر اساس order_id
             try:
-                amount_decimal = float(amount)
-                if abs(amount_decimal - float(booking.final_price)) > 0.01:
-                    # مبلغ تطابق ندارد
+                booking = ClassBooking.objects.get(id=order_id)
+            except ClassBooking.DoesNotExist:
+                return Response(
+                    {'error': _('رزرو یافت نشد')},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # اگر پرداخت ناموفق بود
+            if success != 1:
+                with transaction.atomic():
+                    booking.payment_status = 'failed'
+                    booking.payment_ref = track_id
+                    booking.save()
+                
+                return Response({
+                    'success': False,
+                    'message': _('پرداخت ناموفق')
+                }, status=status.HTTP_200_OK)
+            
+            # تأیید پرداخت از طریق Zibal Verify API
+            zibal_verify_url = settings.ZIBAL_VERIFY_URL
+            zibal_merchant_id = settings.ZIBAL_MERCHANT_ID
+            
+            verify_payload = {
+                'merchant': zibal_merchant_id,
+                'trackId': track_id
+            }
+            
+            try:
+                verify_response = requests.post(zibal_verify_url, json=verify_payload, timeout=10)
+                
+                if verify_response.status_code != 200:
                     with transaction.atomic():
                         booking.payment_status = 'failed'
-                        booking.payment_ref = payment_ref
+                        booking.payment_ref = track_id
                         booking.save()
                     
                     return Response({
                         'success': False,
-                        'message': _('مبلغ تطابق ندارد')
-                    }, status=status.HTTP_400_BAD_REQUEST)
-            except (ValueError, TypeError):
-                return Response(
-                    {'error': _('مبلغ نامعتبر')},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # بررسی وضعیت
-            with transaction.atomic():
-                if status_code == 'success' or status_code == '0':
-                    # پرداخت موفق
-                    booking.paid_amount = float(amount)
+                        'message': _('خطا در تأیید پرداخت')
+                    }, status=status.HTTP_200_OK)
+                
+                verify_data = verify_response.json()
+                
+                # بررسی نتیجه تأیید
+                if verify_data.get('result') != 100:
+                    with transaction.atomic():
+                        booking.payment_status = 'failed'
+                        booking.payment_ref = track_id
+                        booking.save()
+                    
+                    return Response({
+                        'success': False,
+                        'message': _('تأیید پرداخت ناموفق')
+                    }, status=status.HTTP_200_OK)
+                
+                # پرداخت موفق و تأیید شد
+                amount = verify_data.get('amount')
+                
+                with transaction.atomic():
+                    booking.paid_amount = float(amount) / 100 if amount else booking.final_price
                     booking.payment_status = 'paid'
-                    booking.payment_ref = payment_ref
+                    booking.payment_ref = track_id
                     booking.paid_at = timezone.now()
                     booking.save()
                     
@@ -3378,21 +3471,18 @@ class PaymentCallbackAPIView(APIView):
                             'is_confirmed': False
                         }
                     )
-                    
-                    return Response({
-                        'success': True,
-                        'message': _('پرداخت تأیید شد')
-                    }, status=status.HTTP_200_OK)
-                else:
-                    # پرداخت ناموفق
-                    booking.payment_status = 'failed'
-                    booking.payment_ref = payment_ref
-                    booking.save()
-                    
-                    return Response({
-                        'success': False,
-                        'message': _('پرداخت ناموفق')
-                    }, status=status.HTTP_200_OK)
+                
+                return Response({
+                    'success': True,
+                    'message': _('پرداخت تأیید شد')
+                }, status=status.HTTP_200_OK)
+            
+            except requests.exceptions.RequestException as e:
+                # خطا در اتصال به Zibal Verify
+                return Response({
+                    'success': False,
+                    'message': _('خطا در تأیید پرداخت با درگاه')
+                }, status=status.HTTP_200_OK)
         
         except ClassBooking.DoesNotExist:
             return Response(
@@ -3401,7 +3491,7 @@ class PaymentCallbackAPIView(APIView):
             )
         except Exception as e:
             return Response(
-                {'error': f'خطا: {str(e)}'},
+                {'error': _('خطای داخلی سرور')},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

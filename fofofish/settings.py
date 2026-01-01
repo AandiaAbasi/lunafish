@@ -323,6 +323,13 @@ OTP_EXPIRY_TIME = 5 * 60  # 5 minutes in seconds
 OTP_MAX_ATTEMPTS = 5
 OTP_LENGTH = 6
 
+# ============ Payment Gateway Configuration ============
+# Zibal Payment Gateway
+ZIBAL_MERCHANT_ID = config('ZIBAL_MERCHANT_ID', default='zibal-merchant-id')
+ZIBAL_API_URL = 'https://api.zibal.ir/v1/request'
+ZIBAL_VERIFY_URL = 'https://api.zibal.ir/v1/verify'
+ZIBAL_CALLBACK_URL = config('ZIBAL_CALLBACK_URL', default='https://fofofish.app/api/payment/callback/')
+
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
