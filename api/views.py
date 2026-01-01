@@ -3280,6 +3280,13 @@ class InitiatePaymentAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # بررسی اینکه booking منقضی نشده باشد
+        if booking.availability.is_expired or booking.availability.is_past():
+            return Response(
+                {'error': _('این رزرو منقضی شده است')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         # درخواست پرداخت از Zibal
         try:
             zibal_merchant_id = settings.ZIBAL_MERCHANT_ID
