@@ -3287,6 +3287,13 @@ class InitiatePaymentAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # بررسی اینکه availability هنوز booked نشده باشد (race condition)
+        if booking.availability.is_booked:
+            return Response(
+                {'error': _('این رزرو دیگر در دسترس نیست')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         # درخواست پرداخت از Zibal
         try:
             zibal_merchant_id = settings.ZIBAL_MERCHANT_ID
@@ -3552,6 +3559,74 @@ class PaymentStatusAPIView(APIView):
                 'payment_ref': booking.payment_ref,
                 'paid_at': booking.paid_at.isoformat() if booking.paid_at else None,
                 'is_paid': booking.payment_status == 'paid'
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class BookingDebugAPIView(APIView):
+    """
+    Booking Debug API
+    
+    بررسی وضعیت تفصیلی رزرو برای عیب‌یابی
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Debug'],
+        summary='Debug Booking Status',
+        description='بررسی وضعیت تفصیلی رزرو',
+        parameters=[
+            OpenApiParameter('booking_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Booking ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Booking debug info"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Booking not found"),
+        }
+    )
+    def get(self, request, booking_id):
+        from classroom.models import ClassBooking
+        
+        try:
+            booking = ClassBooking.objects.get(id=booking_id)
+        except ClassBooking.DoesNotExist:
+            return Response(
+                {'error': _('رزرو یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # فقط دانش‌آموز می‌تواند وضعیت خود را ببیند
+        if request.user.role != 'user' or booking.student_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return Response({
+            'success': True,
+            'data': {
+                'booking_id': booking.id,
+                'status': booking.status,
+                'payment_status': booking.payment_status,
+                'availability': {
+                    'id': booking.availability.id,
+                    'date': booking.availability.date.isoformat(),
+                    'is_available': booking.availability.is_available,
+                    'is_booked': booking.availability.is_booked,
+                    'is_expired': booking.availability.is_expired,
+                    'is_past': booking.availability.is_past()
+                },
+                'prices': {
+                    'price': str(booking.price),
+                    'discount_amount': str(booking.discount_amount),
+                    'final_price': str(booking.final_price),
+                    'paid_amount': str(booking.paid_amount)
+                },
+                'payment': {
+                    'payment_status': booking.payment_status,
+                    'payment_ref': booking.payment_ref,
+                    'paid_at': booking.paid_at.isoformat() if booking.paid_at else None
+                }
             }
         }, status=status.HTTP_200_OK)
 

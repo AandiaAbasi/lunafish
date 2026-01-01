@@ -79,6 +79,7 @@ urlpatterns = [
     path('class-booking/<int:booking_id>/initiate-payment/', views.InitiatePaymentAPIView.as_view(), name='initiate_payment'),
     path('payment/callback/', views.PaymentCallbackAPIView.as_view(), name='payment_callback'),
     path('class-booking/<int:booking_id>/payment-status/', views.PaymentStatusAPIView.as_view(), name='payment_status'),
+    path('class-booking/<int:booking_id>/debug/', views.BookingDebugAPIView.as_view(), name='booking_debug'),
     
     # ========== Teaching Subjects (کلاس‌ها) ==========
     path('teaching-subjects/', views.TeachingSubjectListAPIView.as_view(), name='teaching_subject_list'),
