@@ -104,6 +104,7 @@ urlpatterns = [
     # ========== Attendance APIs ==========
     path('attendance/<int:booking_id>/', views.AttendanceAPIView.as_view(), name='attendance'),
     path('attendance/<int:booking_id>/list/', views.AttendanceListAPIView.as_view(), name='attendance_list'),
+    path('attendance/list/', views.AttendanceGeneralListAPIView.as_view(), name='attendance_general_list'),
     
     # ========== Financial System APIs ==========
     # Wallet endpoints
