@@ -3519,11 +3519,15 @@ class PaymentCallbackAPIView(APIView):
                             'is_confirmed': False
                         }
                     )
+
+                return redirect(
+                    f"lunafish://payment-result?status=success&orderId={booking.id}"
+                )
                 
-                return Response({
-                    'success': True,
-                    'message': _('پرداخت تأیید شد')
-                }, status=status.HTTP_200_OK)
+                # return Response({
+                #     'success': True,
+                #     'message': _('پرداخت تأیید شد')
+                # }, status=status.HTTP_200_OK)
             
             except requests.exceptions.RequestException as e:
                 # خطا در اتصال به Zibal Verify
