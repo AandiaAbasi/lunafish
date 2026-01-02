@@ -5504,6 +5504,97 @@ class ParentProfileAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class ParentChangePasswordAPIView(APIView):
+    """
+    تغییر رمز والد
+    والد می‌تواند رمز خود را تغییر دهد
+    
+    post:
+        Change parent password
+        
+        Request body:
+        - student_id: شناسه دانش‌آموز
+        - current_password: رمز فعلی
+        - new_password: رمز جدید (حداقل 8 کاراکتر)
+        - confirm_password: تکرار رمز جدید
+        
+        Returns:
+            200 OK:
+                - success: true
+                - message: "Password updated successfully"
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parent Portal'],
+        summary='Change Parent Password',
+        description='تغییر رمز عبور والد',
+        request=inline_serializer(
+            name='ParentChangePasswordRequest',
+            fields={
+                'student_id': serializers.IntegerField(help_text='شناسه دانش‌آموز'),
+                'current_password': serializers.CharField(help_text='رمز فعلی والد'),
+                'new_password': serializers.CharField(help_text='رمز جدید (حداقل 8 کاراکتر)'),
+                'confirm_password': serializers.CharField(help_text='تکرار رمز جدید')
+            }
+        ),
+        responses={
+            200: OpenApiResponse(description="رمز با موفقیت تغییر کرد"),
+            400: OpenApiResponse(description="خطا در اعتبارسنجی"),
+            403: OpenApiResponse(description="رمز فعلی نادرست است"),
+            404: OpenApiResponse(description="پروفایل والد یافت نشد"),
+        }
+    )
+    def post(self, request):
+        """Change parent password"""
+        from .parent_serializers import ParentChangePasswordSerializer
+        
+        student_id = request.data.get('student_id')
+        
+        if not student_id:
+            return Response({
+                'success': False,
+                'error': _('Student ID is required')
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get student and parent profile
+        try:
+            student = User.objects.get(id=student_id, role='user')
+            parent = ParentProfile.objects.get(student=student, is_active=True)
+        except (User.DoesNotExist, ParentProfile.DoesNotExist):
+            return Response({
+                'success': False,
+                'error': _('Student or parent profile not found')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Validate input
+        serializer = ParentChangePasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        current_password = serializer.validated_data['current_password']
+        new_password = serializer.validated_data['new_password']
+        
+        # Verify current password
+        if not parent.verify_password(current_password):
+            return Response({
+                'success': False,
+                'error': _('Current password is incorrect')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Update password
+        parent.set_password(new_password)
+        parent.save()
+        
+        return Response({
+            'success': True,
+            'message': _('Password updated successfully')
+        }, status=status.HTTP_200_OK)
+
+
 # ===== Attendance API =====
 class AttendanceAPIView(APIView):
     """

@@ -100,6 +100,7 @@ urlpatterns = [
     path('parent/payment-summary/', views.ChildPaymentSummaryAPIView.as_view(), name='payment_summary'),
     path('parent/update-usage-time/', views.ParentUpdateUsageTimeAPIView.as_view(), name='update_usage_time'),
     path('parent/profile/', views.ParentProfileAPIView.as_view(), name='parent_profile'),
+    path('parent/change-password/', views.ParentChangePasswordAPIView.as_view(), name='parent_change_password'),
     
     # ========== Parental Control - Usage Tracking APIs ==========
     path('parental/limits/', views.ParentalLimitsAPIView.as_view(), name='parental_limits'),

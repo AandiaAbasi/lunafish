@@ -364,6 +364,35 @@ class UsageReportRequestSerializer(serializers.Serializer):
         allow_null=True,
         help_text=_("زمان پایان در دستگاه کاربر (غیرقابل اعتماد)")
     )
+
+
+class ParentChangePasswordSerializer(serializers.Serializer):
+    """تغییر رمز والد"""
+    current_password = serializers.CharField(
+        write_only=True,
+        help_text=_("رمز فعلی والد")
+    )
+    new_password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        help_text=_("رمز جدید (حداقل 8 کاراکتر)")
+    )
+    confirm_password = serializers.CharField(
+        write_only=True,
+        help_text=_("تکرار رمز جدید")
+    )
+    
+    def validate(self, data):
+        """Validate password match"""
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({
+                'confirm_password': _("Passwords do not match")
+            })
+        return data
+
+
+class TeachingSubjectForParentSelectionSerializer(serializers.ModelSerializer):
+    """موضوعات تدریس برای انتخاب توسط والد"""
     cover_image_url = serializers.SerializerMethodField()
     demo_video_url = serializers.SerializerMethodField()
     
