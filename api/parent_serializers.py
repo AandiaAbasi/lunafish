@@ -38,13 +38,13 @@ class JalaliDateField(serializers.DateField):
 
 # ===== Parent Login Serializer =====
 class ParentLoginSerializer(serializers.Serializer):
-    """والدین برای ورود می‌توانند از student_id، شماره تماس یا ایمیل استفاده کنند"""
-    identifier = serializers.CharField(
+    """والدین برای ورود باید از نام کاربری دانش‌آموز استفاده کنند"""
+    username = serializers.CharField(
         max_length=255,
         write_only=True,
-        help_text=_("شناسه دانش‌آموز یا شماره تماس یا ایمیل")
+        help_text=_("نام کاربری دانش‌آموز")
     )
-    parent_password = serializers.CharField(
+    password = serializers.CharField(
         max_length=255,
         write_only=True,
         help_text=_("رمز والدین"),
@@ -52,29 +52,21 @@ class ParentLoginSerializer(serializers.Serializer):
     )
     
     def validate(self, data):
-        """بررسی صحت identifier و parent_password"""
-        identifier = data.get('identifier')
-        parent_password = data.get('parent_password')
+        """بررسی صحت username و password"""
+        username = data.get('username')
+        password = data.get('password')
         
-        # بررسی دانش‌آموز بر اساس شناسه، شماره تماس یا ایمیل
+        # بررسی دانش‌آموز بر اساس نام کاربری
         student = None
         try:
-            # ابتدا تلاش کنید شناسه را به عنوان ID پیدا کنید
-            if identifier.isdigit():
-                student = User.objects.get(id=int(identifier), role='user')
-            else:
-                # سپس بر اساس شماره تماس یا ایمیل جستجو کنید
-                from django.db.models import Q
-                student = User.objects.get(
-                    (Q(phone=identifier) | Q(email=identifier)) & Q(role='user')
-                )
+            student = User.objects.get(username=username, role='user')
         except User.DoesNotExist:
             raise serializers.ValidationError({
-                'identifier': _("Student not found. Please check your student ID, phone number or email.")
+                'username': _("Student not found. Please check the student username.")
             })
         except Exception:
             raise serializers.ValidationError({
-                'identifier': _("Invalid identifier format")
+                'username': _("Invalid username format")
             })
         
         # بررسی والد
@@ -82,13 +74,13 @@ class ParentLoginSerializer(serializers.Serializer):
             parent = ParentProfile.objects.get(student=student, is_active=True)
         except ParentProfile.DoesNotExist:
             raise serializers.ValidationError({
-                'parent_password': _("No parent profile found for this student")
+                'password': _("No parent profile found for this student")
             })
         
         # بررسی رمز
-        if not parent.verify_password(parent_password):
+        if not parent.verify_password(password):
             raise serializers.ValidationError({
-                'parent_password': _("Invalid parent password")
+                'password': _("Invalid parent password")
             })
         
         # ذخیره parent برای استفاده در view

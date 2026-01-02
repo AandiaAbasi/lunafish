@@ -380,15 +380,15 @@ class CompleteRegistrationAPIView(APIView):
                     try:
                         import secrets
                         import string
-                        import bcrypt
+                        from django.contrib.auth.hashers import make_password
                         from account.utils import send_sms_general
                         
                         # Generate random password for parent (8-12 characters)
                         password_length = secrets.choice([8, 9, 10, 11, 12])
                         parent_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(password_length))
                         
-                        # Hash password using bcrypt
-                        hashed_password = bcrypt.hashpw(parent_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                        # Hash password using Django's hasher (compatible with ParentProfile.verify_password)
+                        hashed_password = make_password(parent_password)
                         
                         # Create parent profile
                         parent_profile = ParentProfile.objects.create(
@@ -4924,14 +4924,14 @@ class TeacherDetailAPIView(APIView):
 
 class ParentLoginAPIView(APIView):
     """
-    والدین می‌توانند با شماره تماس، ایمیل یا شناسه دانش‌آموز + رمز والد وارد شوند
+    والدین می‌توانند با نام کاربری دانش‌آموز + رمز والد وارد شوند
     
     post:
-        Login with student identifier (ID, phone, or email) and parent password
+        Login with student username and parent password
         
         Request body:
-        - identifier: string (required) - شناسه دانش‌آموز (شناسه، شماره تماس یا ایمیل)
-        - parent_password: string (required) - رمز والدین
+        - username: string (required) - نام کاربری دانش‌آموز
+        - password: string (required) - رمز والدین
         
         Returns:
             200 OK:
@@ -4955,12 +4955,12 @@ class ParentLoginAPIView(APIView):
     @extend_schema(
         tags=['Parent Portal'],
         summary='Parent Login',
-        description='والدین می‌توانند با شماره تماس، ایمیل یا شناسه دانش‌آموز + رمز والد وارد شوند',
+        description='والدین می‌توانند با نام کاربری دانش‌آموز + رمز والد وارد شوند',
         request=inline_serializer(
             name='ParentLoginRequest',
             fields={
-                'identifier': serializers.CharField(help_text='شناسه دانش‌آموز (شناسه، شماره تماس یا ایمیل)'),
-                'parent_password': serializers.CharField(help_text='رمز والدین', style={'input_type': 'password'})
+                'username': serializers.CharField(help_text='نام کاربری دانش‌آموز'),
+                'password': serializers.CharField(help_text='رمز والدین', style={'input_type': 'password'})
             }
         ),
         responses={
