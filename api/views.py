@@ -4262,8 +4262,8 @@ class CreateFieldAPIView(APIView):
         serializer = FieldCreateUpdateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             field = serializer.save()
-            logger.info(f"✅ Field created successfully with id: {field.id}")
-            logger.info(f"✅ Details count: {field.details.count()}")
+            logger.info(f"[SUCCESS] Field created successfully with id: {field.id}")
+            logger.info(f"[SUCCESS] Details count: {field.details.count()}")
             response_serializer = FieldRetrieveSerializer(field)
             return Response({
                 'success': True,
@@ -4273,7 +4273,7 @@ class CreateFieldAPIView(APIView):
         
         # Log validation errors
         logger.error("=" * 80)
-        logger.error("❌ VALIDATION FAILED")
+        logger.error("[ERROR] VALIDATION FAILED")
         logger.error(f"Validation errors: {serializer.errors}")
         logger.error("=" * 80)
         return Response({

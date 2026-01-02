@@ -76,7 +76,7 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         while True:
             title_key = f'details[{index}][title]'
             if title_key not in data:
-                print(f"⚠️ Key '{title_key}' not found in data, stopping parse")
+                print(f"[WARNING] Key not found in data, stopping parse at index {index}")
                 break
             
             title_value = data.get(f'details[{index}][title]', '')
@@ -140,20 +140,20 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
                 data._mutable = True
             data['details'] = details
             try:
-                print(f"✅ Total details parsed: {len(details)}")
-                print(f"✅ Parsed details structure: {repr(details)}")
+                print(f"[SUCCESS] Total details parsed: {len(details)}")
+                print(f"[SUCCESS] Parsed details structure: {repr(details)}")
             except: pass
         else:
-            print(f"⚠️ No form array notation found, checking if details already exists as list")
+            print(f"[WARNING] No form array notation found, checking if details already exists as list")
             if 'details' in data and isinstance(data.get('details'), list):
                 try:
-                    print(f"✅ Details already exists as list with {len(data['details'])} items")
+                    print(f"[SUCCESS] Details already exists as list with {len(data['details'])} items")
                     print(f"   Existing details: {repr(data.get('details'))}")
                 except: pass
         
         print(f"Calling super().to_internal_value...")
         result = super().to_internal_value(data)
-        print(f"✅ super().to_internal_value succeeded")
+        print(f"[SUCCESS] super().to_internal_value succeeded")
         print(f"Result has {len(result.get('details', []))} details")
         return result
     
@@ -191,9 +191,9 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     _('سوالات تایپی باید حداقل یک detail با correct_answer داشته باشند')
                 )
-            logger.info(f"✅ Input validation passed - has correct_answer")
+            logger.info(f"[SUCCESS] Input validation passed - has correct_answer")
         
-        logger.info(f"✅ Validation passed")
+        logger.info(f"[SUCCESS] Validation passed")
         return data
     
     def create(self, validated_data):
