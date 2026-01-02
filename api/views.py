@@ -4156,7 +4156,6 @@ class CreateFieldAPIView(APIView):
                 - type: string
                 - is_required: integer
                 - details: array - Answer options
-                - correct_answer: string - For input questions
                 - message: string - "Question created successfully"
                 
             400 Bad Request - Invalid data
@@ -4226,30 +4225,8 @@ class CreateFieldAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Handle input-type questions: extract correct_answer from details
-        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
-        
-        if data.get('type') == 'input' and 'details' in data:
-            details = data.get('details', [])
-            # Extract correct_answer from the first detail item
-            if details and len(details) > 0:
-                first_detail = details[0]
-                if isinstance(first_detail, dict):
-                    # Extract correct_answer to Field level
-                    if 'correct_answer' in first_detail:
-                        data['correct_answer'] = first_detail['correct_answer']
-                    
-                    # Keep the detail entry but remove correct_answer from it
-                    # (title and other fields are preserved)
-                    cleaned_detail = {k: v for k, v in first_detail.items() if k != 'correct_answer'}
-                    
-                    # If there's still meaningful data (like title), keep it
-                    if cleaned_detail:
-                        data['details'] = [cleaned_detail]
-                    else:
-                        data['details'] = []
-        
-        serializer = FieldCreateUpdateSerializer(data=data)
+        # No special handling needed - correct_answer is now in FieldDetail
+        serializer = FieldCreateUpdateSerializer(data=request.data)
         if serializer.is_valid():
             field = serializer.save()
             response_serializer = FieldRetrieveSerializer(field)

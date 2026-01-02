@@ -16,7 +16,7 @@ class FieldDetailSerializer(serializers.ModelSerializer):
         model = FieldDetail
         fields = [
             'id', 'title', 'second_title', 'image_path', 'is_correct',
-            'guide', 'des', 'sort', 'is_required'
+            'correct_answer', 'guide', 'des', 'sort', 'is_required'
         ]
         read_only_fields = ['id']
 
@@ -35,12 +35,12 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         model = Field
         fields = [
             'id', 'title', 'type', 'is_required', 'image_path',
-            'audio_path', 'video_path', 'guide', 'des', 'sort', 'details', 'correct_answer'
+            'audio_path', 'video_path', 'guide', 'des', 'sort', 'details'
         ]
         read_only_fields = ['id']
     
     def validate(self, data):
-        """Validate that choice questions have details and input questions don't"""
+        """Validate that choice questions have details"""
         question_type = data.get('type')
         details = data.get('details', [])
         
@@ -50,12 +50,6 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     _('سوالات انتخابی باید حداقل یک گزینه داشته باشند')
                 )
-        
-        # ✅ سوالات input نباید details داشته باشند
-        if question_type == 'input':
-            if details:
-                # اگر details ارسال شد، حذفش کن
-                data['details'] = []
         
         return data
     
@@ -93,7 +87,7 @@ class FieldRetrieveSerializer(serializers.ModelSerializer):
         model = Field
         fields = [
             'id', 'title', 'type', 'is_required', 'image_path',
-            'audio_path', 'video_path', 'guide', 'des', 'sort', 'details', 'correct_answer'
+            'audio_path', 'video_path', 'guide', 'des', 'sort', 'details'
         ]
 
 
