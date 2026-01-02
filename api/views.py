@@ -34,7 +34,7 @@ from account.models import OTP, VerificationToken, ParentProfile
 from classroom.models import ClassBooking, StudentTransaction, TeacherAvailability
 from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail
 from .exercise_serializers import (
-    FieldCreateUpdateSerializer, FieldRetrieveSerializer, FieldListSerializer,
+    FieldRetrieveSerializer, FieldListSerializer,
     CategoryFieldCreateSerializer, CategoryFieldRetrieveSerializer,
     OrderCreateSubmitSerializer, OrderRetrieveSerializer, OrderListSerializer,
     OrderDetailRetrieveSerializer
