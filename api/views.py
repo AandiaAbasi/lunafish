@@ -7876,3 +7876,280 @@ class PaymentRedirectAPIView(APIView):
         
         return HttpResponse(html_content, content_type='text/html')
 
+
+# ========== Parental Control - Usage Tracking APIs ==========
+
+class ParentalLimitsAPIView(APIView):
+    """
+    دریافت محدودیت‌های والدین و وضعیت مصرف کنونی
+    
+    GET: Get parental control limits and current usage status
+    
+    Returns:
+        200 OK:
+            - daily_usage_limit_minutes: حداکثر دقایق روزانه
+            - allowed_start_time: ساعت شروع مجاز
+            - allowed_end_time: ساعت پایان مجاز
+            - server_now: زمان فعلی سرور
+            - server_date: تاریخ فعلی سرور
+            - server_time: ساعت فعلی سرور
+            - used_today_seconds: ثانیه‌های استفاده شده امروز
+            - remaining_seconds: ثانیه‌های باقی‌مانده
+            - blocked: آیا دسترسی بلاک شده است
+            - block_reason: دلیل بلاک (OUT_OF_ALLOWED_WINDOW یا DAILY_LIMIT_REACHED)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parental Control'],
+        summary='Get Parental Control Limits',
+        description='دریافت محدودیت‌های والدین و وضعیت مصرف فعلی دانش‌آموز',
+        responses={
+            200: OpenApiResponse(description="محدودیت‌ها و وضعیت با موفقیت دریافت شد"),
+            404: OpenApiResponse(description="پروفایل والد یافت نشد"),
+        }
+    )
+    def get(self, request):
+        """Get parental limits and usage status"""
+        from account.models import ParentProfile, ParentAppUsageLog
+        from .parent_serializers import ParentalLimitsSerializer
+        
+        # Get student (use authenticated user)
+        student = request.user
+        
+        if student.role != 'user':
+            return Response({
+                'success': False,
+                'error': _('This endpoint is only for students')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get active parent profile
+        parent = ParentProfile.objects.filter(
+            student=student,
+            is_active=True
+        ).first()
+        
+        if not parent:
+            return Response({
+                'success': False,
+                'error': _('No active parent profile found for this student')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get server time (source of truth)
+        server_now = timezone.localtime(timezone.now())
+        today = server_now.date()
+        current_time = server_now.time()
+        
+        # Get or create today's usage log
+        usage_log, created = ParentAppUsageLog.objects.get_or_create(
+            parent=parent,
+            date=today,
+            defaults={'total_seconds': 0, 'total_minutes': 0, 'session_count': 0}
+        )
+        
+        used_today_seconds = usage_log.total_seconds
+        
+        # Compute remaining seconds
+        remaining_seconds = None
+        if parent.daily_usage_limit_minutes:
+            limit_seconds = parent.daily_usage_limit_minutes * 60
+            remaining_seconds = max(0, limit_seconds - used_today_seconds)
+        
+        # Check if blocked
+        blocked = False
+        block_reason = None
+        
+        # Check time window
+        if not parent.is_within_allowed_window(current_time):
+            blocked = True
+            block_reason = 'OUT_OF_ALLOWED_WINDOW'
+        
+        # Check daily limit
+        elif parent.daily_usage_limit_minutes and remaining_seconds == 0:
+            blocked = True
+            block_reason = 'DAILY_LIMIT_REACHED'
+        
+        # Prepare response data
+        data = {
+            'daily_usage_limit_minutes': parent.daily_usage_limit_minutes,
+            'allowed_start_time': parent.allowed_start_time,
+            'allowed_end_time': parent.allowed_end_time,
+            'server_now': server_now,
+            'server_date': today,
+            'server_time': current_time,
+            'used_today_seconds': used_today_seconds,
+            'remaining_seconds': remaining_seconds,
+            'blocked': blocked,
+            'block_reason': block_reason
+        }
+        
+        serializer = ParentalLimitsSerializer(data)
+        
+        return Response({
+            'success': True,
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class ParentalUsageReportAPIView(APIView):
+    """
+    گزارش مصرف از طرف دانش‌آموز
+    
+    POST: Report usage chunk from student device
+    
+    Request body:
+        - session_seconds: int (1-600) - تعداد ثانیه‌های این جلسه
+        - device_id: string (optional) - شناسه دستگاه
+        - client_started_at: datetime (optional) - زمان شروع در دستگاه
+        - client_ended_at: datetime (optional) - زمان پایان در دستگاه
+    
+    Returns:
+        200 OK: همان پاسخ GET limits با وضعیت به‌روز شده
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parental Control'],
+        summary='Report Usage Chunk',
+        description='گزارش مصرف زمان توسط دانش‌آموز (حداکثر 10 دقیقه در هر گزارش)',
+        request=inline_serializer(
+            name='UsageReportRequest',
+            fields={
+                'session_seconds': serializers.IntegerField(min_value=1, max_value=600),
+                'device_id': serializers.CharField(required=False, allow_blank=True),
+                'client_started_at': serializers.DateTimeField(required=False),
+                'client_ended_at': serializers.DateTimeField(required=False)
+            }
+        ),
+        responses={
+            200: OpenApiResponse(description="مصرف با موفقیت ثبت شد"),
+            400: OpenApiResponse(description="داده‌های نامعتبر"),
+            404: OpenApiResponse(description="پروفایل والد یافت نشد"),
+        }
+    )
+    def post(self, request):
+        """Report usage chunk"""
+        from account.models import ParentProfile, ParentAppUsageLog
+        from .parent_serializers import UsageReportRequestSerializer, ParentalLimitsSerializer
+        from django.db.models import F
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        # Validate request
+        serializer = UsageReportRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        session_seconds = serializer.validated_data['session_seconds']
+        device_id = serializer.validated_data.get('device_id', '')
+        
+        # Get student (use authenticated user)
+        student = request.user
+        
+        if student.role != 'user':
+            return Response({
+                'success': False,
+                'error': _('This endpoint is only for students')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get active parent profile
+        parent = ParentProfile.objects.filter(
+            student=student,
+            is_active=True
+        ).first()
+        
+        if not parent:
+            return Response({
+                'success': False,
+                'error': _('No active parent profile found for this student'),
+                'error_code': 'NO_PARENT_PROFILE'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check for multiple parents (log warning)
+        parent_count = ParentProfile.objects.filter(
+            student=student,
+            is_active=True
+        ).count()
+        
+        if parent_count > 1:
+            logger.warning(
+                f"Student {student.id} ({student.username}) has {parent_count} active parent profiles. "
+                f"Using earliest created parent profile {parent.id}."
+            )
+        
+        # Use server time as source of truth
+        server_now = timezone.localtime(timezone.now())
+        today = server_now.date()
+        
+        # Upsert usage log (atomic update)
+        usage_log, created = ParentAppUsageLog.objects.get_or_create(
+            parent=parent,
+            date=today,
+            defaults={
+                'total_seconds': 0,
+                'total_minutes': 0,
+                'session_count': 0,
+                'last_reported_at': server_now
+            }
+        )
+        
+        # Atomically update usage (use F() to avoid race conditions)
+        ParentAppUsageLog.objects.filter(pk=usage_log.pk).update(
+            total_seconds=F('total_seconds') + session_seconds,
+            total_minutes=F('total_seconds') // 60,  # Derived from seconds
+            session_count=F('session_count') + 1,
+            last_reported_at=server_now
+        )
+        
+        # Refresh from database to get updated values
+        usage_log.refresh_from_db()
+        
+        used_today_seconds = usage_log.total_seconds
+        
+        # Compute remaining seconds
+        remaining_seconds = None
+        if parent.daily_usage_limit_minutes:
+            limit_seconds = parent.daily_usage_limit_minutes * 60
+            remaining_seconds = max(0, limit_seconds - used_today_seconds)
+        
+        # Check if blocked
+        current_time = server_now.time()
+        blocked = False
+        block_reason = None
+        
+        # Check time window
+        if not parent.is_within_allowed_window(current_time):
+            blocked = True
+            block_reason = 'OUT_OF_ALLOWED_WINDOW'
+        
+        # Check daily limit
+        elif parent.daily_usage_limit_minutes and remaining_seconds == 0:
+            blocked = True
+            block_reason = 'DAILY_LIMIT_REACHED'
+        
+        # Prepare response data
+        data = {
+            'daily_usage_limit_minutes': parent.daily_usage_limit_minutes,
+            'allowed_start_time': parent.allowed_start_time,
+            'allowed_end_time': parent.allowed_end_time,
+            'server_now': server_now,
+            'server_date': today,
+            'server_time': current_time,
+            'used_today_seconds': used_today_seconds,
+            'remaining_seconds': remaining_seconds,
+            'blocked': blocked,
+            'block_reason': block_reason
+        }
+        
+        response_serializer = ParentalLimitsSerializer(data)
+        
+        return Response({
+            'success': True,
+            'message': _('Usage recorded successfully'),
+            'data': response_serializer.data
+        }, status=status.HTTP_200_OK)
+

@@ -298,6 +298,72 @@ class TeachingSubjectForParentSelectionSerializer(serializers.ModelSerializer):
     """موضوعات تدریس برای انتخاب توسط والد"""
     teacher_name = serializers.CharField(source='teacher.name', read_only=True)
     teacher_id = serializers.IntegerField(source='teacher.id', read_only=True)
+
+
+# ===== Parental Control Usage Tracking Serializers =====
+
+class ParentalLimitsSerializer(serializers.Serializer):
+    """دریافت محدودیت‌های والدین و وضعیت مصرف"""
+    daily_usage_limit_minutes = serializers.IntegerField(
+        allow_null=True,
+        help_text=_("حداکثر دقایق استفاده روزانه")
+    )
+    allowed_start_time = serializers.TimeField(
+        allow_null=True,
+        help_text=_("ساعت شروع مجاز")
+    )
+    allowed_end_time = serializers.TimeField(
+        allow_null=True,
+        help_text=_("ساعت پایان مجاز")
+    )
+    server_now = serializers.DateTimeField(
+        help_text=_("زمان فعلی سرور")
+    )
+    server_date = serializers.DateField(
+        help_text=_("تاریخ فعلی سرور")
+    )
+    server_time = serializers.TimeField(
+        help_text=_("ساعت فعلی سرور")
+    )
+    used_today_seconds = serializers.IntegerField(
+        help_text=_("ثانیه‌های استفاده شده امروز")
+    )
+    remaining_seconds = serializers.IntegerField(
+        allow_null=True,
+        help_text=_("ثانیه‌های باقی‌مانده")
+    )
+    blocked = serializers.BooleanField(
+        help_text=_("آیا دسترسی بلاک شده است")
+    )
+    block_reason = serializers.CharField(
+        allow_null=True,
+        help_text=_("دلیل بلاک")
+    )
+
+
+class UsageReportRequestSerializer(serializers.Serializer):
+    """گزارش مصرف از طرف دانش‌آموز"""
+    session_seconds = serializers.IntegerField(
+        min_value=1,
+        max_value=600,
+        help_text=_("تعداد ثانیه‌های این جلسه (حداکثر 10 دقیقه)")
+    )
+    device_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=255,
+        help_text=_("شناسه دستگاه (اختیاری)")
+    )
+    client_started_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text=_("زمان شروع در دستگاه کاربر (غیرقابل اعتماد)")
+    )
+    client_ended_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text=_("زمان پایان در دستگاه کاربر (غیرقابل اعتماد)")
+    )
     cover_image_url = serializers.SerializerMethodField()
     demo_video_url = serializers.SerializerMethodField()
     

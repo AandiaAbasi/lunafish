@@ -101,6 +101,10 @@ urlpatterns = [
     path('parent/update-usage-time/', views.ParentUpdateUsageTimeAPIView.as_view(), name='update_usage_time'),
     path('parent/profile/', views.ParentProfileAPIView.as_view(), name='parent_profile'),
     
+    # ========== Parental Control - Usage Tracking APIs ==========
+    path('parental/limits/', views.ParentalLimitsAPIView.as_view(), name='parental_limits'),
+    path('parental/usage/report/', views.ParentalUsageReportAPIView.as_view(), name='parental_usage_report'),
+    
     # ========== Attendance APIs ==========
     path('attendance/<int:booking_id>/', views.AttendanceAPIView.as_view(), name='attendance'),
     path('attendance/<int:booking_id>/list/', views.AttendanceListAPIView.as_view(), name='attendance_list'),
