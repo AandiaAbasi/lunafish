@@ -12,6 +12,11 @@ from datetime import datetime, date
 
 class FieldDetailSerializer(serializers.ModelSerializer):
     """Serializer for answer options/details"""
+    # Make all fields optional for creation (they'll be validated at Field level)
+    title = serializers.CharField(required=True, allow_blank=False)
+    correct_answer = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    is_correct = serializers.IntegerField(required=False, allow_null=True)
+    
     class Meta:
         model = FieldDetail
         fields = [
@@ -64,10 +69,20 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             if title_key not in data:
                 break
             
+            title_value = data.get(f'details[{index}][title]', '')
+            sort_value = data.get(f'details[{index}][sort]', index)
+            
+            logger.info(f"Building detail {index}:")
+            logger.info(f"  title_key='{title_key}' in data: {title_key in data}")
+            logger.info(f"  title_value: '{title_value}' (type: {type(title_value)})")
+            logger.info(f"  sort_value: '{sort_value}' (type: {type(sort_value)})")
+            
             detail = {
-                'title': data.get(f'details[{index}][title]', ''),
-                'sort': int(data.get(f'details[{index}][sort]', index)),
+                'title': title_value,
+                'sort': int(sort_value) if sort_value else index,
             }
+            
+            logger.info(f"  detail dict after title/sort: {detail}")
             
             # Optional fields
             if f'details[{index}][second_title]' in data:
@@ -87,15 +102,19 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             
             # Check for is_correct (checkbox/radioButton)
             if f'details[{index}][is_correct]' in data:
-                detail['is_correct'] = int(data.get(f'details[{index}][is_correct]', 0))
+                is_correct_value = data.get(f'details[{index}][is_correct]', 0)
+                detail['is_correct'] = int(is_correct_value) if is_correct_value else 0
+                logger.info(f"  Added is_correct: {detail['is_correct']}")
             
             # Check for correct_answer (input type)
             if f'details[{index}][correct_answer]' in data:
-                detail['correct_answer'] = data.get(f'details[{index}][correct_answer]', '')
+                correct_answer_value = data.get(f'details[{index}][correct_answer]', '')
+                detail['correct_answer'] = correct_answer_value
+                logger.info(f"  Added correct_answer: '{correct_answer_value}'")
             
+            logger.info(f"  Final detail dict: {detail}")
             details.append(detail)
             index += 1
-            logger.info(f"Parsed detail {index}: {detail}")
         
         if details:
             # Create a mutable copy of data if it's a QueryDict
@@ -103,12 +122,17 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
                 data._mutable = True
             data['details'] = details
             logger.info(f"✅ Total details parsed: {len(details)}")
+            logger.info(f"✅ Parsed details structure: {details}")
         else:
             logger.info(f"⚠️ No form array notation found, checking if details already exists as list")
             if 'details' in data and isinstance(data.get('details'), list):
                 logger.info(f"✅ Details already exists as list with {len(data['details'])} items")
         
-        return super().to_internal_value(data)
+        logger.info(f"Calling super().to_internal_value with data containing 'details': {'details' in data}")
+        result = super().to_internal_value(data)
+        logger.info(f"✅ super().to_internal_value succeeded")
+        logger.info(f"Result has {len(result.get('details', []))} details")
+        return result
     
     def validate(self, data):
         """Validate that questions have appropriate details"""
