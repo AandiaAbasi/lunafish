@@ -1,42 +1,33 @@
 """
 Serializers for Exercise App - Questions, Exams, and Answers
 Supports: Typing, Multiple Choice (Checkbox), Single Choice (RadioButton)
+
+TWO-STEP CREATION FLOW:
+1. Create Field (multipart) - NO details
+2. Create FieldDetails (JSON) - uses Field ID
 """
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
+from django.db import transaction
 from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail
 from classroom.models import TeachingSubject
 import jdatetime
 from datetime import datetime, date
+import os
+import uuid
+from django.core.files.storage import default_storage
 
 
-class FieldDetailSerializer(serializers.ModelSerializer):
-    """Serializer for answer options/details"""
-    # Make all fields optional for creation (they'll be validated at Field level)
-    title = serializers.CharField(required=True, allow_blank=False)
-    correct_answer = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    is_correct = serializers.IntegerField(required=False, allow_null=True)
-    
-    class Meta:
-        model = FieldDetail
-        fields = [
-            'id', 'title', 'second_title', 'image_path', 'is_correct',
-            'correct_answer', 'guide', 'des', 'sort', 'is_required'
-        ]
-        read_only_fields = ['id']
+# ==================== STEP 1: Create Field (Multipart, NO Details) ====================
 
-
-class FieldCreateUpdateSerializer(serializers.ModelSerializer):
-    """Serializer for creating/updating questions (Fields)
-    
-    Supports:
-    - input (تایپی) - Typing questions (details contain correct_answer)
-    - checkbox (چند گزینه‌ای) - Multiple choice (details contain options with is_correct)
-    - radioButton (تک گزینه‌ای) - Single choice (details contain options with is_correct)
+class FieldCreateSerializer(serializers.ModelSerializer):
     """
-    details = FieldDetailSerializer(many=True, required=False, write_only=True)
+    STEP 1: Create Field with file uploads (multipart/form-data)
     
-    # File upload fields - override model CharField to accept files
+    Does NOT handle details at all - details are created in Step 2.
+    Accepts file uploads for image, audio, video.
+    """
+    # Override model CharField to accept file uploads
     image_path = serializers.FileField(required=False, allow_null=True, write_only=True)
     audio_path = serializers.FileField(required=False, allow_null=True, write_only=True)
     video_path = serializers.FileField(required=False, allow_null=True, write_only=True)
@@ -44,244 +35,178 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Field
         fields = [
-            'id', 'title', 'type', 'is_required', 'image_path',
-            'audio_path', 'video_path', 'guide', 'des', 'sort', 'details'
+            'id', 'title', 'type', 'is_required', 'sort',
+            'guide', 'des', 'image_path', 'audio_path', 'video_path'
         ]
         read_only_fields = ['id']
     
-    def to_internal_value(self, data):
-        """Parse form array notation (details[0][title]) into nested structure"""
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        try:
-            print("=" * 80)
-            print("=== to_internal_value called ===")
-            print(f"Data type: {type(data)}")
-            print(f"Data keys: {list(data.keys()) if hasattr(data, 'keys') else 'N/A'}")
-            print(f"Has 'details' key: {'details' in data}")
-            
-            # Log all keys that start with 'details['
-            detail_keys = [k for k in data.keys() if str(k).startswith('details[')]
-            print(f"Keys starting with 'details[': {detail_keys}")
-            print("=" * 80)
-        except Exception as e:
-            print(f"Error in debug logging: {e}")
-        
-        # Try to parse form array notation from multipart/form-data
-        details = []
-        index = 0
-        
-        # Parse form array notation: details[0][title], details[0][correct_answer], etc.
-        while True:
-            title_key = f'details[{index}][title]'
-            if title_key not in data:
-                print(f"[WARNING] Key not found in data, stopping parse at index {index}")
-                break
-            
-            try:
-                title_value = data.get(f'details[{index}][title]', '')
-                sort_value = data.get(f'details[{index}][sort]', index)
-                
-                print(f"Detail {index}: title_len={len(str(title_value))}, sort={sort_value}")
-                
-                detail = {
-                    'title': title_value,
-                    'sort': int(sort_value) if sort_value else index,
-                }
-                
-                # Optional fields
-                if f'details[{index}][second_title]' in data:
-                    detail['second_title'] = data.get(f'details[{index}][second_title]')
-                
-                if f'details[{index}][image_path]' in data:
-                    detail['image_path'] = data.get(f'details[{index}][image_path]')
-                
-                if f'details[{index}][guide]' in data:
-                    detail['guide'] = data.get(f'details[{index}][guide]')
-                
-                if f'details[{index}][des]' in data:
-                    detail['des'] = data.get(f'details[{index}][des]')
-                
-                if f'details[{index}][is_required]' in data:
-                    detail['is_required'] = int(data.get(f'details[{index}][is_required]', 0))
-                
-                # Check for is_correct (checkbox/radioButton)
-                if f'details[{index}][is_correct]' in data:
-                    is_correct_value = data.get(f'details[{index}][is_correct]', 0)
-                    detail['is_correct'] = int(is_correct_value) if is_correct_value else 0
-                
-                # Check for correct_answer (input type)
-                if f'details[{index}][correct_answer]' in data:
-                    correct_answer_value = data.get(f'details[{index}][correct_answer]', '')
-                    detail['correct_answer'] = correct_answer_value
-                    print(f"  Added correct_answer: len={len(str(correct_answer_value))}")
-                
-                print(f"  Detail {index} complete with keys: {list(detail.keys())}")
-                details.append(detail)
-                index += 1
-            except Exception as e:
-                print(f"[ERROR] Failed to parse detail {index}: {type(e).__name__}")
-                break
-        
-        if details:
-            # QueryDict doesn't handle list assignments properly
-            # Convert to regular dict and set the details
-            if hasattr(data, '_mutable'):
-                data._mutable = True
-            
-            # Convert QueryDict to regular dict to properly handle list values
-            data_dict = dict(data)
-            data_dict['details'] = details
-            
-            print(f"[SUCCESS] Total details parsed: {len(details)}")
-            print(f"[SUCCESS] First detail keys: {list(details[0].keys()) if details else 'none'}")
-            # Check if title exists in first detail
-            if details and 'title' in details[0]:
-                title_val = details[0]['title']
-                print(f"[SUCCESS] First detail title: len={len(str(title_val))}, empty={not title_val}")
-            
-            # Pass the regular dict to parent
-            print(f"About to call super().to_internal_value with regular dict...")
-            result = super().to_internal_value(data_dict)
-            print(f"[SUCCESS] super().to_internal_value succeeded")
-            print(f"Result has {len(result.get('details', []))} details")
-            return result
-    
-    def validate(self, data):
-        """Validate that questions have appropriate details"""
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        question_type = data.get('type')
-        details = data.get('details', [])
-        
-        logger.info(f"=== Validating Field ===")
-        logger.info(f"Question type: {question_type}")
-        logger.info(f"Details count: {len(details)}")
-        logger.info(f"Details: {details}")
-        
-        # ✅ سوالات choice باید دارای details باشند
-        if question_type in ['checkbox', 'radioButton']:
-            if not details:
-                raise serializers.ValidationError(
-                    _('سوالات انتخابی باید حداقل یک گزینه داشته باشند')
-                )
-        
-        # ✅ سوالات input باید حداقل یک detail با correct_answer داشته باشند
-        if question_type == 'input':
-            if not details:
-                raise serializers.ValidationError(
-                    _('سوالات تایپی باید حداقل یک detail برای ذخیره پاسخ صحیح داشته باشند')
-                )
-            # Validate that at least one detail has correct_answer
-            has_correct_answer = any(
-                detail.get('correct_answer') for detail in details
+    def validate_type(self, value):
+        """Validate question type"""
+        valid_types = ['input', 'checkbox', 'radioButton']
+        if value not in valid_types:
+            raise serializers.ValidationError(
+                _('نوع سوال باید یکی از این مقادیر باشد: input, checkbox, radioButton')
             )
-            if not has_correct_answer:
-                raise serializers.ValidationError(
-                    _('سوالات تایپی باید حداقل یک detail با correct_answer داشته باشند')
-                )
-            logger.info(f"[SUCCESS] Input validation passed - has correct_answer")
-        
-        logger.info(f"[SUCCESS] Validation passed")
-        return data
+        return value
     
     def create(self, validated_data):
-        """Create Field with FieldDetail entries"""
-        import logging
-        import os
-        import uuid
-        from django.core.files.storage import default_storage
-        from django.conf import settings
-        
-        logger = logging.getLogger(__name__)
-        
-        details_data = validated_data.pop('details', [])
-        logger.info(f"Creating Field with type: {validated_data.get('type')}")
-        logger.info(f"Details data received: {details_data}")
-        logger.info(f"Number of details: {len(details_data)}")
-        
-        # Get teacher from context (only if field exists in DB)
-        # TODO: Remove try-except after migration is applied
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
-            try:
-                # Check if teacher field exists in model
-                Field._meta.get_field('teacher')
-                validated_data['teacher'] = request.user
-            except Exception:
-                # Field doesn't exist in DB yet, skip assignment
-                logger.info("Teacher field not in database yet, skipping assignment")
-        
-        # Handle file uploads from validated_data (processed by FileField)
-        # Handle image upload
+        """Create Field and handle file uploads"""
+        # Handle file uploads
         image_file = validated_data.pop('image_path', None)
         if image_file:
             ext = os.path.splitext(image_file.name)[1]
             filename = f"exercise_images/{uuid.uuid4().hex}{ext}"
             saved_path = default_storage.save(filename, image_file)
             validated_data['image_path'] = saved_path
-            logger.info(f"Image uploaded: {saved_path}")
         
-        # Handle audio upload
         audio_file = validated_data.pop('audio_path', None)
         if audio_file:
             ext = os.path.splitext(audio_file.name)[1]
             filename = f"exercise_audio/{uuid.uuid4().hex}{ext}"
             saved_path = default_storage.save(filename, audio_file)
             validated_data['audio_path'] = saved_path
-            logger.info(f"Audio uploaded: {saved_path}")
         
-        # Handle video upload
         video_file = validated_data.pop('video_path', None)
         if video_file:
             ext = os.path.splitext(video_file.name)[1]
             filename = f"exercise_videos/{uuid.uuid4().hex}{ext}"
             saved_path = default_storage.save(filename, video_file)
             validated_data['video_path'] = saved_path
-            logger.info(f"Video uploaded: {saved_path}")
         
-        # Create the Field
-        field = Field.objects.create(**validated_data)
-        logger.info(f"Field created with ID: {field.id}")
+        # Set teacher if available in context
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            try:
+                Field._meta.get_field('teacher')
+                validated_data['teacher'] = request.user
+            except Exception:
+                pass
         
-        # Create FieldDetail entries
-        created_details = []
-        for i, detail_data in enumerate(details_data):
-            logger.info(f"Creating FieldDetail {i}: {detail_data}")
-            detail = FieldDetail.objects.create(field=field, **detail_data)
-            created_details.append(detail)
-            logger.info(f"FieldDetail created with ID: {detail.id}")
-        
-        logger.info(f"Total FieldDetails created: {len(created_details)}")
-        
-        # Reload Field with prefetched related details
-        # This ensures the details are properly loaded when serializing
-        result = Field.objects.prefetch_related('details').get(pk=field.pk)
-        logger.info(f"Reloaded Field has {result.details.count()} details")
-        return result
+        return Field.objects.create(**validated_data)
+
+
+# ==================== STEP 2: Create FieldDetails (JSON) ====================
+
+class FieldDetailCreateSerializer(serializers.Serializer):
+    """
+    Serializer for individual detail item in Step 2
+    Validation depends on parent Field.type
+    """
+    title = serializers.CharField(required=True, allow_blank=False, max_length=255)
+    sort = serializers.IntegerField(required=False, allow_null=True)
+    second_title = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=255)
+    guide = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=255)
+    des = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    image_path = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=255)
+    is_required = serializers.IntegerField(required=False, allow_null=True, default=0)
     
-    def update(self, instance, validated_data):
-        """Update Field and its FieldDetail entries"""
-        details_data = validated_data.pop('details', None)
+    # For checkbox/radioButton types
+    is_correct = serializers.IntegerField(required=False, allow_null=True)
+    
+    # For input types
+    correct_answer = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+
+class FieldDetailBulkSerializer(serializers.Serializer):
+    """
+    STEP 2: Create/Replace all FieldDetails for a Field (JSON)
+    
+    Validates based on the Field.type and replaces all existing details atomically.
+    """
+    details = FieldDetailCreateSerializer(many=True, required=True)
+    
+    def validate_details(self, value):
+        """Validate that details array is not empty"""
+        if not value:
+            raise serializers.ValidationError(
+                _('حداقل یک detail الزامی است')
+            )
+        return value
+    
+    def validate(self, data):
+        """Validate details based on Field type"""
+        field = self.context.get('field')
+        if not field:
+            raise serializers.ValidationError(_('Field not found in context'))
         
-        # Update field fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        details = data.get('details', [])
+        field_type = field.type
         
-        # Update details if provided
-        if details_data is not None:
-            # Delete existing details
-            instance.details.all().delete()
-            # Create new details
-            for detail_data in details_data:
-                FieldDetail.objects.create(field=instance, **detail_data)
+        # Validate based on field type
+        if field_type == 'input':
+            # Input type: each detail must have correct_answer
+            for idx, detail in enumerate(details):
+                if not detail.get('correct_answer'):
+                    raise serializers.ValidationError({
+                        'details': {
+                            idx: {
+                                'correct_answer': [_('برای سوالات تایپی، correct_answer الزامی است')]
+                            }
+                        }
+                    })
         
-        # Reload Field with prefetched related details
-        # This ensures the details are properly loaded when serializing
-        return Field.objects.prefetch_related('details').get(pk=instance.pk)
+        elif field_type in ['checkbox', 'radioButton']:
+            # Choice types: each detail must have is_correct
+            for idx, detail in enumerate(details):
+                if detail.get('is_correct') is None:
+                    raise serializers.ValidationError({
+                        'details': {
+                            idx: {
+                                'is_correct': [_('برای سوالات انتخابی، is_correct الزامی است')]
+                            }
+                        }
+                    })
+                # Validate is_correct value
+                if detail['is_correct'] not in [0, 1, -1]:
+                    raise serializers.ValidationError({
+                        'details': {
+                            idx: {
+                                'is_correct': [_('is_correct باید 0 یا 1 یا -1 باشد')]
+                            }
+                        }
+                    })
+        
+        return data
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        """Replace all FieldDetails for the Field"""
+        field = self.context.get('field')
+        details_data = validated_data.get('details', [])
+        
+        # Delete existing details
+        FieldDetail.objects.filter(field=field).delete()
+        
+        # Create new details
+        created_details = []
+        for idx, detail_data in enumerate(details_data):
+            # Set default sort if not provided
+            if detail_data.get('sort') is None:
+                detail_data['sort'] = idx
+            
+            detail = FieldDetail.objects.create(
+                field=field,
+                **detail_data
+            )
+            created_details.append(detail)
+        
+        return {
+            'field_id': field.id,
+            'details': created_details
+        }
+
+
+# ==================== Read Serializers ====================
+
+class FieldDetailSerializer(serializers.ModelSerializer):
+    """Serializer for reading answer options/details"""
+    class Meta:
+        model = FieldDetail
+        fields = [
+            'id', 'title', 'second_title', 'image_path', 'is_correct',
+            'correct_answer', 'guide', 'des', 'sort', 'is_required'
+        ]
+        read_only_fields = ['id']
 
 
 class FieldRetrieveSerializer(serializers.ModelSerializer):

@@ -4113,171 +4113,231 @@ class TeachingSubjectDeleteAPIView(APIView):
 
 # ========== Exercise APIs (آزمون‌ها) ==========
 
+# ==================== STEP 1: Create Field (Multipart, NO Details) ====================
+
 class CreateFieldAPIView(APIView):
     """
-    Create Question (Field) API
+    STEP 1: Create Field with file uploads (multipart/form-data)
     
-    Create a new question with optional answer options.
+    Does NOT accept details. Details are created in Step 2 using the returned field_id.
+    Only teachers can create fields.
+    
     Supports multiple question types:
     - input (تایپی) - Typing/text questions
     - checkbox (چند گزینه‌ای) - Multiple choice questions
     - radioButton (تک گزینه‌ای) - Single choice questions
     
-    Only teachers can create questions.
-    Requires authentication.
-    
     post:
-        Create a new question with answer details.
+        Create a new field without details.
         
-        Request body parameters:
+        Request body parameters (multipart/form-data):
         - title: string (required) - Question text/title
         - type: string (required) - Question type: 'input', 'checkbox', or 'radioButton'
-        - is_required: integer (optional) - 0 or 1 - Whether answer is required
-        - image_path: string (optional) - Path to question image
-        - audio_path: string (optional) - Path to question audio
-        - video_path: string (optional) - Path to question video
+        - is_required: integer (optional, default: 0) - 0 or 1 - Whether answer is required
+        - sort: integer (optional, default: 0) - Sort order
         - guide: string (optional) - Question guide/hint
         - des: string (optional) - Question description
-        - sort: integer (optional, default: 0) - Sort order
-        - details: array (optional) - Answer options
-            - For choice questions (checkbox/radioButton):
-                - title: string - Option text
-                - is_correct: integer - 1 if correct, 0 if incorrect, -1 for text
-                - image_path: string (optional) - Option image
-                - guide: string (optional) - Explanation for this option
-            - For input questions:
-                - title: string (optional) - Label or description for the input field
-                - correct_answer: string - Teacher's answer key for grading
-            
+        - image_path: file (optional) - Question image file
+        - audio_path: file (optional) - Question audio file
+        - video_path: file (optional) - Question video file
+        
         Returns:
             201 Created:
-                - id: integer - Question ID
-                - title: string
-                - type: string
-                - is_required: integer
-                - details: array - Answer options
-                - message: string - "Question created successfully"
+                {
+                    "ok": true,
+                    "data": {
+                        "id": 123,
+                        "title": "...",
+                        "type": "input",
+                        "is_required": 1,
+                        "sort": 0,
+                        "guide": "...",
+                        "des": "...",
+                        "image_path": "...",
+                        "audio_path": "...",
+                        "video_path": "..."
+                    }
+                }
                 
             400 Bad Request - Invalid data
             403 Forbidden - User is not a teacher
-    
-    Example Request - Multiple Choice:
-    ```json
-    {
-        "title": "What is 2+2?",
-        "type": "radioButton",
-        "is_required": 1,
-        "guide": "Choose the correct answer",
-        "details": [
-            {
-                "title": "3",
-                "is_correct": 0
-            },
-            {
-                "title": "4",
-                "is_correct": 1
-            },
-            {
-                "title": "5",
-                "is_correct": 0
-            }
-        ]
-    }
-    ```
-    
-    Example Request - Typing (Input):
-    ```json
-    {
-        "title": "Write your name",
-        "type": "input",
-        "is_required": 1,
-        "guide": "Enter your full name",
-        "details": [
-            {
-                "title": "Student Name",
-                "correct_answer": "Expected answer text"
-            }
-        ]
-    }
-    ```
     """
     permission_classes = [IsAuthenticated]
-    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    parser_classes = (MultiPartParser, FormParser)  # ONLY multipart, NO JSON
     
     @extend_schema(
-        tags=['Exercise - Questions'],
-        summary='Create Question',
-        description='Create new question with optional answer options. Supports file uploads for images, audio, and video. Only for teachers.',
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Step 1: Create Field (NO details)',
+        description='Create question field with file uploads. Does NOT accept details array.',
         request=None,
         responses={
-            201: OpenApiResponse(description="Question created successfully"),
+            201: OpenApiResponse(description="Field created successfully"),
             400: OpenApiResponse(description="Invalid data"),
-            403: OpenApiResponse(description="Only teachers can create questions"),
+            403: OpenApiResponse(description="Only teachers can create fields"),
         }
     )
     def post(self, request):
         from exercise.models import Field
-        from .exercise_serializers import FieldCreateUpdateSerializer
+        from .exercise_serializers import FieldCreateSerializer
         
-        # فقط معلمان می‌توانند سؤال ایجاد کنند
+        # Only teachers can create fields
         if request.user.role != 'teacher':
-            return Response(
-                {'error': _('تنها معلمان می‌توانند سؤال ایجاد کنند')},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({
+                'ok': False,
+                'error': _('تنها معلمان می‌توانند سؤال ایجاد کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
         
-        # Log incoming data for debugging
-        import logging
-        logger = logging.getLogger(__name__)
-        try:
-            print("=" * 80)
-            print("CreateField POST Request Received")
-            print("=" * 80)
-            print(f"Content-Type: {request.content_type}")
-            print(f"Request data keys: {list(request.data.keys())}")
-            print(f"Request POST keys: {list(request.POST.keys()) if hasattr(request, 'POST') else 'N/A'}")
-            print(f"Request FILES keys: {list(request.FILES.keys()) if hasattr(request, 'FILES') else 'N/A'}")
-            print(f"Question type: {request.data.get('type')}")
-            print(f"Question title: {repr(request.data.get('title'))}")
-            
-            # Check for form array notation details
-            detail_keys = [key for key in request.data.keys() if key.startswith('details[')]
-            print(f"Form array notation detail keys found: {len(detail_keys)} keys")
-            if detail_keys:
-                print(f"Sample detail keys: {detail_keys[:5]}")
-                # Print actual values
-                for key in detail_keys[:5]:
-                    print(f"  {key} = {repr(request.data.get(key))}")
-            
-            # Check if details exists as a key
-            if 'details' in request.data:
-                print(f"'details' key exists, type: {type(request.data.get('details'))}")
-                print(f"Details value: {repr(request.data.get('details'))}")
-            
-            print("=" * 80)
-        except Exception as e:
-            print(f"Error in debug logging: {e}")
+        # Ignore any 'details' or 'details[...]' keys completely
+        # Extract only the allowed fields
+        field_data = {}
+        allowed_fields = ['title', 'type', 'is_required', 'sort', 'guide', 'des']
+        for field in allowed_fields:
+            if field in request.data:
+                field_data[field] = request.data[field]
         
-        # No special handling needed - correct_answer is now in FieldDetail
-        serializer = FieldCreateUpdateSerializer(data=request.data, context={'request': request})
+        # Add file fields
+        for file_field in ['image_path', 'audio_path', 'video_path']:
+            if file_field in request.FILES:
+                field_data[file_field] = request.FILES[file_field]
+        
+        serializer = FieldCreateSerializer(data=field_data, context={'request': request})
         if serializer.is_valid():
             field = serializer.save()
-            logger.info(f"[SUCCESS] Field created successfully with id: {field.id}")
-            logger.info(f"[SUCCESS] Details count: {field.details.count()}")
-            response_serializer = FieldRetrieveSerializer(field)
             return Response({
-                'success': True,
-                'data': response_serializer.data,
-                'message': _('سؤال با موفقیت ایجاد شد')
+                'ok': True,
+                'data': {
+                    'id': field.id,
+                    'title': field.title,
+                    'type': field.type,
+                    'is_required': field.is_required,
+                    'sort': field.sort,
+                    'guide': field.guide,
+                    'des': field.des,
+                    'image_path': field.image_path,
+                    'audio_path': field.audio_path,
+                    'video_path': field.video_path,
+                }
             }, status=status.HTTP_201_CREATED)
         
-        # Log validation errors
-        logger.error("=" * 80)
-        logger.error("[ERROR] VALIDATION FAILED")
-        logger.error(f"Validation errors: {serializer.errors}")
-        logger.error("=" * 80)
         return Response({
-            'success': False,
+            'ok': False,
+            'error': _('داده‌های نامعتبر'),
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ==================== STEP 2: Create FieldDetails (JSON) ====================
+
+class CreateFieldDetailsAPIView(APIView):
+    """
+    STEP 2: Create/Replace FieldDetails for a Field (JSON)
+    
+    Replaces ALL existing details for the specified field_id.
+    Validates based on Field.type:
+    - For 'input' type: requires 'correct_answer' in each detail
+    - For 'checkbox'/'radioButton': requires 'is_correct' (0=wrong, 1=correct, -1=text/explanation)
+    
+    post:
+        Create/replace all details for a field.
+        
+        URL parameter:
+        - field_id: integer (required) - The Field ID from Step 1
+        
+        Request body (JSON):
+        {
+            "details": [
+                {
+                    "title": "Detail text",
+                    "sort": 0,
+                    "correct_answer": "Answer for input type",  // for input type ONLY
+                    "is_correct": 1,                            // for checkbox/radioButton ONLY
+                    "guide": "Explanation (optional)"
+                },
+                ...
+            ]
+        }
+        
+        Returns:
+            201 Created:
+                {
+                    "ok": true,
+                    "data": {
+                        "field_id": 123,
+                        "details": [...]
+                    }
+                }
+                
+            400 Bad Request - Invalid data
+            403 Forbidden - Permission denied
+            404 Not Found - Field not found
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (JSONParser,)  # ONLY JSON, NO multipart
+    
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Step 2: Create FieldDetails',
+        description='Create/replace all details for a field. Uses field_id from URL. Validates based on field type.',
+        request=None,
+        responses={
+            201: OpenApiResponse(description="Details created successfully"),
+            400: OpenApiResponse(description="Invalid data"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Field not found"),
+        }
+    )
+    def post(self, request, field_id):
+        from exercise.models import Field
+        from .exercise_serializers import FieldDetailBulkSerializer, FieldDetailSerializer
+        
+        # Get the field
+        try:
+            field = Field.objects.get(id=field_id)
+        except Field.DoesNotExist:
+            return Response({
+                'ok': False,
+                'error': _('سؤال یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check permission - only field owner (teacher) can add details
+        if request.user.role != 'teacher':
+            return Response({
+                'ok': False,
+                'error': _('تنها معلمان می‌توانند details ایجاد کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Optional: Check if user is the field owner
+        try:
+            if hasattr(field, 'teacher') and field.teacher != request.user:
+                return Response({
+                    'ok': False,
+                    'error': _('شما مجاز به ویرایش این سؤال نیستید')
+                }, status=status.HTTP_403_FORBIDDEN)
+        except Exception:
+            pass  # teacher field might not exist yet
+        
+        # Validate and create details
+        serializer = FieldDetailBulkSerializer(
+            data=request.data,
+            context={'field': field, 'request': request}
+        )
+        
+        if serializer.is_valid():
+            result = serializer.save()
+            
+            # Serialize the created details for response
+            details_serializer = FieldDetailSerializer(result['details'], many=True)
+            
+            return Response({
+                'ok': True,
+                'data': {
+                    'field_id': result['field_id'],
+                    'details': details_serializer.data
+                }
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'ok': False,
             'error': _('داده‌های نامعتبر'),
             'details': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
