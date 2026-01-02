@@ -5046,8 +5046,8 @@ class ParentLoginAPIView(APIView):
             'message': _("Parent login successful"),
             'data': {
                 'tokens': {
-                    'accessToken': tokens['access'],
-                    'refreshToken': tokens['refresh']
+                    'access': tokens['access'],
+                    'refresh': tokens['refresh']
                 },
                 'parent': {
                     'parent_id': parent.id,
