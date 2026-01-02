@@ -4229,16 +4229,35 @@ class CreateFieldAPIView(APIView):
         # Log incoming data for debugging
         import logging
         logger = logging.getLogger(__name__)
-        logger.info(f"CreateField request data: {request.data}")
+        logger.info("=" * 80)
+        logger.info("CreateField POST Request Received")
+        logger.info("=" * 80)
+        logger.info(f"Content-Type: {request.content_type}")
+        logger.info(f"Request data keys: {list(request.data.keys())}")
+        logger.info(f"Request POST keys: {list(request.POST.keys()) if hasattr(request, 'POST') else 'N/A'}")
+        logger.info(f"Request FILES keys: {list(request.FILES.keys()) if hasattr(request, 'FILES') else 'N/A'}")
         logger.info(f"Question type: {request.data.get('type')}")
-        logger.info(f"Details: {request.data.get('details')}")
+        logger.info(f"Question title: {request.data.get('title')}")
+        
+        # Check for form array notation details
+        detail_keys = [key for key in request.data.keys() if key.startswith('details[')]
+        logger.info(f"Form array notation detail keys found: {len(detail_keys)} keys")
+        if detail_keys:
+            logger.info(f"Sample detail keys: {detail_keys[:5]}")
+        
+        # Check if details exists as a key
+        if 'details' in request.data:
+            logger.info(f"'details' key exists, type: {type(request.data.get('details'))}")
+            logger.info(f"Details value: {request.data.get('details')}")
+        
+        logger.info("=" * 80)
         
         # No special handling needed - correct_answer is now in FieldDetail
         serializer = FieldCreateUpdateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             field = serializer.save()
-            logger.info(f"Field created with id: {field.id}")
-            logger.info(f"Details count: {field.details.count()}")
+            logger.info(f"✅ Field created successfully with id: {field.id}")
+            logger.info(f"✅ Details count: {field.details.count()}")
             response_serializer = FieldRetrieveSerializer(field)
             return Response({
                 'success': True,
@@ -4247,7 +4266,10 @@ class CreateFieldAPIView(APIView):
             }, status=status.HTTP_201_CREATED)
         
         # Log validation errors
+        logger.error("=" * 80)
+        logger.error("❌ VALIDATION FAILED")
         logger.error(f"Validation errors: {serializer.errors}")
+        logger.error("=" * 80)
         return Response({
             'success': False,
             'error': _('داده‌های نامعتبر'),
