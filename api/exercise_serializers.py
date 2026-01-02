@@ -130,13 +130,22 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
                 data._mutable = True
             data['details'] = details
             print(f"[SUCCESS] Total details parsed: {len(details)}")
-            print(f"[SUCCESS] First detail has fields: {list(details[0].keys()) if details else 'none'}")
+            print(f"[SUCCESS] First detail keys: {list(details[0].keys()) if details else 'none'}")
+            # Check if title exists in first detail
+            if details and 'title' in details[0]:
+                title_val = details[0]['title']
+                print(f"[SUCCESS] First detail title exists: len={len(str(title_val))}, empty={not title_val}")
         else:
             print(f"[WARNING] No form array notation found")
             if 'details' in data and isinstance(data.get('details'), list):
                 print(f"[SUCCESS] Details already exists as list with {len(data['details'])} items")
         
-        print(f"Calling super().to_internal_value...")
+        print(f"About to call super().to_internal_value...")
+        print(f"  'details' in data: {'details' in data}")
+        if 'details' in data:
+            print(f"  data['details'] is list: {isinstance(data['details'], list)}")
+            print(f"  data['details'] length: {len(data['details']) if isinstance(data['details'], list) else 'N/A'}")
+        
         result = super().to_internal_value(data)
         print(f"[SUCCESS] super().to_internal_value succeeded")
         print(f"Result has {len(result.get('details', []))} details")
