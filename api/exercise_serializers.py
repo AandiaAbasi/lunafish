@@ -79,51 +79,50 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
                 print(f"[WARNING] Key not found in data, stopping parse at index {index}")
                 break
             
-            title_value = data.get(f'details[{index}][title]', '')
-            sort_value = data.get(f'details[{index}][sort]', index)
-            
-            print(f"Building detail {index}:")
-            print(f"  title exists: {bool(title_value)}, length: {len(title_value) if isinstance(title_value, str) else 0}")
-            print(f"  sort_value: {sort_value}")
-            
-            detail = {
-                'title': title_value,
-                'sort': int(sort_value) if sort_value else index,
-            }
-            
-            print(f"  Created detail dict with {len(detail)} fields")
-            
-            # Optional fields
-            if f'details[{index}][second_title]' in data:
-                detail['second_title'] = data.get(f'details[{index}][second_title]')
-            
-            if f'details[{index}][image_path]' in data:
-                detail['image_path'] = data.get(f'details[{index}][image_path]')
-            
-            if f'details[{index}][guide]' in data:
-                detail['guide'] = data.get(f'details[{index}][guide]')
-            
-            if f'details[{index}][des]' in data:
-                detail['des'] = data.get(f'details[{index}][des]')
-            
-            if f'details[{index}][is_required]' in data:
-                detail['is_required'] = int(data.get(f'details[{index}][is_required]', 0))
-            
-            # Check for is_correct (checkbox/radioButton)
-            if f'details[{index}][is_correct]' in data:
-                is_correct_value = data.get(f'details[{index}][is_correct]', 0)
-                detail['is_correct'] = int(is_correct_value) if is_correct_value else 0
-                print(f"  Added is_correct: {detail['is_correct']}")
-            
-            # Check for correct_answer (input type)
-            if f'details[{index}][correct_answer]' in data:
-                correct_answer_value = data.get(f'details[{index}][correct_answer]', '')
-                detail['correct_answer'] = correct_answer_value
-                print(f"  Added correct_answer, length: {len(correct_answer_value) if isinstance(correct_answer_value, str) else 0}")
-            
-            print(f"  Final detail has {len(detail)} fields: {list(detail.keys())}")
-            details.append(detail)
-            index += 1
+            try:
+                title_value = data.get(f'details[{index}][title]', '')
+                sort_value = data.get(f'details[{index}][sort]', index)
+                
+                print(f"Detail {index}: title_len={len(str(title_value))}, sort={sort_value}")
+                
+                detail = {
+                    'title': title_value,
+                    'sort': int(sort_value) if sort_value else index,
+                }
+                
+                # Optional fields
+                if f'details[{index}][second_title]' in data:
+                    detail['second_title'] = data.get(f'details[{index}][second_title]')
+                
+                if f'details[{index}][image_path]' in data:
+                    detail['image_path'] = data.get(f'details[{index}][image_path]')
+                
+                if f'details[{index}][guide]' in data:
+                    detail['guide'] = data.get(f'details[{index}][guide]')
+                
+                if f'details[{index}][des]' in data:
+                    detail['des'] = data.get(f'details[{index}][des]')
+                
+                if f'details[{index}][is_required]' in data:
+                    detail['is_required'] = int(data.get(f'details[{index}][is_required]', 0))
+                
+                # Check for is_correct (checkbox/radioButton)
+                if f'details[{index}][is_correct]' in data:
+                    is_correct_value = data.get(f'details[{index}][is_correct]', 0)
+                    detail['is_correct'] = int(is_correct_value) if is_correct_value else 0
+                
+                # Check for correct_answer (input type)
+                if f'details[{index}][correct_answer]' in data:
+                    correct_answer_value = data.get(f'details[{index}][correct_answer]', '')
+                    detail['correct_answer'] = correct_answer_value
+                    print(f"  Added correct_answer: len={len(str(correct_answer_value))}")
+                
+                print(f"  Detail {index} complete with keys: {list(detail.keys())}")
+                details.append(detail)
+                index += 1
+            except Exception as e:
+                print(f"[ERROR] Failed to parse detail {index}: {type(e).__name__}")
+                break
         
         if details:
             # Create a mutable copy of data if it's a QueryDict
