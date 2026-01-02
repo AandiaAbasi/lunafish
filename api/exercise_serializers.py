@@ -78,6 +78,11 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         logger.info(f"Details data received: {details_data}")
         logger.info(f"Number of details: {len(details_data)}")
         
+        # Get teacher from context
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['teacher'] = request.user
+        
         # Create the Field
         field = Field.objects.create(**validated_data)
         logger.info(f"Field created with ID: {field.id}")

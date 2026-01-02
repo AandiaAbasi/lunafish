@@ -4233,7 +4233,7 @@ class CreateFieldAPIView(APIView):
         logger.info(f"Details: {request.data.get('details')}")
         
         # No special handling needed - correct_answer is now in FieldDetail
-        serializer = FieldCreateUpdateSerializer(data=request.data)
+        serializer = FieldCreateUpdateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             field = serializer.save()
             logger.info(f"Field created with id: {field.id}")
@@ -4352,18 +4352,10 @@ class TeacherFieldListAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Get all fields linked to this teacher's teaching subjects
-        # Field -> CategoryField -> TeachingSubject -> Teacher
-        teacher_subject_ids = TeachingSubject.objects.filter(
-            teacher=request.user
-        ).values_list('id', flat=True)
-        
-        field_ids = CategoryField.objects.filter(
-            teachingsubject_id__in=teacher_subject_ids
-        ).values_list('field_id', flat=True).distinct()
-        
+        # Get all fields created by this teacher
+        # Now using direct teacher foreign key relationship
         queryset = Field.objects.filter(
-            id__in=field_ids
+            teacher=request.user
         ).prefetch_related('details').order_by('-created_at')
         
         # Apply filters

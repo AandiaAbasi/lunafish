@@ -9,6 +9,15 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class Field(BaseModel):
     _safedelete_policy = SOFT_DELETE_CASCADE
 
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='created_fields',
+        limit_choices_to={'role': 'teacher'},
+        verbose_name=_("Teacher"),
+        help_text=_("Teacher who created this question")
+    )
+
     title = models.CharField(
         max_length=255,
         verbose_name=_("Title")
