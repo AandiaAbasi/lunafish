@@ -1271,18 +1271,48 @@ class FetchUserAPIView(APIView):
     @extend_schema(
         tags=['Profile Management'],
         summary='Fetch Current User Profile',
-        description='Get authenticated user profile information',
+        description='Get authenticated user profile information with parent session indicator if applicable',
         responses={
-            200: OpenApiResponse(description="User profile retrieved successfully"),
+            200: OpenApiResponse(description="User profile retrieved successfully with parent info if applicable"),
             401: OpenApiResponse(description="User not authenticated"),
         }
     )
     def get(self, request):
-        """Get current user information"""
+        """Get current user information with parent session indicator"""
         serializer = UserProfileSerializer(request.user)
+        
+        # Check if this user (student) has an active parent profile
+        parent_info = None
+        is_parent_session = False
+        
+        if request.user.role == 'user':
+            try:
+                parent = ParentProfile.objects.filter(
+                    student=request.user,
+                    is_active=True
+                ).first()
+                
+                if parent:
+                    is_parent_session = True
+                    parent_info = {
+                        'parent_id': parent.id,
+                        'parent_name': parent.parent_name,
+                        'phone': parent.phone,
+                        'email': parent.email,
+                        'can_view_class_history': parent.can_view_class_history,
+                        'can_view_payments': parent.can_view_payments,
+                        'can_select_teacher': parent.can_select_teacher,
+                        'can_set_usage_time': parent.can_set_usage_time,
+                        'last_login_at': parent.last_login_at.isoformat() if parent.last_login_at else None
+                    }
+            except Exception:
+                pass
+        
         return Response({
             "success": True,
-            "user": serializer.data
+            "is_parent_session": is_parent_session,
+            "user": serializer.data,
+            "parent": parent_info
         }, status=status.HTTP_200_OK)
 
 
