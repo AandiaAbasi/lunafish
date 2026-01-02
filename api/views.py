@@ -4343,6 +4343,62 @@ class CreateFieldDetailsAPIView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# ==================== Delete Field ====================
+
+class DeleteFieldAPIView(APIView):
+    """
+    Delete Field API
+    
+    Allows teachers to delete their own fields.
+    Only the teacher who created the field can delete it.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Delete Field',
+        description='Delete a field. Only the teacher who created it can delete.',
+        responses={
+            204: OpenApiResponse(description="Field deleted successfully"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Field not found"),
+        }
+    )
+    def delete(self, request, field_id):
+        from exercise.models import Field
+        
+        # Only teachers can delete fields
+        if request.user.role != 'teacher':
+            return Response({
+                'ok': False,
+                'error': _('تنها معلمان می‌توانند سؤال حذف کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get the field
+        try:
+            field = Field.objects.get(id=field_id)
+        except Field.DoesNotExist:
+            return Response({
+                'ok': False,
+                'error': _('سؤال یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if user is the field owner
+        if field.teacher != request.user:
+            return Response({
+                'ok': False,
+                'error': _('شما مجاز به حذف این سؤال نیستید')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Delete the field (soft delete if using django-safedelete)
+        field.delete()
+        
+        return Response({
+            'ok': True,
+            'message': _('سؤال با موفقیت حذف شد')
+        }, status=status.HTTP_204_NO_CONTENT)
+
+
 class TeacherFieldListAPIView(APIView):
     """
     Get Teacher's Questions List API

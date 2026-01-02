@@ -131,6 +131,7 @@ urlpatterns = [
     # TWO-STEP Field Creation
     path('exercise/field/create/', views.CreateFieldAPIView.as_view(), name='field_create_step1'),  # Step 1: Create Field (multipart)
     path('exercise/field/<int:field_id>/details/', views.CreateFieldDetailsAPIView.as_view(), name='field_create_details_step2'),  # Step 2: Add Details (JSON)
+    path('exercise/field/<int:field_id>/delete/', views.DeleteFieldAPIView.as_view(), name='field_delete'),  # Delete Field
     
     # Other Exercise APIs
     path('exercise/fields/teacher/', views.TeacherFieldListAPIView.as_view(), name='teacher_fields_list'),
