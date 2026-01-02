@@ -4229,28 +4229,31 @@ class CreateFieldAPIView(APIView):
         # Log incoming data for debugging
         import logging
         logger = logging.getLogger(__name__)
-        logger.info("=" * 80)
-        logger.info("CreateField POST Request Received")
-        logger.info("=" * 80)
-        logger.info(f"Content-Type: {request.content_type}")
-        logger.info(f"Request data keys: {list(request.data.keys())}")
-        logger.info(f"Request POST keys: {list(request.POST.keys()) if hasattr(request, 'POST') else 'N/A'}")
-        logger.info(f"Request FILES keys: {list(request.FILES.keys()) if hasattr(request, 'FILES') else 'N/A'}")
-        logger.info(f"Question type: {request.data.get('type')}")
-        logger.info(f"Question title: {request.data.get('title')}")
+        print("=" * 80)
+        print("CreateField POST Request Received")
+        print("=" * 80)
+        print(f"Content-Type: {request.content_type}")
+        print(f"Request data keys: {list(request.data.keys())}")
+        print(f"Request POST keys: {list(request.POST.keys()) if hasattr(request, 'POST') else 'N/A'}")
+        print(f"Request FILES keys: {list(request.FILES.keys()) if hasattr(request, 'FILES') else 'N/A'}")
+        print(f"Question type: {request.data.get('type')}")
+        print(f"Question title: {request.data.get('title')}")
         
         # Check for form array notation details
         detail_keys = [key for key in request.data.keys() if key.startswith('details[')]
-        logger.info(f"Form array notation detail keys found: {len(detail_keys)} keys")
+        print(f"Form array notation detail keys found: {len(detail_keys)} keys")
         if detail_keys:
-            logger.info(f"Sample detail keys: {detail_keys[:5]}")
+            print(f"Sample detail keys: {detail_keys[:5]}")
+            # Print actual values
+            for key in detail_keys[:5]:
+                print(f"  {key} = {request.data.get(key)}")
         
         # Check if details exists as a key
         if 'details' in request.data:
-            logger.info(f"'details' key exists, type: {type(request.data.get('details'))}")
-            logger.info(f"Details value: {request.data.get('details')}")
+            print(f"'details' key exists, type: {type(request.data.get('details'))}")
+            print(f"Details value: {request.data.get('details')}")
         
-        logger.info("=" * 80)
+        print("=" * 80)
         
         # No special handling needed - correct_answer is now in FieldDetail
         serializer = FieldCreateUpdateSerializer(data=request.data, context={'request': request})

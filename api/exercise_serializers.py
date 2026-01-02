@@ -54,10 +54,16 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         import logging
         logger = logging.getLogger(__name__)
         
-        logger.info(f"=== to_internal_value called ===")
-        logger.info(f"Data type: {type(data)}")
-        logger.info(f"Has 'details' key: {'details' in data}")
-        logger.info(f"Has getlist: {hasattr(data, 'getlist')}")
+        print("=" * 80)
+        print("=== to_internal_value called ===")
+        print(f"Data type: {type(data)}")
+        print(f"Data keys: {list(data.keys()) if hasattr(data, 'keys') else 'N/A'}")
+        print(f"Has 'details' key: {'details' in data}")
+        
+        # Log all keys that start with 'details['
+        detail_keys = [k for k in data.keys() if str(k).startswith('details[')]
+        print(f"Keys starting with 'details[': {detail_keys}")
+        print("=" * 80)
         
         # Try to parse form array notation from multipart/form-data
         details = []
@@ -67,22 +73,23 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         while True:
             title_key = f'details[{index}][title]'
             if title_key not in data:
+                print(f"⚠️ Key '{title_key}' not found in data, stopping parse")
                 break
             
             title_value = data.get(f'details[{index}][title]', '')
             sort_value = data.get(f'details[{index}][sort]', index)
             
-            logger.info(f"Building detail {index}:")
-            logger.info(f"  title_key='{title_key}' in data: {title_key in data}")
-            logger.info(f"  title_value: '{title_value}' (type: {type(title_value)})")
-            logger.info(f"  sort_value: '{sort_value}' (type: {type(sort_value)})")
+            print(f"Building detail {index}:")
+            print(f"  title_key='{title_key}' in data: {title_key in data}")
+            print(f"  title_value: '{title_value}' (type: {type(title_value)}, len: {len(title_value) if isinstance(title_value, str) else 'N/A'})")
+            print(f"  sort_value: '{sort_value}' (type: {type(sort_value)})")
             
             detail = {
                 'title': title_value,
                 'sort': int(sort_value) if sort_value else index,
             }
             
-            logger.info(f"  detail dict after title/sort: {detail}")
+            print(f"  detail dict after title/sort: {detail}")
             
             # Optional fields
             if f'details[{index}][second_title]' in data:
@@ -104,15 +111,15 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             if f'details[{index}][is_correct]' in data:
                 is_correct_value = data.get(f'details[{index}][is_correct]', 0)
                 detail['is_correct'] = int(is_correct_value) if is_correct_value else 0
-                logger.info(f"  Added is_correct: {detail['is_correct']}")
+                print(f"  Added is_correct: {detail['is_correct']}")
             
             # Check for correct_answer (input type)
             if f'details[{index}][correct_answer]' in data:
                 correct_answer_value = data.get(f'details[{index}][correct_answer]', '')
                 detail['correct_answer'] = correct_answer_value
-                logger.info(f"  Added correct_answer: '{correct_answer_value}'")
+                print(f"  Added correct_answer: '{correct_answer_value}'")
             
-            logger.info(f"  Final detail dict: {detail}")
+            print(f"  Final detail dict: {detail}")
             details.append(detail)
             index += 1
         
@@ -121,17 +128,18 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             if hasattr(data, '_mutable'):
                 data._mutable = True
             data['details'] = details
-            logger.info(f"✅ Total details parsed: {len(details)}")
-            logger.info(f"✅ Parsed details structure: {details}")
+            print(f"✅ Total details parsed: {len(details)}")
+            print(f"✅ Parsed details structure: {details}")
         else:
-            logger.info(f"⚠️ No form array notation found, checking if details already exists as list")
+            print(f"⚠️ No form array notation found, checking if details already exists as list")
             if 'details' in data and isinstance(data.get('details'), list):
-                logger.info(f"✅ Details already exists as list with {len(data['details'])} items")
+                print(f"✅ Details already exists as list with {len(data['details'])} items")
+                print(f"   Existing details: {data.get('details')}")
         
-        logger.info(f"Calling super().to_internal_value with data containing 'details': {'details' in data}")
+        print(f"Calling super().to_internal_value...")
         result = super().to_internal_value(data)
-        logger.info(f"✅ super().to_internal_value succeeded")
-        logger.info(f"Result has {len(result.get('details', []))} details")
+        print(f"✅ super().to_internal_value succeeded")
+        print(f"Result has {len(result.get('details', []))} details")
         return result
     
     def validate(self, data):
