@@ -51,8 +51,20 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
                     _('سوالات انتخابی باید حداقل یک گزینه داشته باشند')
                 )
         
-        # ✅ سوالات input می‌توانند details داشته باشند (برای ذخیره correct_answer)
-        # No restriction on input questions having details
+        # ✅ سوالات input باید حداقل یک detail با correct_answer داشته باشند
+        if question_type == 'input':
+            if not details:
+                raise serializers.ValidationError(
+                    _('سوالات تایپی باید حداقل یک detail برای ذخیره پاسخ صحیح داشته باشند')
+                )
+            # Validate that at least one detail has correct_answer
+            has_correct_answer = any(
+                detail.get('correct_answer') for detail in details
+            )
+            if not has_correct_answer:
+                raise serializers.ValidationError(
+                    _('سوالات تایپی باید حداقل یک detail با correct_answer داشته باشند')
+                )
         
         return data
     
