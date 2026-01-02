@@ -162,7 +162,11 @@ export const createField = async (
   } catch (error) {
     const apiError = error as AxiosError<ApiResponse<Field>>;
     console.log('====================================');
-    console.log('API Error:', apiError.response?.data);
+    console.log('❌ API Error Response:');
+    console.log('Status:', apiError.response?.status);
+    console.log('Error:', apiError.response?.data?.error);
+    console.log('Details:', JSON.stringify(apiError.response?.data?.details, null, 2));
+    console.log('Full response:', JSON.stringify(apiError.response?.data, null, 2));
     console.log('====================================');
     const message =
       apiError.response?.data?.error ||

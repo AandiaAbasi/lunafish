@@ -112,8 +112,16 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         """Validate that questions have appropriate details"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         question_type = data.get('type')
         details = data.get('details', [])
+        
+        logger.info(f"=== Validating Field ===")
+        logger.info(f"Question type: {question_type}")
+        logger.info(f"Details count: {len(details)}")
+        logger.info(f"Details: {details}")
         
         # ✅ سوالات choice باید دارای details باشند
         if question_type in ['checkbox', 'radioButton']:
@@ -136,7 +144,9 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     _('سوالات تایپی باید حداقل یک detail با correct_answer داشته باشند')
                 )
+            logger.info(f"✅ Input validation passed - has correct_answer")
         
+        logger.info(f"✅ Validation passed")
         return data
     
     def create(self, validated_data):
