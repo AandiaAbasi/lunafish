@@ -60,9 +60,15 @@ from core.serializers import (
 User = get_user_model()
 
 
-def get_tokens_for_user(user):
-    """Generate JWT tokens for user"""
+def get_tokens_for_user(user, is_parent=False):
+    """Generate JWT tokens for user with optional parent session claim"""
     refresh = RefreshToken.for_user(user)
+    
+    # Add custom claim for parent sessions
+    if is_parent:
+        refresh['is_parent_session'] = True
+        refresh.access_token['is_parent_session'] = True
+    
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
@@ -1271,19 +1277,30 @@ class FetchUserAPIView(APIView):
     @extend_schema(
         tags=['Profile Management'],
         summary='Fetch Current User Profile',
-        description='Get authenticated user profile information with parent profile availability if exists',
+        description='Get authenticated user profile information with parent session detection from JWT claim',
         responses={
-            200: OpenApiResponse(description="User profile retrieved successfully with parent info if available"),
+            200: OpenApiResponse(description="User profile retrieved successfully with is_parent_session flag"),
             401: OpenApiResponse(description="User not authenticated"),
         }
     )
     def get(self, request):
-        """Get current user information with parent profile availability"""
+        """Get current user information with parent session indicator from JWT claim"""
         serializer = UserProfileSerializer(request.user)
         
+        # Check JWT token for is_parent_session claim
+        is_parent_session = False
+        try:
+            # Get the JWT token from the request
+            auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+            if auth_header.startswith('Bearer '):
+                from rest_framework_simplejwt.tokens import AccessToken
+                token_str = auth_header.split(' ')[1]
+                token = AccessToken(token_str)
+                is_parent_session = token.get('is_parent_session', False)
+        except Exception:
+            pass
+        
         # Check if this user (student) has an active parent profile available
-        # Note: is_parent_session should be determined from login endpoint, not here
-        # JWT tokens are stateless, so we can't differentiate parent vs student sessions here
         parent_info = None
         
         if request.user.role == 'user':
@@ -1310,6 +1327,7 @@ class FetchUserAPIView(APIView):
         
         return Response({
             "success": True,
+            "is_parent_session": is_parent_session,
             "user": serializer.data,
             "parent": parent_info
         }, status=status.HTTP_200_OK)
@@ -5068,7 +5086,8 @@ class ParentLoginAPIView(APIView):
         parent.save()
         
         # Generate JWT tokens for the student (parent logs in on behalf of student)
-        tokens = get_tokens_for_user(parent.student)
+        # Mark this as a parent session with custom claim
+        tokens = get_tokens_for_user(parent.student, is_parent=True)
         
         return Response({
             'success': True,
