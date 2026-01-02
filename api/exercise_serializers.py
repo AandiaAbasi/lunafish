@@ -71,6 +71,11 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Create Field with FieldDetail entries"""
         import logging
+        import os
+        import uuid
+        from django.core.files.storage import default_storage
+        from django.conf import settings
+        
         logger = logging.getLogger(__name__)
         
         details_data = validated_data.pop('details', [])
@@ -89,6 +94,35 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             except Exception:
                 # Field doesn't exist in DB yet, skip assignment
                 logger.info("Teacher field not in database yet, skipping assignment")
+        
+        # Handle file uploads from request.FILES
+        if request and hasattr(request, 'FILES'):
+            # Handle image upload
+            image_file = request.FILES.get('image_path')
+            if image_file:
+                ext = os.path.splitext(image_file.name)[1]
+                filename = f"exercise_images/{uuid.uuid4().hex}{ext}"
+                saved_path = default_storage.save(filename, image_file)
+                validated_data['image_path'] = saved_path
+                logger.info(f"Image uploaded: {saved_path}")
+            
+            # Handle audio upload
+            audio_file = request.FILES.get('audio_path')
+            if audio_file:
+                ext = os.path.splitext(audio_file.name)[1]
+                filename = f"exercise_audio/{uuid.uuid4().hex}{ext}"
+                saved_path = default_storage.save(filename, audio_file)
+                validated_data['audio_path'] = saved_path
+                logger.info(f"Audio uploaded: {saved_path}")
+            
+            # Handle video upload
+            video_file = request.FILES.get('video_path')
+            if video_file:
+                ext = os.path.splitext(video_file.name)[1]
+                filename = f"exercise_videos/{uuid.uuid4().hex}{ext}"
+                saved_path = default_storage.save(filename, video_file)
+                validated_data['video_path'] = saved_path
+                logger.info(f"Video uploaded: {saved_path}")
         
         # Create the Field
         field = Field.objects.create(**validated_data)

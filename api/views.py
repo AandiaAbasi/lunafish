@@ -4202,11 +4202,12 @@ class CreateFieldAPIView(APIView):
     ```
     """
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
     
     @extend_schema(
         tags=['Exercise - Questions'],
         summary='Create Question',
-        description='Create new question with optional answer options. Only for teachers.',
+        description='Create new question with optional answer options. Supports file uploads for images, audio, and video. Only for teachers.',
         request=None,
         responses={
             201: OpenApiResponse(description="Question created successfully"),
