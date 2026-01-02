@@ -1271,19 +1271,20 @@ class FetchUserAPIView(APIView):
     @extend_schema(
         tags=['Profile Management'],
         summary='Fetch Current User Profile',
-        description='Get authenticated user profile information with parent session indicator if applicable',
+        description='Get authenticated user profile information with parent profile availability if exists',
         responses={
-            200: OpenApiResponse(description="User profile retrieved successfully with parent info if applicable"),
+            200: OpenApiResponse(description="User profile retrieved successfully with parent info if available"),
             401: OpenApiResponse(description="User not authenticated"),
         }
     )
     def get(self, request):
-        """Get current user information with parent session indicator"""
+        """Get current user information with parent profile availability"""
         serializer = UserProfileSerializer(request.user)
         
-        # Check if this user (student) has an active parent profile
+        # Check if this user (student) has an active parent profile available
+        # Note: is_parent_session should be determined from login endpoint, not here
+        # JWT tokens are stateless, so we can't differentiate parent vs student sessions here
         parent_info = None
-        is_parent_session = False
         
         if request.user.role == 'user':
             try:
@@ -1293,7 +1294,6 @@ class FetchUserAPIView(APIView):
                 ).first()
                 
                 if parent:
-                    is_parent_session = True
                     parent_info = {
                         'parent_id': parent.id,
                         'parent_name': parent.parent_name,
@@ -1310,7 +1310,6 @@ class FetchUserAPIView(APIView):
         
         return Response({
             "success": True,
-            "is_parent_session": is_parent_session,
             "user": serializer.data,
             "parent": parent_info
         }, status=status.HTTP_200_OK)
