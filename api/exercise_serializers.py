@@ -82,12 +82,16 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             title_value = data.get(f'details[{index}][title]', '')
             sort_value = data.get(f'details[{index}][sort]', index)
             
-            try:
-                print(f"Building detail {index}:")
-                print(f"  title_key='{title_key}' in data: {title_key in data}")
-                print(f"  title_value: {repr(title_value)} (type: {type(title_value)}, len: {len(title_value) if isinstance(title_value, str) else 'N/A'})")
-                print(f"  sort_value: {repr(sort_value)} (type: {type(sort_value)})")
-            except: pass
+            print(f"Building detail {index}:")
+            print(f"  title_key in data: {title_key in data}")
+            print(f"  title_value type: {type(title_value)}")
+            print(f"  title_value is empty: {not title_value}")
+            print(f"  title_value length: {len(title_value) if isinstance(title_value, str) else 'N/A'}")
+            if title_value:
+                print(f"  title_value repr: {repr(title_value)}")
+            else:
+                print(f"  title_value is empty or None!")
+            print(f"  sort_value: {sort_value}")
             
             detail = {
                 'title': title_value,
