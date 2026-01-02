@@ -393,7 +393,7 @@ class CompleteRegistrationAPIView(APIView):
                         # Create parent profile
                         parent_profile = ParentProfile.objects.create(
                             student=user,
-                            parent_name=f"والد {user.name}" if user.name else f"والد {user.username}",
+                            parent_name=f"ولی {user.name}" if user.name else f"ولی {user.username}",
                             phone=user.phone,
                             parent_password_hash=hashed_password,
                             can_view_class_history=True,
