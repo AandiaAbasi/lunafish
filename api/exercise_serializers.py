@@ -83,14 +83,7 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             sort_value = data.get(f'details[{index}][sort]', index)
             
             print(f"Building detail {index}:")
-            print(f"  title_key in data: {title_key in data}")
-            print(f"  title_value type: {type(title_value)}")
-            print(f"  title_value is empty: {not title_value}")
-            print(f"  title_value length: {len(title_value) if isinstance(title_value, str) else 'N/A'}")
-            if title_value:
-                print(f"  title_value repr: {repr(title_value)}")
-            else:
-                print(f"  title_value is empty or None!")
+            print(f"  title exists: {bool(title_value)}, length: {len(title_value) if isinstance(title_value, str) else 0}")
             print(f"  sort_value: {sort_value}")
             
             detail = {
@@ -98,9 +91,7 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
                 'sort': int(sort_value) if sort_value else index,
             }
             
-            try:
-                print(f"  detail dict after title/sort: {repr(detail)}")
-            except: pass
+            print(f"  Created detail dict with {len(detail)} fields")
             
             # Optional fields
             if f'details[{index}][second_title]' in data:
@@ -128,13 +119,9 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             if f'details[{index}][correct_answer]' in data:
                 correct_answer_value = data.get(f'details[{index}][correct_answer]', '')
                 detail['correct_answer'] = correct_answer_value
-                try:
-                    print(f"  Added correct_answer: {repr(correct_answer_value)}")
-                except: pass
+                print(f"  Added correct_answer, length: {len(correct_answer_value) if isinstance(correct_answer_value, str) else 0}")
             
-            try:
-                print(f"  Final detail dict: {repr(detail)}")
-            except: pass
+            print(f"  Final detail has {len(detail)} fields: {list(detail.keys())}")
             details.append(detail)
             index += 1
         
@@ -143,17 +130,12 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             if hasattr(data, '_mutable'):
                 data._mutable = True
             data['details'] = details
-            try:
-                print(f"[SUCCESS] Total details parsed: {len(details)}")
-                print(f"[SUCCESS] Parsed details structure: {repr(details)}")
-            except: pass
+            print(f"[SUCCESS] Total details parsed: {len(details)}")
+            print(f"[SUCCESS] First detail has fields: {list(details[0].keys()) if details else 'none'}")
         else:
-            print(f"[WARNING] No form array notation found, checking if details already exists as list")
+            print(f"[WARNING] No form array notation found")
             if 'details' in data and isinstance(data.get('details'), list):
-                try:
-                    print(f"[SUCCESS] Details already exists as list with {len(data['details'])} items")
-                    print(f"   Existing details: {repr(data.get('details'))}")
-                except: pass
+                print(f"[SUCCESS] Details already exists as list with {len(data['details'])} items")
         
         print(f"Calling super().to_internal_value...")
         result = super().to_internal_value(data)
