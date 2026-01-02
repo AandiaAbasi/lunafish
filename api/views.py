@@ -4229,31 +4229,34 @@ class CreateFieldAPIView(APIView):
         # Log incoming data for debugging
         import logging
         logger = logging.getLogger(__name__)
-        print("=" * 80)
-        print("CreateField POST Request Received")
-        print("=" * 80)
-        print(f"Content-Type: {request.content_type}")
-        print(f"Request data keys: {list(request.data.keys())}")
-        print(f"Request POST keys: {list(request.POST.keys()) if hasattr(request, 'POST') else 'N/A'}")
-        print(f"Request FILES keys: {list(request.FILES.keys()) if hasattr(request, 'FILES') else 'N/A'}")
-        print(f"Question type: {request.data.get('type')}")
-        print(f"Question title: {request.data.get('title')}")
-        
-        # Check for form array notation details
-        detail_keys = [key for key in request.data.keys() if key.startswith('details[')]
-        print(f"Form array notation detail keys found: {len(detail_keys)} keys")
-        if detail_keys:
-            print(f"Sample detail keys: {detail_keys[:5]}")
-            # Print actual values
-            for key in detail_keys[:5]:
-                print(f"  {key} = {request.data.get(key)}")
-        
-        # Check if details exists as a key
-        if 'details' in request.data:
-            print(f"'details' key exists, type: {type(request.data.get('details'))}")
-            print(f"Details value: {request.data.get('details')}")
-        
-        print("=" * 80)
+        try:
+            print("=" * 80)
+            print("CreateField POST Request Received")
+            print("=" * 80)
+            print(f"Content-Type: {request.content_type}")
+            print(f"Request data keys: {list(request.data.keys())}")
+            print(f"Request POST keys: {list(request.POST.keys()) if hasattr(request, 'POST') else 'N/A'}")
+            print(f"Request FILES keys: {list(request.FILES.keys()) if hasattr(request, 'FILES') else 'N/A'}")
+            print(f"Question type: {request.data.get('type')}")
+            print(f"Question title: {repr(request.data.get('title'))}")
+            
+            # Check for form array notation details
+            detail_keys = [key for key in request.data.keys() if key.startswith('details[')]
+            print(f"Form array notation detail keys found: {len(detail_keys)} keys")
+            if detail_keys:
+                print(f"Sample detail keys: {detail_keys[:5]}")
+                # Print actual values
+                for key in detail_keys[:5]:
+                    print(f"  {key} = {repr(request.data.get(key))}")
+            
+            # Check if details exists as a key
+            if 'details' in request.data:
+                print(f"'details' key exists, type: {type(request.data.get('details'))}")
+                print(f"Details value: {repr(request.data.get('details'))}")
+            
+            print("=" * 80)
+        except Exception as e:
+            print(f"Error in debug logging: {e}")
         
         # No special handling needed - correct_answer is now in FieldDetail
         serializer = FieldCreateUpdateSerializer(data=request.data, context={'request': request})
