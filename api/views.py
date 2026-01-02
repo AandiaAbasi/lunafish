@@ -4352,21 +4352,10 @@ class TeacherFieldListAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Get all fields linked to this teacher's teaching subjects
-        # Using indirect relationship until migration is applied
-        # TODO: After migration, change to: Field.objects.filter(teacher=request.user)
-        from classroom.models import TeachingSubject
-        teacher_subject_ids = TeachingSubject.objects.filter(
-            teacher=request.user
-        ).values_list('id', flat=True)
-        
-        field_ids = CategoryField.objects.filter(
-            teachingsubject_id__in=teacher_subject_ids
-        ).values_list('field_id', flat=True).distinct()
-        
-        queryset = Field.objects.filter(
-            id__in=field_ids
-        ).prefetch_related('details').order_by('-created_at')
+        # TEMPORARY: Show all fields until migration is applied
+        # Without teacher field in DB, we cannot filter by ownership
+        # After migration, change to: Field.objects.filter(teacher=request.user)
+        queryset = Field.objects.all().prefetch_related('details').order_by('-created_at')
         
         # Apply filters
         question_type = request.query_params.get('type')
