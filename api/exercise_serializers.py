@@ -25,9 +25,9 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
     """Serializer for creating/updating questions (Fields)
     
     Supports:
-    - input (تایپی) - Typing questions (no details needed)
-    - checkbox (چند گزینه‌ای) - Multiple choice (requires details)
-    - radioButton (تک گزینه‌ای) - Single choice (requires details)
+    - input (تایپی) - Typing questions (details contain correct_answer)
+    - checkbox (چند گزینه‌ای) - Multiple choice (details contain options with is_correct)
+    - radioButton (تک گزینه‌ای) - Single choice (details contain options with is_correct)
     """
     details = FieldDetailSerializer(many=True, required=False, write_only=True)
     
@@ -40,7 +40,7 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
     
     def validate(self, data):
-        """Validate that choice questions have details"""
+        """Validate that questions have appropriate details"""
         question_type = data.get('type')
         details = data.get('details', [])
         
@@ -51,18 +51,28 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
                     _('سوالات انتخابی باید حداقل یک گزینه داشته باشند')
                 )
         
+        # ✅ سوالات input می‌توانند details داشته باشند (برای ذخیره correct_answer)
+        # No restriction on input questions having details
+        
         return data
     
     def create(self, validated_data):
+        """Create Field with FieldDetail entries"""
         details_data = validated_data.pop('details', [])
+        
+        # Create the Field
         field = Field.objects.create(**validated_data)
         
+        # Create FieldDetail entries
         for detail_data in details_data:
             FieldDetail.objects.create(field=field, **detail_data)
         
+        # Reload to get the related details
+        field.refresh_from_db()
         return field
     
     def update(self, instance, validated_data):
+        """Update Field and its FieldDetail entries"""
         details_data = validated_data.pop('details', None)
         
         # Update field fields
@@ -72,10 +82,14 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         
         # Update details if provided
         if details_data is not None:
+            # Delete existing details
             instance.details.all().delete()
+            # Create new details
             for detail_data in details_data:
                 FieldDetail.objects.create(field=instance, **detail_data)
         
+        # Reload to get the related details
+        instance.refresh_from_db()
         return instance
 
 
