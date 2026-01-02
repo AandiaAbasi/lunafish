@@ -44,6 +44,66 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id']
     
+    def to_internal_value(self, data):
+        """Parse form array notation (details[0][title]) into nested structure"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Parse details from form array notation
+        if 'details' not in data or not isinstance(data.get('details'), list):
+            details = []
+            index = 0
+            
+            # Check if data is QueryDict (from multipart form)
+            if hasattr(data, 'getlist'):
+                # Parse form array notation: details[0][title], details[0][correct_answer], etc.
+                while True:
+                    title_key = f'details[{index}][title]'
+                    if title_key not in data:
+                        break
+                    
+                    detail = {
+                        'title': data.get(f'details[{index}][title]', ''),
+                        'sort': int(data.get(f'details[{index}][sort]', index)),
+                    }
+                    
+                    # Optional fields
+                    if f'details[{index}][second_title]' in data:
+                        detail['second_title'] = data.get(f'details[{index}][second_title]')
+                    
+                    if f'details[{index}][image_path]' in data:
+                        detail['image_path'] = data.get(f'details[{index}][image_path]')
+                    
+                    if f'details[{index}][guide]' in data:
+                        detail['guide'] = data.get(f'details[{index}][guide]')
+                    
+                    if f'details[{index}][des]' in data:
+                        detail['des'] = data.get(f'details[{index}][des]')
+                    
+                    if f'details[{index}][is_required]' in data:
+                        detail['is_required'] = int(data.get(f'details[{index}][is_required]', 0))
+                    
+                    # Check for is_correct (checkbox/radioButton)
+                    if f'details[{index}][is_correct]' in data:
+                        detail['is_correct'] = int(data.get(f'details[{index}][is_correct]', 0))
+                    
+                    # Check for correct_answer (input type)
+                    if f'details[{index}][correct_answer]' in data:
+                        detail['correct_answer'] = data.get(f'details[{index}][correct_answer]', '')
+                    
+                    details.append(detail)
+                    index += 1
+                    logger.info(f"Parsed detail {index}: {detail}")
+                
+                if details:
+                    # Create a mutable copy of data
+                    if hasattr(data, '_mutable'):
+                        data._mutable = True
+                    data['details'] = details
+                    logger.info(f"Total details parsed: {len(details)}")
+        
+        return super().to_internal_value(data)
+    
     def validate(self, data):
         """Validate that questions have appropriate details"""
         question_type = data.get('type')
