@@ -67,9 +67,9 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         for detail_data in details_data:
             FieldDetail.objects.create(field=field, **detail_data)
         
-        # Reload to get the related details
-        field.refresh_from_db()
-        return field
+        # Reload Field with prefetched related details
+        # This ensures the details are properly loaded when serializing
+        return Field.objects.prefetch_related('details').get(pk=field.pk)
     
     def update(self, instance, validated_data):
         """Update Field and its FieldDetail entries"""
@@ -88,9 +88,9 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
             for detail_data in details_data:
                 FieldDetail.objects.create(field=instance, **detail_data)
         
-        # Reload to get the related details
-        instance.refresh_from_db()
-        return instance
+        # Reload Field with prefetched related details
+        # This ensures the details are properly loaded when serializing
+        return Field.objects.prefetch_related('details').get(pk=instance.pk)
 
 
 class FieldRetrieveSerializer(serializers.ModelSerializer):
