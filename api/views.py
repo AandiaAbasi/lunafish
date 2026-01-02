@@ -4939,8 +4939,8 @@ class ParentLoginAPIView(APIView):
                 - message: string - "Parent login successful"
                 - data: object
                     - tokens: object
-                        - accessToken: string - JWT access token
-                        - refreshToken: string - JWT refresh token
+                        - access: string - JWT access token
+                        - refresh: string - JWT refresh token
                     - parent: object
                         - parent_id: integer
                         - parent_name: string
@@ -4983,8 +4983,8 @@ class ParentLoginAPIView(APIView):
                             'tokens': inline_serializer(
                                 name='ParentTokens',
                                 fields={
-                                    'accessToken': serializers.CharField(),
-                                    'refreshToken': serializers.CharField()
+                                    'access': serializers.CharField(),
+                                    'refresh': serializers.CharField()
                                 }
                             ),
                             'parent': inline_serializer(
