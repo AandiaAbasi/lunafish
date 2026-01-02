@@ -4139,11 +4139,15 @@ class CreateFieldAPIView(APIView):
         - guide: string (optional) - Question guide/hint
         - des: string (optional) - Question description
         - sort: integer (optional, default: 0) - Sort order
-        - details: array (optional) - Answer options for choice questions
-            - title: string - Option text
-            - is_correct: integer - 1 if correct, 0 if incorrect, -1 for text
-            - image_path: string (optional) - Option image
-            - guide: string (optional) - Explanation for this option
+        - details: array (optional) - Answer options
+            - For choice questions (checkbox/radioButton):
+                - title: string - Option text
+                - is_correct: integer - 1 if correct, 0 if incorrect, -1 for text
+                - image_path: string (optional) - Option image
+                - guide: string (optional) - Explanation for this option
+            - For input questions:
+                - title: string (optional) - Label or description for the input field
+                - correct_answer: string - Teacher's answer key for grading
             
         Returns:
             201 Created:
@@ -4152,6 +4156,7 @@ class CreateFieldAPIView(APIView):
                 - type: string
                 - is_required: integer
                 - details: array - Answer options
+                - correct_answer: string - For input questions
                 - message: string - "Question created successfully"
                 
             400 Bad Request - Invalid data
@@ -4181,13 +4186,19 @@ class CreateFieldAPIView(APIView):
     }
     ```
     
-    Example Request - Typing:
+    Example Request - Typing (Input):
     ```json
     {
         "title": "Write your name",
         "type": "input",
         "is_required": 1,
-        "guide": "Enter your full name"
+        "guide": "Enter your full name",
+        "details": [
+            {
+                "title": "Student Name",
+                "correct_answer": "Expected answer text"
+            }
+        ]
     }
     ```
     """
@@ -4215,7 +4226,30 @@ class CreateFieldAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        serializer = FieldCreateUpdateSerializer(data=request.data)
+        # Handle input-type questions: extract correct_answer from details
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        
+        if data.get('type') == 'input' and 'details' in data:
+            details = data.get('details', [])
+            # Extract correct_answer from the first detail item
+            if details and len(details) > 0:
+                first_detail = details[0]
+                if isinstance(first_detail, dict):
+                    # Extract correct_answer to Field level
+                    if 'correct_answer' in first_detail:
+                        data['correct_answer'] = first_detail['correct_answer']
+                    
+                    # Keep the detail entry but remove correct_answer from it
+                    # (title and other fields are preserved)
+                    cleaned_detail = {k: v for k, v in first_detail.items() if k != 'correct_answer'}
+                    
+                    # If there's still meaningful data (like title), keep it
+                    if cleaned_detail:
+                        data['details'] = [cleaned_detail]
+                    else:
+                        data['details'] = []
+        
+        serializer = FieldCreateUpdateSerializer(data=data)
         if serializer.is_valid():
             field = serializer.save()
             response_serializer = FieldRetrieveSerializer(field)
