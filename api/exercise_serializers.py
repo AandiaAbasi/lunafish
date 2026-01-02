@@ -78,10 +78,17 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
         logger.info(f"Details data received: {details_data}")
         logger.info(f"Number of details: {len(details_data)}")
         
-        # Get teacher from context
+        # Get teacher from context (only if field exists in DB)
+        # TODO: Remove try-except after migration is applied
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
-            validated_data['teacher'] = request.user
+            try:
+                # Check if teacher field exists in model
+                Field._meta.get_field('teacher')
+                validated_data['teacher'] = request.user
+            except Exception:
+                # Field doesn't exist in DB yet, skip assignment
+                logger.info("Teacher field not in database yet, skipping assignment")
         
         # Create the Field
         field = Field.objects.create(**validated_data)
