@@ -375,6 +375,56 @@ class CompleteRegistrationAPIView(APIView):
                 tokens = get_tokens_for_user(user)
                 user_data = UserProfileSerializer(user).data
                 
+                # Create parent profile automatically for students (children)
+                if user.role == 'user' and user.phone:
+                    try:
+                        import secrets
+                        import string
+                        import bcrypt
+                        from account.utils import send_sms_general
+                        
+                        # Generate random password for parent (8-12 characters)
+                        password_length = secrets.choice([8, 9, 10, 11, 12])
+                        parent_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(password_length))
+                        
+                        # Hash password using bcrypt
+                        hashed_password = bcrypt.hashpw(parent_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                        
+                        # Create parent profile
+                        parent_profile = ParentProfile.objects.create(
+                            student=user,
+                            parent_name=f"والد {user.name}" if user.name else f"والد {user.username}",
+                            phone=user.phone,
+                            parent_password_hash=hashed_password,
+                            can_view_class_history=True,
+                            can_view_payments=True,
+                            can_select_teacher=False,
+                            can_set_usage_time=True,
+                            is_active=True
+                        )
+                        
+                        # Send SMS to parent with credentials
+                        try:
+                            send_sms_general(
+                                phone_number=user.phone,
+                                template_id=555413,
+                                parameters=[
+                                    {'name': 'NAME', 'value': user.name if user.name else user.username},
+                                    {'name': 'PASS', 'value': parent_password}
+                                ]
+                            )
+                        except Exception as sms_error:
+                            # Log SMS error but don't fail registration
+                            import logging
+                            logger = logging.getLogger(__name__)
+                            logger.error(f"Failed to send parent SMS: {sms_error}")
+                    
+                    except Exception as e:
+                        # Log error but don't fail the registration
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.error(f"Failed to create parent profile: {e}")
+                
                 return Response({
                     "success": True,
                     "message": _("Registration completed successfully"),
