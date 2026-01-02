@@ -4937,20 +4937,21 @@ class ParentLoginAPIView(APIView):
             200 OK:
                 - success: boolean (true)
                 - message: string - "Parent login successful"
-                - tokens: object
-                    - accessToken: string - JWT access token
-                    - refreshToken: string - JWT refresh token
-                - parent: object
-                    - parent_id: integer
-                    - parent_name: string
-                    - can_view_class_history: boolean
-                    - can_view_payments: boolean
-                    - can_select_teacher: boolean
-                    - can_set_usage_time: boolean
-                - student: object
-                    - student_id: integer
-                    - student_name: string
-                    - username: string
+                - data: object
+                    - tokens: object
+                        - accessToken: string - JWT access token
+                        - refreshToken: string - JWT refresh token
+                    - parent: object
+                        - parent_id: integer
+                        - parent_name: string
+                        - can_view_class_history: boolean
+                        - can_view_payments: boolean
+                        - can_select_teacher: boolean
+                        - can_set_usage_time: boolean
+                    - student: object
+                        - student_id: integer
+                        - student_name: string
+                        - username: string
                 
             400 Bad Request:
                 - success: boolean (false)
@@ -4976,30 +4977,35 @@ class ParentLoginAPIView(APIView):
                 fields={
                     'success': serializers.BooleanField(),
                     'message': serializers.CharField(),
-                    'tokens': inline_serializer(
-                        name='ParentTokens',
+                    'data': inline_serializer(
+                        name='ParentLoginData',
                         fields={
-                            'accessToken': serializers.CharField(),
-                            'refreshToken': serializers.CharField()
-                        }
-                    ),
-                    'parent': inline_serializer(
-                        name='ParentInfo',
-                        fields={
-                            'parent_id': serializers.IntegerField(),
-                            'parent_name': serializers.CharField(),
-                            'can_view_class_history': serializers.BooleanField(),
-                            'can_view_payments': serializers.BooleanField(),
-                            'can_select_teacher': serializers.BooleanField(),
-                            'can_set_usage_time': serializers.BooleanField()
-                        }
-                    ),
-                    'student': inline_serializer(
-                        name='StudentInfo',
-                        fields={
-                            'student_id': serializers.IntegerField(),
-                            'student_name': serializers.CharField(),
-                            'username': serializers.CharField()
+                            'tokens': inline_serializer(
+                                name='ParentTokens',
+                                fields={
+                                    'accessToken': serializers.CharField(),
+                                    'refreshToken': serializers.CharField()
+                                }
+                            ),
+                            'parent': inline_serializer(
+                                name='ParentInfo',
+                                fields={
+                                    'parent_id': serializers.IntegerField(),
+                                    'parent_name': serializers.CharField(),
+                                    'can_view_class_history': serializers.BooleanField(),
+                                    'can_view_payments': serializers.BooleanField(),
+                                    'can_select_teacher': serializers.BooleanField(),
+                                    'can_set_usage_time': serializers.BooleanField()
+                                }
+                            ),
+                            'student': inline_serializer(
+                                name='StudentInfo',
+                                fields={
+                                    'student_id': serializers.IntegerField(),
+                                    'student_name': serializers.CharField(),
+                                    'username': serializers.CharField()
+                                }
+                            )
                         }
                     )
                 }
@@ -5038,22 +5044,24 @@ class ParentLoginAPIView(APIView):
         return Response({
             'success': True,
             'message': _("Parent login successful"),
-            'tokens': {
-                'accessToken': tokens['access'],
-                'refreshToken': tokens['refresh']
-            },
-            'parent': {
-                'parent_id': parent.id,
-                'parent_name': parent.parent_name,
-                'can_view_class_history': parent.can_view_class_history,
-                'can_view_payments': parent.can_view_payments,
-                'can_select_teacher': parent.can_select_teacher,
-                'can_set_usage_time': parent.can_set_usage_time
-            },
-            'student': {
-                'student_id': parent.student.id,
-                'student_name': parent.student.name or parent.student.username,
-                'username': parent.student.username
+            'data': {
+                'tokens': {
+                    'accessToken': tokens['access'],
+                    'refreshToken': tokens['refresh']
+                },
+                'parent': {
+                    'parent_id': parent.id,
+                    'parent_name': parent.parent_name,
+                    'can_view_class_history': parent.can_view_class_history,
+                    'can_view_payments': parent.can_view_payments,
+                    'can_select_teacher': parent.can_select_teacher,
+                    'can_set_usage_time': parent.can_set_usage_time
+                },
+                'student': {
+                    'student_id': parent.student.id,
+                    'student_name': parent.student.name or parent.student.username,
+                    'username': parent.student.username
+                }
             }
         }, status=status.HTTP_200_OK)
 
