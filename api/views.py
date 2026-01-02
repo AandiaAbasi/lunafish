@@ -4225,10 +4225,19 @@ class CreateFieldAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
+        # Log incoming data for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"CreateField request data: {request.data}")
+        logger.info(f"Question type: {request.data.get('type')}")
+        logger.info(f"Details: {request.data.get('details')}")
+        
         # No special handling needed - correct_answer is now in FieldDetail
         serializer = FieldCreateUpdateSerializer(data=request.data)
         if serializer.is_valid():
             field = serializer.save()
+            logger.info(f"Field created with id: {field.id}")
+            logger.info(f"Details count: {field.details.count()}")
             response_serializer = FieldRetrieveSerializer(field)
             return Response({
                 'success': True,
@@ -4236,6 +4245,8 @@ class CreateFieldAPIView(APIView):
                 'message': _('سؤال با موفقیت ایجاد شد')
             }, status=status.HTTP_201_CREATED)
         
+        # Log validation errors
+        logger.error(f"Validation errors: {serializer.errors}")
         return Response({
             'success': False,
             'error': _('داده‌های نامعتبر'),

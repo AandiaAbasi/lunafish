@@ -58,18 +58,33 @@ class FieldCreateUpdateSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         """Create Field with FieldDetail entries"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         details_data = validated_data.pop('details', [])
+        logger.info(f"Creating Field with type: {validated_data.get('type')}")
+        logger.info(f"Details data received: {details_data}")
+        logger.info(f"Number of details: {len(details_data)}")
         
         # Create the Field
         field = Field.objects.create(**validated_data)
+        logger.info(f"Field created with ID: {field.id}")
         
         # Create FieldDetail entries
-        for detail_data in details_data:
-            FieldDetail.objects.create(field=field, **detail_data)
+        created_details = []
+        for i, detail_data in enumerate(details_data):
+            logger.info(f"Creating FieldDetail {i}: {detail_data}")
+            detail = FieldDetail.objects.create(field=field, **detail_data)
+            created_details.append(detail)
+            logger.info(f"FieldDetail created with ID: {detail.id}")
+        
+        logger.info(f"Total FieldDetails created: {len(created_details)}")
         
         # Reload Field with prefetched related details
         # This ensures the details are properly loaded when serializing
-        return Field.objects.prefetch_related('details').get(pk=field.pk)
+        result = Field.objects.prefetch_related('details').get(pk=field.pk)
+        logger.info(f"Reloaded Field has {result.details.count()} details")
+        return result
     
     def update(self, instance, validated_data):
         """Update Field and its FieldDetail entries"""
