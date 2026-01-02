@@ -34,7 +34,7 @@ from account.models import OTP, VerificationToken, ParentProfile
 from classroom.models import ClassBooking, StudentTransaction, TeacherAvailability
 from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail
 from .exercise_serializers import (
-    FieldCreateUpdateSerializer, FieldRetrieveSerializer,
+    FieldCreateUpdateSerializer, FieldRetrieveSerializer, FieldListSerializer,
     CategoryFieldCreateSerializer, CategoryFieldRetrieveSerializer,
     OrderCreateSubmitSerializer, OrderRetrieveSerializer, OrderListSerializer,
     OrderDetailRetrieveSerializer
@@ -4252,6 +4252,148 @@ class CreateFieldAPIView(APIView):
             'error': _('داده‌های نامعتبر'),
             'details': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TeacherFieldListAPIView(APIView):
+    """
+    Get Teacher's Questions List API
+    
+    Retrieve list of all questions (fields) that the authenticated teacher has created.
+    Questions are identified by their usage in the teacher's teaching subjects through exams.
+    
+    Only teachers can access this endpoint.
+    Requires authentication.
+    
+    get:
+        Get paginated list of teacher's questions.
+        
+        Query parameters:
+        - type: string (optional) - Filter by question type: 'input', 'checkbox', 'radioButton'
+        - search: string (optional) - Search in question title, guide, or description
+        - page: integer (optional, default: 1) - Page number
+        - page_size: integer (optional, default: 20, max: 100) - Items per page
+        
+        Returns:
+            200 OK:
+                - count: integer - Total number of questions
+                - next: string - URL to next page (or null)
+                - previous: string - URL to previous page (or null)
+                - results: array - List of questions
+                    - id: integer
+                    - title: string
+                    - type: string - Question type
+                    - type_display: string - Human-readable type name
+                    - is_required: integer - 0 or 1
+                    - image_path: string
+                    - guide: string
+                    - des: string - Description
+                    - sort: integer
+                    - details_count: integer - Number of answer options
+                    - created_at: datetime
+                    - created_at_jalali: string - Jalali formatted date
+                
+            403 Forbidden - User is not a teacher
+            401 Unauthorized - User not authenticated
+    
+    Example Response:
+    ```json
+    {
+        "count": 15,
+        "next": "http://api/exercise/fields/teacher/?page=2",
+        "previous": null,
+        "results": [
+            {
+                "id": 1,
+                "title": "What is 2+2?",
+                "type": "radioButton",
+                "type_display": "تک گزینه‌ای",
+                "is_required": 1,
+                "details_count": 4,
+                "created_at": "2025-01-01T10:00:00Z",
+                "created_at_jalali": "1403/10/12 10:00"
+            }
+        ]
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Questions'],
+        summary='Get Teacher\'s Questions List',
+        description='Retrieve all questions created by the authenticated teacher',
+        parameters=[
+            OpenApiParameter('type', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, 
+                           description='Filter by type: input, checkbox, radioButton'),
+            OpenApiParameter('search', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY,
+                           description='Search in title, guide, or description'),
+            OpenApiParameter('page', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY,
+                           description='Page number (default: 1)'),
+            OpenApiParameter('page_size', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY,
+                           description='Items per page (default: 20, max: 100)'),
+        ],
+        responses={
+            200: OpenApiResponse(description="Paginated list of teacher's questions"),
+            403: OpenApiResponse(description="User is not a teacher"),
+            401: OpenApiResponse(description="User not authenticated"),
+        }
+    )
+    def get(self, request):
+        from exercise.models import Field, CategoryField
+        from classroom.models import TeachingSubject
+        from .exercise_serializers import FieldListSerializer
+        from django.db.models import Q
+        from rest_framework.pagination import PageNumberPagination
+        
+        # فقط معلمان می‌توانند لیست سوالات خود را ببینند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('تنها معلمان می‌توانند لیست سوالات خود را مشاهده کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get all fields linked to this teacher's teaching subjects
+        # Field -> CategoryField -> TeachingSubject -> Teacher
+        teacher_subject_ids = TeachingSubject.objects.filter(
+            teacher=request.user
+        ).values_list('id', flat=True)
+        
+        field_ids = CategoryField.objects.filter(
+            teachingsubject_id__in=teacher_subject_ids
+        ).values_list('field_id', flat=True).distinct()
+        
+        queryset = Field.objects.filter(
+            id__in=field_ids
+        ).prefetch_related('details').order_by('-created_at')
+        
+        # Apply filters
+        question_type = request.query_params.get('type')
+        if question_type:
+            queryset = queryset.filter(type=question_type)
+        
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(guide__icontains=search) |
+                Q(des__icontains=search)
+            )
+        
+        # Pagination
+        paginator = PageNumberPagination()
+        page_size = request.query_params.get('page_size', 20)
+        try:
+            page_size = int(page_size)
+            page_size = min(page_size, 100)  # Max 100 items per page
+        except (ValueError, TypeError):
+            page_size = 20
+        
+        paginator.page_size = page_size
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        
+        serializer = FieldListSerializer(paginated_queryset, many=True)
+        
+        return paginator.get_paginated_response(serializer.data)
 
 
 class CreateExamAPIView(APIView):

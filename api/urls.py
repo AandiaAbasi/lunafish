@@ -129,6 +129,7 @@ urlpatterns = [
     
     # ========== Exercise APIs (آزمون‌ها) ==========
     path('exercise/field/create/', views.CreateFieldAPIView.as_view(), name='field_create'),
+    path('exercise/fields/teacher/', views.TeacherFieldListAPIView.as_view(), name='teacher_fields_list'),
     path('exercise/exam/create/', views.CreateExamAPIView.as_view(), name='exam_create'),
     path('exercise/exam/<int:subject_id>/', views.GetExamAPIView.as_view(), name='exam_get'),
     path('exercise/exam/<int:subject_id>/submit/', views.SubmitExamAPIView.as_view(), name='exam_submit'),

@@ -132,6 +132,44 @@ class FieldRetrieveSerializer(serializers.ModelSerializer):
         ]
 
 
+class FieldListSerializer(serializers.ModelSerializer):
+    """Serializer for listing questions with summary information"""
+    details_count = serializers.SerializerMethodField()
+    type_display = serializers.SerializerMethodField()
+    created_at_jalali = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Field
+        fields = [
+            'id', 'title', 'type', 'type_display', 'is_required',
+            'image_path', 'guide', 'des', 'sort',
+            'details_count', 'created_at', 'created_at_jalali'
+        ]
+    
+    def get_details_count(self, obj):
+        """Get count of answer options/details"""
+        return obj.details.count()
+    
+    def get_type_display(self, obj):
+        """Get human-readable type name"""
+        type_map = {
+            'input': _('تایپی'),
+            'checkbox': _('چند گزینه‌ای'),
+            'radioButton': _('تک گزینه‌ای')
+        }
+        return type_map.get(obj.type, obj.type)
+    
+    def get_created_at_jalali(self, obj):
+        """Get Jalali formatted creation date"""
+        if obj.created_at:
+            import jdatetime
+            from datetime import datetime
+            return jdatetime.datetime.fromgregorian(
+                datetime=obj.created_at
+            ).strftime('%Y/%m/%d %H:%M')
+        return None
+
+
 class CategoryFieldCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating exam questions (CategoryField)
     
