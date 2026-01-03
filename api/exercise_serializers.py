@@ -196,6 +196,173 @@ class FieldDetailBulkSerializer(serializers.Serializer):
         }
 
 
+# ==================== Update Serializers ====================
+
+class FieldUpdateSerializer(serializers.ModelSerializer):
+    """
+    Update Field (edit mode)
+    
+    Allows updating all field properties EXCEPT type (type is immutable after creation).
+    Handles file uploads and deletes old files when new ones are uploaded.
+    
+    To DELETE a file without uploading a new one, send:
+    - delete_image_path=true
+    - delete_audio_path=true
+    - delete_video_path=true
+    """
+    # Override model CharField to accept file uploads
+    image_path = serializers.FileField(required=False, allow_null=True, write_only=True)
+    audio_path = serializers.FileField(required=False, allow_null=True, write_only=True)
+    video_path = serializers.FileField(required=False, allow_null=True, write_only=True)
+    
+    # Boolean flags for explicit file deletion
+    delete_image_path = serializers.BooleanField(required=False, write_only=True, default=False)
+    delete_audio_path = serializers.BooleanField(required=False, write_only=True, default=False)
+    delete_video_path = serializers.BooleanField(required=False, write_only=True, default=False)
+    
+    class Meta:
+        model = Field
+        fields = [
+            'id', 'title', 'is_required', 'sort',
+            'guide', 'des', 'image_path', 'audio_path', 'video_path',
+            'delete_image_path', 'delete_audio_path', 'delete_video_path'
+        ]
+        read_only_fields = ['id', 'type']  # type is immutable
+    
+    def update(self, instance, validated_data):
+        """Update Field and handle file uploads/deletions"""
+        # Extract deletion flags
+        delete_image = validated_data.pop('delete_image_path', False)
+        delete_audio = validated_data.pop('delete_audio_path', False)
+        delete_video = validated_data.pop('delete_video_path', False)
+        
+        # Handle image file
+        image_file = validated_data.pop('image_path', None)
+        if image_file:
+            # Delete old file if exists
+            if instance.image_path:
+                try:
+                    default_storage.delete(instance.image_path)
+                except Exception:
+                    pass
+            # Save new file
+            ext = os.path.splitext(image_file.name)[1]
+            filename = f"exercise_images/{uuid.uuid4().hex}{ext}"
+            saved_path = default_storage.save(filename, image_file)
+            validated_data['image_path'] = saved_path
+        elif delete_image:
+            # Delete file without uploading new one
+            if instance.image_path:
+                try:
+                    default_storage.delete(instance.image_path)
+                except Exception:
+                    pass
+            validated_data['image_path'] = None
+        
+        # Handle audio file
+        audio_file = validated_data.pop('audio_path', None)
+        if audio_file:
+            # Delete old file if exists
+            if instance.audio_path:
+                try:
+                    default_storage.delete(instance.audio_path)
+                except Exception:
+                    pass
+            # Save new file
+            ext = os.path.splitext(audio_file.name)[1]
+            filename = f"exercise_audio/{uuid.uuid4().hex}{ext}"
+            saved_path = default_storage.save(filename, audio_file)
+            validated_data['audio_path'] = saved_path
+        elif delete_audio:
+            # Delete file without uploading new one
+            if instance.audio_path:
+                try:
+                    default_storage.delete(instance.audio_path)
+                except Exception:
+                    pass
+            validated_data['audio_path'] = None
+        
+        # Handle video file
+        video_file = validated_data.pop('video_path', None)
+        if video_file:
+            # Delete old file if exists
+            if instance.video_path:
+                try:
+                    default_storage.delete(instance.video_path)
+                except Exception:
+                    pass
+            # Save new file
+            ext = os.path.splitext(video_file.name)[1]
+            filename = f"exercise_videos/{uuid.uuid4().hex}{ext}"
+            saved_path = default_storage.save(filename, video_file)
+            validated_data['video_path'] = saved_path
+        elif delete_video:
+            # Delete file without uploading new one
+            if instance.video_path:
+                try:
+                    default_storage.delete(instance.video_path)
+                except Exception:
+                    pass
+            validated_data['video_path'] = None
+        
+        # Update remaining fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
+
+
+class FieldDetailUpdateSerializer(serializers.ModelSerializer):
+    """
+    Update FieldDetail (edit mode)
+    
+    Allows updating individual field detail properties.
+    Validates based on parent Field.type.
+    """
+    class Meta:
+        model = FieldDetail
+        fields = [
+            'id', 'title', 'second_title', 'is_required', 'image_path',
+            'is_correct', 'correct_answer', 'guide', 'des', 'sort'
+        ]
+        read_only_fields = ['id']
+    
+    def validate(self, data):
+        """Validate based on field type"""
+        instance = self.instance
+        if not instance:
+            raise serializers.ValidationError(_('FieldDetail instance not found'))
+        
+        field = instance.field
+        field_type = field.type
+        
+        # Type-specific validation
+        if field_type == 'input':
+            # Input type: correct_answer is required, is_correct should not be used
+            if 'correct_answer' in data and not data['correct_answer']:
+                raise serializers.ValidationError({
+                    'correct_answer': _('برای سوالات تایپی، correct_answer الزامی است')
+                })
+            if 'is_correct' in data and data['is_correct'] not in [-1, None]:
+                raise serializers.ValidationError({
+                    'is_correct': _('برای سوالات تایپی، is_correct نباید استفاده شود')
+                })
+        
+        elif field_type in ['checkbox', 'radioButton']:
+            # Choice types: is_correct is required, correct_answer should not be used
+            if 'is_correct' in data and data['is_correct'] not in [0, 1, -1]:
+                raise serializers.ValidationError({
+                    'is_correct': _('برای سوالات چند گزینه‌ای، is_correct باید 0، 1 یا -1 باشد')
+                })
+            if 'correct_answer' in data and data['correct_answer']:
+                raise serializers.ValidationError({
+                    'correct_answer': _('برای سوالات چند گزینه‌ای، correct_answer نباید استفاده شود')
+                })
+        
+        return data
+
+
 # ==================== Read Serializers ====================
 
 class FieldDetailSerializer(serializers.ModelSerializer):

@@ -4399,6 +4399,225 @@ class DeleteFieldAPIView(APIView):
         }, status=status.HTTP_204_NO_CONTENT)
 
 
+# ==================== Get Field Detail ====================
+
+class GetFieldDetailAPIView(APIView):
+    """
+    Get Field Detail API
+    
+    Retrieve a single field with all its details.
+    Accessible to authenticated users.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Get Field Detail',
+        description='Retrieve field with all details (answers/options).',
+        responses={
+            200: OpenApiResponse(description="Field retrieved successfully"),
+            404: OpenApiResponse(description="Field not found"),
+        }
+    )
+    def get(self, request, field_id):
+        from exercise.models import Field
+        from .exercise_serializers import FieldRetrieveSerializer
+        
+        # Get the field
+        try:
+            field = Field.objects.prefetch_related('details').get(id=field_id)
+        except Field.DoesNotExist:
+            return Response({
+                'ok': False,
+                'error': _('سؤال یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Serialize and return
+        serializer = FieldRetrieveSerializer(field)
+        
+        return Response({
+            'ok': True,
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+# ==================== Update Field ====================
+
+class UpdateFieldAPIView(APIView):
+    """
+    Update Field API
+    
+    Allows teachers to update their own fields.
+    Type field is immutable and cannot be changed.
+    When uploading new files, old files are automatically deleted.
+    Only the teacher who created the field can update it.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)  # For file uploads
+    
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Update Field',
+        description='Update field properties. Type cannot be changed. Old files are deleted when new ones are uploaded.',
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Field updated successfully"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Field not found"),
+        }
+    )
+    def put(self, request, field_id):
+        from exercise.models import Field
+        from .exercise_serializers import FieldUpdateSerializer
+        
+        # Only teachers can update fields
+        if request.user.role != 'teacher':
+            return Response({
+                'ok': False,
+                'error': _('تنها معلمان می‌توانند سؤال ویرایش کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get the field
+        try:
+            field = Field.objects.get(id=field_id)
+        except Field.DoesNotExist:
+            return Response({
+                'ok': False,
+                'error': _('سؤال یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if user is the field owner
+        if field.teacher != request.user:
+            return Response({
+                'ok': False,
+                'error': _('شما مجاز به ویرایش این سؤال نیستید')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Update the field
+        serializer = FieldUpdateSerializer(
+            field,
+            data=request.data,
+            partial=True,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            updated_field = serializer.save()
+            return Response({
+                'ok': True,
+                'data': {
+                    'id': updated_field.id,
+                    'title': updated_field.title,
+                    'type': updated_field.type,
+                    'is_required': updated_field.is_required,
+                    'sort': updated_field.sort,
+                    'guide': updated_field.guide,
+                    'des': updated_field.des,
+                    'image_path': updated_field.image_path,
+                    'audio_path': updated_field.audio_path,
+                    'video_path': updated_field.video_path,
+                },
+                'message': _('سؤال با موفقیت ویرایش شد')
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            'ok': False,
+            'error': _('داده‌های نامعتبر'),
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    patch = put  # Allow PATCH as well
+
+
+# ==================== Update Field Detail ====================
+
+class UpdateFieldDetailAPIView(APIView):
+    """
+    Update Field Detail API
+    
+    Allows teachers to update individual field details.
+    Validates based on parent field type.
+    Only the teacher who created the parent field can update its details.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (JSONParser,)  # JSON only
+    
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Update Field Detail',
+        description='Update individual field detail. Validates based on parent field type.',
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Detail updated successfully"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Detail not found"),
+        }
+    )
+    def put(self, request, detail_id):
+        from exercise.models import FieldDetail
+        from .exercise_serializers import FieldDetailUpdateSerializer
+        
+        # Only teachers can update field details
+        if request.user.role != 'teacher':
+            return Response({
+                'ok': False,
+                'error': _('تنها معلمان می‌توانند جزئیات سؤال ویرایش کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get the field detail
+        try:
+            detail = FieldDetail.objects.select_related('field').get(id=detail_id)
+        except FieldDetail.DoesNotExist:
+            return Response({
+                'ok': False,
+                'error': _('جزئیات سؤال یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if user is the field owner
+        if detail.field.teacher != request.user:
+            return Response({
+                'ok': False,
+                'error': _('شما مجاز به ویرایش این جزئیات نیستید')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Update the detail
+        serializer = FieldDetailUpdateSerializer(
+            detail,
+            data=request.data,
+            partial=True,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            updated_detail = serializer.save()
+            
+            return Response({
+                'ok': True,
+                'data': {
+                    'id': updated_detail.id,
+                    'field_id': updated_detail.field.id,
+                    'title': updated_detail.title,
+                    'second_title': updated_detail.second_title,
+                    'is_required': updated_detail.is_required,
+                    'image_path': updated_detail.image_path,
+                    'is_correct': updated_detail.is_correct,
+                    'correct_answer': updated_detail.correct_answer,
+                    'guide': updated_detail.guide,
+                    'des': updated_detail.des,
+                    'sort': updated_detail.sort,
+                },
+                'message': _('جزئیات سؤال با موفقیت ویرایش شد')
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            'ok': False,
+            'error': _('داده‌های نامعتبر'),
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    patch = put  # Allow PATCH as well
+
+
 class TeacherFieldListAPIView(APIView):
     """
     Get Teacher's Questions List API
