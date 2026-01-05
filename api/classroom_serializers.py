@@ -574,3 +574,84 @@ class AttendanceSerializer(serializers.Serializer):
     booking_id = serializers.IntegerField()
     status = serializers.CharField(max_length=10)
     created = serializers.BooleanField(read_only=True)
+
+
+# ===== Teacher's Students & Classes APIs =====
+
+class TeacherStudentSerializer(serializers.Serializer):
+    """
+    Serializer for Teacher's Students (from paid classes)
+    
+    Returns unique students who have paid classes with this teacher.
+    Fields:
+    - student_id: int - User ID
+    - name: str - Student display name
+    - username: str - Student username
+    - selected_avatar: str - Avatar ID or null
+    - last_paid_class_date: str - Date of last paid class (Jalali format)
+    - total_paid_classes: int - Count of paid classes
+    """
+    student_id = serializers.IntegerField()
+    name = serializers.CharField()
+    username = serializers.CharField()
+    selected_avatar = serializers.IntegerField(allow_null=True)
+    last_paid_class_date = JalaliDateField()
+    total_paid_classes = serializers.IntegerField()
+
+
+class StudentPaidClassSerializer(serializers.Serializer):
+    """
+    Serializer for Student's Paid Classes
+    
+    Returns all classes with payment_status='paid' for a student.
+    Fields:
+    - class_id: int - ClassBooking ID
+    - date: str - Class date (Jalali format)
+    - start_time: str - Class start time
+    - end_time: str - Class end time
+    - subject_title: str - TeachingSubject title
+    - status: str - Class status (reserved/completed/cancelled/no_show)
+    - price: str - Original price
+    - final_price: str - Price after discount
+    - discount_amount: str - Discount applied
+    - paid_amount: str - Amount paid
+    - paid_at: str - Payment timestamp
+    """
+    class_id = serializers.IntegerField()
+    date = JalaliDateField()
+    start_time = serializers.TimeField()
+    end_time = serializers.TimeField()
+    subject_title = serializers.CharField()
+    status = serializers.CharField()
+    price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    final_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    discount_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    paid_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    paid_at = serializers.DateTimeField(allow_null=True)
+
+
+class StudentExerciseTemplateSerializer(serializers.Serializer):
+    """
+    Serializer for Student's Exercise Templates (CategoryField)
+    
+    Returns exercise templates from subjects where student has paid classes.
+    Fields:
+    - exercise_id: int - CategoryField ID
+    - subject_id: int - TeachingSubject ID
+    - subject_title: str - TeachingSubject title
+    - field_id: int - Field (Question) ID
+    - field_title: str - Field title
+    - step: int - Exercise step
+    - sort: int - Sort order
+    - type: str - Exercise type (input/checkbox/radioButton)
+    - is_conditional: bool - Is conditional exercise
+    """
+    exercise_id = serializers.IntegerField()
+    subject_id = serializers.IntegerField()
+    subject_title = serializers.CharField()
+    field_id = serializers.IntegerField()
+    field_title = serializers.CharField()
+    step = serializers.IntegerField()
+    sort = serializers.IntegerField()
+    type = serializers.CharField()
+    is_conditional = serializers.BooleanField()

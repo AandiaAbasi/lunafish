@@ -39,7 +39,7 @@ from .exercise_serializers import (
     OrderCreateSubmitSerializer, OrderRetrieveSerializer, OrderListSerializer,
     OrderDetailRetrieveSerializer
 )
-from .classroom_serializers import TeachingSubjectSerializer
+from .classroom_serializers import TeachingSubjectSerializer, TeacherStudentSerializer, StudentPaidClassSerializer, StudentExerciseTemplateSerializer
 from .parent_serializers import (
     ParentLoginSerializer, ParentProfileSerializer, ParentUpdateUsageTimeSerializer,
     ChildClassHistorySerializer, ChildPaymentHistorySerializer
@@ -8939,3 +8939,319 @@ class ParentalUsageReportAPIView(APIView):
             'data': response_serializer.data
         }, status=status.HTTP_200_OK)
 
+
+# ===== Teacher's Students & Classes APIs =====
+
+class TeacherStudentsListAPIView(APIView):
+    """
+    API to fetch all students of a teacher (from paid classes only)
+    
+    Permission: Authenticated, Teacher only
+    
+    GET /api/teacher/students/
+    
+    Returns:
+        200 OK:
+            {
+                'success': true,
+                'message': 'Students list retrieved successfully',
+                'data': [
+                    {
+                        'student_id': 123,
+                        'name': 'علی محمدی',
+                        'username': 'ali_mohammad',
+                        'selected_avatar': 5,
+                        'last_paid_class_date': '1403/10/15',
+                        'total_paid_classes': 5
+                    },
+                    ...
+                ]
+            }
+        
+        403 Forbidden: User is not a teacher
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary='Fetch teacher\'s students',
+        description='Get all unique students who have paid classes with this teacher',
+        responses={
+            200: inline_serializer(
+                name='TeacherStudentsResponse',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': serializers.ListField(child=serializers.DictField())
+                }
+            )
+        }
+    )
+    def get(self, request):
+        """Get all students of this teacher (from paid classes)"""
+        teacher = request.user
+        
+        # Check if user is a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                'success': False,
+                'message': _('Only teachers can access this endpoint')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get unique students with paid classes from this teacher
+        from django.db.models import Max, Count, Q
+        
+        students_data = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).values('student').distinct().annotate(
+            last_paid_class_date=Max('availability__date'),
+            total_paid_classes=Count('id', filter=Q(payment_status='paid'))
+        ).values('student', 'last_paid_class_date', 'total_paid_classes')
+        
+        # Fetch student details
+        student_ids = [s['student'] for s in students_data]
+        students_dict = {s.id: s for s in User.objects.filter(id__in=student_ids)}
+        students_map = {s['student']: s for s in students_data}
+        
+        # Serialize data
+        result = []
+        for student_id in student_ids:
+            student = students_dict.get(student_id)
+            student_stats = students_map.get(student_id)
+            
+            if student and student_stats:
+                result.append({
+                    'student_id': student.id,
+                    'name': student.name or student.username,
+                    'username': student.username,
+                    'selected_avatar': student.selected_avatar_id,
+                    'last_paid_class_date': student_stats['last_paid_class_date'],
+                    'total_paid_classes': student_stats['total_paid_classes']
+                })
+        
+        # Sort by last_paid_class_date (newest first)
+        result.sort(key=lambda x: x['last_paid_class_date'] or dt.date.min, reverse=True)
+        
+        serializer = TeacherStudentSerializer(result, many=True)
+        
+        return Response({
+            'success': True,
+            'message': _('Students list retrieved successfully'),
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class StudentPaidClassesListAPIView(APIView):
+    """
+    API to fetch all paid classes for a specific student (teacher's view)
+    
+    Permission: Authenticated, Teacher only (can only see their own students)
+    
+    GET /api/teacher/student/<student_id>/paid-classes/
+    
+    Returns:
+        200 OK:
+            {
+                'success': true,
+                'message': 'Classes retrieved successfully',
+                'data': [
+                    {
+                        'class_id': 456,
+                        'date': '1403/10/15',
+                        'start_time': '09:00:00',
+                        'end_time': '10:00:00',
+                        'subject_title': 'انگلیسی مبتدی',
+                        'status': 'completed',
+                        'price': '500000.00',
+                        'final_price': '450000.00',
+                        'discount_amount': '50000.00',
+                        'paid_amount': '450000.00',
+                        'paid_at': '2024-12-20T14:30:00Z'
+                    },
+                    ...
+                ]
+            }
+        
+        403 Forbidden: User is not a teacher or not their student
+        404 Not Found: Student not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary='Fetch paid classes for a student',
+        description='Get all paid classes for a specific student under this teacher',
+        parameters=[
+            OpenApiParameter(
+                name='student_id',
+                location=OpenApiParameter.PATH,
+                description='ID of the student',
+                required=True,
+                type=OpenApiTypes.INT
+            )
+        ],
+        responses={
+            200: inline_serializer(
+                name='StudentPaidClassesResponse',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': serializers.ListField(child=serializers.DictField())
+                }
+            )
+        }
+    )
+    def get(self, request, student_id):
+        """Get all paid classes for a student (teacher's view)"""
+        teacher = request.user
+        
+        # Check if user is a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                'success': False,
+                'message': _('Only teachers can access this endpoint')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Verify student exists
+        student = get_object_or_404(User, id=student_id)
+        
+        # Get all paid classes for this student from this teacher
+        classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            student=student,
+            payment_status='paid'
+        ).select_related('availability', 'subject').order_by('-availability__date')
+        
+        # Serialize data
+        result = []
+        for booking in classes:
+            result.append({
+                'class_id': booking.id,
+                'date': booking.availability.date,
+                'start_time': booking.availability.start_time,
+                'end_time': booking.availability.end_time,
+                'subject_title': booking.subject.title,
+                'status': booking.status,
+                'price': booking.price,
+                'final_price': booking.final_price,
+                'discount_amount': booking.discount_amount,
+                'paid_amount': booking.paid_amount,
+                'paid_at': booking.paid_at
+            })
+        
+        serializer = StudentPaidClassSerializer(result, many=True)
+        
+        return Response({
+            'success': True,
+            'message': _('Classes retrieved successfully'),
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class StudentExercisesListAPIView(APIView):
+    """
+    API to fetch exercise templates for a student
+    
+    Returns all CategoryField (exercise templates) from subjects where the student
+    has paid classes with this teacher.
+    
+    Permission: Authenticated, Teacher only (can only see their own students)
+    
+    GET /api/teacher/student/<student_id>/exercises/
+    
+    Returns:
+        200 OK:
+            {
+                'success': true,
+                'message': 'Exercises retrieved successfully',
+                'data': [
+                    {
+                        'exercise_id': 789,
+                        'subject_id': 123,
+                        'subject_title': 'انگلیسی مبتدی',
+                        'field_id': 456,
+                        'field_title': 'سوال اول',
+                        'step': 1,
+                        'sort': 0,
+                        'type': 'input',
+                        'is_conditional': false
+                    },
+                    ...
+                ]
+            }
+        
+        403 Forbidden: User is not a teacher or not their student
+        404 Not Found: Student not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary='Fetch exercise templates for a student',
+        description='Get all exercise templates from subjects where student has paid classes',
+        parameters=[
+            OpenApiParameter(
+                name='student_id',
+                location=OpenApiParameter.PATH,
+                description='ID of the student',
+                required=True,
+                type=OpenApiTypes.INT
+            )
+        ],
+        responses={
+            200: inline_serializer(
+                name='StudentExercisesResponse',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': serializers.ListField(child=serializers.DictField())
+                }
+            )
+        }
+    )
+    def get(self, request, student_id):
+        """Get all exercise templates for a student"""
+        teacher = request.user
+        
+        # Check if user is a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                'success': False,
+                'message': _('Only teachers can access this endpoint')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Verify student exists
+        student = get_object_or_404(User, id=student_id)
+        
+        # Get all subjects where this student has paid classes with this teacher
+        subject_ids = ClassBooking.objects.filter(
+            teacher=teacher,
+            student=student,
+            payment_status='paid'
+        ).values_list('subject_id', flat=True).distinct()
+        
+        # Get all CategoryField exercises from these subjects
+        exercises = CategoryField.objects.filter(
+            teachingsubject_id__in=subject_ids
+        ).select_related('teachingsubject', 'field').order_by('teachingsubject', 'step', 'sort')
+        
+        # Serialize data
+        result = []
+        for exercise in exercises:
+            result.append({
+                'exercise_id': exercise.id,
+                'subject_id': exercise.teachingsubject.id,
+                'subject_title': exercise.teachingsubject.title,
+                'field_id': exercise.field.id,
+                'field_title': exercise.field.title,
+                'step': exercise.step,
+                'sort': exercise.sort,
+                'type': exercise.type,
+                'is_conditional': exercise.is_conditional
+            })
+        
+        serializer = StudentExerciseTemplateSerializer(result, many=True)
+        
+        return Response({
+            'success': True,
+            'message': _('Exercises retrieved successfully'),
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)

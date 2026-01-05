@@ -92,6 +92,11 @@ urlpatterns = [
     path('teachers/', views.TeacherListAPIView.as_view(), name='teacher_list'),
     path('teachers/<int:id>/', views.TeacherDetailAPIView.as_view(), name='teacher_detail'),
     
+    # ========== Teacher's Students & Classes APIs ==========
+    path('teacher/students/', views.TeacherStudentsListAPIView.as_view(), name='teacher_students_list'),
+    path('teacher/student/<int:student_id>/paid-classes/', views.StudentPaidClassesListAPIView.as_view(), name='student_paid_classes'),
+    path('teacher/student/<int:student_id>/exercises/', views.StudentExercisesListAPIView.as_view(), name='student_exercises'),
+    
     # ========== Parent Portal APIs ==========
     path('parent/login/', views.ParentLoginAPIView.as_view(), name='parent_login'),
     path('parent/dashboard/', views.ParentDashboardAPIView.as_view(), name='parent_dashboard'),
