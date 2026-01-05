@@ -4867,6 +4867,20 @@ class CreateExamAPIView(APIView):
         
         # ایجاد سؤالات برای آزمون
         created_questions = []
+        
+        # محاسبه حداکثر sort برای هر step (برای auto-increment)
+        # Get max sort for each step in this teaching subject
+        from django.db.models import Max
+        existing_max_sorts = {}
+        existing_records = CategoryField.objects.filter(
+            teachingsubject=subject
+        ).values('step').annotate(max_sort=Max('sort'))
+        for record in existing_records:
+            existing_max_sorts[record['step']] = record['max_sort']
+        
+        # Track sort counters per step for this batch
+        step_sort_counters = {}
+        
         try:
             for question_data in questions:
                 field_id = question_data.get('field_id')
@@ -4879,11 +4893,21 @@ class CreateExamAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
+                # Auto-calculate sort for this step
+                step = question_data.get('step', 0)
+                if step not in step_sort_counters:
+                    # Initialize counter: start from max_sort + 1, or 0 if no existing records
+                    base_sort = existing_max_sorts.get(step, -1) + 1
+                    step_sort_counters[step] = base_sort
+                
+                auto_sort = step_sort_counters[step]
+                step_sort_counters[step] += 1  # Increment for next question in same step
+                
                 exam_question = CategoryField.objects.create(
                     teachingsubject=subject,
                     field=field,
-                    step=question_data.get('step', 0),
-                    sort=question_data.get('sort', 0),
+                    step=step,
+                    sort=auto_sort,
                     type=question_data.get('type', field.type),
                     is_conditional=question_data.get('is_conditional', False)
                 )
