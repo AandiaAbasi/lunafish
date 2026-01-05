@@ -333,7 +333,7 @@ class EditTeacherProfileSerializer(serializers.ModelSerializer):
             'gender', 'birth_date',
             'qualifications', 'languages_taught', 'specialization', 
             'resume_summary', 'introduction_video', 'hourly_rate', 'experience_years',
-            'is_teacher_verified',
+            'is_teacher_verified', 'commission_rate_override',
             'educational_qualifications', 'years_of_experience'
         ]
         read_only_fields = ['is_teacher_verified']
@@ -353,6 +353,7 @@ class EditTeacherProfileSerializer(serializers.ModelSerializer):
             'experience_years': {'required': False},
             'educational_qualifications': {'required': False},
             'years_of_experience': {'required': False},
+            'commission_rate_override': {'required': False},
         }
     
     def validate_birth_date(self, value):
@@ -639,7 +640,7 @@ class StudentProfileWithStatsSerializer(serializers.ModelSerializer):
             'id', 'username', 'profile_photo_path', 'profile_photo_url',
             'total_ratings', 'total_rating_score', 'total_rating_stars',
             'average_rating_score', 'average_rating_stars',
-            'total_medals', 'medals_by_type','commission_rate_override'
+            'total_medals', 'medals_by_type'
         ]
     
     def get_profile_photo_url(self, obj):
@@ -732,7 +733,7 @@ class TeacherProfileWithStatsSerializer(serializers.ModelSerializer):
             'introduction_video', 'introduction_video_url',
             'qualifications', 'languages_taught', 'specialization',
             'experience_years', 'hourly_rate', 'gender', 'birth_date',
-            'is_teacher_verified',
+            'is_teacher_verified', 'commission_rate_override',
             'total_ratings', 'total_rating_stars', 'average_rating_stars',
             'total_comments', 'ratings_by_type',
             'students_given_ratings', 'total_student_ratings_given', 'resume_summary'
