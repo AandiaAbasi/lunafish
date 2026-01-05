@@ -31,7 +31,7 @@ import datetime as dt
 from account.serializers import *
 from account.services import *
 from account.models import OTP, VerificationToken, ParentProfile
-from classroom.models import ClassBooking, StudentTransaction, TeacherAvailability
+from classroom.models import ClassBooking, StudentTransaction, TeacherAvailability, TeachingSubject, Attendance
 from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail
 from .exercise_serializers import (
     FieldRetrieveSerializer, FieldListSerializer,
