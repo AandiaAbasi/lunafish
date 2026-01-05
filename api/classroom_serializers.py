@@ -608,30 +608,44 @@ class StudentPaidClassSerializer(serializers.Serializer):
     Serializer for Student's Paid Classes
     
     Returns all classes with payment_status='paid' for a student.
+    Uses same fields as ClassBookingSerializer for consistency.
+    
     Fields:
-    - class_id: int - ClassBooking ID
-    - date: str - Class date (Jalali format)
-    - start_time: str - Class start time
-    - end_time: str - Class end time
+    - id: int - ClassBooking ID
+    - availability: int - TeacherAvailability ID
+    - availability_date: str - Class date (Gregorian format)
+    - availability_time: str - Time range (HH:MM - HH:MM)
+    - teacher: int - Teacher user ID
+    - teacher_name: str - Teacher name
+    - student: int - Student user ID
+    - student_name: str - Student name
+    - subject: int - TeachingSubject ID
     - subject_title: str - TeachingSubject title
     - status: str - Class status (reserved/completed/cancelled/no_show)
+    - status_display: str - Localized status display
     - price: str - Original price
-    - final_price: str - Price after discount
     - discount_amount: str - Discount applied
-    - paid_amount: str - Amount paid
-    - paid_at: str - Payment timestamp
+    - final_price: str - Price after discount
+    - created_at: str - Creation timestamp
+    - updated_at: str - Last update timestamp
     """
-    class_id = serializers.IntegerField()
-    date = JalaliDateField()
-    start_time = serializers.TimeField()
-    end_time = serializers.TimeField()
+    id = serializers.IntegerField()
+    availability = serializers.IntegerField()
+    availability_date = serializers.DateField()
+    availability_time = serializers.CharField()
+    teacher = serializers.IntegerField()
+    teacher_name = serializers.CharField()
+    student = serializers.IntegerField()
+    student_name = serializers.CharField()
+    subject = serializers.IntegerField()
     subject_title = serializers.CharField()
     status = serializers.CharField()
+    status_display = serializers.CharField()
     price = serializers.DecimalField(max_digits=10, decimal_places=2)
-    final_price = serializers.DecimalField(max_digits=10, decimal_places=2)
     discount_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
-    paid_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
-    paid_at = serializers.DateTimeField(allow_null=True)
+    final_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
 
 
 class StudentExerciseTemplateSerializer(serializers.Serializer):

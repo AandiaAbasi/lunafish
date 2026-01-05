@@ -9102,6 +9102,8 @@ class StudentPaidClassesListAPIView(APIView):
     
     GET /api/teacher/student/<student_id>/paid-classes/
     
+    Returns same fields as /api/teacher/bookings/ endpoint for consistency.
+    
     Returns:
         200 OK:
             {
@@ -9109,17 +9111,23 @@ class StudentPaidClassesListAPIView(APIView):
                 'message': 'Classes retrieved successfully',
                 'data': [
                     {
-                        'class_id': 456,
-                        'date': '1403/10/15',
-                        'start_time': '09:00:00',
-                        'end_time': '10:00:00',
+                        'id': 456,
+                        'availability': 123,
+                        'availability_date': '2024-12-20',
+                        'availability_time': '09:00 - 10:00',
+                        'teacher': 1,
+                        'teacher_name': 'علی معلم',
+                        'student': 5,
+                        'student_name': 'علی محمدی',
+                        'subject': 10,
                         'subject_title': 'انگلیسی مبتدی',
                         'status': 'completed',
+                        'status_display': 'تکمیل شده',
                         'price': '500000.00',
-                        'final_price': '450000.00',
                         'discount_amount': '50000.00',
-                        'paid_amount': '450000.00',
-                        'paid_at': '2024-12-20T14:30:00Z'
+                        'final_price': '450000.00',
+                        'created_at': '2024-12-18T14:30:00Z',
+                        'updated_at': '2024-12-20T14:30:00Z'
                     },
                     ...
                 ]
@@ -9132,7 +9140,7 @@ class StudentPaidClassesListAPIView(APIView):
     
     @extend_schema(
         summary='Fetch paid classes for a student',
-        description='Get all paid classes for a specific student under this teacher',
+        description='Get all paid classes for a specific student under this teacher. Returns same fields as /api/teacher/bookings/',
         parameters=[
             OpenApiParameter(
                 name='student_id',
@@ -9174,24 +9182,9 @@ class StudentPaidClassesListAPIView(APIView):
             payment_status='paid'
         ).select_related('availability', 'subject').order_by('-availability__date')
         
-        # Serialize data
-        result = []
-        for booking in classes:
-            result.append({
-                'class_id': booking.id,
-                'date': booking.availability.date,
-                'start_time': booking.availability.start_time,
-                'end_time': booking.availability.end_time,
-                'subject_title': booking.subject.title,
-                'status': booking.status,
-                'price': booking.price,
-                'final_price': booking.final_price,
-                'discount_amount': booking.discount_amount,
-                'paid_amount': booking.paid_amount,
-                'paid_at': booking.paid_at
-            })
-        
-        serializer = StudentPaidClassSerializer(result, many=True)
+        # Serialize using ClassBookingSerializer for consistency with teacher/bookings/
+        from .classroom_serializers import ClassBookingSerializer
+        serializer = ClassBookingSerializer(classes, many=True)
         
         return Response({
             'success': True,
