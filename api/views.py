@@ -5171,7 +5171,7 @@ class GetExamByStepsAPIView(APIView):
                 'image_path': field.image_path,
                 'audio_path': field.audio_path,
                 'video_path': field.video_path,
-                'details': [{
+                'field_details': [{
                     'id': d.id,
                     'title': d.title,
                     'second_title': d.second_title,
