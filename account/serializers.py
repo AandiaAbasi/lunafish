@@ -639,7 +639,7 @@ class StudentProfileWithStatsSerializer(serializers.ModelSerializer):
             'id', 'username', 'profile_photo_path', 'profile_photo_url',
             'total_ratings', 'total_rating_score', 'total_rating_stars',
             'average_rating_score', 'average_rating_stars',
-            'total_medals', 'medals_by_type'
+            'total_medals', 'medals_by_type','commission_rate_override'
         ]
     
     def get_profile_photo_url(self, obj):
