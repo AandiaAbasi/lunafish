@@ -5199,6 +5199,209 @@ class GetExamByStepsAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class DeleteExamQuestionAPIView(APIView):
+    """
+    Delete Single Exam Question API
+    
+    Delete a single CategoryField (question) from an exam step.
+    Automatically re-orders the remaining items' sort values to maintain sequence.
+    
+    delete:
+        Delete a question from exam and re-sort remaining questions in the step.
+        
+        Path parameters:
+        - question_id: integer - CategoryField ID to delete
+        
+        Returns:
+            200 OK:
+                - message: string - Success message
+                - deleted_id: integer - Deleted CategoryField ID
+                - step: integer - Step number that was affected
+                - remaining_questions: integer - Count of remaining questions in step
+                
+            403 Forbidden - Not the owner of this subject
+            404 Not Found - Question not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Exams'],
+        summary='Delete Exam Question',
+        description='Delete a single question from exam and re-sort remaining questions in the step',
+        parameters=[
+            OpenApiParameter('question_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='CategoryField ID to delete')
+        ],
+        responses={
+            200: OpenApiResponse(description="Question deleted and sort re-ordered"),
+            403: OpenApiResponse(description="Not authorized to delete this question"),
+            404: OpenApiResponse(description="Question not found"),
+        }
+    )
+    def delete(self, request, question_id):
+        from exercise.models import CategoryField
+        from django.db import transaction
+        
+        # فقط معلمان می‌توانند سؤال حذف کنند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('تنها معلمان می‌توانند سؤال حذف کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            question = CategoryField.objects.select_related('teachingsubject').get(id=question_id)
+        except CategoryField.DoesNotExist:
+            return Response(
+                {'error': _('سؤال یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی مالکیت
+        if question.teachingsubject.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به حذف این سؤال ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        subject = question.teachingsubject
+        step = question.step
+        deleted_sort = question.sort
+        
+        with transaction.atomic():
+            # حذف سؤال
+            question.delete()
+            
+            # به‌روزرسانی sort برای سؤالات باقی‌مانده در همان step
+            # کاهش sort برای سؤالاتی که sort بزرگتر داشتند
+            remaining_questions = CategoryField.objects.filter(
+                teachingsubject=subject,
+                step=step,
+                sort__gt=deleted_sort
+            ).order_by('sort')
+            
+            for q in remaining_questions:
+                q.sort -= 1
+                q.save(update_fields=['sort'])
+            
+            # تعداد سؤالات باقی‌مانده در step
+            remaining_count = CategoryField.objects.filter(
+                teachingsubject=subject,
+                step=step
+            ).count()
+        
+        return Response({
+            'message': _('سؤال با موفقیت حذف شد'),
+            'deleted_id': question_id,
+            'step': step,
+            'remaining_questions': remaining_count
+        }, status=status.HTTP_200_OK)
+
+
+class DeleteExamStepAPIView(APIView):
+    """
+    Delete Entire Exam Step API
+    
+    Delete all CategoryFields in a specific step and shift higher steps down.
+    Ensures no gaps between step numbers.
+    
+    delete:
+        Delete entire step and shift higher steps down.
+        
+        Path parameters:
+        - subject_id: integer - Teaching subject ID
+        - step: integer - Step number to delete
+        
+        Returns:
+            200 OK:
+                - message: string - Success message
+                - deleted_step: integer - Deleted step number
+                - deleted_questions_count: integer - Number of questions deleted
+                - steps_shifted: integer - Number of steps that were shifted down
+                
+            403 Forbidden - Not the owner of this subject
+            404 Not Found - Subject or step not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Exams'],
+        summary='Delete Entire Exam Step',
+        description='Delete all questions in a step and shift higher steps down to maintain sequence',
+        parameters=[
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Teaching subject ID'),
+            OpenApiParameter('step', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Step number to delete')
+        ],
+        responses={
+            200: OpenApiResponse(description="Step deleted and higher steps shifted down"),
+            403: OpenApiResponse(description="Not authorized to delete this step"),
+            404: OpenApiResponse(description="Subject or step not found"),
+        }
+    )
+    def delete(self, request, subject_id, step):
+        from exercise.models import CategoryField
+        from classroom.models import TeachingSubject
+        from django.db import transaction
+        
+        # فقط معلمان می‌توانند step حذف کنند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('تنها معلمان می‌توانند مرحله حذف کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی مالکیت
+        if subject.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به حذف این مرحله ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # بررسی وجود step
+        step_questions = CategoryField.objects.filter(
+            teachingsubject=subject,
+            step=step
+        )
+        
+        if not step_questions.exists():
+            return Response(
+                {'error': _('مرحله مورد نظر یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        deleted_count = step_questions.count()
+        
+        with transaction.atomic():
+            # حذف تمام سؤالات در این step
+            step_questions.delete()
+            
+            # کاهش step برای stepهای بزرگتر (شیفت به پایین)
+            higher_steps = CategoryField.objects.filter(
+                teachingsubject=subject,
+                step__gt=step
+            ).order_by('step', 'sort')
+            
+            steps_shifted = set()
+            for q in higher_steps:
+                steps_shifted.add(q.step)
+                q.step -= 1
+                q.save(update_fields=['step'])
+        
+        return Response({
+            'message': _('مرحله با موفقیت حذف شد'),
+            'deleted_step': step,
+            'deleted_questions_count': deleted_count,
+            'steps_shifted': len(steps_shifted)
+        }, status=status.HTTP_200_OK)
+
+
 class SubmitExamAPIView(APIView):
     """
     Submit Exam Answers API
