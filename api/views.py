@@ -5177,6 +5177,7 @@ class GetExamByStepsAPIView(APIView):
                     'second_title': d.second_title,
                     'image_path': d.image_path,
                     'is_correct': d.is_correct,
+                    'correct_answer': d.correct_answer,
                     'sort': d.sort
                 } for d in field.details.all().order_by('sort')]
             }
