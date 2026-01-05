@@ -148,6 +148,7 @@ urlpatterns = [
     path('exercise/fields/teacher/', views.TeacherFieldListAPIView.as_view(), name='teacher_fields_list'),
     path('exercise/exam/create/', views.CreateExamAPIView.as_view(), name='exam_create'),
     path('exercise/exam/<int:subject_id>/', views.GetExamAPIView.as_view(), name='exam_get'),
+    path('exercise/exam/<int:subject_id>/steps/', views.GetExamByStepsAPIView.as_view(), name='exam_get_by_steps'),
     path('exercise/exam/<int:subject_id>/submit/', views.SubmitExamAPIView.as_view(), name='exam_submit'),
     path('exercise/results/', views.GetExamResultsAPIView.as_view(), name='exam_results_list'),
     path('exercise/results/<int:attempt_id>/', views.GetExamAttemptDetailAPIView.as_view(), name='exam_results_detail'),

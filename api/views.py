@@ -5045,6 +5045,160 @@ class GetExamAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class GetExamByStepsAPIView(APIView):
+    """
+    Get Exam Grouped by Steps API
+    
+    Retrieve CategoryFields (exam questions) grouped by step.
+    Each step contains its own fields array, ordered by sort.
+    
+    get:
+        Get exam questions grouped by step.
+        
+        Path parameters:
+        - subject_id: integer - Teaching subject ID
+        
+        Returns:
+            200 OK:
+                - subject_id: integer
+                - subject_title: string
+                - total_steps: integer
+                - total_questions: integer
+                - steps: array
+                    - step: integer - Step number
+                    - fields: array - Questions in this step (ordered by sort)
+                        - id: integer - CategoryField ID
+                        - field_id: integer - Field (Question) ID
+                        - field_title: string
+                        - type: string
+                        - sort: integer
+                        - is_conditional: boolean
+                        - details: array - Answer options
+                
+            404 Not Found - Teaching subject not found
+            403 Forbidden - User does not have access
+    
+    Example Response:
+    ```json
+    {
+        "data": {
+            "subject_id": 5,
+            "subject_title": "English Beginner",
+            "total_steps": 2,
+            "total_questions": 5,
+            "steps": [
+                {
+                    "step": 0,
+                    "fields": [
+                        {"id": 1, "field_id": 10, "field_title": "Q1", "sort": 0, ...},
+                        {"id": 2, "field_id": 11, "field_title": "Q2", "sort": 1, ...}
+                    ]
+                },
+                {
+                    "step": 1,
+                    "fields": [
+                        {"id": 3, "field_id": 12, "field_title": "Q3", "sort": 0, ...}
+                    ]
+                }
+            ]
+        }
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Exams'],
+        summary='Get Exam Questions Grouped by Steps',
+        description='Retrieve exam questions grouped by step, each step with its own fields array',
+        parameters=[
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Teaching subject ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Exam questions grouped by steps"),
+            403: OpenApiResponse(description="User does not have access to this exam"),
+            404: OpenApiResponse(description="Teaching subject not found"),
+        }
+    )
+    def get(self, request, subject_id):
+        from exercise.models import CategoryField
+        from classroom.models import TeachingSubject
+        from .exercise_serializers import FieldRetrieveSerializer
+        from collections import OrderedDict
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی دسترسی
+        if request.user.role == 'teacher' and subject.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به این موضوع ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        elif request.user.role == 'user' and not subject.is_active:
+            return Response(
+                {'error': _('این موضوع دسترس پذیر نیست')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # دریافت تمام سؤالات آزمون مرتب شده بر اساس step و sort
+        exam_questions = CategoryField.objects.filter(
+            teachingsubject=subject
+        ).select_related('field').prefetch_related('field__details').order_by('step', 'sort')
+        
+        # گروه‌بندی بر اساس step
+        steps_dict = OrderedDict()
+        for eq in exam_questions:
+            step = eq.step
+            if step not in steps_dict:
+                steps_dict[step] = []
+            
+            field = eq.field
+            field_data = {
+                'id': eq.id,
+                'field_id': field.id,
+                'field_title': field.title,
+                'type': eq.type,
+                'sort': eq.sort,
+                'is_conditional': eq.is_conditional,
+                'guide': field.guide,
+                'des': field.des,
+                'image_path': field.image_path,
+                'audio_path': field.audio_path,
+                'video_path': field.video_path,
+                'details': [{
+                    'id': d.id,
+                    'title': d.title,
+                    'second_title': d.second_title,
+                    'image_path': d.image_path,
+                    'is_correct': d.is_correct,
+                    'sort': d.sort
+                } for d in field.details.all().order_by('sort')]
+            }
+            steps_dict[step].append(field_data)
+        
+        # تبدیل به فرمت خروجی
+        steps_list = [
+            {'step': step, 'fields': fields}
+            for step, fields in steps_dict.items()
+        ]
+        
+        return Response({
+            'data': {
+                'subject_id': subject.id,
+                'subject_title': subject.title,
+                'total_steps': len(steps_list),
+                'total_questions': exam_questions.count(),
+                'steps': steps_list
+            }
+        }, status=status.HTTP_200_OK)
+
+
 class SubmitExamAPIView(APIView):
     """
     Submit Exam Answers API
