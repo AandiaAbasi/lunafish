@@ -39,7 +39,7 @@ from .exercise_serializers import (
     OrderCreateSubmitSerializer, OrderRetrieveSerializer, OrderListSerializer,
     OrderDetailRetrieveSerializer
 )
-from .classroom_serializers import TeachingSubjectSerializer, TeacherStudentSerializer, StudentPaidClassSerializer, StudentExerciseTemplateSerializer, StudentProfileDetailSerializer
+from .classroom_serializers import TeachingSubjectSerializer, TeacherStudentSerializer, StudentPaidClassSerializer, StudentExerciseTemplateSerializer, StudentProfileDetailSerializer, TeacherDashboardSerializer
 from .parent_serializers import (
     ParentLoginSerializer, ParentProfileSerializer, ParentUpdateUsageTimeSerializer,
     ChildClassHistorySerializer, ChildPaymentHistorySerializer
@@ -9461,5 +9461,248 @@ class StudentProfileDetailAPIView(APIView):
         return Response({
             'success': True,
             'message': _('Student profile retrieved successfully'),
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class TeacherDashboardAPIView(APIView):
+    """
+    API to fetch teacher dashboard summary with key metrics and statistics
+    
+    Permission: Authenticated, Teacher only
+    
+    GET /api/teacher/dashboard/
+    
+    Returns comprehensive dashboard data including:
+    - Overall statistics (students, classes, revenue)
+    - Class breakdown (completed, pending, cancelled)
+    - Payment information
+    - Recent classes and activities
+    - Top performing students
+    - Teaching subjects summary
+    
+    Returns:
+        200 OK:
+            {
+                'success': true,
+                'message': 'Dashboard data retrieved successfully',
+                'data': {
+                    'total_students': 25,
+                    'total_classes': 120,
+                    'total_paid_classes': 115,
+                    'total_revenue': '5750000.00',
+                    'average_student_attendance': 87.5,
+                    'completed_classes': 110,
+                    'pending_classes': 5,
+                    'cancelled_classes': 5,
+                    'total_paid_amount': '5750000.00',
+                    'pending_payment': '125000.00',
+                    'average_class_price': '50000.00',
+                    'recent_classes': [...],
+                    'top_students': [...],
+                    'subjects': [...]
+                }
+            }
+        
+        403 Forbidden: User is not a teacher
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary='Fetch teacher dashboard',
+        description='Get comprehensive dashboard metrics and statistics for teacher',
+        responses={
+            200: inline_serializer(
+                name='TeacherDashboardResponse',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': serializers.DictField()
+                }
+            )
+        }
+    )
+    def get(self, request):
+        """Get teacher dashboard summary"""
+        teacher = request.user
+        
+        # Check if user is a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                'success': False,
+                'message': _('Only teachers can access this endpoint')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        from django.db.models import Max, Count, Q, Sum, Avg, F
+        from classroom.models import Attendance
+        
+        # ===== OVERALL STATISTICS =====
+        
+        # Count unique students with paid classes
+        total_students = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).values('student').distinct().count()
+        
+        # Count all classes
+        total_classes = ClassBooking.objects.filter(teacher=teacher).count()
+        total_paid_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).count()
+        
+        # Calculate total revenue (from paid classes)
+        revenue_data = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).aggregate(total=Sum('final_price'))
+        total_revenue = revenue_data['total'] or 0
+        
+        # Calculate average attendance across all paid classes
+        total_attended = Attendance.objects.filter(
+            booking__teacher=teacher,
+            booking__payment_status='paid',
+            status='present'
+        ).count()
+        
+        if total_paid_classes > 0:
+            average_attendance = (total_attended / total_paid_classes) * 100
+        else:
+            average_attendance = 0.0
+        
+        # ===== CLASS STATISTICS =====
+        
+        completed_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            status='completed'
+        ).count()
+        
+        pending_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            status__in=['reserved']
+        ).count()
+        
+        cancelled_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            status__in=['cancelled', 'no_show']
+        ).count()
+        
+        # ===== PAYMENT STATISTICS =====
+        
+        total_paid = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).aggregate(total=Sum('paid_amount'))['total'] or 0
+        
+        pending_payment = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status__in=['not_paid', 'partial']
+        ).aggregate(total=Sum('final_price'))['total'] or 0
+        
+        avg_price = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).aggregate(avg=Avg('final_price'))['avg'] or 0
+        
+        # ===== RECENT CLASSES =====
+        
+        recent_classes_list = ClassBooking.objects.filter(
+            teacher=teacher
+        ).select_related('student', 'subject', 'availability').order_by(
+            '-availability__date'
+        )[:5]
+        
+        recent_classes_data = []
+        for booking in recent_classes_list:
+            recent_classes_data.append({
+                'id': booking.id,
+                'student_name': booking.student.name or booking.student.username,
+                'subject_title': booking.subject.title,
+                'date': booking.availability.date,
+                'time': f"{booking.availability.start_time.strftime('%H:%M')} - {booking.availability.end_time.strftime('%H:%M')}",
+                'status': booking.get_status_display(),
+                'payment_status': booking.get_payment_status_display(),
+                'price': str(booking.final_price)
+            })
+        
+        # ===== TOP STUDENTS =====
+        
+        top_students_list = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).values('student').annotate(
+            class_count=Count('id'),
+            student_name=F('student__name'),
+            student_username=F('student__username'),
+            last_class=Max('availability__date')
+        ).order_by('-class_count')[:5]
+        
+        top_students_data = []
+        for student_stat in top_students_list:
+            # Calculate attendance for this student
+            student_attended = Attendance.objects.filter(
+                student_id=student_stat['student'],
+                booking__teacher=teacher,
+                booking__payment_status='paid',
+                status='present'
+            ).count()
+            
+            attendance_percent = (student_attended / student_stat['class_count'] * 100) if student_stat['class_count'] > 0 else 0
+            
+            top_students_data.append({
+                'student_id': student_stat['student'],
+                'name': student_stat['student_name'] or student_stat['student_username'],
+                'username': student_stat['student_username'],
+                'total_classes': student_stat['class_count'],
+                'attendance_percentage': round(attendance_percent, 2),
+                'last_class_date': student_stat['last_class']
+            })
+        
+        # ===== TEACHING SUBJECTS SUMMARY =====
+        
+        subjects_list = TeachingSubject.objects.filter(
+            teacher=teacher
+        ).annotate(
+            class_count=Count('bookings', filter=Q(bookings__payment_status='paid')),
+            total_revenue=Sum('bookings__final_price', filter=Q(bookings__payment_status='paid'))
+        ).values(
+            'id', 'title', 'level', 'class_count', 'total_revenue'
+        )[:10]
+        
+        subjects_data = []
+        for subject in subjects_list:
+            subjects_data.append({
+                'subject_id': subject['id'],
+                'title': subject['title'],
+                'level': subject['level'],
+                'class_count': subject['class_count'],
+                'total_revenue': str(subject['total_revenue'] or 0)
+            })
+        
+        # ===== BUILD RESPONSE =====
+        
+        dashboard_data = {
+            'total_students': total_students,
+            'total_classes': total_classes,
+            'total_paid_classes': total_paid_classes,
+            'total_revenue': str(total_revenue),
+            'average_student_attendance': round(average_attendance, 2),
+            'completed_classes': completed_classes,
+            'pending_classes': pending_classes,
+            'cancelled_classes': cancelled_classes,
+            'total_paid_amount': str(total_paid),
+            'pending_payment': str(pending_payment),
+            'average_class_price': str(avg_price),
+            'recent_classes': recent_classes_data,
+            'top_students': top_students_data,
+            'subjects': subjects_data
+        }
+        
+        from .classroom_serializers import TeacherDashboardSerializer
+        serializer = TeacherDashboardSerializer(dashboard_data)
+        
+        return Response({
+            'success': True,
+            'message': _('Dashboard data retrieved successfully'),
             'data': serializer.data
         }, status=status.HTTP_200_OK)

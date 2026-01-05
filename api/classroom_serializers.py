@@ -648,6 +648,37 @@ class StudentPaidClassSerializer(serializers.Serializer):
     updated_at = serializers.DateTimeField()
 
 
+class TeacherDashboardSerializer(serializers.Serializer):
+    """
+    Serializer for Teacher Dashboard Summary
+    
+    Returns comprehensive dashboard metrics and statistics for teacher app.
+    """
+    # Overall Statistics
+    total_students = serializers.IntegerField()
+    total_classes = serializers.IntegerField()
+    total_paid_classes = serializers.IntegerField()
+    total_revenue = serializers.DecimalField(max_digits=15, decimal_places=2)
+    average_student_attendance = serializers.FloatField()
+    
+    # Class Statistics
+    completed_classes = serializers.IntegerField()
+    pending_classes = serializers.IntegerField()
+    cancelled_classes = serializers.IntegerField()
+    
+    # Payment Statistics
+    total_paid_amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    pending_payment = serializers.DecimalField(max_digits=15, decimal_places=2)
+    average_class_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Recent Classes
+    recent_classes = serializers.ListField(child=serializers.DictField())
+    
+    # Top Students
+    top_students = serializers.ListField(child=serializers.DictField())
+    
+    # Teaching Subjects Summary
+    subjects = serializers.ListField(child=serializers.DictField())
 class StudentExerciseTemplateSerializer(serializers.Serializer):
     """
     Serializer for Student's Exercise Templates (CategoryField)
