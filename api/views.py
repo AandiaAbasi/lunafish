@@ -8949,6 +8949,10 @@ class TeacherStudentsListAPIView(APIView):
     Permission: Authenticated, Teacher only
     
     GET /api/teacher/students/
+    GET /api/teacher/students/?search=ali
+    
+    Query Parameters:
+        - search (optional): Search by student name or username
     
     Returns:
         200 OK:
@@ -8974,7 +8978,16 @@ class TeacherStudentsListAPIView(APIView):
     
     @extend_schema(
         summary='Fetch teacher\'s students',
-        description='Get all unique students who have paid classes with this teacher',
+        description='Get all unique students who have paid classes with this teacher. Supports search by name or username.',
+        parameters=[
+            OpenApiParameter(
+                name='search',
+                location=OpenApiParameter.QUERY,
+                description='Search by student name or username',
+                required=False,
+                type=OpenApiTypes.STR
+            )
+        ],
         responses={
             200: inline_serializer(
                 name='TeacherStudentsResponse',
@@ -9028,6 +9041,16 @@ class TeacherStudentsListAPIView(APIView):
                     'last_paid_class_date': student_stats['last_paid_class_date'],
                     'total_paid_classes': student_stats['total_paid_classes']
                 })
+        
+        # Apply search filter if provided
+        search_query = request.query_params.get('search', '').strip()
+        if search_query:
+            search_query_lower = search_query.lower()
+            result = [
+                student for student in result
+                if search_query_lower in student['name'].lower() or 
+                   search_query_lower in student['username'].lower()
+            ]
         
         # Sort by last_paid_class_date (newest first)
         result.sort(key=lambda x: x['last_paid_class_date'] or dt.date.min, reverse=True)
