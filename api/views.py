@@ -9011,7 +9011,8 @@ class TeacherStudentsListAPIView(APIView):
             }, status=status.HTTP_403_FORBIDDEN)
         
         # Get unique students with paid classes from this teacher
-        from django.db.models import Max, Count, Q
+        from django.db.models import Max, Count, Q, F
+        from classroom.models import Attendance
         
         students_data = ClassBooking.objects.filter(
             teacher=teacher,
@@ -9021,10 +9022,14 @@ class TeacherStudentsListAPIView(APIView):
             total_paid_classes=Count('id', filter=Q(payment_status='paid'))
         ).values('student', 'last_paid_class_date', 'total_paid_classes')
         
-        # Fetch student details
+        # Fetch student details and avatars
         student_ids = [s['student'] for s in students_data]
         students_dict = {s.id: s for s in User.objects.filter(id__in=student_ids)}
         students_map = {s['student']: s for s in students_data}
+        
+        # Fetch avatar information
+        from account.models import AvatarTemplate
+        avatar_dict = {a.id: a.image.url if a.image else None for a in AvatarTemplate.objects.all()}
         
         # Serialize data
         result = []
@@ -9033,11 +9038,36 @@ class TeacherStudentsListAPIView(APIView):
             student_stats = students_map.get(student_id)
             
             if student and student_stats:
+                # Calculate attendance percentage
+                total_classes = ClassBooking.objects.filter(
+                    teacher=teacher,
+                    student=student,
+                    payment_status='paid'
+                ).count()
+                
+                if total_classes > 0:
+                    attended_classes = Attendance.objects.filter(
+                        student=student,
+                        booking__teacher=teacher,
+                        booking__payment_status='paid',
+                        status='present'
+                    ).count()
+                    average_attendance = (attended_classes / total_classes) * 100
+                else:
+                    average_attendance = 0.0
+                
+                # Get avatar URL
+                avatar_url = None
+                if student.selected_avatar_id:
+                    avatar_url = avatar_dict.get(student.selected_avatar_id)
+                
                 result.append({
                     'student_id': student.id,
                     'name': student.name or student.username,
                     'username': student.username,
-                    'selected_avatar': student.selected_avatar_id,
+                    'selected_avatar': avatar_url,
+                    'total_classes': total_classes,
+                    'average_attendance_percentage': round(average_attendance, 2),
                     'last_paid_class_date': student_stats['last_paid_class_date'],
                     'total_paid_classes': student_stats['total_paid_classes']
                 })

@@ -587,14 +587,18 @@ class TeacherStudentSerializer(serializers.Serializer):
     - student_id: int - User ID
     - name: str - Student display name
     - username: str - Student username
-    - selected_avatar: str - Avatar ID or null
+    - selected_avatar: str - Avatar URL/path or null
+    - total_classes: int - Total number of paid classes
+    - average_attendance_percentage: float - Average attendance percentage (0-100)
     - last_paid_class_date: str - Date of last paid class (Jalali format)
     - total_paid_classes: int - Count of paid classes
     """
     student_id = serializers.IntegerField()
     name = serializers.CharField()
     username = serializers.CharField()
-    selected_avatar = serializers.IntegerField(allow_null=True)
+    selected_avatar = serializers.CharField(allow_null=True)
+    total_classes = serializers.IntegerField()
+    average_attendance_percentage = serializers.FloatField()
     last_paid_class_date = JalaliDateField()
     total_paid_classes = serializers.IntegerField()
 
