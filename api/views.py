@@ -5403,6 +5403,276 @@ class DeleteExamStepAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class StudentSubjectsWithExercisesAPIView(APIView):
+    """
+    Student: List Teaching Subjects with Exercises API
+    
+    Returns list of teaching subjects that have exercises (CategoryFields) assigned.
+    Only shows active subjects.
+    
+    get:
+        Get list of subjects with exercises for student.
+        
+        Returns:
+            200 OK:
+                - subjects: array
+                    - id: integer - Subject ID
+                    - title: string - Subject title
+                    - description: string
+                    - teacher_name: string
+                    - total_questions: integer - Number of questions
+                    - total_steps: integer - Number of steps
+                    - has_started: boolean - If student has started this exam
+                    - order_id: integer or null - Existing order ID if started
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Student'],
+        summary='List Subjects with Exercises',
+        description='Get list of teaching subjects that have exercises assigned',
+        responses={
+            200: OpenApiResponse(description="List of subjects with exercises"),
+        }
+    )
+    def get(self, request):
+        from exercise.models import CategoryField, Order
+        from classroom.models import TeachingSubject
+        from django.db.models import Count
+        
+        # دریافت موضوعات فعال که تمرین دارند
+        subjects_with_exercises = TeachingSubject.objects.filter(
+            is_active=True,
+            category_fields__isnull=False
+        ).annotate(
+            total_questions=Count('category_fields'),
+        ).distinct()
+        
+        subjects_data = []
+        for subject in subjects_with_exercises:
+            # بررسی اینکه آیا دانش‌آموز این آزمون را شروع کرده
+            order = Order.objects.filter(
+                user=request.user,
+                teachingsubject=subject
+            ).first()
+            
+            # تعداد step‌ها
+            steps_count = CategoryField.objects.filter(
+                teachingsubject=subject
+            ).values('step').distinct().count()
+            
+            subjects_data.append({
+                'id': subject.id,
+                'title': subject.title,
+                'description': subject.description,
+                'cover_image': subject.cover_image.url if subject.cover_image else None,
+                'teacher_id': subject.teacher_id,
+                'teacher_name': subject.teacher.name or subject.teacher.username,
+                'level': subject.level,
+                'total_questions': subject.total_questions,
+                'total_steps': steps_count,
+                'has_started': order is not None,
+                'order_id': order.id if order else None
+            })
+        
+        return Response({
+            'data': {
+                'subjects': subjects_data,
+                'total': len(subjects_data)
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class StudentExamByStepsAPIView(APIView):
+    """
+    Student: Get Exam Grouped by Steps with Answers API
+    
+    Similar to teacher's GetExamByStepsAPIView but includes student's answers.
+    Each field_detail includes the student's answer (value from OrderDetail).
+    
+    get:
+        Get exam questions grouped by step with student's answers.
+        
+        Path parameters:
+        - subject_id: integer - Teaching subject ID
+        
+        Returns:
+            200 OK:
+                - subject_id: integer
+                - subject_title: string
+                - order_id: integer or null - Existing order ID (null if not started)
+                - total_steps: integer
+                - total_questions: integer
+                - steps: array
+                    - step: integer
+                    - fields: array
+                        - id: integer - CategoryField ID
+                        - field_id: integer
+                        - field_title: string
+                        - type: string
+                        - sort: integer
+                        - student_answer: string or null - Answer from OrderDetail.value
+                        - field_details: array
+                            - id: integer
+                            - title: string
+                            - is_correct: integer
+                            - correct_answer: string
+                            - value: string or null - Student's answer for this option
+                
+            404 Not Found - Subject not found
+            403 Forbidden - Subject not active
+    
+    Example Response:
+    ```json
+    {
+        "data": {
+            "subject_id": 5,
+            "subject_title": "English Beginner",
+            "order_id": 10,
+            "total_steps": 2,
+            "total_questions": 5,
+            "steps": [
+                {
+                    "step": 0,
+                    "fields": [
+                        {
+                            "id": 1,
+                            "field_id": 10,
+                            "field_title": "What is 2+2?",
+                            "type": "radioButton",
+                            "sort": 0,
+                            "student_answer": null,
+                            "field_details": [
+                                {"id": 1, "title": "3", "value": null},
+                                {"id": 2, "title": "4", "value": "1"}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Student'],
+        summary='Get Exam Questions with Student Answers',
+        description='Get exam questions grouped by step with student\'s answers from OrderDetail',
+        parameters=[
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Teaching subject ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Exam questions with student answers"),
+            403: OpenApiResponse(description="Subject not active"),
+            404: OpenApiResponse(description="Subject not found"),
+        }
+    )
+    def get(self, request, subject_id):
+        from exercise.models import CategoryField, Order, OrderDetail
+        from classroom.models import TeachingSubject
+        from collections import OrderedDict
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی فعال بودن موضوع
+        if not subject.is_active:
+            return Response(
+                {'error': _('این موضوع فعال نیست')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # دریافت Order موجود برای این دانش‌آموز (اگر وجود دارد)
+        order = Order.objects.filter(
+            user=request.user,
+            teachingsubject=subject
+        ).first()
+        
+        # دریافت پاسخ‌های دانش‌آموز (اگر Order وجود دارد)
+        student_answers = {}
+        if order:
+            order_details = OrderDetail.objects.filter(order=order).select_related('field', 'field_detail')
+            for od in order_details:
+                # کلید: field_id
+                if od.field_id not in student_answers:
+                    student_answers[od.field_id] = {
+                        'main_value': None,
+                        'details': {}
+                    }
+                
+                # اگر field_detail دارد، پاسخ برای آن گزینه است
+                if od.field_detail_id:
+                    student_answers[od.field_id]['details'][od.field_detail_id] = od.value
+                else:
+                    # پاسخ متنی (input)
+                    student_answers[od.field_id]['main_value'] = od.value
+        
+        # دریافت تمام سؤالات آزمون
+        exam_questions = CategoryField.objects.filter(
+            teachingsubject=subject
+        ).select_related('field').prefetch_related('field__details').order_by('step', 'sort')
+        
+        # گروه‌بندی بر اساس step
+        steps_dict = OrderedDict()
+        for eq in exam_questions:
+            step = eq.step
+            if step not in steps_dict:
+                steps_dict[step] = []
+            
+            field = eq.field
+            field_answers = student_answers.get(field.id, {'main_value': None, 'details': {}})
+            
+            field_data = {
+                'id': eq.id,
+                'field_id': field.id,
+                'field_title': field.title,
+                'type': eq.type,
+                'sort': eq.sort,
+                'is_conditional': eq.is_conditional,
+                'guide': field.guide,
+                'des': field.des,
+                'image_path': field.image_path,
+                'audio_path': field.audio_path,
+                'video_path': field.video_path,
+                'student_answer': field_answers['main_value'],  # پاسخ متنی (برای input)
+                'field_details': [{
+                    'id': d.id,
+                    'title': d.title,
+                    'second_title': d.second_title,
+                    'image_path': d.image_path,
+                    'is_correct': d.is_correct,
+                    'correct_answer': d.correct_answer,
+                    'sort': d.sort,
+                    'value': field_answers['details'].get(d.id, None)  # پاسخ دانش‌آموز برای این گزینه
+                } for d in field.details.all().order_by('sort')]
+            }
+            steps_dict[step].append(field_data)
+        
+        # تبدیل به فرمت خروجی
+        steps_list = [
+            {'step': step, 'fields': fields}
+            for step, fields in steps_dict.items()
+        ]
+        
+        return Response({
+            'data': {
+                'subject_id': subject.id,
+                'subject_title': subject.title,
+                'order_id': order.id if order else None,
+                'total_steps': len(steps_list),
+                'total_questions': exam_questions.count(),
+                'steps': steps_list
+            }
+        }, status=status.HTTP_200_OK)
+
+
 class SubmitExamAPIView(APIView):
     """
     Submit Exam Answers API
