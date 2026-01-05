@@ -9631,7 +9631,7 @@ class TeacherDashboardAPIView(APIView):
             received_medals__teacher=teacher
         ).annotate(
             medal_count=Count('received_medals', distinct=True),
-            class_count=Count('bookings', filter=Q(bookings__teacher=teacher, bookings__payment_status='paid'), distinct=True)
+            class_count=Count('booked_classes', filter=Q(booked_classes__teacher=teacher, booked_classes__payment_status='paid'), distinct=True)
         ).order_by('-medal_count')[:5]
         
         top_students_data = []
