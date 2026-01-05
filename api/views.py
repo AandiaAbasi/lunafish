@@ -30,9 +30,9 @@ import jdatetime
 import datetime as dt
 from account.serializers import *
 from account.services import *
-from account.models import OTP, VerificationToken, ParentProfile
+from account.models import OTP, VerificationToken, ParentProfile, User
 from classroom.models import ClassBooking, StudentTransaction, TeacherAvailability, TeachingSubject, Attendance
-from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail
+from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail, StudentMedal
 from .exercise_serializers import (
     FieldRetrieveSerializer, FieldListSerializer,
     CategoryFieldCreateSerializer, CategoryFieldRetrieveSerializer,
@@ -9625,37 +9625,34 @@ class TeacherDashboardAPIView(APIView):
                 'price': str(booking.final_price)
             })
         
-        # ===== TOP STUDENTS =====
+        # ===== TOP STUDENTS (Ranked by Medals) =====
         
-        top_students_list = ClassBooking.objects.filter(
-            teacher=teacher,
-            payment_status='paid'
-        ).values('student').annotate(
-            class_count=Count('id'),
-            student_name=F('student__name'),
-            student_username=F('student__username'),
-            last_class=Max('availability__date')
-        ).order_by('-class_count')[:5]
+        top_students_list = User.objects.filter(
+            received_medals__teacher=teacher
+        ).annotate(
+            medal_count=Count('received_medals', distinct=True),
+            class_count=Count('bookings', filter=Q(bookings__teacher=teacher, bookings__payment_status='paid'), distinct=True)
+        ).order_by('-medal_count')[:5]
         
         top_students_data = []
-        for student_stat in top_students_list:
+        for student in top_students_list:
             # Calculate attendance for this student
             student_attended = Attendance.objects.filter(
-                student_id=student_stat['student'],
+                student=student,
                 booking__teacher=teacher,
                 booking__payment_status='paid',
                 status='present'
             ).count()
             
-            attendance_percent = (student_attended / student_stat['class_count'] * 100) if student_stat['class_count'] > 0 else 0
+            attendance_percent = (student_attended / student.class_count * 100) if student.class_count > 0 else 0
             
             top_students_data.append({
-                'student_id': student_stat['student'],
-                'name': student_stat['student_name'] or student_stat['student_username'],
-                'username': student_stat['student_username'],
-                'total_classes': student_stat['class_count'],
-                'attendance_percentage': round(attendance_percent, 2),
-                'last_class_date': student_stat['last_class']
+                'student_id': student.id,
+                'name': student.name or student.username,
+                'username': student.username,
+                'total_medals': student.medal_count,
+                'total_classes': student.class_count,
+                'attendance_percentage': round(attendance_percent, 2)
             })
         
         # ===== TEACHING SUBJECTS SUMMARY =====
