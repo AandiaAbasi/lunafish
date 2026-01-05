@@ -39,7 +39,7 @@ from .exercise_serializers import (
     OrderCreateSubmitSerializer, OrderRetrieveSerializer, OrderListSerializer,
     OrderDetailRetrieveSerializer
 )
-from .classroom_serializers import TeachingSubjectSerializer, TeacherStudentSerializer, StudentPaidClassSerializer, StudentExerciseTemplateSerializer
+from .classroom_serializers import TeachingSubjectSerializer, TeacherStudentSerializer, StudentPaidClassSerializer, StudentExerciseTemplateSerializer, StudentProfileDetailSerializer
 from .parent_serializers import (
     ParentLoginSerializer, ParentProfileSerializer, ParentUpdateUsageTimeSerializer,
     ChildClassHistorySerializer, ChildPaymentHistorySerializer
@@ -9299,5 +9299,167 @@ class StudentExercisesListAPIView(APIView):
         return Response({
             'success': True,
             'message': _('Exercises retrieved successfully'),
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+class StudentProfileDetailAPIView(APIView):
+    """
+    API to fetch a student's profile details (teacher's view)
+    
+    Permission: Authenticated, Teacher only (can only see their own students)
+    
+    GET /api/teacher/student/<student_id>/profile/
+    
+    Returns comprehensive student profile information including:
+    - Basic info (name, username, email, phone)
+    - Profile info (bio, gender, birth_date, avatar, profile photo)
+    - Class statistics (total classes, attendance %, last class date)
+    
+    Returns:
+        200 OK:
+            {
+                'success': true,
+                'message': 'Student profile retrieved successfully',
+                'data': {
+                    'student_id': 5,
+                    'name': 'علی محمدی',
+                    'username': 'ali_mohammad',
+                    'email': 'ali@example.com',
+                    'phone': '09123456789',
+                    'bio': 'I love learning English',
+                    'gender': 'male',
+                    'birth_date': '1408/05/15',
+                    'selected_avatar': 'https://example.com/media/avatars/avatar_2.png',
+                    'profile_photo_path': 'https://example.com/media/profiles/student_5.jpg',
+                    'total_classes': 8,
+                    'average_attendance_percentage': 87.5,
+                    'last_class_date': '1403/10/20',
+                    'created_at': '2023-12-10T14:30:00Z'
+                }
+            }
+        
+        403 Forbidden: User is not a teacher
+        404 Not Found: Student not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary='Fetch student profile details',
+        description='Get comprehensive student profile information visible to their teacher',
+        parameters=[
+            OpenApiParameter(
+                name='student_id',
+                location=OpenApiParameter.PATH,
+                description='ID of the student',
+                required=True,
+                type=OpenApiTypes.INT
+            )
+        ],
+        responses={
+            200: inline_serializer(
+                name='StudentProfileDetailResponse',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': serializers.DictField()
+                }
+            )
+        }
+    )
+    def get(self, request, student_id):
+        """Get student profile details"""
+        teacher = request.user
+        
+        # Check if user is a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                'success': False,
+                'message': _('Only teachers can access this endpoint')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Verify student exists
+        student = get_object_or_404(User, id=student_id)
+        
+        # Verify this student has at least one paid class with this teacher
+        has_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            student=student,
+            payment_status='paid'
+        ).exists()
+        
+        if not has_classes:
+            return Response({
+                'success': False,
+                'message': _('Student not found or has no paid classes with this teacher')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Calculate attendance percentage
+        from classroom.models import Attendance
+        
+        total_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            student=student,
+            payment_status='paid'
+        ).count()
+        
+        if total_classes > 0:
+            attended_classes = Attendance.objects.filter(
+                student=student,
+                booking__teacher=teacher,
+                booking__payment_status='paid',
+                status='present'
+            ).count()
+            average_attendance = (attended_classes / total_classes) * 100
+        else:
+            average_attendance = 0.0
+        
+        # Get last class date
+        from django.db.models import Max
+        last_class = ClassBooking.objects.filter(
+            teacher=teacher,
+            student=student,
+            payment_status='paid'
+        ).aggregate(last_date=Max('availability__date'))
+        last_class_date = last_class['last_date']
+        
+        # Get avatar URL
+        from account.models import AvatarTemplate
+        avatar_url = None
+        if student.selected_avatar_id:
+            try:
+                avatar = AvatarTemplate.objects.get(id=student.selected_avatar_id)
+                avatar_url = avatar.image.url if avatar.image else None
+            except AvatarTemplate.DoesNotExist:
+                avatar_url = None
+        
+        # Get profile photo URL
+        profile_photo_url = None
+        if student.profile_photo_path:
+            profile_photo_url = student.profile_photo_path.url if student.profile_photo_path else None
+        
+        # Build response data
+        profile_data = {
+            'student_id': student.id,
+            'name': student.name or student.username,
+            'username': student.username,
+            'email': student.email,
+            'phone': student.phone,
+            'bio': student.bio,
+            'gender': student.gender,
+            'birth_date': student.birth_date,
+            'selected_avatar': avatar_url,
+            'profile_photo_path': profile_photo_url,
+            'total_classes': total_classes,
+            'average_attendance_percentage': round(average_attendance, 2),
+            'last_class_date': last_class_date,
+            'created_at': student.created_at
+        }
+        
+        from .classroom_serializers import StudentProfileDetailSerializer
+        serializer = StudentProfileDetailSerializer(profile_data)
+        
+        return Response({
+            'success': True,
+            'message': _('Student profile retrieved successfully'),
             'data': serializer.data
         }, status=status.HTTP_200_OK)

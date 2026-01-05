@@ -673,3 +673,41 @@ class StudentExerciseTemplateSerializer(serializers.Serializer):
     sort = serializers.IntegerField()
     type = serializers.CharField()
     is_conditional = serializers.BooleanField()
+
+
+class StudentProfileDetailSerializer(serializers.Serializer):
+    """
+    Serializer for Student Profile Details (Teacher View)
+    
+    Returns comprehensive student profile information visible to their teacher.
+    
+    Fields:
+    - student_id: int - User ID
+    - name: str - Student display name
+    - username: str - Student username
+    - email: str - Email address (if available)
+    - phone: str - Phone number (if available)
+    - bio: str - Student bio/biography
+    - gender: str - Gender (male/female/custom/prefer_not_to_say)
+    - birth_date: str - Birth date in Jalali format
+    - selected_avatar: str - Avatar image URL (if selected)
+    - profile_photo_path: str - Profile photo URL (if available)
+    - total_classes: int - Total paid classes with this teacher
+    - average_attendance_percentage: float - Average attendance percentage (0-100)
+    - last_class_date: str - Date of most recent paid class (Jalali format)
+    - created_at: str - Account creation timestamp
+    """
+    student_id = serializers.IntegerField()
+    name = serializers.CharField()
+    username = serializers.CharField()
+    email = serializers.CharField(allow_null=True)
+    phone = serializers.CharField(allow_null=True)
+    bio = serializers.CharField(allow_null=True)
+    gender = serializers.CharField(allow_null=True)
+    birth_date = serializers.CharField(allow_null=True)
+    selected_avatar = serializers.CharField(allow_null=True)
+    profile_photo_path = serializers.CharField(allow_null=True)
+    total_classes = serializers.IntegerField()
+    average_attendance_percentage = serializers.FloatField()
+    last_class_date = JalaliDateField(allow_null=True)
+    created_at = serializers.DateTimeField()
