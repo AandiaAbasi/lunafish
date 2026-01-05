@@ -5641,7 +5641,7 @@ class StudentExamByStepsAPIView(APIView):
                 'image_path': field.image_path,
                 'audio_path': field.audio_path,
                 'video_path': field.video_path,
-                'student_answer': field_answers['main_value'],  # پاسخ متنی (برای input)
+                'value': field_answers['main_value'],  # پاسخ متنی (برای input)
                 'field_details': [{
                     'id': d.id,
                     'title': d.title,
