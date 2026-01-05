@@ -252,6 +252,36 @@ class TeacherWalletSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'balance', 'total_earned', 'total_withdrawn', 'created_at', 'updated_at']
 
 
+class BankInformationUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating bank information in TeacherWallet"""
+    
+    class Meta:
+        model = TeacherWallet
+        fields = ['bank_name', 'account_number', 'iban', 'card_number', 'account_holder_name']
+    
+    def validate_iban(self, value):
+        """Validate IBAN format (IR + 24 digits)"""
+        if value:
+            value = value.strip().upper()
+            if not value.startswith('IR'):
+                raise serializers.ValidationError(_("شماره شبا باید با IR شروع شود"))
+            if len(value) != 26:
+                raise serializers.ValidationError(_("شماره شبا باید 26 کاراکتر باشد (IR + 24 رقم)"))
+            if not value[2:].isdigit():
+                raise serializers.ValidationError(_("شماره شبا باید فقط شامل اعداد باشد (بعد از IR)"))
+        return value
+    
+    def validate_card_number(self, value):
+        """Validate card number (16 digits)"""
+        if value:
+            value = value.strip().replace(' ', '').replace('-', '')
+            if not value.isdigit():
+                raise serializers.ValidationError(_("شماره کارت باید فقط شامل اعداد باشد"))
+            if len(value) != 16:
+                raise serializers.ValidationError(_("شماره کارت باید 16 رقم باشد"))
+        return value
+
+
 class ClassRevenueSerializer(serializers.ModelSerializer):
     """Serializer for ClassRevenue"""
     teacher_name = serializers.CharField(source='teacher.name', read_only=True)

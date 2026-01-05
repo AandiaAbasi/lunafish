@@ -7048,6 +7048,182 @@ class TeacherWalletDetailAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class UpdateBankInformationAPIView(APIView):
+    """
+    Update Teacher Bank Information API
+    
+    Teachers can update their bank account information for withdrawal settlements.
+    Only the authenticated teacher can update their own bank information.
+    Requires authentication (teacher only).
+    
+    put/patch:
+        Update bank information fields.
+        
+        Request body parameters:
+        - bank_name: string (optional) - Name of the bank
+        - account_number: string (optional) - Bank account number
+        - iban: string (optional) - IBAN (format: IR + 24 digits)
+        - card_number: string (optional) - Bank card number (16 digits)
+        - account_holder_name: string (optional) - Name of the account holder
+        
+        Returns:
+            200 OK:
+                - success: boolean - true
+                - message: string - "اطلاعات بانکی با موفقیت به‌روزرسانی شد"
+                - wallet: object - Updated wallet information
+                    - id: integer
+                    - bank_name: string
+                    - account_number: string
+                    - iban: string
+                    - card_number: string
+                    - account_holder_name: string
+                    - is_verified: boolean
+                
+            400 Bad Request:
+                - Invalid IBAN format
+                - Invalid card number format
+                - Validation errors
+                
+            403 Forbidden - User is not a teacher
+            404 Not Found - Wallet not found
+    
+    Example PUT Request:
+    ```
+    PUT /api/wallet/update-bank-info/
+    Authorization: Bearer <teacher_token>
+    Content-Type: application/json
+    
+    {
+        "bank_name": "بانک ملی",
+        "account_number": "1234567890",
+        "iban": "IR123456789012345678901234",
+        "card_number": "6037691234567890",
+        "account_holder_name": "علی محمدی"
+    }
+    ```
+    
+    Example Response:
+    ```json
+    {
+        "success": true,
+        "message": "اطلاعات بانکی با موفقیت به‌روزرسانی شد",
+        "wallet": {
+            "id": 1,
+            "bank_name": "بانک ملی",
+            "account_number": "1234567890",
+            "iban": "IR123456789012345678901234",
+            "card_number": "6037691234567890",
+            "account_holder_name": "علی محمدی",
+            "is_verified": false
+        }
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Financial - Wallet'],
+        summary='Update Teacher Bank Information',
+        description='Update bank account information for withdrawal settlements',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'bank_name': {'type': 'string', 'description': 'Name of the bank'},
+                    'account_number': {'type': 'string', 'description': 'Bank account number'},
+                    'iban': {'type': 'string', 'description': 'IBAN (IR + 24 digits)'},
+                    'card_number': {'type': 'string', 'description': 'Bank card number (16 digits)'},
+                    'account_holder_name': {'type': 'string', 'description': 'Name of the account holder'},
+                },
+            }
+        },
+        responses={
+            200: OpenApiResponse(description="Bank information updated successfully"),
+            400: OpenApiResponse(description="Validation error"),
+            403: OpenApiResponse(description="User is not a teacher"),
+            404: OpenApiResponse(description="Wallet not found"),
+        }
+    )
+    def put(self, request):
+        return self._update_bank_info(request)
+    
+    @extend_schema(
+        tags=['Financial - Wallet'],
+        summary='Update Teacher Bank Information (Partial)',
+        description='Partially update bank account information',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'bank_name': {'type': 'string', 'description': 'Name of the bank'},
+                    'account_number': {'type': 'string', 'description': 'Bank account number'},
+                    'iban': {'type': 'string', 'description': 'IBAN (IR + 24 digits)'},
+                    'card_number': {'type': 'string', 'description': 'Bank card number (16 digits)'},
+                    'account_holder_name': {'type': 'string', 'description': 'Name of the account holder'},
+                },
+            }
+        },
+        responses={
+            200: OpenApiResponse(description="Bank information updated successfully"),
+            400: OpenApiResponse(description="Validation error"),
+            403: OpenApiResponse(description="User is not a teacher"),
+            404: OpenApiResponse(description="Wallet not found"),
+        }
+    )
+    def patch(self, request):
+        return self._update_bank_info(request, partial=True)
+    
+    def _update_bank_info(self, request, partial=False):
+        """Internal method to handle both PUT and PATCH"""
+        from classroom.models import TeacherWallet
+        from .classroom_serializers import BankInformationUpdateSerializer
+        
+        # فقط معلمان
+        if request.user.role != 'teacher':
+            return Response({
+                'error': _('فقط معلمان می‌توانند اطلاعات بانکی خود را ویرایش کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            wallet = TeacherWallet.objects.get(teacher=request.user)
+        except TeacherWallet.DoesNotExist:
+            return Response({
+                'error': _('کیف پول یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = BankInformationUpdateSerializer(
+            wallet, 
+            data=request.data, 
+            partial=partial
+        )
+        
+        if serializer.is_valid():
+            serializer.save()
+            
+            # اگر اطلاعات بانکی به‌روز شد، is_verified را false کنید
+            # تا ادمین دوباره تأیید کند
+            if wallet.is_verified:
+                wallet.is_verified = False
+                wallet.verified_at = None
+                wallet.save()
+            
+            return Response({
+                'success': True,
+                'message': _('اطلاعات بانکی با موفقیت به‌روزرسانی شد'),
+                'wallet': {
+                    'id': wallet.id,
+                    'bank_name': wallet.bank_name,
+                    'account_number': wallet.account_number,
+                    'iban': wallet.iban,
+                    'card_number': wallet.card_number,
+                    'account_holder_name': wallet.account_holder_name,
+                    'is_verified': wallet.is_verified,
+                }
+            }, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class WithdrawalRequestListAPIView(APIView):
     """
     Get Withdrawal Requests List API

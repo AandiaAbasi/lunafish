@@ -114,6 +114,7 @@ urlpatterns = [
     # ========== Financial System APIs ==========
     # Wallet endpoints
     path('wallet/', views.TeacherWalletDetailAPIView.as_view(), name='teacher_wallet'),
+    path('wallet/update-bank-info/', views.UpdateBankInformationAPIView.as_view(), name='update_bank_info'),
     
     # Withdrawal request endpoints
     path('withdrawal-requests/', views.WithdrawalRequestListAPIView.as_view(), name='withdrawal_requests_list'),
