@@ -5872,7 +5872,7 @@ class StudentSaveAnswerAPIView(APIView):
                     # برای checkbox و سایر: هر گزینه می‌تواند پاسخ جداگانه داشته باشد
                     if field_type == 'checkbox' and value in ['0', '', None]:
                         # اگر checkbox برداشته شد، سطر مربوطه حذف شود
-                        deleted_count, _ = OrderDetail.objects.filter(
+                        deleted_count, deleted_info = OrderDetail.objects.filter(
                             order=order,
                             field=field,
                             field_detail=field_detail
