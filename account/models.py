@@ -665,7 +665,6 @@ class ParentAppUsageLog(BaseModel):
 
 
 # ========== Teacher Rating System ==========
-
 class TeacherRating(BaseModel):
     """
     امتیاز و ستاره‌ای که دانش‌آموز یا والدین به معلم می‌دهند
@@ -747,3 +746,4 @@ class TeacherRating(BaseModel):
     def __str__(self):
         rater_name = self.rater.name or self.rater.username if not self.is_anonymous else "Anonymous"
         return f"{rater_name} rated {self.teacher.name or self.teacher.username}: {self.stars}⭐"
+

@@ -655,3 +655,397 @@ class SupportMessage(BaseModel):
             self.save()
             return True
         return False
+
+
+# ===== Package & Installment Models =====
+class Package(BaseModel):
+    """
+    پکیج آموزشی
+    معلم می‌تواند پکیج‌های آموزشی تعریف کند که شامل تعداد مشخصی جلسه است
+    و می‌تواند قسط‌بندی اختیاری برای آن تعریف کند
+    """
+    teacher = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'teacher'},
+        related_name='packages',
+        verbose_name=_("معلم"),
+        help_text=_("معلمی که این پکیج را تعریف کرده")
+    )
+    title = models.CharField(
+        max_length=200,
+        verbose_name=_("نام پکیج"),
+        help_text=_("نام پکیج آموزشی (مثال: انگلیسی مبتدی - ۳۰ جلسه)")
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name=_("توضیح پکیج"),
+        help_text=_("توضیح تفصیلی درباره محتوای پکیج")
+    )
+    cover_image = models.ImageField(
+        upload_to=upload_to_dynamic,
+        null=True,
+        blank=True,
+        verbose_name=_("تصویر پکیج"),
+        help_text=_("تصویر کاور برای نمایش در فروشگاه")
+    )
+    subjects = models.ManyToManyField(
+        TeachingSubject,
+        related_name='packages',
+        verbose_name=_("موضوعات"),
+        help_text=_("یک یا چند موضوع تدریس که این پکیج شامل آن است")
+    )
+    total_sessions = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+        verbose_name=_("تعداد کل جلسات"),
+        help_text=_("کل تعداد جلسات در این پکیج")
+    )
+    total_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        verbose_name=_("قیمت کل پکیج"),
+        help_text=_("قیمت کل پکیج (جمع همه اقساط)")
+    )
+    has_installment = models.BooleanField(
+        default=False,
+        verbose_name=_("قسط‌بندی تعریف‌شده"),
+        help_text=_("آیا معلم قسط‌بندی برای این پکیج تعریف کرده؟")
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_("فعال"),
+        help_text=_("آیا این پکیج برای فروش فعال است؟")
+    )
+    
+    class Meta:
+        verbose_name = _("پکیج آموزشی")
+        verbose_name_plural = _("پکیج‌های آموزشی")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['teacher', 'is_active']),
+            models.Index(fields=['is_active', '-created_at']),
+            models.Index(fields=['teacher', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} ({self.total_sessions} جلسه) - {self.teacher.name}"
+    
+    def get_installments(self):
+        """دریافت اقساط مرتب‌شده این پکیج"""
+        return self.installments.all().order_by('installment_number')
+    
+    def get_installment_count(self):
+        """تعداد اقساط تعریف‌شده"""
+        return self.installments.count()
+
+
+class PackageInstallment(BaseModel):
+    """
+    قسط‌بندی پکیج آموزشی
+    هر قسط شامل:
+    - مبلغ قسط
+    - شماره جلسه ای که این قسط تا قبل از آن باید پرداخت شود
+    
+    مثال:
+    - قسط 1: ۲۰۰,۰۰۰ تومان (قبل از جلسه ۱)
+    - قسط 2: ۱۸۰,۰۰۰ تومان (قبل از جلسه ۱۰)
+    - قسط 3: ۱۲۰,۰۰۰ تومان (قبل از جلسه ۲۰)
+    """
+    package = models.ForeignKey(
+        Package,
+        on_delete=models.CASCADE,
+        related_name='installments',
+        verbose_name=_("پکیج"),
+        help_text=_("پکیجی که این قسط متعلق به آن است")
+    )
+    installment_number = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+        verbose_name=_("شماره قسط"),
+        help_text=_("ترتیب قسط (1، 2، 3، ...)")
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        verbose_name=_("مبلغ قسط"),
+        help_text=_("مبلغ این قسط به تومان")
+    )
+    session_number = models.PositiveIntegerField(
+        verbose_name=_("شماره جلسه"),
+        help_text=_("قسط باید قبل از شروع این جلسه پرداخت شود")
+    )
+    description = models.TextField(
+        blank=True,
+        verbose_name=_("توضیح"),
+        help_text=_("توضیح اضافی درباره این قسط")
+    )
+    
+    class Meta:
+        verbose_name = _("قسط پکیج")
+        verbose_name_plural = _("اقساط پکیج")
+        # ترکیب unique: هر پکیج نمی‌تواند بیش از یک قسط برای یک شماره داشته باشد
+        unique_together = [
+            ('package', 'installment_number'),
+            ('package', 'session_number'),
+        ]
+        ordering = ['package', 'installment_number']
+        indexes = [
+            models.Index(fields=['package', 'installment_number']),
+            models.Index(fields=['package', 'session_number']),
+        ]
+    
+    def __str__(self):
+        return f"{self.package.title} - قسط {self.installment_number}: {self.amount:,} T (جلسه {self.session_number})"
+    
+    def clean(self):
+        """تصدیق صحت داده‌های قسط"""
+        from django.core.exceptions import ValidationError
+        
+        if self.session_number > self.package.total_sessions:
+            raise ValidationError(
+                _("شماره جلسه نمی‌تواند بیشتر از تعداد کل جلسات (%(total)d) باشد"),
+                code='session_number_too_high',
+                params={'total': self.package.total_sessions},
+            )
+        
+        if self.session_number < 1:
+            raise ValidationError(
+                _("شماره جلسه باید حداقل ۱ باشد"),
+                code='session_number_too_low',
+            )
+
+
+class StudentPackageEnrollment(BaseModel):
+    """
+    ثبت‌نام دانش‌آموز به پکیج آموزشی
+    هر دانش‌آموز می‌تواند برای یک پکیج ثبت‌نام کند و می‌بایست اقساط آن را بپردازد
+    """
+    STATUS_CHOICES = [
+        ('active', _("فعال")),
+        ('completed', _("تکمیل‌شده")),
+        ('cancelled', _("لغو‌شده")),
+        ('suspended', _("تعلیق‌شده")),
+    ]
+    
+    student = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'user'},
+        related_name='package_enrollments',
+        verbose_name=_("دانش‌آموز"),
+        help_text=_("دانش‌آموزی که برای پکیج ثبت‌نام کرد")
+    )
+    package = models.ForeignKey(
+        Package,
+        on_delete=models.PROTECT,
+        related_name='enrollments',
+        verbose_name=_("پکیج"),
+        help_text=_("پکیج آموزشی")
+    )
+    enrollment_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("تاریخ ثبت‌نام"),
+        help_text=_("تاریخ و زمان ثبت‌نام دانش‌آموز")
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='active',
+        verbose_name=_("وضعیت"),
+        help_text=_("وضعیت فعلی ثبت‌نام")
+    )
+    completed_sessions_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("تعداد جلسات تکمیل‌شده"),
+        help_text=_("تعداد جلسات‌ای که دانش‌آموز حضور داشته است")
+    )
+    notes = models.TextField(
+        blank=True,
+        verbose_name=_("یادداشت‌ها"),
+        help_text=_("یادداشت‌های اضافی درباره ثبت‌نام")
+    )
+    
+    class Meta:
+        verbose_name = _("ثبت‌نام دانش‌آموز به پکیج")
+        verbose_name_plural = _("ثبت‌نام‌های دانش‌آموزان به پکیج‌ها")
+        unique_together = [('student', 'package')]
+        ordering = ['-enrollment_date']
+        indexes = [
+            models.Index(fields=['student', 'status']),
+            models.Index(fields=['package', 'status']),
+            models.Index(fields=['status', '-enrollment_date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.student.name} - {self.package.title} ({self.get_status_display()})"
+    
+    def get_paid_installments(self):
+        """دریافت اقساط پرداخت‌شده"""
+        return self.installment_payments.filter(payment_status='paid')
+    
+    def get_pending_installments(self):
+        """دریافت اقساط در انتظار پرداخت"""
+        return self.installment_payments.filter(payment_status__in=['pending', 'partial'])
+    
+    def can_attend_session(self, session_number):
+        """
+        بررسی آیا دانش‌آموز می‌تواند در این جلسه شرکت کند
+        شرط: تمام اقساط قبل از این جلسه باید پرداخت شده باشند
+        """
+        if self.status != 'active':
+            return False
+        
+        # پیدا کردن آخرین قسطی که باید قبل از این جلسه پرداخت شده باشد
+        installment = self.package.installments.filter(
+            session_number__lte=session_number
+        ).last()
+        
+        if not installment:
+            return True  # هیچ قسطی برای این جلسه یا قبل از آن تعریف نشده
+        
+        # بررسی پرداخت این قسط
+        payment = self.installment_payments.filter(
+            installment=installment
+        ).first()
+        
+        return payment and payment.payment_status == 'paid'
+    
+    def get_next_due_installment(self):
+        """دریافت اولین قسط پرداخت‌نشده"""
+        return self.installment_payments.filter(
+            payment_status__in=['pending', 'partial']
+        ).order_by('installment__installment_number').first()
+
+
+class StudentPackagePayment(BaseModel):
+    """
+    پرداخت اقساط پکیج توسط دانش‌آموز
+    هر دانش‌آموز برای هر قسط از هر پکیج باید یک رکورد پرداخت داشته باشد
+    """
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', _("در انتظار پرداخت")),
+        ('partial', _("جزئی")),
+        ('paid', _("پرداخت‌شده")),
+        ('failed', _("ناموفق")),
+        ('refunded', _("بازگشت‌شده")),
+    ]
+    
+    enrollment = models.ForeignKey(
+        StudentPackageEnrollment,
+        on_delete=models.CASCADE,
+        related_name='installment_payments',
+        verbose_name=_("ثبت‌نام"),
+        help_text=_("ثبت‌نام دانش‌آموز به پکیج")
+    )
+    installment = models.ForeignKey(
+        PackageInstallment,
+        on_delete=models.PROTECT,
+        related_name='payments',
+        verbose_name=_("قسط"),
+        help_text=_("قسطی که پرداخت برای آن است")
+    )
+    amount_due = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name=_("مبلغ مقرر"),
+        help_text=_("مبلغ مقرر برای این قسط")
+    )
+    amount_paid = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("مبلغ پرداختی"),
+        help_text=_("مبلغ پرداخت‌شده (ممکن است جزئی باشد)")
+    )
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PAYMENT_STATUS_CHOICES,
+        default='pending',
+        verbose_name=_("وضعیت پرداخت"),
+        help_text=_("وضعیت فعلی پرداخت")
+    )
+    payment_ref = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name=_("شناسه تراکنش"),
+        help_text=_("شناسه تراکنش درگاه پرداخت")
+    )
+    first_payment_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("تاریخ اولین پرداخت"),
+        help_text=_("تاریخ اولین پرداخت برای این قسط")
+    )
+    last_payment_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("تاریخ آخرین پرداخت"),
+        help_text=_("تاریخ آخرین پرداخت برای این قسط")
+    )
+    completed_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("تاریخ تکمیل"),
+        help_text=_("تاریخ تکمیل پرداخت (زمانی که مبلغ کامل پرداخت شود)")
+    )
+    notes = models.TextField(
+        blank=True,
+        verbose_name=_("یادداشت‌ها"),
+        help_text=_("یادداشت‌های اضافی درباره پرداخت")
+    )
+    
+    class Meta:
+        verbose_name = _("پرداخت قسط پکیج")
+        verbose_name_plural = _("پرداخت‌های قسط‌های پکیج")
+        # هر دانش‌آموز برای هر قسط یک رکورد پرداخت داشته باشد
+        unique_together = [('enrollment', 'installment')]
+        ordering = ['enrollment', 'installment__installment_number']
+        indexes = [
+            models.Index(fields=['enrollment', 'payment_status']),
+            models.Index(fields=['installment', 'payment_status']),
+            models.Index(fields=['payment_status', '-last_payment_date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.enrollment.student.name} - {self.installment.package.title} قسط {self.installment.installment_number}"
+    
+    def is_overdue(self):
+        """بررسی آیا این قسط سررسیده است"""
+        if self.payment_status == 'paid':
+            return False
+        
+        # بررسی اینکه آیا برای جلسه مشخص‌شده زمان خوب تعریف است
+        # (این بخش نیازمند تاریخ جلسات است که در مدل جداگانه قرار می‌گیرد)
+        return False
+    
+    def get_remaining_amount(self):
+        """مبلغ باقی‌مانده برای پرداخت"""
+        return self.amount_due - self.amount_paid
+    
+    def is_fully_paid(self):
+        """بررسی آیا این قسط به طور کامل پرداخت‌شده است"""
+        return self.payment_status == 'paid' or self.amount_paid >= self.amount_due
+    
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        
+        # تنظیم تاریخ اولین پرداخت
+        if is_new and self.payment_status != 'pending':
+            self.first_payment_date = timezone.now()
+            self.last_payment_date = timezone.now()
+        
+        # بروزرسانی تاریخ آخرین پرداخت
+        if self.payment_status != 'pending' and not is_new:
+            self.last_payment_date = timezone.now()
+        
+        # تنظیم وضعیت بر اساس مبلغ پرداختی
+        if self.amount_paid >= self.amount_due:
+            self.payment_status = 'paid'
+            self.completed_date = timezone.now()
+        elif self.amount_paid > 0:
+            self.payment_status = 'partial'
+            self.last_payment_date = timezone.now()
+        
+        super().save(*args, **kwargs)
