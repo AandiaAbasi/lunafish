@@ -10230,15 +10230,23 @@ class StudentExercisesListAPIView(APIView):
             order_id__in=order_ids
         ).select_related('field_detail')
         
-        # Build a dict: {(order_id, field_id): {'value': ..., 'field_detail_id': ..., 'is_correct': ...}}
+        # Build a dict: {(order_id, field_id): {'value': ..., 'field_detail_id': ..., 'is_correct': ..., 'field_detail': ...}}
         student_answers = {}
         for od in order_details:
             key = (od.order_id, od.field_id)
             is_correct = False
+            field_detail_info = None
             
             if od.field_detail:
                 # سوال چند گزینه‌ای
                 is_correct = od.field_detail.is_correct == 1
+                field_detail_info = {
+                    'id': od.field_detail.id,
+                    'title': od.field_detail.title,
+                    'second_title': od.field_detail.second_title,
+                    'image_path': od.field_detail.image_path,
+                    'is_correct': od.field_detail.is_correct,
+                }
             else:
                 # سوال متنی - مقایسه با correct_answer
                 field_detail_obj = FieldDetail.objects.filter(field_id=od.field_id).first()
@@ -10250,7 +10258,8 @@ class StudentExercisesListAPIView(APIView):
             student_answers[key] = {
                 'value': od.value,
                 'field_detail_id': od.field_detail_id,
-                'is_correct': is_correct
+                'is_correct': is_correct,
+                'field_detail': field_detail_info
             }
         
         # Serialize data
@@ -10272,6 +10281,7 @@ class StudentExercisesListAPIView(APIView):
                 'answered': answer_data is not None,
                 'answer_value': answer_data['value'] if answer_data else None,
                 'answer_field_detail_id': answer_data['field_detail_id'] if answer_data else None,
+                'answer_field_detail': answer_data['field_detail'] if answer_data else None,
                 'is_correct': answer_data['is_correct'] if answer_data else None
             })
         

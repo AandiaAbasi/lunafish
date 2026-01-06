@@ -697,6 +697,7 @@ class StudentExerciseTemplateSerializer(serializers.Serializer):
     - answered: bool - Whether student has answered this question
     - answer_value: str - Student's answer value
     - answer_field_detail_id: int - Selected option ID (for choice questions)
+    - answer_field_detail: dict - Details of selected option (id, title, second_title, image_path, is_correct)
     - is_correct: bool - Whether answer is correct
     """
     exercise_id = serializers.IntegerField()
@@ -711,6 +712,7 @@ class StudentExerciseTemplateSerializer(serializers.Serializer):
     answered = serializers.BooleanField()
     answer_value = serializers.CharField(allow_null=True)
     answer_field_detail_id = serializers.IntegerField(allow_null=True)
+    answer_field_detail = serializers.DictField(allow_null=True)
     is_correct = serializers.BooleanField(allow_null=True)
 
 
