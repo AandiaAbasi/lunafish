@@ -5870,15 +5870,25 @@ class StudentSaveAnswerAPIView(APIView):
                         detail_created = True
                 else:
                     # برای checkbox و سایر: هر گزینه می‌تواند پاسخ جداگانه داشته باشد
-                    order_detail, detail_created = OrderDetail.objects.update_or_create(
-                        order=order,
-                        field=field,
-                        field_detail=field_detail,
-                        defaults={
-                            'value': value if value else '1',
-                            'score': 0
-                        }
-                    )
+                    if field_type == 'checkbox' and value in ['0', '', None]:
+                        # اگر checkbox برداشته شد، سطر مربوطه حذف شود
+                        deleted_count, _ = OrderDetail.objects.filter(
+                            order=order,
+                            field=field,
+                            field_detail=field_detail
+                        ).delete()
+                        detail_created = False
+                        order_detail = None
+                    else:
+                        order_detail, detail_created = OrderDetail.objects.update_or_create(
+                            order=order,
+                            field=field,
+                            field_detail=field_detail,
+                            defaults={
+                                'value': value if value else '1',
+                                'score': 0
+                            }
+                        )
             else:
                 # پاسخ متنی (input)
                 order_detail, detail_created = OrderDetail.objects.update_or_create(
@@ -5911,18 +5921,22 @@ class StudentSaveAnswerAPIView(APIView):
                 is_correct = student_answer == correct_ans
                 correct_answer = field_detail_obj.correct_answer
         
+        # بررسی اینکه آیا پاسخ حذف شده است (برای checkbox)
+        deleted = order_detail is None
+        
         return Response({
             'data': {
                 'order_id': order.id,
                 'field_id': field_id,
                 'field_detail_id': field_detail_id,
                 'value': value,
-                'saved': True,
-                'created': detail_created,
-                'is_correct': is_correct,
-                'correct_answer': correct_answer
+                'saved': not deleted,
+                'deleted': deleted,
+                'created': detail_created if not deleted else False,
+                'is_correct': is_correct if not deleted else None,
+                'correct_answer': correct_answer if not deleted else None
             },
-            'message': _('پاسخ با موفقیت ذخیره شد')
+            'message': _('پاسخ حذف شد') if deleted else _('پاسخ با موفقیت ذخیره شد')
         }, status=status.HTTP_200_OK)
 
 
