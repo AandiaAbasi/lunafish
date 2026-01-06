@@ -5424,6 +5424,8 @@ class StudentSubjectsWithExercisesAPIView(APIView):
                     - total_steps: integer - Number of steps
                     - has_started: boolean - If student has started this exam
                     - order_id: integer or null - Existing order ID if started
+                    - correct_answers: integer - Number of correct answers
+                    - completion_percentage: float - Percentage of correct answers (0-100)
     """
     permission_classes = [IsAuthenticated]
     
@@ -5436,7 +5438,7 @@ class StudentSubjectsWithExercisesAPIView(APIView):
         }
     )
     def get(self, request):
-        from exercise.models import CategoryField, Order
+        from exercise.models import CategoryField, Order, OrderDetail, FieldDetail
         from classroom.models import TeachingSubject
         from django.db.models import Count
         
@@ -5461,6 +5463,35 @@ class StudentSubjectsWithExercisesAPIView(APIView):
                 teachingsubject=subject
             ).values('step').distinct().count()
             
+            # محاسبه درصد تکمیل بر اساس پاسخ‌های صحیح
+            correct_answers = 0
+            total_questions = subject.total_questions
+            
+            if order:
+                # دریافت تمام پاسخ‌های دانش‌آموز برای این آزمون
+                order_details = OrderDetail.objects.filter(order=order).select_related('field', 'field_detail')
+                
+                for detail in order_details:
+                    if detail.field_detail:
+                        # سوال چند گزینه‌ای: بررسی is_correct
+                        if detail.field_detail.is_correct == 1:
+                            correct_answers += 1
+                    else:
+                        # سوال متنی: مقایسه value با correct_answer
+                        # پیدا کردن correct_answer از اولین FieldDetail مربوط به این Field
+                        field_detail = FieldDetail.objects.filter(field=detail.field).first()
+                        if field_detail and field_detail.correct_answer:
+                            # مقایسه بدون حساسیت به حروف و فاصله
+                            student_answer = (detail.value or '').strip().lower()
+                            correct_answer = field_detail.correct_answer.strip().lower()
+                            if student_answer == correct_answer:
+                                correct_answers += 1
+            
+            # محاسبه درصد
+            completion_percentage = 0.0
+            if total_questions > 0:
+                completion_percentage = round((correct_answers / total_questions) * 100, 1)
+            
             subjects_data.append({
                 'id': subject.id,
                 'title': subject.title,
@@ -5469,10 +5500,12 @@ class StudentSubjectsWithExercisesAPIView(APIView):
                 'teacher_id': subject.teacher_id,
                 'teacher_name': subject.teacher.name or subject.teacher.username,
                 'level': subject.level,
-                'total_questions': subject.total_questions,
+                'total_questions': total_questions,
                 'total_steps': steps_count,
                 'has_started': order is not None,
-                'order_id': order.id if order else None
+                'order_id': order.id if order else None,
+                'correct_answers': correct_answers,
+                'completion_percentage': completion_percentage
             })
         
         return Response({
