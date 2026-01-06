@@ -6,7 +6,8 @@ from django.utils.translation import gettext_lazy as _
 from classroom.models import (
     TeacherAvailability, TeachingSubject, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
-    StudentTransaction, PlatformSettings
+    StudentTransaction, PlatformSettings,
+    Package, StudentPackageEnrollment, StudentPackagePayment
 )
 import jdatetime
 from datetime import datetime, date
@@ -752,3 +753,143 @@ class StudentProfileDetailSerializer(serializers.Serializer):
     average_attendance_percentage = serializers.FloatField()
     last_class_date = JalaliDateField(allow_null=True)
     created_at = serializers.DateTimeField()
+
+
+# ============================================================================
+# Package & Installment Serializers
+# ============================================================================
+
+class PackageInstallmentSerializer(serializers.Serializer):
+    """
+    Serializer for Package Installment
+    نشان‌دهی قسط‌های پرداخت
+    """
+    id = serializers.IntegerField(read_only=True)
+    installment_number = serializers.IntegerField(read_only=True)
+    session_number = serializers.IntegerField()
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    
+    class Meta:
+        fields = ['id', 'installment_number', 'session_number', 'amount']
+
+
+class PackageSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Package with installments
+    نشان‌دهی اطلاعات بسته آموزشی
+    """
+    teacher_name = serializers.CharField(source='teacher.name', read_only=True)
+    total_sessions = serializers.IntegerField(read_only=True)
+    total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    
+    class Meta:
+        model = Package
+        fields = ['id', 'name', 'description', 'teacher_name', 'total_sessions', 
+                  'total_price', 'has_installment', 'is_active', 'created_at']
+        read_only_fields = ['created_at']
+
+
+class StudentPackagePaymentSerializer(serializers.Serializer):
+    """
+    Serializer for payment status of an installment
+    نشان‌دهی وضعیت پرداخت یک قسط
+    """
+    id = serializers.IntegerField(read_only=True)
+    installment_number = serializers.IntegerField()
+    session_number = serializers.IntegerField()
+    amount_due = serializers.DecimalField(max_digits=10, decimal_places=2)
+    amount_paid = serializers.DecimalField(max_digits=10, decimal_places=2)
+    remaining_amount = serializers.SerializerMethodField()
+    payment_status = serializers.ChoiceField(
+        choices=['pending', 'partial', 'paid', 'failed'],
+        read_only=True
+    )
+    
+    def get_remaining_amount(self, obj):
+        return obj.get('amount_due', 0) - obj.get('amount_paid', 0)
+
+
+class StudentPackageEnrollmentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Student Package Enrollment with payment summary
+    نشان‌دهی ثبت‌نام دانش‌آموز در بسته
+    """
+    package_name = serializers.CharField(source='package.name', read_only=True)
+    teacher_name = serializers.CharField(source='package.teacher.name', read_only=True)
+    total_sessions = serializers.CharField(source='package.total_sessions', read_only=True)
+    payment_summary = serializers.SerializerMethodField()
+    pending_installments = serializers.SerializerMethodField()
+    next_due = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = StudentPackageEnrollment
+        fields = ['id', 'package', 'package_name', 'teacher_name', 'status', 
+                  'total_sessions', 'enrolled_at', 'payment_summary', 
+                  'pending_installments', 'next_due']
+        read_only_fields = ['enrolled_at']
+    
+    def get_payment_summary(self, obj):
+        """
+        دریافت خلاصه پرداخت از Service
+        """
+        from api.package_service import PackageInstallmentService
+        summary = PackageInstallmentService.get_payment_summary(obj)
+        return {
+            'total_amount': str(summary['total_amount']),
+            'paid_amount': str(summary['paid_amount']),
+            'remaining_amount': str(summary['remaining_amount']),
+            'total_installments': summary['total_installments'],
+            'paid_installments': summary['paid_installments'],
+            'pending_installments': summary['pending_installments'],
+            'completion_percentage': summary['completion_percentage'],
+        }
+    
+    def get_pending_installments(self, obj):
+        """
+        دریافت اقساط معلق از Service
+        """
+        from api.package_service import PackageInstallmentService
+        return PackageInstallmentService.get_pending_installments(obj)
+    
+    def get_next_due(self, obj):
+        """
+        دریافت قسط بعدی از Service
+        """
+        from api.package_service import PackageInstallmentService
+        return PackageInstallmentService.get_next_due_installment(obj)
+
+
+class ProcessPackagePaymentSerializer(serializers.Serializer):
+    """
+    Serializer for processing package payment (Zibal)
+    درخواست پرداخت قسط از طریق درگاه Zibal
+    """
+    enrollment_id = serializers.IntegerField(help_text="ID of student package enrollment")
+    phone = serializers.CharField(max_length=11, help_text="شماره موبایل")
+    description = serializers.CharField(
+        max_length=255, 
+        required=False,
+        help_text="توضیح پرداخت"
+    )
+    
+    def validate_phone(self, value):
+        """
+        بررسی اعتبار شماره تلفن
+        """
+        if not (value.isdigit() and len(value) >= 10):
+            raise serializers.ValidationError(
+                _("شماره موبایل معتبر نیست")
+            )
+        return value
+
+
+class VerifyPackagePaymentSerializer(serializers.Serializer):
+    """
+    Serializer for verifying package payment (Zibal callback)
+    تایید پرداخت بازگردانی شده از Zibal
+    """
+    status = serializers.IntegerField()
+    order_id = serializers.IntegerField()
+    track_id = serializers.CharField(max_length=100)
+    ref_number = serializers.CharField(max_length=100)
+    message = serializers.CharField(max_length=255, required=False)

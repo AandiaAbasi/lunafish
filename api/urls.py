@@ -180,4 +180,11 @@ urlpatterns = [
     path('support-messages/<int:message_id>/', views.SupportMessageDetailAPIView.as_view(), name='support_message_detail'),
     path('teacher-conversations/', views.TeacherConversationsAPIView.as_view(), name='teacher_conversations'),
     path('teacher-conversations/<int:teacher_id>/', views.TeacherConversationDetailAPIView.as_view(), name='teacher_conversation_detail'),
+    
+    # ========== Package & Installment Payment APIs (فصل ۲۹) ==========
+    path('packages/', views.PackageListAPIView.as_view(), name='package_list'),
+    path('student/enrollments/', views.StudentEnrollmentListAPIView.as_view(), name='student_enrollments'),
+    path('packages/check-session-access/', views.CheckSessionAccessAPIView.as_view(), name='check_session_access'),
+    path('packages/process-payment/', views.ProcessPackagePaymentAPIView.as_view(), name='process_package_payment'),
+    path('packages/verify-payment/', views.VerifyPackagePaymentAPIView.as_view(), name='verify_package_payment'),
 ]

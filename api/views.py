@@ -21,7 +21,7 @@ from django.utils.translation import gettext_lazy as _
 from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponseRedirect
 from django.contrib import messages
-from django.db import models
+from django.db import models, transaction
 from django.http import StreamingHttpResponse, HttpResponse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 import boto3
@@ -31,7 +31,10 @@ import datetime as dt
 from account.serializers import *
 from account.services import *
 from account.models import OTP, VerificationToken, ParentProfile, User
-from classroom.models import ClassBooking, StudentTransaction, TeacherAvailability, TeachingSubject, Attendance
+from classroom.models import (
+    ClassBooking, StudentTransaction, TeacherAvailability, TeachingSubject, Attendance,
+    Package, StudentPackageEnrollment, StudentPackagePayment
+)
 from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail, StudentMedal
 from .exercise_serializers import (
     FieldRetrieveSerializer, FieldListSerializer,
@@ -39,7 +42,12 @@ from .exercise_serializers import (
     OrderCreateSubmitSerializer, OrderRetrieveSerializer, OrderListSerializer,
     OrderDetailRetrieveSerializer
 )
-from .classroom_serializers import TeachingSubjectSerializer, TeacherStudentSerializer, StudentPaidClassSerializer, StudentExerciseTemplateSerializer, StudentProfileDetailSerializer, TeacherDashboardSerializer
+from .classroom_serializers import (
+    TeachingSubjectSerializer, TeacherStudentSerializer, StudentPaidClassSerializer, 
+    StudentExerciseTemplateSerializer, StudentProfileDetailSerializer, TeacherDashboardSerializer,
+    PackageSerializer, StudentPackageEnrollmentSerializer, ProcessPackagePaymentSerializer,
+    VerifyPackagePaymentSerializer
+)
 from .parent_serializers import (
     ParentLoginSerializer, ParentProfileSerializer, ParentUpdateUsageTimeSerializer,
     ChildClassHistorySerializer, ChildPaymentHistorySerializer
@@ -10694,3 +10702,449 @@ class TeacherDashboardAPIView(APIView):
             'message': _('Dashboard data retrieved successfully'),
             'data': serializer.data
         }, status=status.HTTP_200_OK)
+
+
+# ============================================================================
+# Package & Installment Payment APIs - فصل ۲۹
+# ============================================================================
+
+class PackageListAPIView(APIView):
+    """
+    لیست بسته‌های آموزشی فعال
+    GET /api/packages/
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        دریافت لیست بسته‌های فعال که دارای قسط‌بندی هستند
+        """
+        try:
+            packages = Package.objects.filter(
+                is_active=True,
+                has_installment=True
+            ).select_related('teacher')
+            
+            serializer = PackageSerializer(packages, many=True)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data,
+                'count': packages.count()
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': _('Error retrieving packages'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class StudentEnrollmentListAPIView(APIView):
+    """
+    لیست ثبت‌نام‌های دانش‌آموز در بسته‌ها
+    GET /api/student/enrollments/
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        دریافت ثبت‌نام‌های فعل دانش‌آموز حاضر با خلاصه پرداخت
+        """
+        try:
+            enrollments = StudentPackageEnrollment.objects.filter(
+                student=request.user,
+                status='active'
+            ).select_related('package', 'package__teacher')
+            
+            serializer = StudentPackageEnrollmentSerializer(enrollments, many=True)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data,
+                'count': enrollments.count()
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': _('Error retrieving enrollments'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CheckSessionAccessAPIView(APIView):
+    """
+    بررسی دسترسی دانش‌آموز به یک جلسه
+    POST /api/packages/check-session-access/
+    
+    Request:
+    {
+        "enrollment_id": 123,
+        "session_number": 2
+    }
+    
+    Response:
+    {
+        "success": true,
+        "can_access": true,
+        "message": "دسترسی مجاز است",
+        "details": {...}
+    }
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """
+        بررسی آیا دانش‌آموز می‌تواند به جلسه دسترسی داشته باشد
+        """
+        try:
+            enrollment_id = request.data.get('enrollment_id')
+            session_number = request.data.get('session_number')
+            
+            # بررسی داده‌های درخواست
+            if not enrollment_id or session_number is None:
+                return Response({
+                    'success': False,
+                    'message': _('enrollment_id and session_number are required')
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # دریافت ثبت‌نام
+            try:
+                enrollment = StudentPackageEnrollment.objects.get(
+                    id=enrollment_id,
+                    student=request.user
+                )
+            except StudentPackageEnrollment.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'message': _('Enrollment not found')
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # بررسی دسترسی
+            from api.package_service import PackageInstallmentService
+            can_access, message = PackageInstallmentService.can_student_attend_session(
+                enrollment, 
+                session_number
+            )
+            
+            # دریافت خلاصه پرداخت
+            payment_summary = PackageInstallmentService.get_payment_summary(enrollment)
+            next_due = PackageInstallmentService.get_next_due_installment(enrollment)
+            
+            return Response({
+                'success': True,
+                'can_access': can_access,
+                'message': str(message),
+                'enrollment_id': enrollment_id,
+                'session_number': session_number,
+                'payment_summary': {
+                    'total_amount': str(payment_summary['total_amount']),
+                    'paid_amount': str(payment_summary['paid_amount']),
+                    'remaining_amount': str(payment_summary['remaining_amount']),
+                    'completion_percentage': payment_summary['completion_percentage'],
+                },
+                'next_due_installment': next_due
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': _('Error checking session access'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ProcessPackagePaymentAPIView(APIView):
+    """
+    شروع فرآیند پرداخت قسط از طریق درگاه Zibal
+    POST /api/packages/process-payment/
+    
+    Request:
+    {
+        "enrollment_id": 123,
+        "phone": "09123456789",
+        "description": "پرداخت قسط اول"
+    }
+    
+    Response:
+    {
+        "success": true,
+        "payment_url": "https://gateway.zibal.ir/start/5034399684ea1e2b",
+        "track_id": "5034399684ea1e2b",
+        "order_id": 456
+    }
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """
+        شروع فرآیند پرداخت بعدی دانش‌آموز
+        """
+        try:
+            serializer = ProcessPackagePaymentSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response({
+                    'success': False,
+                    'message': _('Invalid input'),
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            enrollment_id = serializer.validated_data.get('enrollment_id')
+            phone = serializer.validated_data.get('phone')
+            description = serializer.validated_data.get('description', '')
+            
+            # دریافت ثبت‌نام
+            try:
+                enrollment = StudentPackageEnrollment.objects.get(
+                    id=enrollment_id,
+                    student=request.user,
+                    status='active'
+                )
+            except StudentPackageEnrollment.DoesNotExist:
+                return Response({
+                    'success': False,
+                    'message': _('Enrollment not found or inactive')
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # دریافت اولین قسط معلق
+            from api.package_service import PackageInstallmentService
+            next_due = PackageInstallmentService.get_next_due_installment(enrollment)
+            
+            if not next_due:
+                return Response({
+                    'success': False,
+                    'message': _('No pending installment')
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # دریافت مبلغ برای پرداخت
+            payment_record = enrollment.installment_payments.get(id=next_due['id'])
+            amount_to_pay = payment_record.installment.amount - payment_record.amount_paid
+            
+            if amount_to_pay <= 0:
+                return Response({
+                    'success': False,
+                    'message': _('This installment is already paid')
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # آماده‌سازی داده‌های Zibal
+            from django.conf import settings
+            import requests
+            from decimal import Decimal
+            
+            zibal_merchant_id = settings.ZIBAL_MERCHANT_ID
+            zibal_api_url = settings.ZIBAL_REQUEST_URL
+            zibal_callback_url = settings.ZIBAL_CALLBACK_URL
+            
+            # تبدیل تومان به ریال
+            amount_rial = int(amount_to_pay * Decimal('100'))
+            
+            payload = {
+                'merchant': zibal_merchant_id,
+                'amount': amount_rial,
+                'callbackUrl': zibal_callback_url,
+                'orderId': f'pkg_payment_{enrollment.id}_{payment_record.id}',
+                'description': description or f'Payment for {enrollment.package.name} - Installment {next_due["installment_number"]}',
+                'phone': phone,
+                'mobile': phone,
+            }
+            
+            # ارسال درخواست به Zibal
+            try:
+                response = requests.post(zibal_api_url, json=payload, timeout=10)
+            except requests.RequestException as e:
+                return Response({
+                    'success': False,
+                    'message': _('Payment gateway error'),
+                    'error': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            if response.status_code != 200:
+                return Response({
+                    'success': False,
+                    'message': _('Payment gateway error'),
+                    'error': response.text
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            response_data = response.json()
+            
+            # بررسی پاسخ Zibal
+            if response_data.get('result') != 100:
+                return Response({
+                    'success': False,
+                    'message': response_data.get('message', _('Payment gateway error')),
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # دریافت track ID از Zibal
+            track_id = response_data.get('trackId')
+            if not track_id:
+                return Response({
+                    'success': False,
+                    'message': _('No track ID received from payment gateway'),
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # ذخیره اطلاعات پرداخت در Student Package Payment
+            payment_record.payment_reference = track_id
+            payment_record.payment_gateway = 'zibal'
+            payment_record.save()
+            
+            # ساخت لینک پرداخت Zibal
+            payment_url = f'https://gateway.zibal.ir/start/{track_id}'
+            
+            return Response({
+                'success': True,
+                'message': _('Payment initiated successfully'),
+                'payment_url': payment_url,
+                'track_id': track_id,
+                'order_id': enrollment.id,
+                'amount': str(amount_to_pay),
+                'installment_number': next_due['installment_number'],
+                'session_number': next_due['session_number'],
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'message': _('Error processing payment'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class VerifyPackagePaymentAPIView(APIView):
+    """
+    تأیید پرداخت قسط (Callback از Zibal)
+    GET/POST /api/packages/verify-payment/
+    
+    پس از پرداخت موفق در درگاه، Zibal کاربر را به این آدرس برمی‌گرداند
+    """
+    permission_classes = [AllowAny]  # Zibal نیاز به الحاق ندارد
+    
+    def get(self, request):
+        """
+        دریافت callback از Zibal (GET)
+        """
+        return self._verify_payment(request)
+    
+    def post(self, request):
+        """
+        دریافت callback از Zibal (POST)
+        """
+        return self._verify_payment(request)
+    
+    def _verify_payment(self, request):
+        """
+        فرآیند تأیید پرداخت
+        """
+        try:
+            import requests
+            from django.db import transaction
+            from django.conf import settings
+            
+            # دریافت داده‌های callback
+            track_id = request.GET.get('trackId') or request.data.get('trackId')
+            status_code = request.GET.get('status') or request.data.get('status')
+            order_id = request.GET.get('orderId') or request.data.get('orderId')
+            ref_number = request.GET.get('refNumber') or request.data.get('refNumber')
+            
+            if not track_id or status_code is None:
+                return Response({
+                    'success': False,
+                    'message': _('Missing required parameters')
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # بررسی status (Zibal: 100 = موفق، دیگری = ناموفق)
+            try:
+                status_code = int(status_code)
+            except (ValueError, TypeError):
+                status_code = 0
+            
+            if status_code != 100:
+                return Response({
+                    'success': False,
+                    'message': _('Payment failed'),
+                    'status': status_code
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # تأیید پرداخت از طریق Zibal Verify API
+            zibal_verify_url = settings.ZIBAL_VERIFY_URL
+            
+            verify_payload = {
+                'merchant': settings.ZIBAL_MERCHANT_ID,
+                'trackId': track_id,
+            }
+            
+            try:
+                verify_response = requests.post(zibal_verify_url, json=verify_payload, timeout=10)
+            except requests.RequestException as e:
+                return Response({
+                    'success': False,
+                    'message': _('Error verifying payment'),
+                    'error': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            if verify_response.status_code != 200:
+                return Response({
+                    'success': False,
+                    'message': _('Error verifying payment with gateway')
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            verify_data = verify_response.json()
+            
+            # بررسی نتیجه تأیید
+            if verify_data.get('result') != 100:
+                return Response({
+                    'success': False,
+                    'message': _('Payment verification failed'),
+                    'result': verify_data.get('result')
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # پیدا کردن Payment Record بر اساس track_id
+            payment_record = StudentPackagePayment.objects.filter(
+                payment_reference=track_id
+            ).first()
+            
+            if not payment_record:
+                return Response({
+                    'success': False,
+                    'message': _('Payment record not found')
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # پرداخت موفق و تأیید شد
+            with transaction.atomic():
+                # به‌روز کردن Payment Record
+                payment_record.payment_status = 'paid'
+                payment_record.payment_ref = ref_number
+                payment_record.amount_paid = payment_record.installment.amount
+                payment_record.save()
+                
+                # به‌روز کردن Enrollment اگر همه اقساط پرداخت شده
+                enrollment = payment_record.enrollment
+                pending_payments = enrollment.installment_payments.exclude(
+                    payment_status='paid'
+                ).count()
+                
+                if pending_payments == 0:
+                    enrollment.status = 'completed'
+                    enrollment.save()
+            
+            return Response({
+                'success': True,
+                'message': _('Payment verified successfully'),
+                'enrollment_id': payment_record.enrollment.id,
+                'installment_number': payment_record.installment.installment_number,
+                'amount': str(payment_record.installment.amount),
+                'track_id': track_id,
+                'ref_number': ref_number,
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'message': _('Error processing payment verification'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
