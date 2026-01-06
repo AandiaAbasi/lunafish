@@ -5661,7 +5661,7 @@ class StudentExamByStepsAPIView(APIView):
             field_data = {
                 'id': eq.id,
                 'field_id': field.id,
-                'field_title': field.title,
+                'title': field.title,
                 'type': eq.type,
                 'sort': eq.sort,
                 'is_conditional': eq.is_conditional,
