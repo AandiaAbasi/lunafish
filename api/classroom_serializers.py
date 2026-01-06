@@ -7,7 +7,7 @@ from classroom.models import (
     TeacherAvailability, TeachingSubject, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
     StudentTransaction, PlatformSettings,
-    Package, StudentPackageEnrollment, StudentPackagePayment
+    Package, PackageInstallment, StudentPackageEnrollment, StudentPackagePayment
 )
 import jdatetime
 from datetime import datetime, date
