@@ -5673,6 +5673,185 @@ class StudentExamByStepsAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class StudentSaveAnswerAPIView(APIView):
+    """
+    Student: Save/Update Answer API
+    
+    Save or update student's answer for a specific field.
+    - If no Order exists for (user, teachingsubject), create new Order
+    - If Order exists, use existing Order
+    - For each answer: Create or Update OrderDetail
+    
+    post:
+        Save/update answer for a field.
+        
+        Path parameters:
+        - subject_id: integer - Teaching subject ID
+        
+        Request body parameters:
+        - field_id: integer (required) - Field (Question) ID
+        - field_detail_id: integer (optional) - Selected option ID (for choice questions)
+        - value: string (optional) - Text answer (for input questions)
+        
+        For radioButton: Send field_detail_id of selected option
+        For checkbox: Send field_detail_id + value (1 = checked, 0 = unchecked)
+        For input: Send value (text answer)
+        
+        Returns:
+            200 OK:
+                - order_id: integer - Order ID
+                - field_id: integer - Field that was answered
+                - saved: boolean - True if saved successfully
+                - message: string
+                
+            400 Bad Request - Invalid data
+            404 Not Found - Subject or Field not found
+    
+    Example Request (radioButton):
+    ```json
+    {
+        "field_id": 10,
+        "field_detail_id": 25
+    }
+    ```
+    
+    Example Request (checkbox):
+    ```json
+    {
+        "field_id": 10,
+        "field_detail_id": 25,
+        "value": "1"
+    }
+    ```
+    
+    Example Request (input):
+    ```json
+    {
+        "field_id": 11,
+        "value": "My answer text"
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Student'],
+        summary='Save Student Answer',
+        description='Save or update student answer for a specific field. Creates Order if not exists.',
+        parameters=[
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Teaching subject ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Answer saved successfully"),
+            400: OpenApiResponse(description="Invalid data"),
+            404: OpenApiResponse(description="Subject or Field not found"),
+        }
+    )
+    def post(self, request, subject_id):
+        from exercise.models import CategoryField, Order, OrderDetail, Field, FieldDetail
+        from classroom.models import TeachingSubject
+        from django.db import transaction
+        
+        field_id = request.data.get('field_id')
+        field_detail_id = request.data.get('field_detail_id')
+        value = request.data.get('value', '')
+        
+        if not field_id:
+            return Response(
+                {'error': _('شناسه سؤال الزامی است')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی فعال بودن موضوع
+        if not subject.is_active:
+            return Response(
+                {'error': _('این موضوع فعال نیست')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            field = Field.objects.get(id=field_id)
+        except Field.DoesNotExist:
+            return Response(
+                {'error': _('سؤال یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی اینکه این سؤال به این موضوع تعلق دارد
+        if not CategoryField.objects.filter(teachingsubject=subject, field=field).exists():
+            return Response(
+                {'error': _('این سؤال به این موضوع تعلق ندارد')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # بررسی field_detail اگر ارسال شده
+        field_detail = None
+        if field_detail_id:
+            try:
+                field_detail = FieldDetail.objects.get(id=field_detail_id, field=field)
+            except FieldDetail.DoesNotExist:
+                return Response(
+                    {'error': _('گزینه یافت نشد')},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        
+        with transaction.atomic():
+            # دریافت یا ایجاد Order
+            order, created = Order.objects.get_or_create(
+                user=request.user,
+                teachingsubject=subject,
+                defaults={
+                    'score': 0,
+                    'correct': 0,
+                    'incorrect': 0
+                }
+            )
+            
+            # ایجاد یا بروزرسانی OrderDetail
+            if field_detail:
+                # پاسخ انتخابی (radioButton یا checkbox)
+                order_detail, detail_created = OrderDetail.objects.update_or_create(
+                    order=order,
+                    field=field,
+                    field_detail=field_detail,
+                    defaults={
+                        'value': value if value else '1',  # برای checkbox مقدار 1 یا 0
+                        'score': 0
+                    }
+                )
+            else:
+                # پاسخ متنی (input)
+                order_detail, detail_created = OrderDetail.objects.update_or_create(
+                    order=order,
+                    field=field,
+                    field_detail__isnull=True,
+                    defaults={
+                        'value': value,
+                        'score': 0
+                    }
+                )
+        
+        return Response({
+            'data': {
+                'order_id': order.id,
+                'field_id': field_id,
+                'field_detail_id': field_detail_id,
+                'value': value,
+                'saved': True,
+                'created': detail_created
+            },
+            'message': _('پاسخ با موفقیت ذخیره شد')
+        }, status=status.HTTP_200_OK)
+
+
 class SubmitExamAPIView(APIView):
     """
     Submit Exam Answers API

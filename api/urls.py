@@ -156,6 +156,7 @@ urlpatterns = [
     # Student Exercise APIs
     path('student/exercises/', views.StudentSubjectsWithExercisesAPIView.as_view(), name='student_subjects_with_exercises'),
     path('student/exercises/<int:subject_id>/steps/', views.StudentExamByStepsAPIView.as_view(), name='student_exam_by_steps'),
+    path('student/exercises/<int:subject_id>/save-answer/', views.StudentSaveAnswerAPIView.as_view(), name='student_save_answer'),
     
     path('exercise/results/', views.GetExamResultsAPIView.as_view(), name='exam_results_list'),
     path('exercise/results/<int:attempt_id>/', views.GetExamAttemptDetailAPIView.as_view(), name='exam_results_detail'),
