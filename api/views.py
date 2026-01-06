@@ -5814,11 +5814,14 @@ class StudentSaveAnswerAPIView(APIView):
             )
         
         # بررسی اینکه این سؤال به این موضوع تعلق دارد
-        if not CategoryField.objects.filter(teachingsubject=subject, field=field).exists():
+        category_field = CategoryField.objects.filter(teachingsubject=subject, field=field).first()
+        if not category_field:
             return Response(
                 {'error': _('این سؤال به این موضوع تعلق ندارد')},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        field_type = category_field.type  # نوع سؤال (radioButton, checkbox, input, ...)
         
         # بررسی field_detail اگر ارسال شده
         field_detail = None
@@ -5845,16 +5848,37 @@ class StudentSaveAnswerAPIView(APIView):
             
             # ایجاد یا بروزرسانی OrderDetail
             if field_detail:
-                # پاسخ انتخابی (radioButton یا checkbox)
-                order_detail, detail_created = OrderDetail.objects.update_or_create(
-                    order=order,
-                    field=field,
-                    field_detail=field_detail,
-                    defaults={
-                        'value': value if value else '1',  # برای checkbox مقدار 1 یا 0
-                        'score': 0
-                    }
-                )
+                if field_type == 'radioButton':
+                    # برای radioButton: فقط یک پاسخ برای هر سؤال، اگر قبلاً پاسخ داده شده بروزرسانی شود
+                    existing_detail = OrderDetail.objects.filter(order=order, field=field).first()
+                    if existing_detail:
+                        # بروزرسانی پاسخ قبلی
+                        existing_detail.field_detail = field_detail
+                        existing_detail.value = value if value else '1'
+                        existing_detail.save()
+                        order_detail = existing_detail
+                        detail_created = False
+                    else:
+                        # ایجاد پاسخ جدید
+                        order_detail = OrderDetail.objects.create(
+                            order=order,
+                            field=field,
+                            field_detail=field_detail,
+                            value=value if value else '1',
+                            score=0
+                        )
+                        detail_created = True
+                else:
+                    # برای checkbox و سایر: هر گزینه می‌تواند پاسخ جداگانه داشته باشد
+                    order_detail, detail_created = OrderDetail.objects.update_or_create(
+                        order=order,
+                        field=field,
+                        field_detail=field_detail,
+                        defaults={
+                            'value': value if value else '1',
+                            'score': 0
+                        }
+                    )
             else:
                 # پاسخ متنی (input)
                 order_detail, detail_created = OrderDetail.objects.update_or_create(
