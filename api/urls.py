@@ -193,3 +193,4 @@ urlpatterns = [
     path('teacher/packages/<int:package_id>/', views.TeacherPackageDetailAPIView.as_view(), name='teacher_package_detail'),
     path('teacher/packages/<int:package_id>/installments/', views.TeacherPackageInstallmentListCreateAPIView.as_view(), name='teacher_installment_list_create'),
     path('teacher/packages/<int:package_id>/installments/<int:installment_id>/', views.TeacherPackageInstallmentDetailAPIView.as_view(), name='teacher_installment_detail'),
+]
