@@ -5540,7 +5540,7 @@ class StudentExamByStepsAPIView(APIView):
                     - Each field object:
                         - id: integer - CategoryField ID
                         - field_id: integer
-                        - field_title: string
+                        - title: string
                         - type: string
                         - sort: integer
                         - value: string or null - Text answer from OrderDetail.value
@@ -5568,7 +5568,7 @@ class StudentExamByStepsAPIView(APIView):
                     {
                         "id": 1,
                         "field_id": 10,
-                        "field_title": "What is 2+2?",
+                        "title": "What is 2+2?",
                         "type": "radioButton",
                         "sort": 0,
                         "value": null,
