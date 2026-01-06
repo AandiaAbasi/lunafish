@@ -5782,7 +5782,15 @@ class StudentSaveAnswerAPIView(APIView):
         
         field_id = request.data.get('field_id')
         field_detail_id = request.data.get('field_detail_id')
-        value = request.data.get('value', '')
+        raw_value = request.data.get('value')
+        
+        # تبدیل value به string برای یکپارچگی
+        if raw_value is None:
+            value = ''
+        elif isinstance(raw_value, bool):
+            value = '1' if raw_value else '0'
+        else:
+            value = str(raw_value)
         
         if not field_id:
             return Response(
@@ -5870,7 +5878,9 @@ class StudentSaveAnswerAPIView(APIView):
                         detail_created = True
                 else:
                     # برای checkbox و سایر: هر گزینه می‌تواند پاسخ جداگانه داشته باشد
-                    if field_type == 'checkbox' and value in ['0', '',0, None]:
+                    # تشخیص اینکه آیا مقدار خالی/نادرست است
+                    is_unchecked = value in ['0', '', 'false', 'False', 'null', 'None']
+                    if field_type == 'checkbox' and is_unchecked:
                         # اگر checkbox برداشته شد، سطر مربوطه حذف شود
                         deleted_count, deleted_info = OrderDetail.objects.filter(
                             order=order,
