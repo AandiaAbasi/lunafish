@@ -321,10 +321,10 @@ def run_full_test():
 
 if __name__ == '__main__':
     # اجرای کامل:
-    # run_full_test()
+    run_full_test()
     
-    # یا جزئی:
-    print("💡 نمونه درخواست‌ها:")
+    # یا جزئی (نمونه درخواست‌ها):
+    # print("💡 نمونه درخواست‌ها:")
     print("\n1️⃣ GET /api/packages/")
     print("   (بدون داده)")
     
