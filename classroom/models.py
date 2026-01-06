@@ -693,7 +693,7 @@ class Package(BaseModel):
         TeachingSubject,
         related_name='packages',
         verbose_name=_("موضوعات"),
-        help_text=_("یک یا چند موضوع تدریس که این پکیج شامل آن است")
+        help_text=_("یک یا چند موضوع تدریس که این پکیج شامل آت است")
     )
     total_sessions = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
@@ -738,6 +738,43 @@ class Package(BaseModel):
     def get_installment_count(self):
         """تعداد اقساط تعریف‌شده"""
         return self.installments.count()
+    
+    def clean(self):
+        """اعتبارسنجی پکیج"""
+        from django.core.exceptions import ValidationError
+        
+        if self.total_sessions < 1:
+            raise ValidationError(
+                _("تعداد جلسات باید حداقل ۱ باشد"),
+                code='invalid_total_sessions',
+            )
+        
+        if self.total_price <= 0:
+            raise ValidationError(
+                _("قیمت کل باید بیشتر از صفر باشد"),
+                code='invalid_total_price',
+            )
+    
+    def save(self, *args, **kwargs):
+        """ذخیره پکیج + ایجاد قسط‌بندی خودکار"""
+        self.full_clean()
+        
+        # اگر هیچ قسطی وجود ندارد، یک قسط پیش‌فرض بسازیم
+        if not kwargs.pop('skip_create_default_installment', False):
+            super().save(*args, **kwargs)
+            
+            if self.installments.count() == 0:
+                PackageInstallment.objects.create(
+                    package=self,
+                    installment_number=1,
+                    amount=self.total_price,
+                    session_number=1,
+                    description=_("قسط پیش‌فرض - تمام مبلغ پکیج")
+                )
+                self.has_installment = True
+                self.save(skip_create_default_installment=True)
+        else:
+            super().save(*args, **kwargs)
 
 
 class PackageInstallment(BaseModel):
@@ -802,6 +839,10 @@ class PackageInstallment(BaseModel):
         """تصدیق صحت داده‌های قسط"""
         from django.core.exceptions import ValidationError
         
+        if not self.package_id:
+            # اگر پکیج ذخیره نشده، این چک را پرش کن
+            return
+        
         if self.session_number > self.package.total_sessions:
             raise ValidationError(
                 _("شماره جلسه نمی‌تواند بیشتر از تعداد کل جلسات (%(total)d) باشد"),
@@ -814,6 +855,21 @@ class PackageInstallment(BaseModel):
                 _("شماره جلسه باید حداقل ۱ باشد"),
                 code='session_number_too_low',
             )
+        
+        if self.amount <= 0:
+            raise ValidationError(
+                _("مبلغ قسط باید بیشتر از صفر باشد"),
+                code='invalid_amount',
+            )
+    
+    def save(self, *args, **kwargs):
+        """ذخیره قسط + به‌روزرسانی وضعیت پکیج"""
+        self.full_clean()
+        super().save(*args, **kwargs)
+        
+        # بروزرسانی has_installment برای پکیج
+        self.package.has_installment = True
+        self.package.save(skip_create_default_installment=True)
 
 
 class StudentPackageEnrollment(BaseModel):
@@ -916,6 +972,31 @@ class StudentPackageEnrollment(BaseModel):
         return self.installment_payments.filter(
             payment_status__in=['pending', 'partial']
         ).order_by('installment__installment_number').first()
+    
+    def create_payment_records(self):
+        """
+        ایجاد رکوردهای پرداخت برای تمام اقساط
+        هنگام ثبت‌نام دانش‌آموز به پکیج
+        """
+        for installment in self.package.installments.all():
+            StudentPackagePayment.objects.get_or_create(
+                enrollment=self,
+                installment=installment,
+                defaults={
+                    'amount_due': installment.amount,
+                    'amount_paid': 0,
+                    'payment_status': 'pending',
+                }
+            )
+    
+    def save(self, *args, **kwargs):
+        """ذخیره ثبت‌نام + ایجاد رکوردهای پرداخت"""
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        # در اولین ذخیره‌سازی، رکوردهای پرداخت را بسازیم
+        if is_new:
+            self.create_payment_records()
 
 
 class StudentPackagePayment(BaseModel):

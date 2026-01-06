@@ -230,3 +230,85 @@ def create_student_transaction(sender, instance, created, **kwargs):
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error creating StudentTransaction for booking {instance.id}: {str(e)}")
+
+
+# ===== Package & Installment Signals =====
+@receiver(pre_save, sender='classroom.PackageInstallment')
+def validate_installment_before_save(sender, instance, **kwargs):
+    """
+    اعتبارسنجی قسط قبل از ذخیره‌سازی
+    - شماره جلسه باید در محدوده باشد
+    - شماره جلسات نباید تکراری باشند
+    """
+    from .models import PackageInstallment
+    from django.core.exceptions import ValidationError
+    from django.utils.translation import gettext_lazy as _
+    
+    if instance.package_id:
+        # بررسی محدوده شماره جلسه
+        if instance.session_number > instance.package.total_sessions:
+            raise ValidationError(
+                _("شماره جلسه نمی‌تواند بیشتر از %(total)d باشد") % {'total': instance.package.total_sessions}
+            )
+        
+        if instance.session_number < 1:
+            raise ValidationError(_("شماره جلسه باید حداقل ۱ باشد"))
+        
+        # بررسی تکرار شماره جلسه
+        existing = PackageInstallment.objects.filter(
+            package=instance.package,
+            session_number=instance.session_number
+        ).exclude(pk=instance.pk)
+        
+        if existing.exists():
+            raise ValidationError(
+                _("این شماره جلسه قبلاً برای یک قسط دیگر تعریف شده است")
+            )
+
+
+@receiver(pre_save, sender='classroom.StudentPackagePayment')
+def update_payment_status(sender, instance, **kwargs):
+    """
+    به‌روزرسانی وضعیت پرداخت بر اساس مبالغ پرداختی
+    """
+    from django.utils import timezone
+    
+    # اگر مبلغ پرداختی برابر یا بیشتر از مبلغ مقرر باشد
+    if instance.amount_paid >= instance.amount_due:
+        instance.payment_status = 'paid'
+        instance.completed_date = instance.last_payment_date or timezone.now()
+    
+    # اگر مبلغ پرداختی بیشتر از صفر اما کمتر از مقرر باشد
+    elif instance.amount_paid > 0:
+        instance.payment_status = 'partial'
+    
+    # اگر مبلغ پرداختی برابر صفر باشد
+    else:
+        instance.payment_status = 'pending'
+        instance.completed_date = None
+
+
+@receiver(post_save, sender='classroom.StudentPackagePayment')
+def sync_enrollment_status(sender, instance, created, **kwargs):
+    """
+    سنکرون کردن وضعیت ثبت‌نام بر اساس وضعیت پرداخت‌ها
+    """
+    enrollment = instance.enrollment
+    
+    # محاسبه تعداد اقساط پرداخت‌شده
+    paid_count = enrollment.installment_payments.filter(payment_status='paid').count()
+    total_count = enrollment.installment_payments.count()
+    
+    # اگر تمام اقساط پرداخت شده باشند
+    if paid_count == total_count and total_count > 0:
+        enrollment.status = 'completed'
+        enrollment.save(update_fields=['status', 'updated_at'])
+
+
+@receiver(post_save, sender='classroom.StudentPackageEnrollment')
+def create_installment_payments(sender, instance, created, **kwargs):
+    """
+    ایجاد رکوردهای پرداخت برای اقساط هنگام ثبت‌نام جدید
+    """
+    if created:
+        instance.create_payment_records()
