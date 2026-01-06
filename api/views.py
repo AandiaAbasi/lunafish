@@ -30,16 +30,16 @@ import jdatetime
 import datetime as dt
 from account.serializers import *
 from account.services import *
-from account.models import OTP, VerificationToken, ParentProfile
-from classroom.models import ClassBooking, StudentTransaction, TeacherAvailability
-from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail
+from account.models import OTP, VerificationToken, ParentProfile, User
+from classroom.models import ClassBooking, StudentTransaction, TeacherAvailability, TeachingSubject, Attendance
+from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail, StudentMedal
 from .exercise_serializers import (
-    FieldCreateUpdateSerializer, FieldRetrieveSerializer,
+    FieldRetrieveSerializer, FieldListSerializer,
     CategoryFieldCreateSerializer, CategoryFieldRetrieveSerializer,
     OrderCreateSubmitSerializer, OrderRetrieveSerializer, OrderListSerializer,
     OrderDetailRetrieveSerializer
 )
-from .classroom_serializers import TeachingSubjectSerializer
+from .classroom_serializers import TeachingSubjectSerializer, TeacherStudentSerializer, StudentPaidClassSerializer, StudentExerciseTemplateSerializer, StudentProfileDetailSerializer, TeacherDashboardSerializer
 from .parent_serializers import (
     ParentLoginSerializer, ParentProfileSerializer, ParentUpdateUsageTimeSerializer,
     ChildClassHistorySerializer, ChildPaymentHistorySerializer
@@ -60,9 +60,15 @@ from core.serializers import (
 User = get_user_model()
 
 
-def get_tokens_for_user(user):
-    """Generate JWT tokens for user"""
+def get_tokens_for_user(user, is_parent=False):
+    """Generate JWT tokens for user with optional parent session claim"""
     refresh = RefreshToken.for_user(user)
+    
+    # Add custom claim for parent sessions
+    if is_parent:
+        refresh['is_parent_session'] = True
+        refresh.access_token['is_parent_session'] = True
+    
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
@@ -374,6 +380,56 @@ class CompleteRegistrationAPIView(APIView):
                 user = result
                 tokens = get_tokens_for_user(user)
                 user_data = UserProfileSerializer(user).data
+                
+                # Create parent profile automatically for students (children)
+                if user.role == 'user' and user.phone:
+                    try:
+                        import secrets
+                        import string
+                        from django.contrib.auth.hashers import make_password
+                        from account.utils import send_sms_general
+                        
+                        # Generate random password for parent (8-12 characters)
+                        password_length = secrets.choice([8, 9, 10, 11, 12])
+                        parent_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(password_length))
+                        
+                        # Hash password using Django's hasher (compatible with ParentProfile.verify_password)
+                        hashed_password = make_password(parent_password)
+                        
+                        # Create parent profile
+                        parent_profile = ParentProfile.objects.create(
+                            student=user,
+                            parent_name=f"ولی {user.name}" if user.name else f"ولی {user.username}",
+                            phone=user.phone,
+                            parent_password_hash=hashed_password,
+                            can_view_class_history=True,
+                            can_view_payments=True,
+                            can_select_teacher=False,
+                            can_set_usage_time=True,
+                            is_active=True
+                        )
+                        
+                        # Send SMS to parent with credentials
+                        try:
+                            send_sms_general(
+                                phone_number=user.phone,
+                                template_id=555413,
+                                parameters=[
+                                    {'name': 'NAME', 'value': user.name if user.name else user.username},
+                                    {'name': 'PASS', 'value': parent_password}
+                                ]
+                            )
+                        except Exception as sms_error:
+                            # Log SMS error but don't fail registration
+                            import logging
+                            logger = logging.getLogger(__name__)
+                            logger.error(f"Failed to send parent SMS: {sms_error}")
+                    
+                    except Exception as e:
+                        # Log error but don't fail the registration
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.error(f"Failed to create parent profile: {e}")
                 
                 return Response({
                     "success": True,
@@ -1221,18 +1277,59 @@ class FetchUserAPIView(APIView):
     @extend_schema(
         tags=['Profile Management'],
         summary='Fetch Current User Profile',
-        description='Get authenticated user profile information',
+        description='Get authenticated user profile information with parent session detection from JWT claim',
         responses={
-            200: OpenApiResponse(description="User profile retrieved successfully"),
+            200: OpenApiResponse(description="User profile retrieved successfully with is_parent_session flag"),
             401: OpenApiResponse(description="User not authenticated"),
         }
     )
     def get(self, request):
-        """Get current user information"""
+        """Get current user information with parent session indicator from JWT claim"""
         serializer = UserProfileSerializer(request.user)
+        
+        # Check JWT token for is_parent_session claim
+        is_parent_session = False
+        try:
+            # Get the JWT token from the request
+            auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+            if auth_header.startswith('Bearer '):
+                from rest_framework_simplejwt.tokens import AccessToken
+                token_str = auth_header.split(' ')[1]
+                token = AccessToken(token_str)
+                is_parent_session = token.get('is_parent_session', False)
+        except Exception:
+            pass
+        
+        # Check if this user (student) has an active parent profile available
+        parent_info = None
+        
+        if request.user.role == 'user':
+            try:
+                parent = ParentProfile.objects.filter(
+                    student=request.user,
+                    is_active=True
+                ).first()
+                
+                if parent:
+                    parent_info = {
+                        'parent_id': parent.id,
+                        'parent_name': parent.parent_name,
+                        'phone': parent.phone,
+                        'email': parent.email,
+                        'can_view_class_history': parent.can_view_class_history,
+                        'can_view_payments': parent.can_view_payments,
+                        'can_select_teacher': parent.can_select_teacher,
+                        'can_set_usage_time': parent.can_set_usage_time,
+                        'last_login_at': parent.last_login_at.isoformat() if parent.last_login_at else None
+                    }
+            except Exception:
+                pass
+        
         return Response({
             "success": True,
-            "user": serializer.data
+            "is_parent_session": is_parent_session,
+            "user": serializer.data,
+            "parent": parent_info
         }, status=status.HTTP_200_OK)
 
 
@@ -3293,6 +3390,17 @@ class InitiatePaymentAPIView(APIView):
             booking.paid_at = timezone.now()
             booking.save()
             
+            # ثبت تراکنش دانش‌آموز برای کلاس رایگان
+            StudentTransaction.objects.create(
+                student=booking.student,
+                transaction_type='class_payment',
+                amount=Decimal('0'),
+                booking=booking,
+                description=f'پرداخت کلاس رایگان {booking.subject.title if booking.subject else "نامشخص"} - تاریخ: {booking.availability.date if booking.availability else "نامشخص"}',
+                status='completed',
+                payment_date=timezone.now()
+            )
+            
             return Response({
                 'success': True,
                 'data': {
@@ -3433,7 +3541,7 @@ class PaymentCallbackAPIView(APIView):
             }
     
     def _process_callback(self, request):
-        from classroom.models import ClassBooking, ClassRevenue
+        from classroom.models import ClassBooking, ClassRevenue, StudentTransaction
         from django.db import transaction
         from django.utils import timezone
         from decimal import Decimal
@@ -3548,6 +3656,17 @@ class PaymentCallbackAPIView(APIView):
                             'teacher_share': booking.final_price * Decimal('0.7'),
                             'is_confirmed': False
                         }
+                    )
+                    
+                    # ثبت تراکنش دانش‌آموز (StudentTransaction)
+                    StudentTransaction.objects.create(
+                        student=booking.student,
+                        transaction_type='class_payment',
+                        amount=paid_amount,
+                        booking=booking,
+                        description=f'پرداخت کلاس {booking.subject.title if booking.subject else "نامشخص"} - تاریخ: {booking.availability.date if booking.availability else "نامشخص"}',
+                        status='completed',
+                        payment_date=timezone.now()
                     )
                 
                 # Redirect کاربر به صفحه نتیجه (برای نمایش در مرورگر و سپس redirect به اپ)
@@ -3994,81 +4113,570 @@ class TeachingSubjectDeleteAPIView(APIView):
 
 # ========== Exercise APIs (آزمون‌ها) ==========
 
+# ==================== STEP 1: Create Field (Multipart, NO Details) ====================
+
 class CreateFieldAPIView(APIView):
     """
-    Create Question (Field) API
+    STEP 1: Create Field with file uploads (multipart/form-data)
     
-    Create a new question with optional answer options.
+    Does NOT accept details. Details are created in Step 2 using the returned field_id.
+    Only teachers can create fields.
+    
     Supports multiple question types:
     - input (تایپی) - Typing/text questions
     - checkbox (چند گزینه‌ای) - Multiple choice questions
     - radioButton (تک گزینه‌ای) - Single choice questions
     
-    Only teachers can create questions.
-    Requires authentication.
-    
     post:
-        Create a new question with answer details.
+        Create a new field without details.
         
-        Request body parameters:
+        Request body parameters (multipart/form-data):
         - title: string (required) - Question text/title
         - type: string (required) - Question type: 'input', 'checkbox', or 'radioButton'
-        - is_required: integer (optional) - 0 or 1 - Whether answer is required
-        - image_path: string (optional) - Path to question image
-        - audio_path: string (optional) - Path to question audio
-        - video_path: string (optional) - Path to question video
+        - is_required: integer (optional, default: 0) - 0 or 1 - Whether answer is required
+        - sort: integer (optional, default: 0) - Sort order
         - guide: string (optional) - Question guide/hint
         - des: string (optional) - Question description
-        - sort: integer (optional, default: 0) - Sort order
-        - details: array (optional) - Answer options for choice questions
-            - title: string - Option text
-            - is_correct: integer - 1 if correct, 0 if incorrect, -1 for text
-            - image_path: string (optional) - Option image
-            - guide: string (optional) - Explanation for this option
-            
+        - image_path: file (optional) - Question image file
+        - audio_path: file (optional) - Question audio file
+        - video_path: file (optional) - Question video file
+        
         Returns:
             201 Created:
-                - id: integer - Question ID
-                - title: string
-                - type: string
-                - is_required: integer
-                - details: array - Answer options
-                - message: string - "Question created successfully"
+                {
+                    "ok": true,
+                    "data": {
+                        "id": 123,
+                        "title": "...",
+                        "type": "input",
+                        "is_required": 1,
+                        "sort": 0,
+                        "guide": "...",
+                        "des": "...",
+                        "image_path": "...",
+                        "audio_path": "...",
+                        "video_path": "..."
+                    }
+                }
                 
             400 Bad Request - Invalid data
             403 Forbidden - User is not a teacher
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)  # ONLY multipart, NO JSON
     
-    Example Request - Multiple Choice:
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Step 1: Create Field (NO details)',
+        description='Create question field with file uploads. Does NOT accept details array.',
+        request=None,
+        responses={
+            201: OpenApiResponse(description="Field created successfully"),
+            400: OpenApiResponse(description="Invalid data"),
+            403: OpenApiResponse(description="Only teachers can create fields"),
+        }
+    )
+    def post(self, request):
+        from exercise.models import Field
+        from .exercise_serializers import FieldCreateSerializer
+        
+        # Only teachers can create fields
+        if request.user.role != 'teacher':
+            return Response({
+                'ok': False,
+                'error': _('تنها معلمان می‌توانند سؤال ایجاد کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Ignore any 'details' or 'details[...]' keys completely
+        # Extract only the allowed fields
+        field_data = {}
+        allowed_fields = ['title', 'type', 'is_required', 'sort', 'guide', 'des']
+        for field in allowed_fields:
+            if field in request.data:
+                field_data[field] = request.data[field]
+        
+        # Add file fields
+        for file_field in ['image_path', 'audio_path', 'video_path']:
+            if file_field in request.FILES:
+                field_data[file_field] = request.FILES[file_field]
+        
+        serializer = FieldCreateSerializer(data=field_data, context={'request': request})
+        if serializer.is_valid():
+            field = serializer.save()
+            return Response({
+                'ok': True,
+                'data': {
+                    'id': field.id,
+                    'title': field.title,
+                    'type': field.type,
+                    'is_required': field.is_required,
+                    'sort': field.sort,
+                    'guide': field.guide,
+                    'des': field.des,
+                    'image_path': field.image_path,
+                    'audio_path': field.audio_path,
+                    'video_path': field.video_path,
+                }
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'ok': False,
+            'error': _('داده‌های نامعتبر'),
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ==================== STEP 2: Create FieldDetails (JSON) ====================
+
+class CreateFieldDetailsAPIView(APIView):
+    """
+    STEP 2: Create/Replace FieldDetails for a Field (JSON)
+    
+    Replaces ALL existing details for the specified field_id.
+    Validates based on Field.type:
+    - For 'input' type: requires 'correct_answer' in each detail
+    - For 'checkbox'/'radioButton': requires 'is_correct' (0=wrong, 1=correct, -1=text/explanation)
+    
+    post:
+        Create/replace all details for a field.
+        
+        URL parameter:
+        - field_id: integer (required) - The Field ID from Step 1
+        
+        Request body (JSON):
+        {
+            "details": [
+                {
+                    "title": "Detail text",
+                    "sort": 0,
+                    "correct_answer": "Answer for input type",  // for input type ONLY
+                    "is_correct": 1,                            // for checkbox/radioButton ONLY
+                    "guide": "Explanation (optional)"
+                },
+                ...
+            ]
+        }
+        
+        Returns:
+            201 Created:
+                {
+                    "ok": true,
+                    "data": {
+                        "field_id": 123,
+                        "details": [...]
+                    }
+                }
+                
+            400 Bad Request - Invalid data
+            403 Forbidden - Permission denied
+            404 Not Found - Field not found
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (JSONParser,)  # ONLY JSON, NO multipart
+    
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Step 2: Create FieldDetails',
+        description='Create/replace all details for a field. Uses field_id from URL. Validates based on field type.',
+        request=None,
+        responses={
+            201: OpenApiResponse(description="Details created successfully"),
+            400: OpenApiResponse(description="Invalid data"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Field not found"),
+        }
+    )
+    def post(self, request, field_id):
+        from exercise.models import Field
+        from .exercise_serializers import FieldDetailBulkSerializer, FieldDetailSerializer
+        
+        # Get the field
+        try:
+            field = Field.objects.get(id=field_id)
+        except Field.DoesNotExist:
+            return Response({
+                'ok': False,
+                'error': _('سؤال یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check permission - only field owner (teacher) can add details
+        if request.user.role != 'teacher':
+            return Response({
+                'ok': False,
+                'error': _('تنها معلمان می‌توانند details ایجاد کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Optional: Check if user is the field owner
+        try:
+            if hasattr(field, 'teacher') and field.teacher != request.user:
+                return Response({
+                    'ok': False,
+                    'error': _('شما مجاز به ویرایش این سؤال نیستید')
+                }, status=status.HTTP_403_FORBIDDEN)
+        except Exception:
+            pass  # teacher field might not exist yet
+        
+        # Validate and create details
+        serializer = FieldDetailBulkSerializer(
+            data=request.data,
+            context={'field': field, 'request': request}
+        )
+        
+        if serializer.is_valid():
+            result = serializer.save()
+            
+            # Serialize the created details for response
+            details_serializer = FieldDetailSerializer(result['details'], many=True)
+            
+            return Response({
+                'ok': True,
+                'data': {
+                    'field_id': result['field_id'],
+                    'details': details_serializer.data
+                }
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'ok': False,
+            'error': _('داده‌های نامعتبر'),
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ==================== Delete Field ====================
+
+class DeleteFieldAPIView(APIView):
+    """
+    Delete Field API
+    
+    Allows teachers to delete their own fields.
+    Only the teacher who created the field can delete it.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Delete Field',
+        description='Delete a field. Only the teacher who created it can delete.',
+        responses={
+            204: OpenApiResponse(description="Field deleted successfully"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Field not found"),
+        }
+    )
+    def delete(self, request, field_id):
+        from exercise.models import Field
+        
+        # Only teachers can delete fields
+        if request.user.role != 'teacher':
+            return Response({
+                'ok': False,
+                'error': _('تنها معلمان می‌توانند سؤال حذف کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get the field
+        try:
+            field = Field.objects.get(id=field_id)
+        except Field.DoesNotExist:
+            return Response({
+                'ok': False,
+                'error': _('سؤال یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if user is the field owner
+        if field.teacher != request.user:
+            return Response({
+                'ok': False,
+                'error': _('شما مجاز به حذف این سؤال نیستید')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Delete the field (soft delete if using django-safedelete)
+        field.delete()
+        
+        return Response({
+            'ok': True,
+            'message': _('سؤال با موفقیت حذف شد')
+        }, status=status.HTTP_204_NO_CONTENT)
+
+
+# ==================== Get Field Detail ====================
+
+class GetFieldDetailAPIView(APIView):
+    """
+    Get Field Detail API
+    
+    Retrieve a single field with all its details.
+    Accessible to authenticated users.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Get Field Detail',
+        description='Retrieve field with all details (answers/options).',
+        responses={
+            200: OpenApiResponse(description="Field retrieved successfully"),
+            404: OpenApiResponse(description="Field not found"),
+        }
+    )
+    def get(self, request, field_id):
+        from exercise.models import Field
+        from .exercise_serializers import FieldRetrieveSerializer
+        
+        # Get the field
+        try:
+            field = Field.objects.prefetch_related('details').get(id=field_id)
+        except Field.DoesNotExist:
+            return Response({
+                'ok': False,
+                'error': _('سؤال یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Serialize and return
+        serializer = FieldRetrieveSerializer(field)
+        
+        return Response({
+            'ok': True,
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+# ==================== Update Field ====================
+
+class UpdateFieldAPIView(APIView):
+    """
+    Update Field API
+    
+    Allows teachers to update their own fields.
+    Type field is immutable and cannot be changed.
+    When uploading new files, old files are automatically deleted.
+    Only the teacher who created the field can update it.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)  # For file uploads
+    
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Update Field',
+        description='Update field properties. Type cannot be changed. Old files are deleted when new ones are uploaded.',
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Field updated successfully"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Field not found"),
+        }
+    )
+    def put(self, request, field_id):
+        from exercise.models import Field
+        from .exercise_serializers import FieldUpdateSerializer
+        
+        # Only teachers can update fields
+        if request.user.role != 'teacher':
+            return Response({
+                'ok': False,
+                'error': _('تنها معلمان می‌توانند سؤال ویرایش کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get the field
+        try:
+            field = Field.objects.get(id=field_id)
+        except Field.DoesNotExist:
+            return Response({
+                'ok': False,
+                'error': _('سؤال یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if user is the field owner
+        if field.teacher != request.user:
+            return Response({
+                'ok': False,
+                'error': _('شما مجاز به ویرایش این سؤال نیستید')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Update the field
+        serializer = FieldUpdateSerializer(
+            field,
+            data=request.data,
+            partial=True,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            updated_field = serializer.save()
+            return Response({
+                'ok': True,
+                'data': {
+                    'id': updated_field.id,
+                    'title': updated_field.title,
+                    'type': updated_field.type,
+                    'is_required': updated_field.is_required,
+                    'sort': updated_field.sort,
+                    'guide': updated_field.guide,
+                    'des': updated_field.des,
+                    'image_path': updated_field.image_path,
+                    'audio_path': updated_field.audio_path,
+                    'video_path': updated_field.video_path,
+                },
+                'message': _('سؤال با موفقیت ویرایش شد')
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            'ok': False,
+            'error': _('داده‌های نامعتبر'),
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    patch = put  # Allow PATCH as well
+
+
+# ==================== Update Field Detail ====================
+
+class UpdateFieldDetailAPIView(APIView):
+    """
+    Update Field Detail API
+    
+    Allows teachers to update individual field details.
+    Validates based on parent field type.
+    Only the teacher who created the parent field can update its details.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = (JSONParser,)  # JSON only
+    
+    @extend_schema(
+        tags=['Exercise - Questions (Two-Step)'],
+        summary='Update Field Detail',
+        description='Update individual field detail. Validates based on parent field type.',
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Detail updated successfully"),
+            403: OpenApiResponse(description="Permission denied"),
+            404: OpenApiResponse(description="Detail not found"),
+        }
+    )
+    def put(self, request, detail_id):
+        from exercise.models import FieldDetail
+        from .exercise_serializers import FieldDetailUpdateSerializer
+        
+        # Only teachers can update field details
+        if request.user.role != 'teacher':
+            return Response({
+                'ok': False,
+                'error': _('تنها معلمان می‌توانند جزئیات سؤال ویرایش کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get the field detail
+        try:
+            detail = FieldDetail.objects.select_related('field').get(id=detail_id)
+        except FieldDetail.DoesNotExist:
+            return Response({
+                'ok': False,
+                'error': _('جزئیات سؤال یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if user is the field owner
+        if detail.field.teacher != request.user:
+            return Response({
+                'ok': False,
+                'error': _('شما مجاز به ویرایش این جزئیات نیستید')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Update the detail
+        serializer = FieldDetailUpdateSerializer(
+            detail,
+            data=request.data,
+            partial=True,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            updated_detail = serializer.save()
+            
+            return Response({
+                'ok': True,
+                'data': {
+                    'id': updated_detail.id,
+                    'field_id': updated_detail.field.id,
+                    'title': updated_detail.title,
+                    'second_title': updated_detail.second_title,
+                    'is_required': updated_detail.is_required,
+                    'image_path': updated_detail.image_path,
+                    'is_correct': updated_detail.is_correct,
+                    'correct_answer': updated_detail.correct_answer,
+                    'guide': updated_detail.guide,
+                    'des': updated_detail.des,
+                    'sort': updated_detail.sort,
+                },
+                'message': _('جزئیات سؤال با موفقیت ویرایش شد')
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            'ok': False,
+            'error': _('داده‌های نامعتبر'),
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    patch = put  # Allow PATCH as well
+
+
+class TeacherFieldListAPIView(APIView):
+    """
+    Get Teacher's Questions List API
+    
+    Retrieve list of all questions (fields) that the authenticated teacher has created.
+    Questions are identified by their usage in the teacher's teaching subjects through exams.
+    
+    Only teachers can access this endpoint.
+    Requires authentication.
+    
+    get:
+        Get paginated list of teacher's questions.
+        
+        Query parameters:
+        - type: string (optional) - Filter by question type: 'input', 'checkbox', 'radioButton'
+        - search: string (optional) - Search in question title, guide, or description
+        - page: integer (optional, default: 1) - Page number
+        - page_size: integer (optional, default: 20, max: 100) - Items per page
+        
+        Returns:
+            200 OK:
+                - count: integer - Total number of questions
+                - next: string - URL to next page (or null)
+                - previous: string - URL to previous page (or null)
+                - results: array - List of questions
+                    - id: integer
+                    - title: string
+                    - type: string - Question type
+                    - type_display: string - Human-readable type name
+                    - is_required: integer - 0 or 1
+                    - image_path: string
+                    - guide: string
+                    - des: string - Description
+                    - sort: integer
+                    - details_count: integer - Number of answer options
+                    - created_at: datetime
+                    - created_at_jalali: string - Jalali formatted date
+                
+            403 Forbidden - User is not a teacher
+            401 Unauthorized - User not authenticated
+    
+    Example Response:
     ```json
     {
-        "title": "What is 2+2?",
-        "type": "radioButton",
-        "is_required": 1,
-        "guide": "Choose the correct answer",
-        "details": [
+        "count": 15,
+        "next": "http://api/exercise/fields/teacher/?page=2",
+        "previous": null,
+        "results": [
             {
-                "title": "3",
-                "is_correct": 0
-            },
-            {
-                "title": "4",
-                "is_correct": 1
-            },
-            {
-                "title": "5",
-                "is_correct": 0
+                "id": 1,
+                "title": "What is 2+2?",
+                "type": "radioButton",
+                "type_display": "تک گزینه‌ای",
+                "is_required": 1,
+                "details_count": 4,
+                "created_at": "2025-01-01T10:00:00Z",
+                "created_at_jalali": "1403/10/12 10:00"
             }
         ]
-    }
-    ```
-    
-    Example Request - Typing:
-    ```json
-    {
-        "title": "Write your name",
-        "type": "input",
-        "is_required": 1,
-        "guide": "Enter your full name"
     }
     ```
     """
@@ -4076,41 +4684,71 @@ class CreateFieldAPIView(APIView):
     
     @extend_schema(
         tags=['Exercise - Questions'],
-        summary='Create Question',
-        description='Create new question with optional answer options. Only for teachers.',
-        request=None,
+        summary='Get Teacher\'s Questions List',
+        description='Retrieve all questions created by the authenticated teacher',
+        parameters=[
+            OpenApiParameter('type', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, 
+                           description='Filter by type: input, checkbox, radioButton'),
+            OpenApiParameter('search', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY,
+                           description='Search in title, guide, or description'),
+            OpenApiParameter('page', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY,
+                           description='Page number (default: 1)'),
+            OpenApiParameter('page_size', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY,
+                           description='Items per page (default: 20, max: 100)'),
+        ],
         responses={
-            201: OpenApiResponse(description="Question created successfully"),
-            400: OpenApiResponse(description="Invalid data"),
-            403: OpenApiResponse(description="Only teachers can create questions"),
+            200: OpenApiResponse(description="Paginated list of teacher's questions"),
+            403: OpenApiResponse(description="User is not a teacher"),
+            401: OpenApiResponse(description="User not authenticated"),
         }
     )
-    def post(self, request):
-        from exercise.models import Field
-        from .exercise_serializers import FieldCreateUpdateSerializer
+    def get(self, request):
+        from exercise.models import Field, CategoryField
+        from classroom.models import TeachingSubject
+        from .exercise_serializers import FieldListSerializer
+        from django.db.models import Q
+        from rest_framework.pagination import PageNumberPagination
         
-        # فقط معلمان می‌توانند سؤال ایجاد کنند
+        # فقط معلمان می‌توانند لیست سوالات خود را ببینند
         if request.user.role != 'teacher':
             return Response(
-                {'error': _('تنها معلمان می‌توانند سؤال ایجاد کنند')},
+                {'error': _('تنها معلمان می‌توانند لیست سوالات خود را مشاهده کنند')},
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        serializer = FieldCreateUpdateSerializer(data=request.data)
-        if serializer.is_valid():
-            field = serializer.save()
-            response_serializer = FieldRetrieveSerializer(field)
-            return Response({
-                'success': True,
-                'data': response_serializer.data,
-                'message': _('سؤال با موفقیت ایجاد شد')
-            }, status=status.HTTP_201_CREATED)
+        # TEMPORARY: Show all fields until migration is applied
+        # Without teacher field in DB, we cannot filter by ownership
+        # After migration, change to: Field.objects.filter(teacher=request.user)
+        queryset = Field.objects.all().prefetch_related('details').order_by('-created_at')
         
-        return Response({
-            'success': False,
-            'error': _('داده‌های نامعتبر'),
-            'details': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+        # Apply filters
+        question_type = request.query_params.get('type')
+        if question_type:
+            queryset = queryset.filter(type=question_type)
+        
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(guide__icontains=search) |
+                Q(des__icontains=search)
+            )
+        
+        # Pagination
+        paginator = PageNumberPagination()
+        page_size = request.query_params.get('page_size', 20)
+        try:
+            page_size = int(page_size)
+            page_size = min(page_size, 100)  # Max 100 items per page
+        except (ValueError, TypeError):
+            page_size = 20
+        
+        paginator.page_size = page_size
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+        
+        serializer = FieldListSerializer(paginated_queryset, many=True)
+        
+        return paginator.get_paginated_response(serializer.data)
 
 
 class CreateExamAPIView(APIView):
@@ -4229,6 +4867,20 @@ class CreateExamAPIView(APIView):
         
         # ایجاد سؤالات برای آزمون
         created_questions = []
+        
+        # محاسبه حداکثر sort برای هر step (برای auto-increment)
+        # Get max sort for each step in this teaching subject
+        from django.db.models import Max
+        existing_max_sorts = {}
+        existing_records = CategoryField.objects.filter(
+            teachingsubject=subject
+        ).values('step').annotate(max_sort=Max('sort'))
+        for record in existing_records:
+            existing_max_sorts[record['step']] = record['max_sort']
+        
+        # Track sort counters per step for this batch
+        step_sort_counters = {}
+        
         try:
             for question_data in questions:
                 field_id = question_data.get('field_id')
@@ -4241,11 +4893,21 @@ class CreateExamAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
+                # Auto-calculate sort for this step
+                step = question_data.get('step', 0)
+                if step not in step_sort_counters:
+                    # Initialize counter: start from max_sort + 1, or 0 if no existing records
+                    base_sort = existing_max_sorts.get(step, -1) + 1
+                    step_sort_counters[step] = base_sort
+                
+                auto_sort = step_sort_counters[step]
+                step_sort_counters[step] += 1  # Increment for next question in same step
+                
                 exam_question = CategoryField.objects.create(
                     teachingsubject=subject,
                     field=field,
-                    step=question_data.get('step', 0),
-                    sort=question_data.get('sort', 0),
+                    step=step,
+                    sort=auto_sort,
                     type=question_data.get('type', field.type),
                     is_conditional=question_data.get('is_conditional', False)
                 )
@@ -4380,6 +5042,911 @@ class GetExamAPIView(APIView):
             'subject_title': subject.title,
             'questions': questions_data,
             'total_questions': exam_questions.count()
+        }, status=status.HTTP_200_OK)
+
+
+class GetExamByStepsAPIView(APIView):
+    """
+    Get Exam Grouped by Steps API
+    
+    Retrieve CategoryFields (exam questions) grouped by step.
+    Each step contains its own fields array, ordered by sort.
+    
+    get:
+        Get exam questions grouped by step.
+        
+        Path parameters:
+        - subject_id: integer - Teaching subject ID
+        
+        Returns:
+            200 OK:
+                - subject_id: integer
+                - subject_title: string
+                - total_steps: integer
+                - total_questions: integer
+                - steps: array
+                    - step: integer - Step number
+                    - fields: array - Questions in this step (ordered by sort)
+                        - id: integer - CategoryField ID
+                        - field_id: integer - Field (Question) ID
+                        - field_title: string
+                        - type: string
+                        - sort: integer
+                        - is_conditional: boolean
+                        - details: array - Answer options
+                
+            404 Not Found - Teaching subject not found
+            403 Forbidden - User does not have access
+    
+    Example Response:
+    ```json
+    {
+        "data": {
+            "subject_id": 5,
+            "subject_title": "English Beginner",
+            "total_steps": 2,
+            "total_questions": 5,
+            "steps": [
+                {
+                    "step": 0,
+                    "fields": [
+                        {"id": 1, "field_id": 10, "field_title": "Q1", "sort": 0, ...},
+                        {"id": 2, "field_id": 11, "field_title": "Q2", "sort": 1, ...}
+                    ]
+                },
+                {
+                    "step": 1,
+                    "fields": [
+                        {"id": 3, "field_id": 12, "field_title": "Q3", "sort": 0, ...}
+                    ]
+                }
+            ]
+        }
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Exams'],
+        summary='Get Exam Questions Grouped by Steps',
+        description='Retrieve exam questions grouped by step, each step with its own fields array',
+        parameters=[
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Teaching subject ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Exam questions grouped by steps"),
+            403: OpenApiResponse(description="User does not have access to this exam"),
+            404: OpenApiResponse(description="Teaching subject not found"),
+        }
+    )
+    def get(self, request, subject_id):
+        from exercise.models import CategoryField
+        from classroom.models import TeachingSubject
+        from .exercise_serializers import FieldRetrieveSerializer
+        from collections import OrderedDict
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی دسترسی
+        if request.user.role == 'teacher' and subject.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به این موضوع ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        elif request.user.role == 'user' and not subject.is_active:
+            return Response(
+                {'error': _('این موضوع دسترس پذیر نیست')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # دریافت تمام سؤالات آزمون مرتب شده بر اساس step و sort
+        exam_questions = CategoryField.objects.filter(
+            teachingsubject=subject
+        ).select_related('field').prefetch_related('field__details').order_by('step', 'sort')
+        
+        # گروه‌بندی بر اساس step
+        steps_dict = OrderedDict()
+        for eq in exam_questions:
+            step = eq.step
+            if step not in steps_dict:
+                steps_dict[step] = []
+            
+            field = eq.field
+            field_data = {
+                'id': eq.id,
+                'field_id': field.id,
+                'field_title': field.title,
+                'type': eq.type,
+                'sort': eq.sort,
+                'is_conditional': eq.is_conditional,
+                'guide': field.guide,
+                'des': field.des,
+                'image_path': field.image_path,
+                'audio_path': field.audio_path,
+                'video_path': field.video_path,
+                'field_details': [{
+                    'id': d.id,
+                    'title': d.title,
+                    'second_title': d.second_title,
+                    'image_path': d.image_path,
+                    'is_correct': d.is_correct,
+                    'correct_answer': d.correct_answer,
+                    'sort': d.sort
+                } for d in field.details.all().order_by('sort')]
+            }
+            steps_dict[step].append(field_data)
+        
+        # تبدیل به فرمت خروجی
+        steps_list = [
+            {'step': step, 'fields': fields}
+            for step, fields in steps_dict.items()
+        ]
+        
+        return Response({
+            'data': {
+                'subject_id': subject.id,
+                'subject_title': subject.title,
+                'total_steps': len(steps_list),
+                'total_questions': exam_questions.count(),
+                'steps': steps_list
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class DeleteExamQuestionAPIView(APIView):
+    """
+    Delete Single Exam Question API
+    
+    Delete a single CategoryField (question) from an exam step.
+    Automatically re-orders the remaining items' sort values to maintain sequence.
+    
+    delete:
+        Delete a question from exam and re-sort remaining questions in the step.
+        
+        Path parameters:
+        - question_id: integer - CategoryField ID to delete
+        
+        Returns:
+            200 OK:
+                - message: string - Success message
+                - deleted_id: integer - Deleted CategoryField ID
+                - step: integer - Step number that was affected
+                - remaining_questions: integer - Count of remaining questions in step
+                
+            403 Forbidden - Not the owner of this subject
+            404 Not Found - Question not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Exams'],
+        summary='Delete Exam Question',
+        description='Delete a single question from exam and re-sort remaining questions in the step',
+        parameters=[
+            OpenApiParameter('question_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='CategoryField ID to delete')
+        ],
+        responses={
+            200: OpenApiResponse(description="Question deleted and sort re-ordered"),
+            403: OpenApiResponse(description="Not authorized to delete this question"),
+            404: OpenApiResponse(description="Question not found"),
+        }
+    )
+    def delete(self, request, question_id):
+        from exercise.models import CategoryField
+        from django.db import transaction
+        
+        # فقط معلمان می‌توانند سؤال حذف کنند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('تنها معلمان می‌توانند سؤال حذف کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            question = CategoryField.objects.select_related('teachingsubject').get(id=question_id)
+        except CategoryField.DoesNotExist:
+            return Response(
+                {'error': _('سؤال یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی مالکیت
+        if question.teachingsubject.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به حذف این سؤال ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        subject = question.teachingsubject
+        step = question.step
+        deleted_sort = question.sort
+        
+        with transaction.atomic():
+            # حذف سؤال
+            question.delete()
+            
+            # به‌روزرسانی sort برای سؤالات باقی‌مانده در همان step
+            # کاهش sort برای سؤالاتی که sort بزرگتر داشتند
+            remaining_questions = CategoryField.objects.filter(
+                teachingsubject=subject,
+                step=step,
+                sort__gt=deleted_sort
+            ).order_by('sort')
+            
+            for q in remaining_questions:
+                q.sort -= 1
+                q.save(update_fields=['sort'])
+            
+            # تعداد سؤالات باقی‌مانده در step
+            remaining_count = CategoryField.objects.filter(
+                teachingsubject=subject,
+                step=step
+            ).count()
+        
+        return Response({
+            'message': _('سؤال با موفقیت حذف شد'),
+            'deleted_id': question_id,
+            'step': step,
+            'remaining_questions': remaining_count
+        }, status=status.HTTP_200_OK)
+
+
+class DeleteExamStepAPIView(APIView):
+    """
+    Delete Entire Exam Step API
+    
+    Delete all CategoryFields in a specific step and shift higher steps down.
+    Ensures no gaps between step numbers.
+    
+    delete:
+        Delete entire step and shift higher steps down.
+        
+        Path parameters:
+        - subject_id: integer - Teaching subject ID
+        - step: integer - Step number to delete
+        
+        Returns:
+            200 OK:
+                - message: string - Success message
+                - deleted_step: integer - Deleted step number
+                - deleted_questions_count: integer - Number of questions deleted
+                - steps_shifted: integer - Number of steps that were shifted down
+                
+            403 Forbidden - Not the owner of this subject
+            404 Not Found - Subject or step not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Exams'],
+        summary='Delete Entire Exam Step',
+        description='Delete all questions in a step and shift higher steps down to maintain sequence',
+        parameters=[
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Teaching subject ID'),
+            OpenApiParameter('step', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Step number to delete')
+        ],
+        responses={
+            200: OpenApiResponse(description="Step deleted and higher steps shifted down"),
+            403: OpenApiResponse(description="Not authorized to delete this step"),
+            404: OpenApiResponse(description="Subject or step not found"),
+        }
+    )
+    def delete(self, request, subject_id, step):
+        from exercise.models import CategoryField
+        from classroom.models import TeachingSubject
+        from django.db import transaction
+        
+        # فقط معلمان می‌توانند step حذف کنند
+        if request.user.role != 'teacher':
+            return Response(
+                {'error': _('تنها معلمان می‌توانند مرحله حذف کنند')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی مالکیت
+        if subject.teacher_id != request.user.id:
+            return Response(
+                {'error': _('شما دسترسی به حذف این مرحله ندارید')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # بررسی وجود step
+        step_questions = CategoryField.objects.filter(
+            teachingsubject=subject,
+            step=step
+        )
+        
+        if not step_questions.exists():
+            return Response(
+                {'error': _('مرحله مورد نظر یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        deleted_count = step_questions.count()
+        
+        with transaction.atomic():
+            # حذف تمام سؤالات در این step
+            step_questions.delete()
+            
+            # کاهش step برای stepهای بزرگتر (شیفت به پایین)
+            higher_steps = CategoryField.objects.filter(
+                teachingsubject=subject,
+                step__gt=step
+            ).order_by('step', 'sort')
+            
+            steps_shifted = set()
+            for q in higher_steps:
+                steps_shifted.add(q.step)
+                q.step -= 1
+                q.save(update_fields=['step'])
+        
+        return Response({
+            'message': _('مرحله با موفقیت حذف شد'),
+            'deleted_step': step,
+            'deleted_questions_count': deleted_count,
+            'steps_shifted': len(steps_shifted)
+        }, status=status.HTTP_200_OK)
+
+
+class StudentSubjectsWithExercisesAPIView(APIView):
+    """
+    Student: List Teaching Subjects with Exercises API
+    
+    Returns list of teaching subjects that have exercises (CategoryFields) assigned.
+    Only shows active subjects.
+    
+    get:
+        Get list of subjects with exercises for student.
+        
+        Returns:
+            200 OK:
+                - subjects: array
+                    - id: integer - Subject ID
+                    - title: string - Subject title
+                    - description: string
+                    - teacher_name: string
+                    - total_questions: integer - Number of questions
+                    - total_steps: integer - Number of steps
+                    - has_started: boolean - If student has started this exam
+                    - order_id: integer or null - Existing order ID if started
+                    - correct_answers: integer - Number of correct answers
+                    - completion_percentage: float - Percentage of correct answers (0-100)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Student'],
+        summary='List Subjects with Exercises',
+        description='Get list of teaching subjects that have exercises assigned',
+        responses={
+            200: OpenApiResponse(description="List of subjects with exercises"),
+        }
+    )
+    def get(self, request):
+        from exercise.models import CategoryField, Order, OrderDetail, FieldDetail
+        from classroom.models import TeachingSubject
+        from django.db.models import Count
+        
+        # دریافت موضوعات فعال که تمرین دارند
+        subjects_with_exercises = TeachingSubject.objects.filter(
+            is_active=True,
+            category_fields__isnull=False
+        ).annotate(
+            total_questions=Count('category_fields'),
+        ).distinct()
+        
+        subjects_data = []
+        for subject in subjects_with_exercises:
+            # بررسی اینکه آیا دانش‌آموز این آزمون را شروع کرده
+            order = Order.objects.filter(
+                user=request.user,
+                teachingsubject=subject
+            ).first()
+            
+            # تعداد step‌ها
+            steps_count = CategoryField.objects.filter(
+                teachingsubject=subject
+            ).values('step').distinct().count()
+            
+            # محاسبه درصد تکمیل بر اساس پاسخ‌های صحیح
+            correct_answers = 0
+            total_questions = subject.total_questions
+            
+            if order:
+                # دریافت تمام پاسخ‌های دانش‌آموز برای این آزمون
+                order_details = OrderDetail.objects.filter(order=order).select_related('field', 'field_detail')
+                
+                for detail in order_details:
+                    if detail.field_detail:
+                        # سوال چند گزینه‌ای: بررسی is_correct
+                        if detail.field_detail.is_correct == 1:
+                            correct_answers += 1
+                    else:
+                        # سوال متنی: مقایسه value با correct_answer
+                        # پیدا کردن correct_answer از اولین FieldDetail مربوط به این Field
+                        field_detail = FieldDetail.objects.filter(field=detail.field).first()
+                        if field_detail and field_detail.correct_answer:
+                            # مقایسه بدون حساسیت به حروف و فاصله
+                            student_answer = (detail.value or '').strip().lower()
+                            correct_answer = field_detail.correct_answer.strip().lower()
+                            if student_answer == correct_answer:
+                                correct_answers += 1
+            
+            # محاسبه درصد
+            completion_percentage = 0.0
+            if total_questions > 0:
+                completion_percentage = round((correct_answers / total_questions) * 100, 1)
+            
+            subjects_data.append({
+                'id': subject.id,
+                'title': subject.title,
+                'description': subject.description,
+                'cover_image': subject.cover_image.url if subject.cover_image else None,
+                'teacher_id': subject.teacher_id,
+                'teacher_name': subject.teacher.name or subject.teacher.username,
+                'level': subject.level,
+                'total_questions': total_questions,
+                'total_steps': steps_count,
+                'has_started': order is not None,
+                'order_id': order.id if order else None,
+                'correct_answers': correct_answers,
+                'completion_percentage': completion_percentage
+            })
+        
+        return Response({
+            'data': {
+                'subjects': subjects_data,
+                'total': len(subjects_data)
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class StudentExamByStepsAPIView(APIView):
+    """
+    Student: Get Exam Grouped by Steps with Answers API
+    
+    Similar to teacher's GetExamByStepsAPIView but includes student's answers.
+    Each field_detail includes the student's answer (value from OrderDetail).
+    
+    get:
+        Get exam questions grouped by step with student's answers.
+        
+        Path parameters:
+        - subject_id: integer - Teaching subject ID
+        
+        Returns:
+            200 OK:
+                - subject_id: integer
+                - subject_title: string
+                - order_id: integer or null - Existing order ID (null if not started)
+                - total_steps: integer
+                - total_questions: integer
+                - steps: array of arrays - Each inner array is a step containing field objects
+                    - Each field object:
+                        - id: integer - CategoryField ID
+                        - field_id: integer
+                        - title: string
+                        - type: string
+                        - sort: integer
+                        - value: string or null - Text answer from OrderDetail.value
+                        - field_details: array
+                            - id: integer
+                            - title: string
+                            - is_correct: integer
+                            - correct_answer: string
+                            - value: string or null - Student's answer for this option
+                
+            404 Not Found - Subject not found
+            403 Forbidden - Subject not active
+    
+    Example Response:
+    ```json
+    {
+        "data": {
+            "subject_id": 5,
+            "subject_title": "English Beginner",
+            "order_id": 10,
+            "total_steps": 2,
+            "total_questions": 5,
+            "steps": [
+                [
+                    {
+                        "id": 1,
+                        "field_id": 10,
+                        "title": "What is 2+2?",
+                        "type": "radioButton",
+                        "sort": 0,
+                        "value": null,
+                        "field_details": [
+                            {"id": 1, "title": "3", "value": null},
+                            {"id": 2, "title": "4", "value": "1"}
+                        ]
+                    }
+                ]
+            ]
+        }
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Student'],
+        summary='Get Exam Questions with Student Answers',
+        description='Get exam questions grouped by step with student\'s answers from OrderDetail',
+        parameters=[
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Teaching subject ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Exam questions with student answers"),
+            403: OpenApiResponse(description="Subject not active"),
+            404: OpenApiResponse(description="Subject not found"),
+        }
+    )
+    def get(self, request, subject_id):
+        from exercise.models import CategoryField, Order, OrderDetail
+        from classroom.models import TeachingSubject
+        from collections import OrderedDict
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی فعال بودن موضوع
+        if not subject.is_active:
+            return Response(
+                {'error': _('این موضوع فعال نیست')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # دریافت Order موجود برای این دانش‌آموز (اگر وجود دارد)
+        order = Order.objects.filter(
+            user=request.user,
+            teachingsubject=subject
+        ).first()
+        
+        # دریافت پاسخ‌های دانش‌آموز (اگر Order وجود دارد)
+        student_answers = {}
+        if order:
+            order_details = OrderDetail.objects.filter(order=order).select_related('field', 'field_detail')
+            for od in order_details:
+                # کلید: field_id
+                if od.field_id not in student_answers:
+                    student_answers[od.field_id] = {
+                        'main_value': None,
+                        'details': {}
+                    }
+                
+                # اگر field_detail دارد، پاسخ برای آن گزینه است
+                if od.field_detail_id:
+                    student_answers[od.field_id]['details'][od.field_detail_id] = od.value
+                else:
+                    # پاسخ متنی (input)
+                    student_answers[od.field_id]['main_value'] = od.value
+        
+        # دریافت تمام سؤالات آزمون
+        exam_questions = CategoryField.objects.filter(
+            teachingsubject=subject
+        ).select_related('field').prefetch_related('field__details').order_by('step', 'sort')
+        
+        # گروه‌بندی بر اساس step
+        steps_dict = OrderedDict()
+        for eq in exam_questions:
+            step = eq.step
+            if step not in steps_dict:
+                steps_dict[step] = []
+            
+            field = eq.field
+            field_answers = student_answers.get(field.id, {'main_value': None, 'details': {}})
+            
+            field_data = {
+                'id': eq.id,
+                'field_id': field.id,
+                'title': field.title,
+                'type': eq.type,
+                'sort': eq.sort,
+                'is_conditional': eq.is_conditional,
+                'guide': field.guide,
+                'des': field.des,
+                'image_path': field.image_path,
+                'audio_path': field.audio_path,
+                'video_path': field.video_path,
+                'value': field_answers['main_value'],  # پاسخ متنی (برای input)
+                'field_details': [{
+                    'id': d.id,
+                    'title': d.title,
+                    'second_title': d.second_title,
+                    'image_path': d.image_path,
+                    'is_correct': d.is_correct,
+                    'correct_answer': d.correct_answer,
+                    'sort': d.sort,
+                    'value': field_answers['details'].get(d.id, None)  # پاسخ دانش‌آموز برای این گزینه
+                } for d in field.details.all().order_by('sort')]
+            }
+            steps_dict[step].append(field_data)
+        
+        # تبدیل به فرمت خروجی: هر step یک آرایه از fieldها
+        steps_list = [fields for step, fields in steps_dict.items()]
+        
+        return Response({
+            'data': {
+                'subject_id': subject.id,
+                'subject_title': subject.title,
+                'order_id': order.id if order else None,
+                'total_steps': len(steps_list),
+                'total_questions': exam_questions.count(),
+                'steps': steps_list
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class StudentSaveAnswerAPIView(APIView):
+    """
+    Student: Save/Update Answer API
+    
+    Save or update student's answer for a specific field.
+    - If no Order exists for (user, teachingsubject), create new Order
+    - If Order exists, use existing Order
+    - For each answer: Create or Update OrderDetail
+    
+    post:
+        Save/update answer for a field.
+        
+        Path parameters:
+        - subject_id: integer - Teaching subject ID
+        
+        Request body parameters:
+        - field_id: integer (required) - Field (Question) ID
+        - field_detail_id: integer (optional) - Selected option ID (for choice questions)
+        - value: string (optional) - Text answer (for input questions)
+        
+        For radioButton: Send field_detail_id of selected option
+        For checkbox: Send field_detail_id + value (1 = checked, 0 = unchecked)
+        For input: Send value (text answer)
+        
+        Returns:
+            200 OK:
+                - order_id: integer - Order ID
+                - field_id: integer - Field that was answered
+                - saved: boolean - True if saved successfully
+                - is_correct: boolean - Whether the answer is correct
+                - correct_answer: integer/string or null - Correct option ID (for choice) or correct text (for input)
+                - message: string
+                
+            400 Bad Request - Invalid data
+            404 Not Found - Subject or Field not found
+    
+    Example Request (radioButton):
+    ```json
+    {
+        "field_id": 10,
+        "field_detail_id": 25
+    }
+    ```
+    
+    Example Request (checkbox):
+    ```json
+    {
+        "field_id": 10,
+        "field_detail_id": 25,
+        "value": "1"
+    }
+    ```
+    
+    Example Request (input):
+    ```json
+    {
+        "field_id": 11,
+        "value": "My answer text"
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Exercise - Student'],
+        summary='Save Student Answer',
+        description='Save or update student answer for a specific field. Creates Order if not exists.',
+        parameters=[
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=True, location=OpenApiParameter.PATH, description='Teaching subject ID')
+        ],
+        responses={
+            200: OpenApiResponse(description="Answer saved successfully"),
+            400: OpenApiResponse(description="Invalid data"),
+            404: OpenApiResponse(description="Subject or Field not found"),
+        }
+    )
+    def post(self, request, subject_id):
+        from exercise.models import CategoryField, Order, OrderDetail, Field, FieldDetail
+        from classroom.models import TeachingSubject
+        from django.db import transaction
+        
+        field_id = request.data.get('field_id')
+        field_detail_id = request.data.get('field_detail_id')
+        raw_value = request.data.get('value')
+        
+        # تبدیل value به string برای یکپارچگی
+        if raw_value is None:
+            value = ''
+        elif isinstance(raw_value, bool):
+            value = '1' if raw_value else '0'
+        else:
+            value = str(raw_value)
+        
+        if not field_id:
+            return Response(
+                {'error': _('شناسه سؤال الزامی است')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            subject = TeachingSubject.objects.get(id=subject_id)
+        except TeachingSubject.DoesNotExist:
+            return Response(
+                {'error': _('موضوع تدریسی یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی فعال بودن موضوع
+        if not subject.is_active:
+            return Response(
+                {'error': _('این موضوع فعال نیست')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            field = Field.objects.get(id=field_id)
+        except Field.DoesNotExist:
+            return Response(
+                {'error': _('سؤال یافت نشد')},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # بررسی اینکه این سؤال به این موضوع تعلق دارد
+        category_field = CategoryField.objects.filter(teachingsubject=subject, field=field).first()
+        if not category_field:
+            return Response(
+                {'error': _('این سؤال به این موضوع تعلق ندارد')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        field_type = category_field.type  # نوع سؤال (radioButton, checkbox, input, ...)
+        
+        # بررسی field_detail اگر ارسال شده
+        field_detail = None
+        if field_detail_id:
+            try:
+                field_detail = FieldDetail.objects.get(id=field_detail_id, field=field)
+            except FieldDetail.DoesNotExist:
+                return Response(
+                    {'error': _('گزینه یافت نشد')},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        
+        with transaction.atomic():
+            # دریافت یا ایجاد Order
+            order, created = Order.objects.get_or_create(
+                user=request.user,
+                teachingsubject=subject,
+                defaults={
+                    'score': 0,
+                    'correct': 0,
+                    'incorrect': 0
+                }
+            )
+            
+            # ایجاد یا بروزرسانی OrderDetail
+            if field_detail:
+                if field_type == 'radioButton':
+                    # برای radioButton: فقط یک پاسخ برای هر سؤال، اگر قبلاً پاسخ داده شده بروزرسانی شود
+                    existing_detail = OrderDetail.objects.filter(order=order, field=field).first()
+                    if existing_detail:
+                        # بروزرسانی پاسخ قبلی
+                        existing_detail.field_detail = field_detail
+                        existing_detail.value = value if value else '1'
+                        existing_detail.save()
+                        order_detail = existing_detail
+                        detail_created = False
+                    else:
+                        # ایجاد پاسخ جدید
+                        order_detail = OrderDetail.objects.create(
+                            order=order,
+                            field=field,
+                            field_detail=field_detail,
+                            value=value if value else '1',
+                            score=0
+                        )
+                        detail_created = True
+                else:
+                    # برای checkbox و سایر: هر گزینه می‌تواند پاسخ جداگانه داشته باشد
+                    # تشخیص اینکه آیا مقدار خالی/نادرست است
+                    is_unchecked = value in ['0', '', 'false', 'False', 'null', 'None']
+                    if field_type == 'checkbox' and is_unchecked:
+                        # اگر checkbox برداشته شد، سطر مربوطه حذف شود
+                        deleted_count, deleted_info = OrderDetail.objects.filter(
+                            order=order,
+                            field=field,
+                            field_detail=field_detail
+                        ).delete()
+                        detail_created = False
+                        order_detail = None
+                    else:
+                        order_detail, detail_created = OrderDetail.objects.update_or_create(
+                            order=order,
+                            field=field,
+                            field_detail=field_detail,
+                            defaults={
+                                'value': value if value else '1',
+                                'score': 0
+                            }
+                        )
+            else:
+                # پاسخ متنی (input)
+                order_detail, detail_created = OrderDetail.objects.update_or_create(
+                    order=order,
+                    field=field,
+                    field_detail__isnull=True,
+                    defaults={
+                        'value': value,
+                        'score': 0
+                    }
+                )
+        
+        # بررسی صحت پاسخ
+        is_correct = False
+        correct_answer = None
+        
+        if field_detail:
+            # سوال چند گزینه‌ای: بررسی is_correct
+            is_correct = field_detail.is_correct == 1
+            # پیدا کردن پاسخ صحیح برای نمایش
+            correct_option = FieldDetail.objects.filter(field=field, is_correct=1).first()
+            if correct_option:
+                correct_answer = correct_option.id
+        else:
+            # سوال متنی: مقایسه value با correct_answer
+            field_detail_obj = FieldDetail.objects.filter(field=field).first()
+            if field_detail_obj and field_detail_obj.correct_answer:
+                student_answer = (value or '').strip().lower()
+                correct_ans = field_detail_obj.correct_answer.strip().lower()
+                is_correct = student_answer == correct_ans
+                correct_answer = field_detail_obj.correct_answer
+        
+        # بررسی اینکه آیا پاسخ حذف شده است (برای checkbox)
+        deleted = order_detail is None
+        
+        return Response({
+            'data': {
+                'order_id': order.id,
+                'field_id': field_id,
+                'field_detail_id': field_detail_id,
+                'value': value,
+                'saved': not deleted,
+                'deleted': deleted,
+                'created': detail_created if not deleted else False,
+                'is_correct': is_correct if not deleted else None,
+                'correct_answer': correct_answer if not deleted else None
+            },
+            'message': _('پاسخ حذف شد') if deleted else _('پاسخ با موفقیت ذخیره شد')
         }, status=status.HTTP_200_OK)
 
 
@@ -4852,58 +6419,98 @@ class TeacherDetailAPIView(APIView):
 
 class ParentLoginAPIView(APIView):
     """
-    والدین می‌توانند با شماره تماس، ایمیل یا شناسه دانش‌آموز + رمز والد وارد شوند
+    والدین می‌توانند با نام کاربری دانش‌آموز + رمز والد وارد شوند
     
     post:
-        Login with student identifier (ID, phone, or email) and parent password
+        Login with student username and parent password
         
         Request body:
-        - identifier: string (required) - شناسه دانش‌آموز (شناسه، شماره تماس یا ایمیل)
-        - parent_password: string (required) - رمز والدین
+        - username: string (required) - نام کاربری دانش‌آموز
+        - password: string (required) - رمز والدین
         
         Returns:
             200 OK:
-                - parent_token: string - Token for parent
-                - parent_id: integer
-                - parent_name: string
-                - student_id: integer
-                - student_name: string
-                - can_view_class_history: boolean
-                - can_view_payments: boolean
-                - can_select_teacher: boolean
-                - can_set_usage_time: boolean
+                - success: boolean (true)
+                - message: string - "Parent login successful"
+                - data: object
+                    - tokens: object
+                        - access: string - JWT access token
+                        - refresh: string - JWT refresh token
+                    - parent: object
+                        - parent_id: integer
+                        - parent_name: string
+                        - can_view_class_history: boolean
+                        - can_view_payments: boolean
+                        - can_select_teacher: boolean
+                        - can_set_usage_time: boolean
+                    - student: object
+                        - student_id: integer
+                        - student_name: string
+                        - username: string
                 
             400 Bad Request:
-                - Student not found
-                - Parent profile not found
-                - Invalid password
+                - success: boolean (false)
+                - message: string
+                - errors: object - Validation errors
     """
     permission_classes = [AllowAny]
     
     @extend_schema(
         tags=['Parent Portal'],
         summary='Parent Login',
-        description='والدین می‌توانند با شماره تماس، ایمیل یا شناسه دانش‌آموز + رمز والد وارد شوند',
+        description='والدین می‌توانند با نام کاربری دانش‌آموز + رمز والد وارد شوند',
         request=inline_serializer(
             name='ParentLoginRequest',
             fields={
-                'identifier': serializers.CharField(help_text='شناسه دانش‌آموز (شناسه، شماره تماس یا ایمیل)'),
-                'parent_password': serializers.CharField(help_text='رمز والدین', style={'input_type': 'password'})
+                'username': serializers.CharField(help_text='نام کاربری دانش‌آموز'),
+                'password': serializers.CharField(help_text='رمز والدین', style={'input_type': 'password'})
             }
         ),
         responses={
             200: inline_serializer(
                 name='ParentLoginResponse',
                 fields={
-                    'parent_token': serializers.CharField(),
-                    'parent_id': serializers.IntegerField(),
-                    'parent_name': serializers.CharField(),
-                    'student_id': serializers.IntegerField(),
-                    'student_name': serializers.CharField(),
-                    'can_view_class_history': serializers.BooleanField(),
-                    'can_view_payments': serializers.BooleanField(),
-                    'can_select_teacher': serializers.BooleanField(),
-                    'can_set_usage_time': serializers.BooleanField()
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': inline_serializer(
+                        name='ParentLoginData',
+                        fields={
+                            'tokens': inline_serializer(
+                                name='ParentTokens',
+                                fields={
+                                    'access': serializers.CharField(),
+                                    'refresh': serializers.CharField()
+                                }
+                            ),
+                            'parent': inline_serializer(
+                                name='ParentInfo',
+                                fields={
+                                    'parent_id': serializers.IntegerField(),
+                                    'parent_name': serializers.CharField(),
+                                    'can_view_class_history': serializers.BooleanField(),
+                                    'can_view_payments': serializers.BooleanField(),
+                                    'can_select_teacher': serializers.BooleanField(),
+                                    'can_set_usage_time': serializers.BooleanField()
+                                }
+                            ),
+                            'student': inline_serializer(
+                                name='StudentInfo',
+                                fields={
+                                    'student_id': serializers.IntegerField(),
+                                    'student_name': serializers.CharField(),
+                                    'username': serializers.CharField()
+                                }
+                            )
+                        }
+                    )
+                }
+            ),
+            400: inline_serializer(
+                name='ParentLoginError',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'errors': serializers.DictField()
                 }
             )
         }
@@ -4914,7 +6521,11 @@ class ParentLoginAPIView(APIView):
         
         serializer = ParentLoginSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "success": False,
+                "message": _("Invalid credentials"),
+                "errors": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         parent = serializer.validated_data['parent']
         
@@ -4922,20 +6533,32 @@ class ParentLoginAPIView(APIView):
         parent.last_login_at = timezone.now()
         parent.save()
         
-        # Generate token
-        import secrets
-        parent_token = secrets.token_urlsafe(32)
+        # Generate JWT tokens for the student (parent logs in on behalf of student)
+        # Mark this as a parent session with custom claim
+        tokens = get_tokens_for_user(parent.student, is_parent=True)
         
         return Response({
-            'parent_token': parent_token,
-            'parent_id': parent.id,
-            'parent_name': parent.parent_name,
-            'student_id': parent.student.id,
-            'student_name': parent.student.name or parent.student.username,
-            'can_view_class_history': parent.can_view_class_history,
-            'can_view_payments': parent.can_view_payments,
-            'can_select_teacher': parent.can_select_teacher,
-            'can_set_usage_time': parent.can_set_usage_time
+            'success': True,
+            'message': _("Parent login successful"),
+            'data': {
+                'tokens': {
+                    'access': tokens['access'],
+                    'refresh': tokens['refresh']
+                },
+                'parent': {
+                    'parent_id': parent.id,
+                    'parent_name': parent.parent_name,
+                    'can_view_class_history': parent.can_view_class_history,
+                    'can_view_payments': parent.can_view_payments,
+                    'can_select_teacher': parent.can_select_teacher,
+                    'can_set_usage_time': parent.can_set_usage_time
+                },
+                'student': {
+                    'student_id': parent.student.id,
+                    'student_name': parent.student.name or parent.student.username,
+                    'username': parent.student.username
+                }
+            }
         }, status=status.HTTP_200_OK)
 
 
@@ -5327,6 +6950,97 @@ class ParentProfileAPIView(APIView):
         from .parent_serializers import ParentProfileSerializer
         serializer = ParentProfileSerializer(parent)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ParentChangePasswordAPIView(APIView):
+    """
+    تغییر رمز والد
+    والد می‌تواند رمز خود را تغییر دهد
+    
+    post:
+        Change parent password
+        
+        Request body:
+        - student_id: شناسه دانش‌آموز
+        - current_password: رمز فعلی
+        - new_password: رمز جدید (حداقل 8 کاراکتر)
+        - confirm_password: تکرار رمز جدید
+        
+        Returns:
+            200 OK:
+                - success: true
+                - message: "Password updated successfully"
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parent Portal'],
+        summary='Change Parent Password',
+        description='تغییر رمز عبور والد',
+        request=inline_serializer(
+            name='ParentChangePasswordRequest',
+            fields={
+                'student_id': serializers.IntegerField(help_text='شناسه دانش‌آموز'),
+                'current_password': serializers.CharField(help_text='رمز فعلی والد'),
+                'new_password': serializers.CharField(help_text='رمز جدید (حداقل 8 کاراکتر)'),
+                'confirm_password': serializers.CharField(help_text='تکرار رمز جدید')
+            }
+        ),
+        responses={
+            200: OpenApiResponse(description="رمز با موفقیت تغییر کرد"),
+            400: OpenApiResponse(description="خطا در اعتبارسنجی"),
+            403: OpenApiResponse(description="رمز فعلی نادرست است"),
+            404: OpenApiResponse(description="پروفایل والد یافت نشد"),
+        }
+    )
+    def post(self, request):
+        """Change parent password"""
+        from .parent_serializers import ParentChangePasswordSerializer
+        
+        student_id = request.data.get('student_id')
+        
+        if not student_id:
+            return Response({
+                'success': False,
+                'error': _('Student ID is required')
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get student and parent profile
+        try:
+            student = User.objects.get(id=student_id, role='user')
+            parent = ParentProfile.objects.get(student=student, is_active=True)
+        except (User.DoesNotExist, ParentProfile.DoesNotExist):
+            return Response({
+                'success': False,
+                'error': _('Student or parent profile not found')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Validate input
+        serializer = ParentChangePasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        current_password = serializer.validated_data['current_password']
+        new_password = serializer.validated_data['new_password']
+        
+        # Verify current password
+        if not parent.verify_password(current_password):
+            return Response({
+                'success': False,
+                'error': _('Current password is incorrect')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Update password
+        parent.set_password(new_password)
+        parent.save()
+        
+        return Response({
+            'success': True,
+            'message': _('Password updated successfully')
+        }, status=status.HTTP_200_OK)
 
 
 # ===== Attendance API =====
@@ -5908,6 +7622,249 @@ class AttendanceListAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class AttendanceGeneralListAPIView(APIView):
+    """
+    دریافت لیست کلی حضور و غیاب همراه با جزئیات کلاس
+    
+    get:
+        Get general attendance list with class details
+        
+        URL: /api/attendance/list/
+        
+        Query Parameters:
+        - student_id: integer (optional) - فیلتر بر اساس دانش‌آموز
+        - teacher_id: integer (optional) - فیلتر بر اساس معلم
+        - subject_id: integer (optional) - فیلتر بر اساس موضوع تدریس
+        - status: string (optional) - فیلتر بر اساس وضعیت (present/absent)
+        - date_from: string (optional) - فیلتر از تاریخ (YYYY-MM-DD)
+        - date_to: string (optional) - فیلتر تا تاریخ (YYYY-MM-DD)
+        - page: integer (optional, default: 1) - شماره صفحه
+        - page_size: integer (optional, default: 20) - تعداد در هر صفحه
+        
+        Returns:
+            200 OK:
+                - count: integer - تعداد کل رکوردها
+                - next: string - لینک صفحه بعد
+                - previous: string - لینک صفحه قبل
+                - results: array - لیست حضور و غیاب با جزئیات کلاس
+                    - id: integer - شناسه حضور/غیاب
+                    - student: object
+                        - id: integer
+                        - name: string
+                        - username: string
+                    - booking: object
+                        - id: integer
+                        - status: string
+                        - price: decimal
+                        - final_price: decimal
+                    - class_details: object
+                        - date: string (Jalali format)
+                        - start_time: string (HH:MM)
+                        - end_time: string (HH:MM)
+                        - subject_title: string
+                        - teacher_name: string
+                        - teacher_id: integer
+                    - status: string (present/absent)
+                    - marked_at: datetime
+                    - created_at: datetime
+                
+            403 Forbidden - دسترسی غیرمجاز
+    
+    Example GET Request:
+    ```
+    GET /api/attendance/list/?student_id=5&status=present&page=1
+    Authorization: Bearer <token>
+    ```
+    
+    Example Response:
+    ```json
+    {
+        "count": 25,
+        "next": "/api/attendance/list/?page=2",
+        "previous": null,
+        "results": [
+            {
+                "id": 1,
+                "student": {
+                    "id": 5,
+                    "name": "محمد رضایی",
+                    "username": "mohammad_r"
+                },
+                "booking": {
+                    "id": 10,
+                    "status": "completed",
+                    "price": "100000.00",
+                    "final_price": "80000.00"
+                },
+                "class_details": {
+                    "date": "1403/10/15",
+                    "start_time": "09:00",
+                    "end_time": "10:00",
+                    "subject_title": "ریاضی پایه نهم",
+                    "teacher_name": "علی محمدی",
+                    "teacher_id": 3
+                },
+                "status": "present",
+                "marked_at": "2024-12-15T09:05:00Z",
+                "created_at": "2024-12-15T09:05:00Z"
+            }
+        ]
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Attendance'],
+        summary='Get General Attendance List with Class Details',
+        description='دریافت لیست کلی حضور و غیاب همراه با جزئیات کامل کلاس',
+        parameters=[
+            OpenApiParameter('student_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='فیلتر بر اساس شناسه دانش‌آموز'),
+            OpenApiParameter('teacher_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='فیلتر بر اساس شناسه معلم'),
+            OpenApiParameter('subject_id', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='فیلتر بر اساس شناسه موضوع تدریس'),
+            OpenApiParameter('status', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='فیلتر بر اساس وضعیت: present یا absent'),
+            OpenApiParameter('date_from', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='فیلتر از تاریخ (YYYY-MM-DD)'),
+            OpenApiParameter('date_to', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='فیلتر تا تاریخ (YYYY-MM-DD)'),
+            OpenApiParameter('page', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='شماره صفحه (پیش‌فرض: 1)'),
+            OpenApiParameter('page_size', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='تعداد آیتم در هر صفحه (پیش‌فرض: 20)'),
+        ],
+        responses={
+            200: OpenApiResponse(description="لیست حضور و غیاب با جزئیات کلاس"),
+            403: OpenApiResponse(description="دسترسی غیرمجاز"),
+        }
+    )
+    def get(self, request):
+        """Get general attendance list with complete class details"""
+        from classroom.models import Attendance
+        from rest_framework.pagination import PageNumberPagination
+        from datetime import datetime
+        
+        # دریافت تمام رکوردهای حضور و غیاب
+        attendances = Attendance.objects.all().select_related(
+            'student', 
+            'booking', 
+            'booking__availability',
+            'booking__subject',
+            'booking__teacher'
+        ).order_by('-marked_at')
+        
+        # فیلتر بر اساس دانش‌آموز
+        student_id = request.query_params.get('student_id')
+        if student_id:
+            try:
+                attendances = attendances.filter(student_id=int(student_id))
+            except (ValueError, TypeError):
+                pass
+        
+        # فیلتر بر اساس معلم
+        teacher_id = request.query_params.get('teacher_id')
+        if teacher_id:
+            try:
+                attendances = attendances.filter(booking__teacher_id=int(teacher_id))
+            except (ValueError, TypeError):
+                pass
+        
+        # فیلتر بر اساس موضوع تدریس
+        subject_id = request.query_params.get('subject_id')
+        if subject_id:
+            try:
+                attendances = attendances.filter(booking__subject_id=int(subject_id))
+            except (ValueError, TypeError):
+                pass
+        
+        # فیلتر بر اساس وضعیت
+        status_filter = request.query_params.get('status')
+        if status_filter in ['present', 'absent']:
+            attendances = attendances.filter(status=status_filter)
+        
+        # فیلتر بر اساس بازه تاریخی
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+        
+        if date_from:
+            try:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+                attendances = attendances.filter(booking__availability__date__gte=from_date)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+                attendances = attendances.filter(booking__availability__date__lte=to_date)
+            except ValueError:
+                pass
+        
+        # اگر کاربر معلم است، فقط کلاس‌های خودش را ببیند
+        if request.user.role == 'teacher':
+            attendances = attendances.filter(booking__teacher=request.user)
+        
+        # اگر کاربر دانش‌آموز است، فقط حضورهای خودش را ببیند
+        if request.user.role == 'user':
+            attendances = attendances.filter(student=request.user)
+        
+        # Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = int(request.query_params.get('page_size', 20))
+        paginated_attendances = paginator.paginate_queryset(attendances, request)
+        
+        # ساخت پاسخ با جزئیات کامل
+        results = []
+        for attendance in paginated_attendances:
+            # جزئیات دانش‌آموز
+            student_data = {
+                'id': attendance.student.id,
+                'name': attendance.student.name or attendance.student.username,
+                'username': attendance.student.username,
+            }
+            
+            # جزئیات رزرو
+            booking_data = {
+                'id': attendance.booking.id,
+                'status': attendance.booking.status,
+                'price': str(attendance.booking.price),
+                'final_price': str(attendance.booking.final_price),
+            }
+            
+            # جزئیات کلاس (از availability و subject)
+            class_details = {}
+            if attendance.booking.availability:
+                class_details['date'] = attendance.booking.availability.date
+                class_details['start_time'] = str(attendance.booking.availability.start_time)
+                class_details['end_time'] = str(attendance.booking.availability.end_time)
+            else:
+                class_details['date'] = None
+                class_details['start_time'] = None
+                class_details['end_time'] = None
+            
+            if attendance.booking.subject:
+                class_details['subject_title'] = attendance.booking.subject.title
+                class_details['subject_id'] = attendance.booking.subject.id
+            else:
+                class_details['subject_title'] = None
+                class_details['subject_id'] = None
+            
+            if attendance.booking.teacher:
+                class_details['teacher_name'] = attendance.booking.teacher.name or attendance.booking.teacher.username
+                class_details['teacher_id'] = attendance.booking.teacher.id
+            else:
+                class_details['teacher_name'] = None
+                class_details['teacher_id'] = None
+            
+            # ترکیب همه داده‌ها
+            results.append({
+                'id': attendance.id,
+                'student': student_data,
+                'booking': booking_data,
+                'class_details': class_details,
+                'status': attendance.status,
+                'marked_at': attendance.marked_at,
+                'created_at': attendance.created_at,
+            })
+        
+        return paginator.get_paginated_response(results)
+
+
 # ========== Financial System APIs ==========
 
 class TeacherWalletDetailAPIView(APIView):
@@ -6018,6 +7975,182 @@ class TeacherWalletDetailAPIView(APIView):
         
         serializer = TeacherWalletSerializer(wallet)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UpdateBankInformationAPIView(APIView):
+    """
+    Update Teacher Bank Information API
+    
+    Teachers can update their bank account information for withdrawal settlements.
+    Only the authenticated teacher can update their own bank information.
+    Requires authentication (teacher only).
+    
+    put/patch:
+        Update bank information fields.
+        
+        Request body parameters:
+        - bank_name: string (optional) - Name of the bank
+        - account_number: string (optional) - Bank account number
+        - iban: string (optional) - IBAN (format: IR + 24 digits)
+        - card_number: string (optional) - Bank card number (16 digits)
+        - account_holder_name: string (optional) - Name of the account holder
+        
+        Returns:
+            200 OK:
+                - success: boolean - true
+                - message: string - "اطلاعات بانکی با موفقیت به‌روزرسانی شد"
+                - wallet: object - Updated wallet information
+                    - id: integer
+                    - bank_name: string
+                    - account_number: string
+                    - iban: string
+                    - card_number: string
+                    - account_holder_name: string
+                    - is_verified: boolean
+                
+            400 Bad Request:
+                - Invalid IBAN format
+                - Invalid card number format
+                - Validation errors
+                
+            403 Forbidden - User is not a teacher
+            404 Not Found - Wallet not found
+    
+    Example PUT Request:
+    ```
+    PUT /api/wallet/update-bank-info/
+    Authorization: Bearer <teacher_token>
+    Content-Type: application/json
+    
+    {
+        "bank_name": "بانک ملی",
+        "account_number": "1234567890",
+        "iban": "IR123456789012345678901234",
+        "card_number": "6037691234567890",
+        "account_holder_name": "علی محمدی"
+    }
+    ```
+    
+    Example Response:
+    ```json
+    {
+        "success": true,
+        "message": "اطلاعات بانکی با موفقیت به‌روزرسانی شد",
+        "wallet": {
+            "id": 1,
+            "bank_name": "بانک ملی",
+            "account_number": "1234567890",
+            "iban": "IR123456789012345678901234",
+            "card_number": "6037691234567890",
+            "account_holder_name": "علی محمدی",
+            "is_verified": false
+        }
+    }
+    ```
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Financial - Wallet'],
+        summary='Update Teacher Bank Information',
+        description='Update bank account information for withdrawal settlements',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'bank_name': {'type': 'string', 'description': 'Name of the bank'},
+                    'account_number': {'type': 'string', 'description': 'Bank account number'},
+                    'iban': {'type': 'string', 'description': 'IBAN (IR + 24 digits)'},
+                    'card_number': {'type': 'string', 'description': 'Bank card number (16 digits)'},
+                    'account_holder_name': {'type': 'string', 'description': 'Name of the account holder'},
+                },
+            }
+        },
+        responses={
+            200: OpenApiResponse(description="Bank information updated successfully"),
+            400: OpenApiResponse(description="Validation error"),
+            403: OpenApiResponse(description="User is not a teacher"),
+            404: OpenApiResponse(description="Wallet not found"),
+        }
+    )
+    def put(self, request):
+        return self._update_bank_info(request)
+    
+    @extend_schema(
+        tags=['Financial - Wallet'],
+        summary='Update Teacher Bank Information (Partial)',
+        description='Partially update bank account information',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'bank_name': {'type': 'string', 'description': 'Name of the bank'},
+                    'account_number': {'type': 'string', 'description': 'Bank account number'},
+                    'iban': {'type': 'string', 'description': 'IBAN (IR + 24 digits)'},
+                    'card_number': {'type': 'string', 'description': 'Bank card number (16 digits)'},
+                    'account_holder_name': {'type': 'string', 'description': 'Name of the account holder'},
+                },
+            }
+        },
+        responses={
+            200: OpenApiResponse(description="Bank information updated successfully"),
+            400: OpenApiResponse(description="Validation error"),
+            403: OpenApiResponse(description="User is not a teacher"),
+            404: OpenApiResponse(description="Wallet not found"),
+        }
+    )
+    def patch(self, request):
+        return self._update_bank_info(request, partial=True)
+    
+    def _update_bank_info(self, request, partial=False):
+        """Internal method to handle both PUT and PATCH"""
+        from classroom.models import TeacherWallet
+        from .classroom_serializers import BankInformationUpdateSerializer
+        
+        # فقط معلمان
+        if request.user.role != 'teacher':
+            return Response({
+                'error': _('فقط معلمان می‌توانند اطلاعات بانکی خود را ویرایش کنند')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            wallet = TeacherWallet.objects.get(teacher=request.user)
+        except TeacherWallet.DoesNotExist:
+            return Response({
+                'error': _('کیف پول یافت نشد')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = BankInformationUpdateSerializer(
+            wallet, 
+            data=request.data, 
+            partial=partial
+        )
+        
+        if serializer.is_valid():
+            serializer.save()
+            
+            # اگر اطلاعات بانکی به‌روز شد، is_verified را false کنید
+            # تا ادمین دوباره تأیید کند
+            if wallet.is_verified:
+                wallet.is_verified = False
+                wallet.verified_at = None
+                wallet.save()
+            
+            return Response({
+                'success': True,
+                'message': _('اطلاعات بانکی با موفقیت به‌روزرسانی شد'),
+                'wallet': {
+                    'id': wallet.id,
+                    'bank_name': wallet.bank_name,
+                    'account_number': wallet.account_number,
+                    'iban': wallet.iban,
+                    'card_number': wallet.card_number,
+                    'account_holder_name': wallet.account_holder_name,
+                    'is_verified': wallet.is_verified,
+                }
+            }, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class WithdrawalRequestListAPIView(APIView):
@@ -7458,3 +9591,1106 @@ class PaymentRedirectAPIView(APIView):
         
         return HttpResponse(html_content, content_type='text/html')
 
+
+# ========== Parental Control - Usage Tracking APIs ==========
+
+class ParentalLimitsAPIView(APIView):
+    """
+    دریافت محدودیت‌های والدین و وضعیت مصرف کنونی
+    
+    GET: Get parental control limits and current usage status
+    
+    Returns:
+        200 OK:
+            - daily_usage_limit_minutes: حداکثر دقایق روزانه
+            - allowed_start_time: ساعت شروع مجاز
+            - allowed_end_time: ساعت پایان مجاز
+            - server_now: زمان فعلی سرور
+            - server_date: تاریخ فعلی سرور
+            - server_time: ساعت فعلی سرور
+            - used_today_seconds: ثانیه‌های استفاده شده امروز
+            - remaining_seconds: ثانیه‌های باقی‌مانده
+            - blocked: آیا دسترسی بلاک شده است
+            - block_reason: دلیل بلاک (OUT_OF_ALLOWED_WINDOW یا DAILY_LIMIT_REACHED)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parental Control'],
+        summary='Get Parental Control Limits',
+        description='دریافت محدودیت‌های والدین و وضعیت مصرف فعلی دانش‌آموز',
+        responses={
+            200: OpenApiResponse(description="محدودیت‌ها و وضعیت با موفقیت دریافت شد"),
+            404: OpenApiResponse(description="پروفایل والد یافت نشد"),
+        }
+    )
+    def get(self, request):
+        """Get parental limits and usage status"""
+        from account.models import ParentProfile, ParentAppUsageLog
+        from .parent_serializers import ParentalLimitsSerializer
+        
+        # Get student (use authenticated user)
+        student = request.user
+        
+        if student.role != 'user':
+            return Response({
+                'success': False,
+                'error': _('This endpoint is only for students')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get active parent profile
+        parent = ParentProfile.objects.filter(
+            student=student,
+            is_active=True
+        ).first()
+        
+        if not parent:
+            return Response({
+                'success': False,
+                'error': _('No active parent profile found for this student')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get server time (source of truth)
+        server_now = timezone.localtime(timezone.now())
+        today = server_now.date()
+        current_time = server_now.time()
+        
+        # Get or create today's usage log
+        usage_log, created = ParentAppUsageLog.objects.get_or_create(
+            parent=parent,
+            date=today,
+            defaults={'total_seconds': 0, 'total_minutes': 0, 'session_count': 0}
+        )
+        
+        used_today_seconds = usage_log.total_seconds
+        
+        # Compute remaining seconds
+        remaining_seconds = None
+        if parent.daily_usage_limit_minutes:
+            limit_seconds = parent.daily_usage_limit_minutes * 60
+            remaining_seconds = max(0, limit_seconds - used_today_seconds)
+        
+        # Check if blocked
+        blocked = False
+        block_reason = None
+        
+        # Check time window
+        if not parent.is_within_allowed_window(current_time):
+            blocked = True
+            block_reason = 'OUT_OF_ALLOWED_WINDOW'
+        
+        # Check daily limit
+        elif parent.daily_usage_limit_minutes and remaining_seconds == 0:
+            blocked = True
+            block_reason = 'DAILY_LIMIT_REACHED'
+        
+        # Prepare response data
+        data = {
+            'daily_usage_limit_minutes': parent.daily_usage_limit_minutes,
+            'allowed_start_time': parent.allowed_start_time,
+            'allowed_end_time': parent.allowed_end_time,
+            'server_now': server_now,
+            'server_date': today,
+            'server_time': current_time,
+            'used_today_seconds': used_today_seconds,
+            'remaining_seconds': remaining_seconds,
+            'blocked': blocked,
+            'block_reason': block_reason
+        }
+        
+        serializer = ParentalLimitsSerializer(data)
+        
+        return Response({
+            'success': True,
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class ParentalUsageReportAPIView(APIView):
+    """
+    گزارش مصرف از طرف دانش‌آموز
+    
+    POST: Report usage chunk from student device
+    
+    Request body:
+        - session_seconds: int (1-600) - تعداد ثانیه‌های این جلسه
+        - device_id: string (optional) - شناسه دستگاه
+        - client_started_at: datetime (optional) - زمان شروع در دستگاه
+        - client_ended_at: datetime (optional) - زمان پایان در دستگاه
+    
+    Returns:
+        200 OK: همان پاسخ GET limits با وضعیت به‌روز شده
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        tags=['Parental Control'],
+        summary='Report Usage Chunk',
+        description='گزارش مصرف زمان توسط دانش‌آموز (حداکثر 10 دقیقه در هر گزارش)',
+        request=inline_serializer(
+            name='UsageReportRequest',
+            fields={
+                'session_seconds': serializers.IntegerField(min_value=1, max_value=600),
+                'device_id': serializers.CharField(required=False, allow_blank=True),
+                'client_started_at': serializers.DateTimeField(required=False),
+                'client_ended_at': serializers.DateTimeField(required=False)
+            }
+        ),
+        responses={
+            200: OpenApiResponse(description="مصرف با موفقیت ثبت شد"),
+            400: OpenApiResponse(description="داده‌های نامعتبر"),
+            404: OpenApiResponse(description="پروفایل والد یافت نشد"),
+        }
+    )
+    def post(self, request):
+        """Report usage chunk"""
+        from account.models import ParentProfile, ParentAppUsageLog
+        from .parent_serializers import UsageReportRequestSerializer, ParentalLimitsSerializer
+        from django.db.models import F
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        # Validate request
+        serializer = UsageReportRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        session_seconds = serializer.validated_data['session_seconds']
+        device_id = serializer.validated_data.get('device_id', '')
+        
+        # Get student (use authenticated user)
+        student = request.user
+        
+        if student.role != 'user':
+            return Response({
+                'success': False,
+                'error': _('This endpoint is only for students')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get active parent profile
+        parent = ParentProfile.objects.filter(
+            student=student,
+            is_active=True
+        ).first()
+        
+        if not parent:
+            return Response({
+                'success': False,
+                'error': _('No active parent profile found for this student'),
+                'error_code': 'NO_PARENT_PROFILE'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check for multiple parents (log warning)
+        parent_count = ParentProfile.objects.filter(
+            student=student,
+            is_active=True
+        ).count()
+        
+        if parent_count > 1:
+            logger.warning(
+                f"Student {student.id} ({student.username}) has {parent_count} active parent profiles. "
+                f"Using earliest created parent profile {parent.id}."
+            )
+        
+        # Use server time as source of truth
+        server_now = timezone.localtime(timezone.now())
+        today = server_now.date()
+        
+        # Upsert usage log (atomic update)
+        usage_log, created = ParentAppUsageLog.objects.get_or_create(
+            parent=parent,
+            date=today,
+            defaults={
+                'total_seconds': 0,
+                'total_minutes': 0,
+                'session_count': 0,
+                'last_reported_at': server_now
+            }
+        )
+        
+        # Atomically update usage (use F() to avoid race conditions)
+        ParentAppUsageLog.objects.filter(pk=usage_log.pk).update(
+            total_seconds=F('total_seconds') + session_seconds,
+            total_minutes=F('total_seconds') // 60,  # Derived from seconds
+            session_count=F('session_count') + 1,
+            last_reported_at=server_now
+        )
+        
+        # Refresh from database to get updated values
+        usage_log.refresh_from_db()
+        
+        used_today_seconds = usage_log.total_seconds
+        
+        # Compute remaining seconds
+        remaining_seconds = None
+        if parent.daily_usage_limit_minutes:
+            limit_seconds = parent.daily_usage_limit_minutes * 60
+            remaining_seconds = max(0, limit_seconds - used_today_seconds)
+        
+        # Check if blocked
+        current_time = server_now.time()
+        blocked = False
+        block_reason = None
+        
+        # Check time window
+        if not parent.is_within_allowed_window(current_time):
+            blocked = True
+            block_reason = 'OUT_OF_ALLOWED_WINDOW'
+        
+        # Check daily limit
+        elif parent.daily_usage_limit_minutes and remaining_seconds == 0:
+            blocked = True
+            block_reason = 'DAILY_LIMIT_REACHED'
+        
+        # Prepare response data
+        data = {
+            'daily_usage_limit_minutes': parent.daily_usage_limit_minutes,
+            'allowed_start_time': parent.allowed_start_time,
+            'allowed_end_time': parent.allowed_end_time,
+            'server_now': server_now,
+            'server_date': today,
+            'server_time': current_time,
+            'used_today_seconds': used_today_seconds,
+            'remaining_seconds': remaining_seconds,
+            'blocked': blocked,
+            'block_reason': block_reason
+        }
+        
+        response_serializer = ParentalLimitsSerializer(data)
+        
+        return Response({
+            'success': True,
+            'message': _('Usage recorded successfully'),
+            'data': response_serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+# ===== Teacher's Students & Classes APIs =====
+
+class TeacherStudentsListAPIView(APIView):
+    """
+    API to fetch all students of a teacher (from paid classes only)
+    
+    Permission: Authenticated, Teacher only
+    
+    GET /api/teacher/students/
+    GET /api/teacher/students/?search=ali
+    
+    Query Parameters:
+        - search (optional): Search by student name or username
+    
+    Returns:
+        200 OK:
+            {
+                'success': true,
+                'message': 'Students list retrieved successfully',
+                'data': [
+                    {
+                        'student_id': 123,
+                        'name': 'علی محمدی',
+                        'username': 'ali_mohammad',
+                        'selected_avatar': 5,
+                        'last_paid_class_date': '1403/10/15',
+                        'total_paid_classes': 5
+                    },
+                    ...
+                ]
+            }
+        
+        403 Forbidden: User is not a teacher
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary='Fetch teacher\'s students',
+        description='Get all unique students who have paid classes with this teacher. Supports search by name or username.',
+        parameters=[
+            OpenApiParameter(
+                name='search',
+                location=OpenApiParameter.QUERY,
+                description='Search by student name or username',
+                required=False,
+                type=OpenApiTypes.STR
+            )
+        ],
+        responses={
+            200: inline_serializer(
+                name='TeacherStudentsResponse',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': serializers.ListField(child=serializers.DictField())
+                }
+            )
+        }
+    )
+    def get(self, request):
+        """Get all students of this teacher (from paid classes)"""
+        teacher = request.user
+        
+        # Check if user is a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                'success': False,
+                'message': _('Only teachers can access this endpoint')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get unique students with paid classes from this teacher
+        from django.db.models import Max, Count, Q, F
+        from classroom.models import Attendance
+        
+        students_data = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).values('student').distinct().annotate(
+            last_paid_class_date=Max('availability__date'),
+            total_paid_classes=Count('id', filter=Q(payment_status='paid'))
+        ).values('student', 'last_paid_class_date', 'total_paid_classes')
+        
+        # Fetch student details and avatars
+        student_ids = [s['student'] for s in students_data]
+        students_dict = {s.id: s for s in User.objects.filter(id__in=student_ids)}
+        students_map = {s['student']: s for s in students_data}
+        
+        # Fetch avatar information
+        from account.models import AvatarTemplate
+        avatar_dict = {a.id: a.image.url if a.image else None for a in AvatarTemplate.objects.all()}
+        
+        # Serialize data
+        result = []
+        for student_id in student_ids:
+            student = students_dict.get(student_id)
+            student_stats = students_map.get(student_id)
+            
+            if student and student_stats:
+                # Calculate attendance percentage
+                total_classes = ClassBooking.objects.filter(
+                    teacher=teacher,
+                    student=student,
+                    payment_status='paid'
+                ).count()
+                
+                if total_classes > 0:
+                    attended_classes = Attendance.objects.filter(
+                        student=student,
+                        booking__teacher=teacher,
+                        booking__payment_status='paid',
+                        status='present'
+                    ).count()
+                    average_attendance = (attended_classes / total_classes) * 100
+                else:
+                    average_attendance = 0.0
+                
+                # Get avatar URL
+                avatar_url = None
+                if student.selected_avatar_id:
+                    avatar_url = avatar_dict.get(student.selected_avatar_id)
+                
+                result.append({
+                    'student_id': student.id,
+                    'name': student.name or student.username,
+                    'username': student.username,
+                    'selected_avatar': avatar_url,
+                    'total_classes': total_classes,
+                    'average_attendance_percentage': round(average_attendance, 2),
+                    'last_paid_class_date': student_stats['last_paid_class_date'],
+                    'total_paid_classes': student_stats['total_paid_classes']
+                })
+        
+        # Apply search filter if provided
+        search_query = request.query_params.get('search', '').strip()
+        if search_query:
+            search_query_lower = search_query.lower()
+            result = [
+                student for student in result
+                if search_query_lower in student['name'].lower() or 
+                   search_query_lower in student['username'].lower()
+            ]
+        
+        # Sort by last_paid_class_date (newest first)
+        result.sort(key=lambda x: x['last_paid_class_date'] or dt.date.min, reverse=True)
+        
+        serializer = TeacherStudentSerializer(result, many=True)
+        
+        return Response({
+            'success': True,
+            'message': _('Students list retrieved successfully'),
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class StudentPaidClassesListAPIView(APIView):
+    """
+    API to fetch all paid classes for a specific student (teacher's view)
+    
+    Permission: Authenticated, Teacher only (can only see their own students)
+    
+    GET /api/teacher/student/<student_id>/paid-classes/
+    
+    Returns same fields as /api/teacher/bookings/ endpoint for consistency.
+    
+    Returns:
+        200 OK:
+            {
+                'success': true,
+                'message': 'Classes retrieved successfully',
+                'data': [
+                    {
+                        'id': 456,
+                        'availability': 123,
+                        'availability_date': '2024-12-20',
+                        'availability_time': '09:00 - 10:00',
+                        'teacher': 1,
+                        'teacher_name': 'علی معلم',
+                        'student': 5,
+                        'student_name': 'علی محمدی',
+                        'subject': 10,
+                        'subject_title': 'انگلیسی مبتدی',
+                        'status': 'completed',
+                        'status_display': 'تکمیل شده',
+                        'price': '500000.00',
+                        'discount_amount': '50000.00',
+                        'final_price': '450000.00',
+                        'created_at': '2024-12-18T14:30:00Z',
+                        'updated_at': '2024-12-20T14:30:00Z'
+                    },
+                    ...
+                ]
+            }
+        
+        403 Forbidden: User is not a teacher or not their student
+        404 Not Found: Student not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary='Fetch paid classes for a student',
+        description='Get all paid classes for a specific student under this teacher. Returns same fields as /api/teacher/bookings/',
+        parameters=[
+            OpenApiParameter(
+                name='student_id',
+                location=OpenApiParameter.PATH,
+                description='ID of the student',
+                required=True,
+                type=OpenApiTypes.INT
+            )
+        ],
+        responses={
+            200: inline_serializer(
+                name='StudentPaidClassesResponse',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': serializers.ListField(child=serializers.DictField())
+                }
+            )
+        }
+    )
+    def get(self, request, student_id):
+        """Get all paid classes for a student (teacher's view)"""
+        teacher = request.user
+        
+        # Check if user is a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                'success': False,
+                'message': _('Only teachers can access this endpoint')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Verify student exists
+        student = get_object_or_404(User, id=student_id)
+        
+        # Get all paid classes for this student from this teacher
+        classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            student=student,
+            payment_status='paid'
+        ).select_related('availability', 'subject').order_by('-availability__date')
+        
+        # Serialize using ClassBookingSerializer for consistency with teacher/bookings/
+        from .classroom_serializers import ClassBookingSerializer
+        serializer = ClassBookingSerializer(classes, many=True)
+        
+        return Response({
+            'success': True,
+            'message': _('Classes retrieved successfully'),
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class StudentExercisesListAPIView(APIView):
+    """
+    API to fetch exercise templates for a student
+    
+    Returns all CategoryField (exercise templates) from subjects where the student
+    has paid classes with this teacher. Includes student's answers and correctness.
+    
+    Permission: Authenticated, Teacher only (can only see their own students)
+    
+    GET /api/teacher/student/<student_id>/exercises/
+    
+    Returns:
+        200 OK:
+            {
+                'success': true,
+                'message': 'Exercises retrieved successfully',
+                'data': [
+                    {
+                        'exercise_id': 789,
+                        'subject_id': 123,
+                        'subject_title': 'انگلیسی مبتدی',
+                        'field_id': 456,
+                        'field_title': 'سوال اول',
+                        'step': 1,
+                        'sort': 0,
+                        'type': 'input',
+                        'is_conditional': false,
+                        'answered': true,
+                        'answer_value': 'پاسخ دانش‌آموز',
+                        'answer_field_detail_id': 10,
+                        'is_correct': true
+                    },
+                    ...
+                ]
+            }
+        
+        403 Forbidden: User is not a teacher or not their student
+        404 Not Found: Student not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary='Fetch exercise templates for a student',
+        description='Get all exercise templates from subjects where student has paid classes',
+        parameters=[
+            OpenApiParameter(
+                name='student_id',
+                location=OpenApiParameter.PATH,
+                description='ID of the student',
+                required=True,
+                type=OpenApiTypes.INT
+            )
+        ],
+        responses={
+            200: inline_serializer(
+                name='StudentExercisesResponse',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': serializers.ListField(child=serializers.DictField())
+                }
+            )
+        }
+    )
+    def get(self, request, student_id):
+        """Get all exercise templates for a student"""
+        teacher = request.user
+        
+        # Check if user is a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                'success': False,
+                'message': _('Only teachers can access this endpoint')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Verify student exists
+        student = get_object_or_404(User, id=student_id)
+        
+        # Get all subjects where this student has paid classes with this teacher
+        subject_ids = ClassBooking.objects.filter(
+            teacher=teacher,
+            student=student,
+            payment_status='paid'
+        ).values_list('subject_id', flat=True).distinct()
+        
+        # Get all CategoryField exercises from these subjects
+        exercises = CategoryField.objects.filter(
+            teachingsubject_id__in=subject_ids
+        ).select_related('teachingsubject', 'field').order_by('teachingsubject', 'step', 'sort')
+        
+        # دریافت پاسخ‌های دانش‌آموز
+        from exercise.models import Order, OrderDetail, FieldDetail
+        
+        # Get all orders for this student
+        student_orders = Order.objects.filter(
+            user=student,
+            teachingsubject_id__in=subject_ids
+        ).values('id', 'teachingsubject_id')
+        
+        # Build a dict: {subject_id: order_id}
+        subject_order_map = {o['teachingsubject_id']: o['id'] for o in student_orders}
+        
+        # Get all order details for student's orders
+        order_ids = [o['id'] for o in student_orders]
+        order_details = OrderDetail.objects.filter(
+            order_id__in=order_ids
+        ).select_related('field_detail')
+        
+        # Build a dict: {(order_id, field_id): {'value': ..., 'field_detail_id': ..., 'is_correct': ..., 'field_detail': ...}}
+        student_answers = {}
+        for od in order_details:
+            key = (od.order_id, od.field_id)
+            is_correct = False
+            field_detail_info = None
+            
+            if od.field_detail:
+                # سوال چند گزینه‌ای
+                is_correct = od.field_detail.is_correct == 1
+                field_detail_info = {
+                    'id': od.field_detail.id,
+                    'title': od.field_detail.title,
+                    'second_title': od.field_detail.second_title,
+                    'image_path': od.field_detail.image_path,
+                    'is_correct': od.field_detail.is_correct,
+                }
+            else:
+                # سوال متنی - مقایسه با correct_answer
+                field_detail_obj = FieldDetail.objects.filter(field_id=od.field_id).first()
+                if field_detail_obj and field_detail_obj.correct_answer:
+                    student_val = (od.value or '').strip().lower()
+                    correct_val = field_detail_obj.correct_answer.strip().lower()
+                    is_correct = student_val == correct_val
+            
+            student_answers[key] = {
+                'value': od.value,
+                'field_detail_id': od.field_detail_id,
+                'is_correct': is_correct,
+                'field_detail': field_detail_info
+            }
+        
+        # Serialize data
+        result = []
+        for exercise in exercises:
+            order_id = subject_order_map.get(exercise.teachingsubject_id)
+            answer_data = student_answers.get((order_id, exercise.field_id)) if order_id else None
+            
+            result.append({
+                'exercise_id': exercise.id,
+                'subject_id': exercise.teachingsubject.id,
+                'subject_title': exercise.teachingsubject.title,
+                'field_id': exercise.field.id,
+                'field_title': exercise.field.title,
+                'step': exercise.step,
+                'sort': exercise.sort,
+                'type': exercise.type,
+                'is_conditional': exercise.is_conditional,
+                'answered': answer_data is not None,
+                'answer_value': answer_data['value'] if answer_data else None,
+                'answer_field_detail_id': answer_data['field_detail_id'] if answer_data else None,
+                'answer_field_detail': answer_data['field_detail'] if answer_data else None,
+                'is_correct': answer_data['is_correct'] if answer_data else None
+            })
+        
+        serializer = StudentExerciseTemplateSerializer(result, many=True)
+        
+        return Response({
+            'success': True,
+            'message': _('Exercises retrieved successfully'),
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+class StudentProfileDetailAPIView(APIView):
+    """
+    API to fetch a student's profile details (teacher's view)
+    
+    Permission: Authenticated, Teacher only (can only see their own students)
+    
+    GET /api/teacher/student/<student_id>/profile/
+    
+    Returns comprehensive student profile information including:
+    - Basic info (name, username, email, phone)
+    - Profile info (bio, gender, birth_date, avatar, profile photo)
+    - Class statistics (total classes, attendance %, last class date)
+    
+    Returns:
+        200 OK:
+            {
+                'success': true,
+                'message': 'Student profile retrieved successfully',
+                'data': {
+                    'student_id': 5,
+                    'name': 'علی محمدی',
+                    'username': 'ali_mohammad',
+                    'email': 'ali@example.com',
+                    'phone': '09123456789',
+                    'bio': 'I love learning English',
+                    'gender': 'male',
+                    'birth_date': '1408/05/15',
+                    'selected_avatar': 'https://example.com/media/avatars/avatar_2.png',
+                    'profile_photo_path': 'https://example.com/media/profiles/student_5.jpg',
+                    'total_classes': 8,
+                    'average_attendance_percentage': 87.5,
+                    'last_class_date': '1403/10/20',
+                    'created_at': '2023-12-10T14:30:00Z'
+                }
+            }
+        
+        403 Forbidden: User is not a teacher
+        404 Not Found: Student not found
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary='Fetch student profile details',
+        description='Get comprehensive student profile information visible to their teacher',
+        parameters=[
+            OpenApiParameter(
+                name='student_id',
+                location=OpenApiParameter.PATH,
+                description='ID of the student',
+                required=True,
+                type=OpenApiTypes.INT
+            )
+        ],
+        responses={
+            200: inline_serializer(
+                name='StudentProfileDetailResponse',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': serializers.DictField()
+                }
+            )
+        }
+    )
+    def get(self, request, student_id):
+        """Get student profile details"""
+        teacher = request.user
+        
+        # Check if user is a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                'success': False,
+                'message': _('Only teachers can access this endpoint')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Verify student exists
+        student = get_object_or_404(User, id=student_id)
+        
+        # Verify this student has at least one paid class with this teacher
+        has_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            student=student,
+            payment_status='paid'
+        ).exists()
+        
+        if not has_classes:
+            return Response({
+                'success': False,
+                'message': _('Student not found or has no paid classes with this teacher')
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Calculate attendance percentage
+        from classroom.models import Attendance
+        
+        total_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            student=student,
+            payment_status='paid'
+        ).count()
+        
+        if total_classes > 0:
+            attended_classes = Attendance.objects.filter(
+                student=student,
+                booking__teacher=teacher,
+                booking__payment_status='paid',
+                status='present'
+            ).count()
+            average_attendance = (attended_classes / total_classes) * 100
+        else:
+            average_attendance = 0.0
+        
+        # Get last class date
+        from django.db.models import Max
+        last_class = ClassBooking.objects.filter(
+            teacher=teacher,
+            student=student,
+            payment_status='paid'
+        ).aggregate(last_date=Max('availability__date'))
+        last_class_date = last_class['last_date']
+        
+        # Get avatar URL
+        from account.models import AvatarTemplate
+        avatar_url = None
+        if student.selected_avatar_id:
+            try:
+                avatar = AvatarTemplate.objects.get(id=student.selected_avatar_id)
+                avatar_url = avatar.image.url if avatar.image else None
+            except AvatarTemplate.DoesNotExist:
+                avatar_url = None
+        
+        # Get profile photo URL
+        profile_photo_url = None
+        if student.profile_photo_path:
+            profile_photo_url = student.profile_photo_path.url if student.profile_photo_path else None
+        
+        # Build response data
+        profile_data = {
+            'student_id': student.id,
+            'name': student.name or student.username,
+            'username': student.username,
+            'email': student.email,
+            'phone': student.phone,
+            'bio': student.bio,
+            'gender': student.gender,
+            'birth_date': student.birth_date,
+            'selected_avatar': avatar_url,
+            'profile_photo_path': profile_photo_url,
+            'total_classes': total_classes,
+            'average_attendance_percentage': round(average_attendance, 2),
+            'last_class_date': last_class_date,
+            'created_at': student.created_at
+        }
+        
+        from .classroom_serializers import StudentProfileDetailSerializer
+        serializer = StudentProfileDetailSerializer(profile_data)
+        
+        return Response({
+            'success': True,
+            'message': _('Student profile retrieved successfully'),
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class TeacherDashboardAPIView(APIView):
+    """
+    API to fetch teacher dashboard summary with key metrics and statistics
+    
+    Permission: Authenticated, Teacher only
+    
+    GET /api/teacher/dashboard/
+    
+    Returns comprehensive dashboard data including:
+    - Overall statistics (students, classes, revenue)
+    - Class breakdown (completed, pending, cancelled)
+    - Payment information
+    - Recent classes and activities
+    - Top performing students
+    - Teaching subjects summary
+    
+    Returns:
+        200 OK:
+            {
+                'success': true,
+                'message': 'Dashboard data retrieved successfully',
+                'data': {
+                    'total_students': 25,
+                    'total_classes': 120,
+                    'total_paid_classes': 115,
+                    'total_revenue': '5750000.00',
+                    'average_student_attendance': 87.5,
+                    'completed_classes': 110,
+                    'pending_classes': 5,
+                    'cancelled_classes': 5,
+                    'total_paid_amount': '5750000.00',
+                    'pending_payment': '125000.00',
+                    'average_class_price': '50000.00',
+                    'recent_classes': [...],
+                    'top_students': [...],
+                    'subjects': [...]
+                }
+            }
+        
+        403 Forbidden: User is not a teacher
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary='Fetch teacher dashboard',
+        description='Get comprehensive dashboard metrics and statistics for teacher',
+        responses={
+            200: inline_serializer(
+                name='TeacherDashboardResponse',
+                fields={
+                    'success': serializers.BooleanField(),
+                    'message': serializers.CharField(),
+                    'data': serializers.DictField()
+                }
+            )
+        }
+    )
+    def get(self, request):
+        """Get teacher dashboard summary"""
+        teacher = request.user
+        
+        # Check if user is a teacher
+        if teacher.role != 'teacher':
+            return Response({
+                'success': False,
+                'message': _('Only teachers can access this endpoint')
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        from django.db.models import Max, Count, Q, Sum, Avg, F
+        from classroom.models import Attendance
+        
+        # ===== OVERALL STATISTICS =====
+        
+        # Count unique students with paid classes
+        total_students = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).values('student').distinct().count()
+        
+        # Count all classes
+        total_classes = ClassBooking.objects.filter(teacher=teacher).count()
+        total_paid_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).count()
+        
+        # Calculate total revenue (from paid classes)
+        revenue_data = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).aggregate(total=Sum('final_price'))
+        total_revenue = revenue_data['total'] or 0
+        
+        # Calculate average attendance across all paid classes
+        total_attended = Attendance.objects.filter(
+            booking__teacher=teacher,
+            booking__payment_status='paid',
+            status='present'
+        ).count()
+        
+        if total_paid_classes > 0:
+            average_attendance = (total_attended / total_paid_classes) * 100
+        else:
+            average_attendance = 0.0
+        
+        # ===== CLASS STATISTICS =====
+        
+        completed_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            status='completed'
+        ).count()
+        
+        pending_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            status__in=['reserved']
+        ).count()
+        
+        cancelled_classes = ClassBooking.objects.filter(
+            teacher=teacher,
+            status__in=['cancelled', 'no_show']
+        ).count()
+        
+        # ===== PAYMENT STATISTICS =====
+        
+        total_paid = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).aggregate(total=Sum('paid_amount'))['total'] or 0
+        
+        pending_payment = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status__in=['not_paid', 'partial']
+        ).aggregate(total=Sum('final_price'))['total'] or 0
+        
+        avg_price = ClassBooking.objects.filter(
+            teacher=teacher,
+            payment_status='paid'
+        ).aggregate(avg=Avg('final_price'))['avg'] or 0
+        
+        # ===== RECENT CLASSES =====
+        
+        recent_classes_list = ClassBooking.objects.filter(
+            teacher=teacher
+        ).select_related('student', 'subject', 'availability').order_by(
+            '-availability__date'
+        )[:5]
+        
+        recent_classes_data = []
+        for booking in recent_classes_list:
+            recent_classes_data.append({
+                'id': booking.id,
+                'student_name': booking.student.name or booking.student.username,
+                'subject_title': booking.subject.title,
+                'date': booking.availability.date,
+                'time': f"{booking.availability.start_time.strftime('%H:%M')} - {booking.availability.end_time.strftime('%H:%M')}",
+                'status': booking.get_status_display(),
+                'payment_status': booking.get_payment_status_display(),
+                'price': str(booking.final_price)
+            })
+        
+        # ===== TOP STUDENTS (Ranked by Medals) =====
+        
+        top_students_list = User.objects.filter(
+            received_medals__teacher=teacher
+        ).annotate(
+            medal_count=Count('received_medals', distinct=True),
+            class_count=Count('booked_classes', filter=Q(booked_classes__teacher=teacher, booked_classes__payment_status='paid'), distinct=True)
+        ).order_by('-medal_count')[:5]
+        
+        top_students_data = []
+        for student in top_students_list:
+            # Calculate attendance for this student
+            student_attended = Attendance.objects.filter(
+                student=student,
+                booking__teacher=teacher,
+                booking__payment_status='paid',
+                status='present'
+            ).count()
+            
+            attendance_percent = (student_attended / student.class_count * 100) if student.class_count > 0 else 0
+            
+            top_students_data.append({
+                'student_id': student.id,
+                'name': student.name or student.username,
+                'username': student.username,
+                'total_medals': student.medal_count,
+                'total_classes': student.class_count,
+                'attendance_percentage': round(attendance_percent, 2)
+            })
+        
+        # ===== TEACHING SUBJECTS SUMMARY =====
+        
+        subjects_list = TeachingSubject.objects.filter(
+            teacher=teacher
+        ).annotate(
+            class_count=Count('bookings', filter=Q(bookings__payment_status='paid')),
+            total_revenue=Sum('bookings__final_price', filter=Q(bookings__payment_status='paid'))
+        ).values(
+            'id', 'title', 'level', 'class_count', 'total_revenue'
+        )[:10]
+        
+        subjects_data = []
+        for subject in subjects_list:
+            subjects_data.append({
+                'subject_id': subject['id'],
+                'title': subject['title'],
+                'level': subject['level'],
+                'class_count': subject['class_count'],
+                'total_revenue': str(subject['total_revenue'] or 0)
+            })
+        
+        # ===== BUILD RESPONSE =====
+        
+        dashboard_data = {
+            'total_students': total_students,
+            'total_classes': total_classes,
+            'total_paid_classes': total_paid_classes,
+            'total_revenue': str(total_revenue),
+            'average_student_attendance': round(average_attendance, 2),
+            'completed_classes': completed_classes,
+            'pending_classes': pending_classes,
+            'cancelled_classes': cancelled_classes,
+            'total_paid_amount': str(total_paid),
+            'pending_payment': str(pending_payment),
+            'average_class_price': str(avg_price),
+            'recent_classes': recent_classes_data,
+            'top_students': top_students_data,
+            'subjects': subjects_data
+        }
+        
+        from .classroom_serializers import TeacherDashboardSerializer
+        serializer = TeacherDashboardSerializer(dashboard_data)
+        
+        return Response({
+            'success': True,
+            'message': _('Dashboard data retrieved successfully'),
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)

@@ -619,6 +619,21 @@ class ParentProfile(BaseModel):
         from django.contrib.auth.hashers import make_password
         self.parent_password_hash = make_password(raw_password)
     
+    def is_within_allowed_window(self, now_time):
+        """بررسی اینکه زمان فعلی در بازه مجاز است یا خیر"""
+        if not self.allowed_start_time or not self.allowed_end_time:
+            return True  # No time restrictions
+        
+        start = self.allowed_start_time
+        end = self.allowed_end_time
+        
+        if start <= end:
+            # Normal window: e.g., 08:00 - 22:00
+            return start <= now_time <= end
+        else:
+            # Overnight window: e.g., 22:00 - 08:00
+            return now_time >= start or now_time <= end
+    
     def save(self, *args, **kwargs):
         """ذخیره والدین"""
         super().save(*args, **kwargs)
@@ -648,6 +663,17 @@ class ParentAppUsageLog(BaseModel):
         verbose_name=_("Number of sessions"),
         help_text=_("تعداد جلسات استفاده در این روز")
     )
+    total_seconds = models.IntegerField(
+        default=0,
+        verbose_name=_("Total seconds used"),
+        help_text=_("کل ثانیه‌های استفاده در این روز")
+    )
+    last_reported_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Last report at"),
+        help_text=_("آخرین زمان گزارش مصرف از اپ")
+    )
     
     class Meta:
         db_table = 'parent_app_usage_logs'
@@ -659,6 +685,11 @@ class ParentAppUsageLog(BaseModel):
             models.Index(fields=['date']),
         ]
         unique_together = ('parent', 'date')
+    
+    @property
+    def used_minutes(self):
+        """محاسبه دقایق استفاده شده از ثانیه‌ها"""
+        return self.total_seconds // 60
     
     def __str__(self):
         return f"{self.parent.student.name} - {self.date} - {self.total_minutes} min"

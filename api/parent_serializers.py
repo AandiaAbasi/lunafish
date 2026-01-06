@@ -38,13 +38,13 @@ class JalaliDateField(serializers.DateField):
 
 # ===== Parent Login Serializer =====
 class ParentLoginSerializer(serializers.Serializer):
-    """والدین برای ورود می‌توانند از student_id، شماره تماس یا ایمیل استفاده کنند"""
-    identifier = serializers.CharField(
+    """والدین برای ورود باید از نام کاربری دانش‌آموز استفاده کنند"""
+    username = serializers.CharField(
         max_length=255,
         write_only=True,
-        help_text=_("شناسه دانش‌آموز یا شماره تماس یا ایمیل")
+        help_text=_("نام کاربری دانش‌آموز")
     )
-    parent_password = serializers.CharField(
+    password = serializers.CharField(
         max_length=255,
         write_only=True,
         help_text=_("رمز والدین"),
@@ -52,29 +52,21 @@ class ParentLoginSerializer(serializers.Serializer):
     )
     
     def validate(self, data):
-        """بررسی صحت identifier و parent_password"""
-        identifier = data.get('identifier')
-        parent_password = data.get('parent_password')
+        """بررسی صحت username و password"""
+        username = data.get('username')
+        password = data.get('password')
         
-        # بررسی دانش‌آموز بر اساس شناسه، شماره تماس یا ایمیل
+        # بررسی دانش‌آموز بر اساس نام کاربری
         student = None
         try:
-            # ابتدا تلاش کنید شناسه را به عنوان ID پیدا کنید
-            if identifier.isdigit():
-                student = User.objects.get(id=int(identifier), role='user')
-            else:
-                # سپس بر اساس شماره تماس یا ایمیل جستجو کنید
-                from django.db.models import Q
-                student = User.objects.get(
-                    (Q(phone=identifier) | Q(email=identifier)) & Q(role='user')
-                )
+            student = User.objects.get(username=username, role='user')
         except User.DoesNotExist:
             raise serializers.ValidationError({
-                'identifier': _("Student not found. Please check your student ID, phone number or email.")
+                'username': _("Student not found. Please check the student username.")
             })
         except Exception:
             raise serializers.ValidationError({
-                'identifier': _("Invalid identifier format")
+                'username': _("Invalid username format")
             })
         
         # بررسی والد
@@ -82,13 +74,13 @@ class ParentLoginSerializer(serializers.Serializer):
             parent = ParentProfile.objects.get(student=student, is_active=True)
         except ParentProfile.DoesNotExist:
             raise serializers.ValidationError({
-                'parent_password': _("No parent profile found for this student")
+                'password': _("No parent profile found for this student")
             })
         
         # بررسی رمز
-        if not parent.verify_password(parent_password):
+        if not parent.verify_password(password):
             raise serializers.ValidationError({
-                'parent_password': _("Invalid parent password")
+                'password': _("Invalid parent password")
             })
         
         # ذخیره parent برای استفاده در view
@@ -306,6 +298,101 @@ class TeachingSubjectForParentSelectionSerializer(serializers.ModelSerializer):
     """موضوعات تدریس برای انتخاب توسط والد"""
     teacher_name = serializers.CharField(source='teacher.name', read_only=True)
     teacher_id = serializers.IntegerField(source='teacher.id', read_only=True)
+
+
+# ===== Parental Control Usage Tracking Serializers =====
+
+class ParentalLimitsSerializer(serializers.Serializer):
+    """دریافت محدودیت‌های والدین و وضعیت مصرف"""
+    daily_usage_limit_minutes = serializers.IntegerField(
+        allow_null=True,
+        help_text=_("حداکثر دقایق استفاده روزانه")
+    )
+    allowed_start_time = serializers.TimeField(
+        allow_null=True,
+        help_text=_("ساعت شروع مجاز")
+    )
+    allowed_end_time = serializers.TimeField(
+        allow_null=True,
+        help_text=_("ساعت پایان مجاز")
+    )
+    server_now = serializers.DateTimeField(
+        help_text=_("زمان فعلی سرور")
+    )
+    server_date = serializers.DateField(
+        help_text=_("تاریخ فعلی سرور")
+    )
+    server_time = serializers.TimeField(
+        help_text=_("ساعت فعلی سرور")
+    )
+    used_today_seconds = serializers.IntegerField(
+        help_text=_("ثانیه‌های استفاده شده امروز")
+    )
+    remaining_seconds = serializers.IntegerField(
+        allow_null=True,
+        help_text=_("ثانیه‌های باقی‌مانده")
+    )
+    blocked = serializers.BooleanField(
+        help_text=_("آیا دسترسی بلاک شده است")
+    )
+    block_reason = serializers.CharField(
+        allow_null=True,
+        help_text=_("دلیل بلاک")
+    )
+
+
+class UsageReportRequestSerializer(serializers.Serializer):
+    """گزارش مصرف از طرف دانش‌آموز"""
+    session_seconds = serializers.IntegerField(
+        min_value=1,
+        max_value=600,
+        help_text=_("تعداد ثانیه‌های این جلسه (حداکثر 10 دقیقه)")
+    )
+    device_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=255,
+        help_text=_("شناسه دستگاه (اختیاری)")
+    )
+    client_started_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text=_("زمان شروع در دستگاه کاربر (غیرقابل اعتماد)")
+    )
+    client_ended_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text=_("زمان پایان در دستگاه کاربر (غیرقابل اعتماد)")
+    )
+
+
+class ParentChangePasswordSerializer(serializers.Serializer):
+    """تغییر رمز والد"""
+    current_password = serializers.CharField(
+        write_only=True,
+        help_text=_("رمز فعلی والد")
+    )
+    new_password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        help_text=_("رمز جدید (حداقل 8 کاراکتر)")
+    )
+    confirm_password = serializers.CharField(
+        write_only=True,
+        help_text=_("تکرار رمز جدید")
+    )
+    
+    def validate(self, data):
+        """Validate password match"""
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({
+                'confirm_password': _("Passwords do not match")
+            })
+        return data
+
+
+class TeachingSubjectForParentSelectionSerializer(serializers.ModelSerializer):
+    """موضوعات تدریس برای انتخاب توسط والد"""
     cover_image_url = serializers.SerializerMethodField()
     demo_video_url = serializers.SerializerMethodField()
     

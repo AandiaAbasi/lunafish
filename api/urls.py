@@ -92,6 +92,13 @@ urlpatterns = [
     path('teachers/', views.TeacherListAPIView.as_view(), name='teacher_list'),
     path('teachers/<int:id>/', views.TeacherDetailAPIView.as_view(), name='teacher_detail'),
     
+    # ========== Teacher's Students & Classes APIs ==========
+    path('teacher/dashboard/', views.TeacherDashboardAPIView.as_view(), name='teacher_dashboard'),
+    path('teacher/students/', views.TeacherStudentsListAPIView.as_view(), name='teacher_students_list'),
+    path('teacher/student/<int:student_id>/profile/', views.StudentProfileDetailAPIView.as_view(), name='student_profile_detail'),
+    path('teacher/student/<int:student_id>/paid-classes/', views.StudentPaidClassesListAPIView.as_view(), name='student_paid_classes'),
+    path('teacher/student/<int:student_id>/exercises/', views.StudentExercisesListAPIView.as_view(), name='student_exercises'),
+    
     # ========== Parent Portal APIs ==========
     path('parent/login/', views.ParentLoginAPIView.as_view(), name='parent_login'),
     path('parent/dashboard/', views.ParentDashboardAPIView.as_view(), name='parent_dashboard'),
@@ -100,14 +107,21 @@ urlpatterns = [
     path('parent/payment-summary/', views.ChildPaymentSummaryAPIView.as_view(), name='payment_summary'),
     path('parent/update-usage-time/', views.ParentUpdateUsageTimeAPIView.as_view(), name='update_usage_time'),
     path('parent/profile/', views.ParentProfileAPIView.as_view(), name='parent_profile'),
+    path('parent/change-password/', views.ParentChangePasswordAPIView.as_view(), name='parent_change_password'),
+    
+    # ========== Parental Control - Usage Tracking APIs ==========
+    path('parental/limits/', views.ParentalLimitsAPIView.as_view(), name='parental_limits'),
+    path('parental/usage/report/', views.ParentalUsageReportAPIView.as_view(), name='parental_usage_report'),
     
     # ========== Attendance APIs ==========
     path('attendance/<int:booking_id>/', views.AttendanceAPIView.as_view(), name='attendance'),
     path('attendance/<int:booking_id>/list/', views.AttendanceListAPIView.as_view(), name='attendance_list'),
+    path('attendance/list/', views.AttendanceGeneralListAPIView.as_view(), name='attendance_general_list'),
     
     # ========== Financial System APIs ==========
     # Wallet endpoints
     path('wallet/', views.TeacherWalletDetailAPIView.as_view(), name='teacher_wallet'),
+    path('wallet/update-bank-info/', views.UpdateBankInformationAPIView.as_view(), name='update_bank_info'),
     
     # Withdrawal request endpoints
     path('withdrawal-requests/', views.WithdrawalRequestListAPIView.as_view(), name='withdrawal_requests_list'),
@@ -122,10 +136,28 @@ urlpatterns = [
     path('financial-summary/', views.FinancialSummaryAPIView.as_view(), name='financial_summary'),
     
     # ========== Exercise APIs (آزمون‌ها) ==========
-    path('exercise/field/create/', views.CreateFieldAPIView.as_view(), name='field_create'),
+    # TWO-STEP Field Creation
+    path('exercise/field/create/', views.CreateFieldAPIView.as_view(), name='field_create_step1'),  # Step 1: Create Field (multipart)
+    path('exercise/field/<int:field_id>/details/', views.CreateFieldDetailsAPIView.as_view(), name='field_create_details_step2'),  # Step 2: Add Details (JSON)
+    path('exercise/field/<int:field_id>/', views.GetFieldDetailAPIView.as_view(), name='field_detail'),  # Get Field with Details
+    path('exercise/field/<int:field_id>/update/', views.UpdateFieldAPIView.as_view(), name='field_update'),  # Update Field
+    path('exercise/field/<int:field_id>/delete/', views.DeleteFieldAPIView.as_view(), name='field_delete'),  # Delete Field
+    path('exercise/field/detail/<int:detail_id>/update/', views.UpdateFieldDetailAPIView.as_view(), name='field_detail_update'),  # Update Field Detail
+    
+    # Other Exercise APIs
+    path('exercise/fields/teacher/', views.TeacherFieldListAPIView.as_view(), name='teacher_fields_list'),
     path('exercise/exam/create/', views.CreateExamAPIView.as_view(), name='exam_create'),
     path('exercise/exam/<int:subject_id>/', views.GetExamAPIView.as_view(), name='exam_get'),
+    path('exercise/exam/<int:subject_id>/steps/', views.GetExamByStepsAPIView.as_view(), name='exam_get_by_steps'),
+    path('exercise/exam/<int:subject_id>/step/<int:step>/delete/', views.DeleteExamStepAPIView.as_view(), name='exam_step_delete'),
+    path('exercise/exam/question/<int:question_id>/delete/', views.DeleteExamQuestionAPIView.as_view(), name='exam_question_delete'),
     path('exercise/exam/<int:subject_id>/submit/', views.SubmitExamAPIView.as_view(), name='exam_submit'),
+    
+    # Student Exercise APIs
+    path('student/exercises/', views.StudentSubjectsWithExercisesAPIView.as_view(), name='student_subjects_with_exercises'),
+    path('student/exercises/<int:subject_id>/steps/', views.StudentExamByStepsAPIView.as_view(), name='student_exam_by_steps'),
+    path('student/exercises/<int:subject_id>/save-answer/', views.StudentSaveAnswerAPIView.as_view(), name='student_save_answer'),
+    
     path('exercise/results/', views.GetExamResultsAPIView.as_view(), name='exam_results_list'),
     path('exercise/results/<int:attempt_id>/', views.GetExamAttemptDetailAPIView.as_view(), name='exam_results_detail'),
     

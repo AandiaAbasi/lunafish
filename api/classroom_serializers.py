@@ -252,6 +252,36 @@ class TeacherWalletSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'balance', 'total_earned', 'total_withdrawn', 'created_at', 'updated_at']
 
 
+class BankInformationUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating bank information in TeacherWallet"""
+    
+    class Meta:
+        model = TeacherWallet
+        fields = ['bank_name', 'account_number', 'iban', 'card_number', 'account_holder_name']
+    
+    def validate_iban(self, value):
+        """Validate IBAN format (IR + 24 digits)"""
+        if value:
+            value = value.strip().upper()
+            if not value.startswith('IR'):
+                raise serializers.ValidationError(_("شماره شبا باید با IR شروع شود"))
+            if len(value) != 26:
+                raise serializers.ValidationError(_("شماره شبا باید 26 کاراکتر باشد (IR + 24 رقم)"))
+            if not value[2:].isdigit():
+                raise serializers.ValidationError(_("شماره شبا باید فقط شامل اعداد باشد (بعد از IR)"))
+        return value
+    
+    def validate_card_number(self, value):
+        """Validate card number (16 digits)"""
+        if value:
+            value = value.strip().replace(' ', '').replace('-', '')
+            if not value.isdigit():
+                raise serializers.ValidationError(_("شماره کارت باید فقط شامل اعداد باشد"))
+            if len(value) != 16:
+                raise serializers.ValidationError(_("شماره کارت باید 16 رقم باشد"))
+        return value
+
+
 class ClassRevenueSerializer(serializers.ModelSerializer):
     """Serializer for ClassRevenue"""
     teacher_name = serializers.CharField(source='teacher.name', read_only=True)
@@ -544,3 +574,181 @@ class AttendanceSerializer(serializers.Serializer):
     booking_id = serializers.IntegerField()
     status = serializers.CharField(max_length=10)
     created = serializers.BooleanField(read_only=True)
+
+
+# ===== Teacher's Students & Classes APIs =====
+
+class TeacherStudentSerializer(serializers.Serializer):
+    """
+    Serializer for Teacher's Students (from paid classes)
+    
+    Returns unique students who have paid classes with this teacher.
+    Fields:
+    - student_id: int - User ID
+    - name: str - Student display name
+    - username: str - Student username
+    - selected_avatar: str - Avatar URL/path or null
+    - total_classes: int - Total number of paid classes
+    - average_attendance_percentage: float - Average attendance percentage (0-100)
+    - last_paid_class_date: str - Date of last paid class (Jalali format)
+    - total_paid_classes: int - Count of paid classes
+    """
+    student_id = serializers.IntegerField()
+    name = serializers.CharField()
+    username = serializers.CharField()
+    selected_avatar = serializers.CharField(allow_null=True)
+    total_classes = serializers.IntegerField()
+    average_attendance_percentage = serializers.FloatField()
+    last_paid_class_date = JalaliDateField()
+    total_paid_classes = serializers.IntegerField()
+
+
+class StudentPaidClassSerializer(serializers.Serializer):
+    """
+    Serializer for Student's Paid Classes
+    
+    Returns all classes with payment_status='paid' for a student.
+    Uses same fields as ClassBookingSerializer for consistency.
+    
+    Fields:
+    - id: int - ClassBooking ID
+    - availability: int - TeacherAvailability ID
+    - availability_date: str - Class date (Gregorian format)
+    - availability_time: str - Time range (HH:MM - HH:MM)
+    - teacher: int - Teacher user ID
+    - teacher_name: str - Teacher name
+    - student: int - Student user ID
+    - student_name: str - Student name
+    - subject: int - TeachingSubject ID
+    - subject_title: str - TeachingSubject title
+    - status: str - Class status (reserved/completed/cancelled/no_show)
+    - status_display: str - Localized status display
+    - price: str - Original price
+    - discount_amount: str - Discount applied
+    - final_price: str - Price after discount
+    - created_at: str - Creation timestamp
+    - updated_at: str - Last update timestamp
+    """
+    id = serializers.IntegerField()
+    availability = serializers.IntegerField()
+    availability_date = serializers.DateField()
+    availability_time = serializers.CharField()
+    teacher = serializers.IntegerField()
+    teacher_name = serializers.CharField()
+    student = serializers.IntegerField()
+    student_name = serializers.CharField()
+    subject = serializers.IntegerField()
+    subject_title = serializers.CharField()
+    status = serializers.CharField()
+    status_display = serializers.CharField()
+    price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    discount_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    final_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+
+
+class TeacherDashboardSerializer(serializers.Serializer):
+    """
+    Serializer for Teacher Dashboard Summary
+    
+    Returns comprehensive dashboard metrics and statistics for teacher app.
+    """
+    # Overall Statistics
+    total_students = serializers.IntegerField()
+    total_classes = serializers.IntegerField()
+    total_paid_classes = serializers.IntegerField()
+    total_revenue = serializers.DecimalField(max_digits=15, decimal_places=2)
+    average_student_attendance = serializers.FloatField()
+    
+    # Class Statistics
+    completed_classes = serializers.IntegerField()
+    pending_classes = serializers.IntegerField()
+    cancelled_classes = serializers.IntegerField()
+    
+    # Payment Statistics
+    total_paid_amount = serializers.DecimalField(max_digits=15, decimal_places=2)
+    pending_payment = serializers.DecimalField(max_digits=15, decimal_places=2)
+    average_class_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Recent Classes
+    recent_classes = serializers.ListField(child=serializers.DictField())
+    
+    # Top Students
+    top_students = serializers.ListField(child=serializers.DictField())
+    
+    # Teaching Subjects Summary
+    subjects = serializers.ListField(child=serializers.DictField())
+class StudentExerciseTemplateSerializer(serializers.Serializer):
+    """
+    Serializer for Student's Exercise Templates (CategoryField)
+    
+    Returns exercise templates from subjects where student has paid classes.
+    Fields:
+    - exercise_id: int - CategoryField ID
+    - subject_id: int - TeachingSubject ID
+    - subject_title: str - TeachingSubject title
+    - field_id: int - Field (Question) ID
+    - field_title: str - Field title
+    - step: int - Exercise step
+    - sort: int - Sort order
+    - type: str - Exercise type (input/checkbox/radioButton)
+    - is_conditional: bool - Is conditional exercise
+    - answered: bool - Whether student has answered this question
+    - answer_value: str - Student's answer value
+    - answer_field_detail_id: int - Selected option ID (for choice questions)
+    - answer_field_detail: dict - Details of selected option (id, title, second_title, image_path, is_correct)
+    - is_correct: bool - Whether answer is correct
+    """
+    exercise_id = serializers.IntegerField()
+    subject_id = serializers.IntegerField()
+    subject_title = serializers.CharField()
+    field_id = serializers.IntegerField()
+    field_title = serializers.CharField()
+    step = serializers.IntegerField()
+    sort = serializers.IntegerField()
+    type = serializers.CharField()
+    is_conditional = serializers.BooleanField()
+    answered = serializers.BooleanField()
+    answer_value = serializers.CharField(allow_null=True)
+    answer_field_detail_id = serializers.IntegerField(allow_null=True)
+    answer_field_detail = serializers.DictField(allow_null=True)
+    is_correct = serializers.BooleanField(allow_null=True)
+
+
+class StudentProfileDetailSerializer(serializers.Serializer):
+    """
+    Serializer for Student Profile Details (Teacher View)
+    
+    Returns comprehensive student profile information visible to their teacher.
+    
+    Fields:
+    - student_id: int - User ID
+    - name: str - Student display name
+    - username: str - Student username
+    - email: str - Email address (if available)
+    - phone: str - Phone number (if available)
+    - bio: str - Student bio/biography
+    - gender: str - Gender (male/female/custom/prefer_not_to_say)
+    - birth_date: str - Birth date in Jalali format
+    - selected_avatar: str - Avatar image URL (if selected)
+    - profile_photo_path: str - Profile photo URL (if available)
+    - total_classes: int - Total paid classes with this teacher
+    - average_attendance_percentage: float - Average attendance percentage (0-100)
+    - last_class_date: str - Date of most recent paid class (Jalali format)
+    - created_at: str - Account creation timestamp
+    """
+    student_id = serializers.IntegerField()
+    name = serializers.CharField()
+    username = serializers.CharField()
+    email = serializers.CharField(allow_null=True)
+    phone = serializers.CharField(allow_null=True)
+    bio = serializers.CharField(allow_null=True)
+    gender = serializers.CharField(allow_null=True)
+    birth_date = serializers.CharField(allow_null=True)
+    selected_avatar = serializers.CharField(allow_null=True)
+    profile_photo_path = serializers.CharField(allow_null=True)
+    total_classes = serializers.IntegerField()
+    average_attendance_percentage = serializers.FloatField()
+    last_class_date = JalaliDateField(allow_null=True)
+    created_at = serializers.DateTimeField()
