@@ -694,6 +694,10 @@ class StudentExerciseTemplateSerializer(serializers.Serializer):
     - sort: int - Sort order
     - type: str - Exercise type (input/checkbox/radioButton)
     - is_conditional: bool - Is conditional exercise
+    - answered: bool - Whether student has answered this question
+    - answer_value: str - Student's answer value
+    - answer_field_detail_id: int - Selected option ID (for choice questions)
+    - is_correct: bool - Whether answer is correct
     """
     exercise_id = serializers.IntegerField()
     subject_id = serializers.IntegerField()
@@ -704,6 +708,10 @@ class StudentExerciseTemplateSerializer(serializers.Serializer):
     sort = serializers.IntegerField()
     type = serializers.CharField()
     is_conditional = serializers.BooleanField()
+    answered = serializers.BooleanField()
+    answer_value = serializers.CharField(allow_null=True)
+    answer_field_detail_id = serializers.IntegerField(allow_null=True)
+    is_correct = serializers.BooleanField(allow_null=True)
 
 
 class StudentProfileDetailSerializer(serializers.Serializer):
