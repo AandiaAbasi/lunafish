@@ -893,3 +893,221 @@ class VerifyPackagePaymentSerializer(serializers.Serializer):
     track_id = serializers.CharField(max_length=100)
     ref_number = serializers.CharField(max_length=100)
     message = serializers.CharField(max_length=255, required=False)
+
+
+# ============================================================================
+# Teacher Package Management Serializers
+# ============================================================================
+
+class CreatePackageSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating/updating Package by teacher
+    معلم می‌تواند بسه جدید برای اینجا بسازد
+    """
+    teaching_subjects = serializers.PrimaryKeyRelatedField(
+        queryset=TeachingSubject.objects.all(),
+        many=True,
+        help_text="کلاس‌های آموزشی که این بسه مربوط به آن‌ها است"
+    )
+    
+    class Meta:
+        model = Package
+        fields = [
+            'name', 'description', 'image', 'total_sessions', 
+            'total_price', 'teaching_subjects', 'has_installment', 'is_active'
+        ]
+    
+    def validate_total_sessions(self, value):
+        """
+        total_sessions باید حداقل 1 باشد
+        """
+        if value < 1:
+            raise serializers.ValidationError(
+                _("تعداد جلسات باید حداقل 1 باشد")
+            )
+        return value
+    
+    def validate_total_price(self, value):
+        """
+        total_price باید بزرگتر از 0 باشد
+        """
+        if value <= 0:
+            raise serializers.ValidationError(
+                _("قیمت باید بزرگتر از 0 باشد")
+            )
+        return value
+    
+    def create(self, validated_data):
+        """
+        ایجاد پکیج جدید و ذخیره معلم
+        """
+        teaching_subjects = validated_data.pop('teaching_subjects')
+        package = Package.objects.create(
+            teacher=self.context['request'].user,
+            **validated_data
+        )
+        package.teaching_subjects.set(teaching_subjects)
+        return package
+
+
+class TeacherPackageSerializer(serializers.ModelSerializer):
+    """
+    Serializer for displaying packages created by teacher
+    نمایش بسه‌های معلم
+    """
+    total_students_enrolled = serializers.SerializerMethodField()
+    total_revenue = serializers.SerializerMethodField()
+    total_paid_installments = serializers.SerializerMethodField()
+    teaching_subject_names = serializers.StringRelatedField(
+        source='teaching_subjects',
+        many=True,
+        read_only=True
+    )
+    
+    class Meta:
+        model = Package
+        fields = [
+            'id', 'name', 'description', 'image', 'total_sessions',
+            'total_price', 'has_installment', 'is_active', 'created_at',
+            'teaching_subject_names', 'total_students_enrolled',
+            'total_revenue', 'total_paid_installments'
+        ]
+        read_only_fields = ['created_at']
+    
+    def get_total_students_enrolled(self, obj):
+        """
+        تعداد دانش‌آموزانی که در این بسه ثبت‌نام کرده‌اند
+        """
+        return obj.enrollments.filter(status='active').count()
+    
+    def get_total_revenue(self, obj):
+        """
+        کل درآمد از این بسه
+        """
+        from django.db.models import Sum
+        total = obj.payments.filter(payment_status='paid').aggregate(
+            total=Sum('amount_paid')
+        )['total'] or 0
+        return str(total)
+    
+    def get_total_paid_installments(self, obj):
+        """
+        تعداد اقساط پرداخت‌شده
+        """
+        return obj.payments.filter(payment_status='paid').count()
+
+
+class CreatePackageInstallmentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating package installment by teacher
+    ایجاد قسط جدید برای بسه
+    """
+    class Meta:
+        model = PackageInstallment
+        fields = ['session_number', 'amount']
+    
+    def validate_session_number(self, value):
+        """
+        session_number باید بین 1 و total_sessions بسه باشد
+        """
+        package = self.context.get('package')
+        if package:
+            if value < 1 or value > package.total_sessions:
+                raise serializers.ValidationError(
+                    _(f"شماره جلسه باید بین 1 و {package.total_sessions} باشد")
+                )
+        return value
+    
+    def validate(self, data):
+        """
+        بررسی اینکه session_number تکراری نباشد
+        """
+        package = self.context.get('package')
+        if package:
+            existing = PackageInstallment.objects.filter(
+                package=package,
+                session_number=data['session_number']
+            ).exists()
+            
+            if existing:
+                raise serializers.ValidationError(
+                    _("این شماره جلسه قبلاً برای این بسه تعریف شده است")
+                )
+        
+        return data
+    
+    def validate_amount(self, value):
+        """
+        مبلغ قسط باید بزرگتر از 0 باشد
+        """
+        if value <= 0:
+            raise serializers.ValidationError(
+                _("مبلغ قسط باید بزرگتر از 0 باشد")
+            )
+        return value
+    
+    def create(self, validated_data):
+        """
+        ایجاد قسط و ثبت installment_number خودکار
+        """
+        package = self.context.get('package')
+        if not package:
+            raise serializers.ValidationError(
+                _("بسه مشخص نشده است")
+            )
+        
+        # محاسبه installment_number
+        last_installment = PackageInstallment.objects.filter(
+            package=package
+        ).order_by('-installment_number').first()
+        
+        installment_number = (last_installment.installment_number + 1) if last_installment else 1
+        
+        installment = PackageInstallment.objects.create(
+            package=package,
+            installment_number=installment_number,
+            **validated_data
+        )
+        return installment
+
+
+class TeacherPackageInstallmentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for displaying package installments (teacher view)
+    نمایش اقساط بسه برای معلم
+    """
+    paid_count = serializers.SerializerMethodField()
+    pending_count = serializers.SerializerMethodField()
+    total_amount_paid = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PackageInstallment
+        fields = [
+            'id', 'installment_number', 'session_number', 'amount',
+            'paid_count', 'pending_count', 'total_amount_paid'
+        ]
+        read_only_fields = ['installment_number']
+    
+    def get_paid_count(self, obj):
+        """
+        تعداد دانش‌آموزانی که این قسط را پرداخت کرده‌اند
+        """
+        return obj.payments.filter(payment_status='paid').count()
+    
+    def get_pending_count(self, obj):
+        """
+        تعداد دانش‌آموزانی که این قسط را پرداخت نکرده‌اند
+        """
+        return obj.payments.filter(
+            payment_status__in=['pending', 'partial']
+        ).count()
+    
+    def get_total_amount_paid(self, obj):
+        """
+        کل مبلغ پرداخت‌شده برای این قسط
+        """
+        from django.db.models import Sum
+        total = obj.payments.filter(
+            payment_status='paid'
+        ).aggregate(total=Sum('amount_paid'))['total'] or 0
+        return str(total)

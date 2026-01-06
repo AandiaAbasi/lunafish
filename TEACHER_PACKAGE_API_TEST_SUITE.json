@@ -1,0 +1,282 @@
+{
+  "info": {
+    "name": "Teacher Package Management API",
+    "version": "1.0",
+    "description": "API برای ایجاد و مدیریت بسه‌ها و اقساط توسط معلم",
+    "baseUrl": "http://localhost:8000/api"
+  },
+  "tests": [
+    {
+      "name": "Create Package",
+      "method": "POST",
+      "endpoint": "/api/teacher/packages/",
+      "description": "ایجاد بسه جدید",
+      "headers": {
+        "Authorization": "Bearer {token}",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "name": "Python Advanced",
+        "description": "دوره پیشرفته پایتون",
+        "total_sessions": 12,
+        "total_price": "1200000",
+        "teaching_subjects": [1, 2],
+        "has_installment": true,
+        "is_active": true
+      },
+      "expectedStatus": 201,
+      "expectedFields": ["id", "name", "total_sessions", "total_price", "total_students_enrolled"]
+    },
+    {
+      "name": "List Teacher Packages",
+      "method": "GET",
+      "endpoint": "/api/teacher/packages/",
+      "description": "دریافت تمام بسه‌های معلم",
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "expectedStatus": 200,
+      "expectedFields": ["success", "count", "data"]
+    },
+    {
+      "name": "Get Package Detail",
+      "method": "GET",
+      "endpoint": "/api/teacher/packages/{package_id}/",
+      "description": "دریافت جزئیات یک بسه",
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "urlParams": {
+        "package_id": "5"
+      },
+      "expectedStatus": 200,
+      "expectedFields": ["id", "name", "total_sessions"]
+    },
+    {
+      "name": "Update Package",
+      "method": "PUT",
+      "endpoint": "/api/teacher/packages/{package_id}/",
+      "description": "بروزرسانی بسه",
+      "headers": {
+        "Authorization": "Bearer {token}",
+        "Content-Type": "application/json"
+      },
+      "urlParams": {
+        "package_id": "5"
+      },
+      "body": {
+        "name": "Python Advanced (Updated)",
+        "total_sessions": 14,
+        "total_price": "1400000",
+        "is_active": true
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Delete Package",
+      "method": "DELETE",
+      "endpoint": "/api/teacher/packages/{package_id}/",
+      "description": "حذف بسه (فقط اگر دانش‌آموز ثبت‌نام نشده)",
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "urlParams": {
+        "package_id": "5"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Add Installment",
+      "method": "POST",
+      "endpoint": "/api/teacher/packages/{package_id}/installments/",
+      "description": "اضافه کردن قسط جدید",
+      "headers": {
+        "Authorization": "Bearer {token}",
+        "Content-Type": "application/json"
+      },
+      "urlParams": {
+        "package_id": "5"
+      },
+      "body": {
+        "session_number": 4,
+        "amount": "300000"
+      },
+      "expectedStatus": 201,
+      "expectedFields": ["id", "installment_number", "session_number", "amount"]
+    },
+    {
+      "name": "List Installments",
+      "method": "GET",
+      "endpoint": "/api/teacher/packages/{package_id}/installments/",
+      "description": "دریافت اقساط بسه",
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "urlParams": {
+        "package_id": "5"
+      },
+      "expectedStatus": 200,
+      "expectedFields": ["success", "data"]
+    },
+    {
+      "name": "Update Installment",
+      "method": "PUT",
+      "endpoint": "/api/teacher/packages/{package_id}/installments/{installment_id}/",
+      "description": "بروزرسانی قسط",
+      "headers": {
+        "Authorization": "Bearer {token}",
+        "Content-Type": "application/json"
+      },
+      "urlParams": {
+        "package_id": "5",
+        "installment_id": "8"
+      },
+      "body": {
+        "session_number": 5,
+        "amount": "350000"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Delete Installment",
+      "method": "DELETE",
+      "endpoint": "/api/teacher/packages/{package_id}/installments/{installment_id}/",
+      "description": "حذف قسط (فقط اگر پرداخت نشده)",
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "urlParams": {
+        "package_id": "5",
+        "installment_id": "8"
+      },
+      "expectedStatus": 200
+    }
+  ],
+  "validationRules": {
+    "package": {
+      "name": {
+        "type": "string",
+        "required": true,
+        "minLength": 3,
+        "maxLength": 100
+      },
+      "total_sessions": {
+        "type": "integer",
+        "required": true,
+        "min": 1,
+        "max": 100
+      },
+      "total_price": {
+        "type": "string",
+        "required": true,
+        "min": 0
+      },
+      "teaching_subjects": {
+        "type": "array",
+        "required": false
+      },
+      "has_installment": {
+        "type": "boolean",
+        "default": true
+      },
+      "is_active": {
+        "type": "boolean",
+        "default": true
+      }
+    },
+    "installment": {
+      "session_number": {
+        "type": "integer",
+        "required": true,
+        "min": 1,
+        "max": "total_sessions",
+        "mustBeUnique": "per package"
+      },
+      "amount": {
+        "type": "string",
+        "required": true,
+        "min": "0.01"
+      }
+    }
+  },
+  "errorCodes": {
+    "400": {
+      "message": "Bad Request",
+      "cases": [
+        "session_number خارج از محدوده",
+        "session_number تکراری",
+        "مبلغ منفی یا صفر",
+        "فیلد الزامی خالی است"
+      ]
+    },
+    "401": {
+      "message": "Unauthorized",
+      "cases": ["Token منقضی یا نامعتبر"]
+    },
+    "403": {
+      "message": "Forbidden",
+      "cases": ["شما مالک این بسه نیستید"]
+    },
+    "404": {
+      "message": "Not Found",
+      "cases": ["بسه یافت نشد", "قسط یافت نشد"]
+    }
+  },
+  "workflows": {
+    "createPackageWithInstallments": {
+      "description": "ایجاد کورس 12 جلسه‌ای با 4 قسط",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Create Package",
+          "endpoint": "POST /api/teacher/packages/",
+          "payload": {
+            "name": "Python Complete",
+            "total_sessions": 12,
+            "total_price": "1200000",
+            "has_installment": true
+          },
+          "note": "قسط پیش‌فرض (جلسه 1) خودکار ایجاد می‌شود"
+        },
+        {
+          "step": 2,
+          "action": "Add Installment 2",
+          "endpoint": "POST /api/teacher/packages/{package_id}/installments/",
+          "payload": {
+            "session_number": 4,
+            "amount": "300000"
+          }
+        },
+        {
+          "step": 3,
+          "action": "Add Installment 3",
+          "endpoint": "POST /api/teacher/packages/{package_id}/installments/",
+          "payload": {
+            "session_number": 7,
+            "amount": "300000"
+          }
+        },
+        {
+          "step": 4,
+          "action": "Add Installment 4",
+          "endpoint": "POST /api/teacher/packages/{package_id}/installments/",
+          "payload": {
+            "session_number": 10,
+            "amount": "300000"
+          }
+        },
+        {
+          "step": 5,
+          "action": "List All Installments",
+          "endpoint": "GET /api/teacher/packages/{package_id}/installments/",
+          "note": "تائید کردن 4 قسط"
+        }
+      ]
+    }
+  },
+  "examples": {
+    "curlCreatePackage": "curl -X POST http://localhost:8000/api/teacher/packages/ \\\n  -H 'Authorization: Bearer {token}' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"name\": \"Python Advanced\", \"total_sessions\": 12, \"total_price\": \"1200000\", \"has_installment\": true}'",
+    "pythonCreatePackage": "import requests\ntoken = 'your_token'\nheaders = {'Authorization': f'Bearer {token}'}\ndata = {'name': 'Python Advanced', 'total_sessions': 12, 'total_price': '1200000', 'has_installment': True}\nresponse = requests.post('http://localhost:8000/api/teacher/packages/', headers=headers, json=data)",
+    "jsCreatePackage": "fetch('/api/teacher/packages/', {\n  method: 'POST',\n  headers: {\n    'Authorization': `Bearer ${token}`,\n    'Content-Type': 'application/json'\n  },\n  body: JSON.stringify({\n    name: 'Python Advanced',\n    total_sessions: 12,\n    total_price: '1200000',\n    has_installment: true\n  })\n}).then(r => r.json()).then(data => console.log(data))"
+  }
+}

@@ -33,7 +33,7 @@ from account.services import *
 from account.models import OTP, VerificationToken, ParentProfile, User
 from classroom.models import (
     ClassBooking, StudentTransaction, TeacherAvailability, TeachingSubject, Attendance,
-    Package, StudentPackageEnrollment, StudentPackagePayment
+    Package, PackageInstallment, StudentPackageEnrollment, StudentPackagePayment
 )
 from exercise.models import Field, FieldDetail, CategoryField, Order, OrderDetail, StudentMedal
 from .exercise_serializers import (
@@ -46,7 +46,9 @@ from .classroom_serializers import (
     TeachingSubjectSerializer, TeacherStudentSerializer, StudentPaidClassSerializer, 
     StudentExerciseTemplateSerializer, StudentProfileDetailSerializer, TeacherDashboardSerializer,
     PackageSerializer, StudentPackageEnrollmentSerializer, ProcessPackagePaymentSerializer,
-    VerifyPackagePaymentSerializer
+    VerifyPackagePaymentSerializer,
+    CreatePackageSerializer, TeacherPackageSerializer,
+    CreatePackageInstallmentSerializer, TeacherPackageInstallmentSerializer
 )
 from .parent_serializers import (
     ParentLoginSerializer, ParentProfileSerializer, ParentUpdateUsageTimeSerializer,
@@ -11146,5 +11148,442 @@ class VerifyPackagePaymentAPIView(APIView):
             return Response({
                 'success': False,
                 'message': _('Error processing payment verification'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ============================================================================
+# Teacher Package Management APIs - مدیریت بسه‌های آموزشی
+# ============================================================================
+
+class TeacherPackageListCreateAPIView(APIView):
+    """
+    لیست بسه‌های معلم و ایجاد بسه جدید
+    
+    GET /api/teacher/packages/          → لیست بسه‌های معلم
+    POST /api/teacher/packages/         → ایجاد بسه جدید
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """
+        لیست تمام بسه‌های ایجاد‌شده توسط معلم لاگین‌شده
+        """
+        try:
+            packages = Package.objects.filter(
+                teacher=request.user
+            ).prefetch_related('teaching_subjects', 'enrollments')
+            
+            serializer = TeacherPackageSerializer(packages, many=True)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data,
+                'count': packages.count()
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': _('Error retrieving packages'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def post(self, request):
+        """
+        ایجاد بسه جدید توسط معلم
+        
+        Request body:
+        {
+            "name": "Python پیشرفته",
+            "description": "دوره کامل Python",
+            "total_sessions": 12,
+            "total_price": "1200000",
+            "teaching_subjects": [1, 2, 3],
+            "has_installment": true,
+            "is_active": true
+        }
+        """
+        try:
+            serializer = CreatePackageSerializer(
+                data=request.data,
+                context={'request': request}
+            )
+            
+            if not serializer.is_valid():
+                return Response({
+                    'success': False,
+                    'message': _('Invalid input'),
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            package = serializer.save()
+            
+            # اگر has_installment=True است، قسط پیش‌فرض ایجاد کن
+            if package.has_installment:
+                PackageInstallment.objects.create(
+                    package=package,
+                    installment_number=1,
+                    session_number=1,
+                    amount=package.total_price
+                )
+            
+            return Response({
+                'success': True,
+                'message': _('Package created successfully'),
+                'data': TeacherPackageSerializer(package).data
+            }, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'message': _('Error creating package'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class TeacherPackageDetailAPIView(APIView):
+    """
+    جزئیات بسه، ویرایش و حذف
+    
+    GET /api/teacher/packages/<id>/     → جزئیات بسه
+    PUT /api/teacher/packages/<id>/     → ویرایش بسه
+    DELETE /api/teacher/packages/<id>/  → حذف بسه
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_package(self, request, package_id):
+        """
+        دریافت بسه و بررسی owner
+        """
+        try:
+            return Package.objects.get(
+                id=package_id,
+                teacher=request.user
+            )
+        except Package.DoesNotExist:
+            return None
+    
+    def get(self, request, package_id):
+        """
+        دریافت جزئیات بسه
+        """
+        try:
+            package = self.get_package(request, package_id)
+            
+            if not package:
+                return Response({
+                    'success': False,
+                    'message': _('Package not found')
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = TeacherPackageSerializer(package)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': _('Error retrieving package'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def put(self, request, package_id):
+        """
+        ویرایش بسه (فقط توسط سازنده)
+        """
+        try:
+            package = self.get_package(request, package_id)
+            
+            if not package:
+                return Response({
+                    'success': False,
+                    'message': _('Package not found')
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = CreatePackageSerializer(
+                package,
+                data=request.data,
+                partial=True,
+                context={'request': request}
+            )
+            
+            if not serializer.is_valid():
+                return Response({
+                    'success': False,
+                    'message': _('Invalid input'),
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            package = serializer.save()
+            
+            return Response({
+                'success': True,
+                'message': _('Package updated successfully'),
+                'data': TeacherPackageSerializer(package).data
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': _('Error updating package'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def delete(self, request, package_id):
+        """
+        حذف بسه (فقط اگر هنوز کسی ثبت‌نام نکرده)
+        """
+        try:
+            package = self.get_package(request, package_id)
+            
+            if not package:
+                return Response({
+                    'success': False,
+                    'message': _('Package not found')
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # بررسی اینکه کسی ثبت‌نام کرده است یا نه
+            if package.enrollments.exists():
+                return Response({
+                    'success': False,
+                    'message': _('Cannot delete package with active enrollments')
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            package.delete()
+            
+            return Response({
+                'success': True,
+                'message': _('Package deleted successfully')
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': _('Error deleting package'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class TeacherPackageInstallmentListCreateAPIView(APIView):
+    """
+    لیست اقساط بسه و اضافه کردن قسط جدید
+    
+    GET /api/teacher/packages/<package_id>/installments/    → لیست اقساط
+    POST /api/teacher/packages/<package_id>/installments/   → اضافه کردن قسط
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_package(self, request, package_id):
+        """
+        دریافت بسه و بررسی owner
+        """
+        try:
+            return Package.objects.get(
+                id=package_id,
+                teacher=request.user
+            )
+        except Package.DoesNotExist:
+            return None
+    
+    def get(self, request, package_id):
+        """
+        لیست اقساط بسه
+        """
+        try:
+            package = self.get_package(request, package_id)
+            
+            if not package:
+                return Response({
+                    'success': False,
+                    'message': _('Package not found')
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            installments = package.installments.all().order_by('installment_number')
+            serializer = TeacherPackageInstallmentSerializer(installments, many=True)
+            
+            return Response({
+                'success': True,
+                'data': serializer.data,
+                'count': installments.count()
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': _('Error retrieving installments'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def post(self, request, package_id):
+        """
+        اضافه کردن قسط جدید
+        
+        Request body:
+        {
+            "session_number": 4,
+            "amount": "300000"
+        }
+        """
+        try:
+            package = self.get_package(request, package_id)
+            
+            if not package:
+                return Response({
+                    'success': False,
+                    'message': _('Package not found')
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = CreatePackageInstallmentSerializer(
+                data=request.data,
+                context={'package': package}
+            )
+            
+            if not serializer.is_valid():
+                return Response({
+                    'success': False,
+                    'message': _('Invalid input'),
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            installment = serializer.save()
+            
+            # اگر دانش‌آموزی برای این بسه ثبت‌نام کرده، برای آن‌ها StudentPackagePayment ایجاد کن
+            enrollments = StudentPackageEnrollment.objects.filter(package=package)
+            for enrollment in enrollments:
+                StudentPackagePayment.objects.get_or_create(
+                    enrollment=enrollment,
+                    installment=installment,
+                    defaults={'payment_status': 'pending'}
+                )
+            
+            return Response({
+                'success': True,
+                'message': _('Installment created successfully'),
+                'data': TeacherPackageInstallmentSerializer(installment).data
+            }, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({
+                'success': False,
+                'message': _('Error creating installment'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class TeacherPackageInstallmentDetailAPIView(APIView):
+    """
+    ویرایش و حذف قسط
+    
+    PUT /api/teacher/packages/<package_id>/installments/<installment_id>/   → ویرایش
+    DELETE /api/teacher/packages/<package_id>/installments/<installment_id>/ → حذف
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_installment(self, request, package_id, installment_id):
+        """
+        دریافت قسط و بررسی owner
+        """
+        try:
+            return PackageInstallment.objects.get(
+                id=installment_id,
+                package__teacher=request.user,
+                package_id=package_id
+            )
+        except PackageInstallment.DoesNotExist:
+            return None
+    
+    def put(self, request, package_id, installment_id):
+        """
+        ویرایش قسط
+        
+        Request body:
+        {
+            "session_number": 5,
+            "amount": "350000"
+        }
+        """
+        try:
+            installment = self.get_installment(request, package_id, installment_id)
+            
+            if not installment:
+                return Response({
+                    'success': False,
+                    'message': _('Installment not found')
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = CreatePackageInstallmentSerializer(
+                installment,
+                data=request.data,
+                partial=True,
+                context={'package': installment.package}
+            )
+            
+            if not serializer.is_valid():
+                return Response({
+                    'success': False,
+                    'message': _('Invalid input'),
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            installment = serializer.save()
+            
+            return Response({
+                'success': True,
+                'message': _('Installment updated successfully'),
+                'data': TeacherPackageInstallmentSerializer(installment).data
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': _('Error updating installment'),
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def delete(self, request, package_id, installment_id):
+        """
+        حذف قسط
+        
+        توجه: اگر کسی این قسط را پرداخت کرده، نمی‌توان حذف کرد
+        """
+        try:
+            installment = self.get_installment(request, package_id, installment_id)
+            
+            if not installment:
+                return Response({
+                    'success': False,
+                    'message': _('Installment not found')
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # بررسی اینکه آیا کسی این قسط را پرداخت کرده
+            if installment.payments.filter(payment_status='paid').exists():
+                return Response({
+                    'success': False,
+                    'message': _('Cannot delete installment with paid payments')
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # حذف StudentPackagePayment‌ها
+            installment.payments.all().delete()
+            
+            # حذف خود قسط
+            installment.delete()
+            
+            return Response({
+                'success': True,
+                'message': _('Installment deleted successfully')
+            }, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': _('Error deleting installment'),
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

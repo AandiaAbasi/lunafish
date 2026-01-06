@@ -1,0 +1,512 @@
+{
+  "info": {
+    "_postman_id": "teacher-package-api-collection",
+    "name": "Teacher Package Management API",
+    "description": "API برای ایجاد و مدیریت بسه‌های معلم",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.environment.set('access_token', jsonData.access);",
+                  "  pm.environment.set('refresh_token', jsonData.refresh);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"teacher1\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/token/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "token"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Packages",
+      "item": [
+        {
+          "name": "Create Package",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Python Advanced\",\n  \"description\": \"دوره پیشرفته پایتون\",\n  \"total_sessions\": 12,\n  \"total_price\": \"1200000\",\n  \"teaching_subjects\": [1, 2],\n  \"has_installment\": true,\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages"]
+            }
+          }
+        },
+        {
+          "name": "List Packages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var jsonData = pm.response.json();",
+                  "  if (jsonData.data.length > 0) {",
+                  "    pm.environment.set('package_id', jsonData.data[0].id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages"]
+            }
+          }
+        },
+        {
+          "name": "Get Package Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Update Package",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Python Advanced (Updated)\",\n  \"total_sessions\": 14,\n  \"total_price\": \"1400000\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Delete Package",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Installments",
+      "item": [
+        {
+          "name": "List Installments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var jsonData = pm.response.json();",
+                  "  if (jsonData.data.length > 0) {",
+                  "    pm.environment.set('installment_id', jsonData.data[0].id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/installments/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", "installments", ""]
+            }
+          }
+        },
+        {
+          "name": "Add Installment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_number\": 4,\n  \"amount\": \"300000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/installments/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", "installments", ""]
+            }
+          }
+        },
+        {
+          "name": "Update Installment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_number\": 5,\n  \"amount\": \"350000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/installments/{{installment_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", "installments", "{{installment_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Delete Installment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/installments/{{installment_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", "installments", "{{installment_id}}", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Workflows",
+      "item": [
+        {
+          "name": "1. Create Complete Package",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Complete Python Course\",\n  \"description\": \"درس کاملی برای یادگیری پایتون\",\n  \"total_sessions\": 12,\n  \"total_price\": \"1200000\",\n  \"teaching_subjects\": [1],\n  \"has_installment\": true,\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages"]
+            }
+          },
+          "description": "نام: Complete Python Course\nجلسات: 12\nقیمت: 1,200,000\nقسط پیش‌فرض: خودکار (جلسه 1، تمام مبلغ)"
+        },
+        {
+          "name": "2. Add Second Installment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_number\": 4,\n  \"amount\": \"400000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/installments/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", "installments", ""]
+            }
+          },
+          "description": "جلسه 4 - 400,000 تومان"
+        },
+        {
+          "name": "3. Add Third Installment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_number\": 8,\n  \"amount\": \"400000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/installments/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", "installments", ""]
+            }
+          },
+          "description": "جلسه 8 - 400,000 تومان"
+        },
+        {
+          "name": "4. View Final Installments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/installments/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", "installments", ""]
+            }
+          },
+          "description": "3 اقساط: جلسه 1 (1,200,000)، جلسه 4 (400,000)، جلسه 8 (400,000)"
+        }
+      ]
+    },
+    {
+      "name": "Error Cases",
+      "item": [
+        {
+          "name": "ERROR: Duplicate session_number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_number\": 4,\n  \"amount\": \"500000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/installments/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", "installments", ""]
+            }
+          },
+          "description": "Expected: 400 - جلسه 4 قبلا اضافه شده"
+        },
+        {
+          "name": "ERROR: session_number out of range",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_number\": 20,\n  \"amount\": \"500000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/installments/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", "installments", ""]
+            }
+          },
+          "description": "Expected: 400 - جلسه 20 از محدوده 1-12 خارج است"
+        },
+        {
+          "name": "ERROR: Invalid amount",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_number\": 10,\n  \"amount\": \"0\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/{{package_id}}/installments/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "{{package_id}}", "installments", ""]
+            }
+          },
+          "description": "Expected: 400 - مبلغ باید بزرگتر از 0 باشد"
+        },
+        {
+          "name": "ERROR: No permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hacked Package\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teacher/packages/999/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "teacher", "packages", "999", ""]
+            }
+          },
+          "description": "Expected: 404 - بسه یافت نشد یا دسترسی رد شد"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "package_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "installment_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

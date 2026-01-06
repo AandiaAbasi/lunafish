@@ -187,4 +187,9 @@ urlpatterns = [
     path('packages/check-session-access/', views.CheckSessionAccessAPIView.as_view(), name='check_session_access'),
     path('packages/process-payment/', views.ProcessPackagePaymentAPIView.as_view(), name='process_package_payment'),
     path('packages/verify-payment/', views.VerifyPackagePaymentAPIView.as_view(), name='verify_package_payment'),
-]
+    
+    # ========== Teacher Package Management APIs ==========
+    path('teacher/packages/', views.TeacherPackageListCreateAPIView.as_view(), name='teacher_package_list_create'),
+    path('teacher/packages/<int:package_id>/', views.TeacherPackageDetailAPIView.as_view(), name='teacher_package_detail'),
+    path('teacher/packages/<int:package_id>/installments/', views.TeacherPackageInstallmentListCreateAPIView.as_view(), name='teacher_installment_list_create'),
+    path('teacher/packages/<int:package_id>/installments/<int:installment_id>/', views.TeacherPackageInstallmentDetailAPIView.as_view(), name='teacher_installment_detail'),
