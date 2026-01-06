@@ -5536,15 +5536,14 @@ class StudentExamByStepsAPIView(APIView):
                 - order_id: integer or null - Existing order ID (null if not started)
                 - total_steps: integer
                 - total_questions: integer
-                - steps: array
-                    - step: integer
-                    - fields: array
+                - steps: array of arrays - Each inner array is a step containing field objects
+                    - Each field object:
                         - id: integer - CategoryField ID
                         - field_id: integer
                         - field_title: string
                         - type: string
                         - sort: integer
-                        - student_answer: string or null - Answer from OrderDetail.value
+                        - value: string or null - Text answer from OrderDetail.value
                         - field_details: array
                             - id: integer
                             - title: string
@@ -5565,23 +5564,20 @@ class StudentExamByStepsAPIView(APIView):
             "total_steps": 2,
             "total_questions": 5,
             "steps": [
-                {
-                    "step": 0,
-                    "fields": [
-                        {
-                            "id": 1,
-                            "field_id": 10,
-                            "field_title": "What is 2+2?",
-                            "type": "radioButton",
-                            "sort": 0,
-                            "student_answer": null,
-                            "field_details": [
-                                {"id": 1, "title": "3", "value": null},
-                                {"id": 2, "title": "4", "value": "1"}
-                            ]
-                        }
-                    ]
-                }
+                [
+                    {
+                        "id": 1,
+                        "field_id": 10,
+                        "field_title": "What is 2+2?",
+                        "type": "radioButton",
+                        "sort": 0,
+                        "value": null,
+                        "field_details": [
+                            {"id": 1, "title": "3", "value": null},
+                            {"id": 2, "title": "4", "value": "1"}
+                        ]
+                    }
+                ]
             ]
         }
     }
@@ -5688,11 +5684,8 @@ class StudentExamByStepsAPIView(APIView):
             }
             steps_dict[step].append(field_data)
         
-        # تبدیل به فرمت خروجی
-        steps_list = [
-            {'step': step, 'fields': fields}
-            for step, fields in steps_dict.items()
-        ]
+        # تبدیل به فرمت خروجی: هر step یک آرایه از fieldها
+        steps_list = [fields for step, fields in steps_dict.items()]
         
         return Response({
             'data': {
@@ -5735,6 +5728,8 @@ class StudentSaveAnswerAPIView(APIView):
                 - order_id: integer - Order ID
                 - field_id: integer - Field that was answered
                 - saved: boolean - True if saved successfully
+                - is_correct: boolean - Whether the answer is correct
+                - correct_answer: integer/string or null - Correct option ID (for choice) or correct text (for input)
                 - message: string
                 
             400 Bad Request - Invalid data
@@ -5872,6 +5867,26 @@ class StudentSaveAnswerAPIView(APIView):
                     }
                 )
         
+        # بررسی صحت پاسخ
+        is_correct = False
+        correct_answer = None
+        
+        if field_detail:
+            # سوال چند گزینه‌ای: بررسی is_correct
+            is_correct = field_detail.is_correct == 1
+            # پیدا کردن پاسخ صحیح برای نمایش
+            correct_option = FieldDetail.objects.filter(field=field, is_correct=1).first()
+            if correct_option:
+                correct_answer = correct_option.id
+        else:
+            # سوال متنی: مقایسه value با correct_answer
+            field_detail_obj = FieldDetail.objects.filter(field=field).first()
+            if field_detail_obj and field_detail_obj.correct_answer:
+                student_answer = (value or '').strip().lower()
+                correct_ans = field_detail_obj.correct_answer.strip().lower()
+                is_correct = student_answer == correct_ans
+                correct_answer = field_detail_obj.correct_answer
+        
         return Response({
             'data': {
                 'order_id': order.id,
@@ -5879,7 +5894,9 @@ class StudentSaveAnswerAPIView(APIView):
                 'field_detail_id': field_detail_id,
                 'value': value,
                 'saved': True,
-                'created': detail_created
+                'created': detail_created,
+                'is_correct': is_correct,
+                'correct_answer': correct_answer
             },
             'message': _('پاسخ با موفقیت ذخیره شد')
         }, status=status.HTTP_200_OK)
