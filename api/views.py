@@ -10127,7 +10127,7 @@ class StudentExercisesListAPIView(APIView):
     API to fetch exercise templates for a student
     
     Returns all CategoryField (exercise templates) from subjects where the student
-    has paid classes with this teacher.
+    has paid classes with this teacher. Includes student's answers and correctness.
     
     Permission: Authenticated, Teacher only (can only see their own students)
     
@@ -10148,7 +10148,11 @@ class StudentExercisesListAPIView(APIView):
                         'step': 1,
                         'sort': 0,
                         'type': 'input',
-                        'is_conditional': false
+                        'is_conditional': false,
+                        'answered': true,
+                        'answer_value': 'پاسخ دانش‌آموز',
+                        'answer_field_detail_id': 10,
+                        'is_correct': true
                     },
                     ...
                 ]
@@ -10208,9 +10212,53 @@ class StudentExercisesListAPIView(APIView):
             teachingsubject_id__in=subject_ids
         ).select_related('teachingsubject', 'field').order_by('teachingsubject', 'step', 'sort')
         
+        # دریافت پاسخ‌های دانش‌آموز
+        from exercise.models import Order, OrderDetail, FieldDetail
+        
+        # Get all orders for this student
+        student_orders = Order.objects.filter(
+            user=student,
+            teachingsubject_id__in=subject_ids
+        ).values('id', 'teachingsubject_id')
+        
+        # Build a dict: {subject_id: order_id}
+        subject_order_map = {o['teachingsubject_id']: o['id'] for o in student_orders}
+        
+        # Get all order details for student's orders
+        order_ids = [o['id'] for o in student_orders]
+        order_details = OrderDetail.objects.filter(
+            order_id__in=order_ids
+        ).select_related('field_detail')
+        
+        # Build a dict: {(order_id, field_id): {'value': ..., 'field_detail_id': ..., 'is_correct': ...}}
+        student_answers = {}
+        for od in order_details:
+            key = (od.order_id, od.field_id)
+            is_correct = False
+            
+            if od.field_detail:
+                # سوال چند گزینه‌ای
+                is_correct = od.field_detail.is_correct == 1
+            else:
+                # سوال متنی - مقایسه با correct_answer
+                field_detail_obj = FieldDetail.objects.filter(field_id=od.field_id).first()
+                if field_detail_obj and field_detail_obj.correct_answer:
+                    student_val = (od.value or '').strip().lower()
+                    correct_val = field_detail_obj.correct_answer.strip().lower()
+                    is_correct = student_val == correct_val
+            
+            student_answers[key] = {
+                'value': od.value,
+                'field_detail_id': od.field_detail_id,
+                'is_correct': is_correct
+            }
+        
         # Serialize data
         result = []
         for exercise in exercises:
+            order_id = subject_order_map.get(exercise.teachingsubject_id)
+            answer_data = student_answers.get((order_id, exercise.field_id)) if order_id else None
+            
             result.append({
                 'exercise_id': exercise.id,
                 'subject_id': exercise.teachingsubject.id,
@@ -10220,7 +10268,11 @@ class StudentExercisesListAPIView(APIView):
                 'step': exercise.step,
                 'sort': exercise.sort,
                 'type': exercise.type,
-                'is_conditional': exercise.is_conditional
+                'is_conditional': exercise.is_conditional,
+                'answered': answer_data is not None,
+                'answer_value': answer_data['value'] if answer_data else None,
+                'answer_field_detail_id': answer_data['field_detail_id'] if answer_data else None,
+                'is_correct': answer_data['is_correct'] if answer_data else None
             })
         
         serializer = StudentExerciseTemplateSerializer(result, many=True)
