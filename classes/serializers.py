@@ -126,6 +126,14 @@ class HandRaiseSerializer(serializers.ModelSerializer):
 class ClassMessageSerializer(serializers.ModelSerializer):
     sender = UserBasicSerializer(read_only=True)
     recipient = UserBasicSerializer(read_only=True)
+    recipient_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source='recipient',
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
+    deleted_by = UserBasicSerializer(read_only=True)
 
     class Meta:
         model = ClassMessage
@@ -136,12 +144,22 @@ class ClassMessageSerializer(serializers.ModelSerializer):
             'content',
             'is_private',
             'recipient',
+            'recipient_id',
             'is_deleted',
             'deleted_by',
             'deleted_at',
             'created_at',
         ]
         read_only_fields = ['id', 'class_session', 'sender', 'is_deleted', 'deleted_by', 'deleted_at', 'created_at']
+
+    def validate(self, attrs):
+        is_private = attrs.get('is_private', getattr(self.instance, 'is_private', False))
+        recipient = attrs.get('recipient', getattr(self.instance, 'recipient', None))
+        if is_private and recipient is None:
+            raise serializers.ValidationError({'recipient_id': 'This field is required for private messages.'})
+        if not is_private:
+            attrs['recipient'] = None
+        return attrs
 
 
 class ClassReactionSerializer(serializers.ModelSerializer):
@@ -151,4 +169,3 @@ class ClassReactionSerializer(serializers.ModelSerializer):
         model = ClassReaction
         fields = ['id', 'class_session', 'student', 'emoji', 'message', 'created_at']
         read_only_fields = ['id', 'class_session', 'student', 'created_at']
-

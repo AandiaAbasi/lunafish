@@ -1,10 +1,13 @@
+import logging
+
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
 
 from . import conf
 from .broadcast import publish_to_class, publish_to_user
@@ -45,6 +48,7 @@ from .utils import is_teacher
 
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class OnlineClassViewSet(viewsets.ModelViewSet):
@@ -69,38 +73,44 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
 
     def _get_participant_context(self, class_instance):
         user = self.request.user
-        is_teacher = class_instance.teacher_id == user.id
+        teacher_participant = class_instance.teacher_id == user.id
         enrollment = None
-        if not is_teacher:
+        if not teacher_participant:
             enrollment = ClassEnrollment.objects.filter(
                 class_session=class_instance,
                 student=user,
                 left_at__isnull=True,
             ).first()
-        return is_teacher, enrollment
+        return teacher_participant, enrollment
 
     def _ensure_participant(self, class_instance):
-        is_teacher, enrollment = self._get_participant_context(class_instance)
-        if not is_teacher and enrollment is None:
+        teacher_participant, enrollment = self._get_participant_context(class_instance)
+        if not teacher_participant and enrollment is None:
             return None, None, Response({'error': 'Not enrolled'}, status=status.HTTP_403_FORBIDDEN)
-        return is_teacher, enrollment, None
+        return teacher_participant, enrollment, None
 
     def _ensure_teacher(self, class_instance):
         if class_instance.teacher_id != self.request.user.id:
             return Response({'error': 'Only class teacher can perform this action'}, status=status.HTTP_403_FORBIDDEN)
         return None
 
-    def _participants(self, class_instance):
-        participants = self._participants(class_instance)
-        student_joined.send(sender=ClassEnrollment, class_instance=class_instance, student=user)
-        return participants
+    def _ensure_joinable(self, class_instance):
+        if class_instance.status != OnlineClass.STATUS_ACTIVE:
+            return Response({'error': 'Only active classes can be joined'}, status=status.HTTP_400_BAD_REQUEST)
+        return None
 
-    def _participant_payload(self, user, role, enrollment=None):
+    def _participant_payload(self, user, role, enrollment=None, class_instance=None):
+        if class_instance is None and enrollment is not None:
+            class_instance = enrollment.class_session
         return {
             'id': str(user.id),
             'user': UserBasicSerializer(user).data,
             'role': role,
-            'isHandRaised': HandRaise.objects.filter(student=user, lowered_at__isnull=True).exists(),
+            'isHandRaised': HandRaise.objects.filter(
+                class_session=class_instance,
+                student=user,
+                lowered_at__isnull=True,
+            ).exists() if class_instance else False,
             'isMuted': True,
             'isVideoOn': False,
             'isScreenSharing': False,
@@ -111,6 +121,14 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             'canDrawOnWhiteboard': role == 'teacher',
         }
 
+    def _participants(self, class_instance):
+        participants = [
+            self._participant_payload(class_instance.teacher, 'teacher', class_instance=class_instance),
+        ]
+        enrollments = class_instance.enrollments.select_related('student').filter(left_at__isnull=True)
+        for enrollment in enrollments:
+            participants.append(self._participant_payload(enrollment.student, 'student', enrollment, class_instance))
+        return participants
 
     @action(detail=True, methods=['post'])
     def start(self, request, pk=None):
@@ -118,7 +136,10 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         teacher_error = self._ensure_teacher(class_instance)
         if teacher_error:
             return teacher_error
-        class_instance.start()
+        try:
+            class_instance.start()
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         data = OnlineClassSerializer(class_instance, context={'request': request}).data
         publish_to_class(str(class_instance.id), 'class.started', data)
         class_started.send(sender=OnlineClass, class_instance=class_instance)
@@ -130,7 +151,10 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         teacher_error = self._ensure_teacher(class_instance)
         if teacher_error:
             return teacher_error
-        class_instance.end()
+        try:
+            class_instance.end()
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         data = OnlineClassSerializer(class_instance, context={'request': request}).data
         publish_to_class(str(class_instance.id), 'class.ended', data)
         class_ended.send(sender=OnlineClass, class_instance=class_instance, duration_minutes=class_instance.actual_duration_minutes)
@@ -142,7 +166,10 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         teacher_error = self._ensure_teacher(class_instance)
         if teacher_error:
             return teacher_error
-        class_instance.cancel()
+        try:
+            class_instance.cancel()
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         data = OnlineClassSerializer(class_instance, context={'request': request}).data
         publish_to_class(str(class_instance.id), 'class.cancelled', data)
         class_cancelled.send(sender=OnlineClass, class_instance=class_instance, cancelled_by=request.user)
@@ -199,16 +226,19 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def join(self, request, pk=None):
         class_instance = self.get_object()
-        is_teacher, enrollment, error = self._ensure_participant(class_instance)
+        teacher_participant, enrollment, error = self._ensure_participant(class_instance)
         if error:
             return error
+        joinable_error = self._ensure_joinable(class_instance)
+        if joinable_error:
+            return joinable_error
 
         user = request.user
-        role = 'teacher' if is_teacher else 'student'
+        role = 'teacher' if teacher_participant else 'student'
         if enrollment:
             enrollment.join()
 
-        if is_teacher:
+        if teacher_participant:
             permissions = {
                 'consume': True,
                 'produceAudio': True,
@@ -216,6 +246,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
                 'produceScreen': True,
                 'manageRecording': True,
             }
+            can_draw = True
         else:
             permissions = {
                 'consume': True,
@@ -224,8 +255,13 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
                 'produceScreen': enrollment.can_share_screen,
                 'manageRecording': False,
             }
+            can_draw = False
 
-        publish_to_class(str(class_instance.id), 'participant.joined', self._participant_payload(user, role, enrollment))
+        publish_to_class(
+            str(class_instance.id),
+            'participant.joined',
+            self._participant_payload(user, role, enrollment, class_instance=class_instance),
+        )
         participants = self._participants(class_instance)
         student_joined.send(sender=ClassEnrollment, class_instance=class_instance, student=user)
 
@@ -241,11 +277,16 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             'realtime': {
                 'token': generate_centrifugo_connection_token(user.id),
                 'wsUrl': conf.CENTRIFUGO_WS_URL,
-                'channels': [f'class:{class_instance.id}', f'$user:{user.id}'],
+                'channels': [
+                    f'class:{class_instance.id}',
+                    f'$user:{user.id}',
+                    *([f'class:{class_instance.id}:control'] if teacher_participant else []),
+                ],
             },
             'whiteboard': {
-                'subscriptionToken': generate_whiteboard_subscription_token(user.id, str(class_instance.id), is_teacher),
-                'canDraw': is_teacher,
+                'subscriptionToken': generate_whiteboard_subscription_token(user.id, str(class_instance.id), can_draw),
+                'channel': f'whiteboard:class:{class_instance.id}',
+                'canDraw': can_draw,
             },
             'user': UserBasicSerializer(user).data,
             'participants': participants,
@@ -266,24 +307,49 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get', 'post'], url_path='messages')
     def messages(self, request, pk=None):
         class_instance = self.get_object()
-        is_teacher, _, error = self._ensure_participant(class_instance)
+        is_teacher_user, _, error = self._ensure_participant(class_instance)
         if error:
             return error
 
         if request.method == 'GET':
             limit = int(request.query_params.get('limit', conf.MESSAGE_HISTORY_LIMIT))
             limit = max(1, min(limit, conf.MESSAGE_HISTORY_LIMIT))
-            messages = class_instance.messages.select_related('sender', 'recipient').filter(is_deleted=False).order_by('-created_at')[:limit]
+            messages = class_instance.messages.select_related('sender', 'recipient', 'deleted_by').filter(
+                is_deleted=False,
+            ).filter(
+                Q(is_private=False)
+                | Q(sender=request.user)
+                | Q(recipient=request.user)
+                | Q(class_session__teacher=request.user)
+            ).order_by('-created_at')[:limit]
             return Response({'results': ClassMessageSerializer(reversed(list(messages)), many=True).data})
 
-        if not is_teacher and not class_instance.allow_student_chat:
+        if not is_teacher_user and not class_instance.allow_student_chat:
             return Response({'error': 'Student chat is disabled'}, status=status.HTTP_403_FORBIDDEN)
 
-        content = request.data.get('content', '').strip()
+        serializer = ClassMessageSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        content = serializer.validated_data.get('content', '').strip()
         if not content:
-            return Response({'content': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError({'content': 'This field is required.'})
 
-        message = ClassMessage.objects.create(class_session=class_instance, sender=request.user, content=content)
+        recipient = serializer.validated_data.get('recipient')
+        is_private = serializer.validated_data.get('is_private', False)
+        if recipient and recipient == request.user:
+            raise ValidationError({'recipient_id': 'Recipient must be another user.'})
+        if is_private and recipient:
+            allowed_user_ids = {class_instance.teacher_id}
+            allowed_user_ids.update(class_instance.enrollments.filter(left_at__isnull=True).values_list('student_id', flat=True))
+            if recipient.id not in allowed_user_ids:
+                raise ValidationError({'recipient_id': 'Recipient must be a class participant.'})
+
+        message = ClassMessage.objects.create(
+            class_session=class_instance,
+            sender=request.user,
+            content=content,
+            is_private=is_private,
+            recipient=recipient,
+        )
         message_data = ClassMessageSerializer(message).data
         publish_to_class(str(class_instance.id), 'chat.message', message_data)
         message_sent.send(sender=ClassMessage, class_instance=class_instance, message=message)
@@ -305,10 +371,10 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='hand/raise')
     def raise_hand(self, request, pk=None):
         class_instance = self.get_object()
-        is_teacher, _, error = self._ensure_participant(class_instance)
+        is_teacher_user, _, error = self._ensure_participant(class_instance)
         if error:
             return error
-        if is_teacher:
+        if is_teacher_user:
             return Response({'error': 'Teacher cannot raise hand'}, status=status.HTTP_400_BAD_REQUEST)
 
         hand = HandRaise.objects.filter(class_session=class_instance, student=request.user, lowered_at__isnull=True).first()
@@ -359,11 +425,19 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='reactions')
     def send_reaction(self, request, pk=None):
         class_instance = self.get_object()
-        is_teacher, _, error = self._ensure_participant(class_instance)
+        is_teacher_user, _, error = self._ensure_participant(class_instance)
         if error:
             return error
-        if not is_teacher and not class_instance.allow_student_reactions:
+        if not is_teacher_user and not class_instance.allow_student_reactions:
             return Response({'error': 'Student reactions are disabled'}, status=status.HTTP_403_FORBIDDEN)
+        if conf.REACTION_RATE_LIMIT:
+            recent_reactions = ClassReaction.objects.filter(
+                class_session=class_instance,
+                student=request.user,
+                created_at__gte=timezone.now() - timezone.timedelta(minutes=1),
+            ).count()
+            if recent_reactions >= conf.REACTION_RATE_LIMIT:
+                return Response({'error': 'Reaction rate limit exceeded'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
         serializer = ClassReactionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         reaction = ClassReaction.objects.create(
@@ -405,6 +479,8 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         teacher_error = self._ensure_teacher(class_instance)
         if teacher_error:
             return teacher_error
+        if str(class_instance.teacher_id) == str(user_id):
+            return Response({'error': 'Teacher cannot be kicked'}, status=status.HTTP_400_BAD_REQUEST)
         reason = request.data.get('reason', '')
         updated = ClassEnrollment.objects.filter(class_session=class_instance, student_id=user_id).update(left_at=timezone.now())
         if not updated:
@@ -453,4 +529,3 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             return teacher_error
         publish_to_class(str(pk), 'whiteboard.cleared', {})
         return Response({'ok': True})
-
