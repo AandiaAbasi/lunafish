@@ -74,6 +74,7 @@ class ContactMessage(BaseModel):
     phone = PhoneNumberField(region="IR", verbose_name=_("Phone number"))
     subject = models.CharField(max_length=100, verbose_name=_("Subject"))
     message = models.TextField(verbose_name=_("Message"))
+    is_read = models.BooleanField(default=False, verbose_name=_("Read"))
 
     def __str__(self):
         return f"{self.name} - {self.subject}"

@@ -32,10 +32,10 @@ BASE_URL = 'https://fofofish.app/'
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-s%3ursx!kyqj!t_q6a+=g8p(%rz5(+z^)477=1hg$79(oh-+v+')
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-s%3ursx!kyqj!t_q6a+=g8p(%rz5(+z^)477=1hg$79(oh-+v+')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app', 'lunafish.app', 'www.lunafish.app', 'localhost', '127.0.0.1', '*']
 CSRF_TRUSTED_ORIGINS = ["https://fofofish.app", "https://www.fofofish.app", "https://lunafish.app", "https://www.lunafish.app"]
@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'api',
     'classroom',
     'exercise',
+    'classes',
 ]
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
@@ -140,23 +141,27 @@ WSGI_APPLICATION = 'fofofish.wsgi.application'
 
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'ENGINE': 'django.db.backends.mysql', 
+#         'NAME': config('DB_NAME', default='fofofish_fofofish'), 
+#         'USER': config('DB_USER', default='fofofish_fofofish'), 
+#         'PASSWORD': config('DB_PASSWORD', default='UZlbqUwJi)O5#0e#'), 
+#         'HOST': config('DB_HOST', default='127.0.0.1'), 
+#         'PORT': config('DB_PORT', default='3306'), 
+#         'OPTIONS': {
+#             'charset': 'utf8mb4',
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+#         },
 #     }
 # }
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', 
-        'NAME': config('DB_NAME', default='fofofish_fofofish'), 
-        'USER': config('DB_USER', default='fofofish_fofofish'), 
-        'PASSWORD': config('DB_PASSWORD', default='UZlbqUwJi)O5#0e#'), 
-        'HOST': config('DB_HOST', default='127.0.0.1'), 
-        'PORT': config('DB_PORT', default='3306'), 
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('DB_NAME', 'fofofish'),
+        'USER': os.getenv('DB_USER', 'fofofish'),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -313,6 +318,24 @@ SIMPLE_JWT = {
     'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
 }
 
+CENTRIFUGO_TOKEN_SECRET = os.getenv('CENTRIFUGO_TOKEN_SECRET', SECRET_KEY)
+CENTRIFUGO_API_KEY = os.getenv('CENTRIFUGO_API_KEY', '')
+CENTRIFUGO_API_URL = os.getenv('CENTRIFUGO_API_URL', '')
+CENTRIFUGO_WS_URL = os.getenv('CENTRIFUGO_WS_URL', '')
+
+RTC_JWT_SECRET = os.getenv('RTC_JWT_SECRET', SECRET_KEY)
+RTC_WS_URL = os.getenv('RTC_WS_URL', '')
+RTC_TOKEN_TTL_SECONDS = int(os.getenv('RTC_TOKEN_TTL_SECONDS', '3600'))
+RTC_ICE_SERVERS = []
+
+CLASSES_USER_ROLE_FIELD = 'role'
+CLASSES_TEACHER_ROLE_VALUE = 'teacher'
+CLASSES_STUDENT_ROLE_VALUE = 'user'
+CLASSES_MAX_STUDENTS_DEFAULT = 100
+CLASSES_MAX_STUDENTS_HARD_LIMIT = 500
+CLASSES_MESSAGE_HISTORY_LIMIT = 300
+CLASSES_REACTION_RATE_LIMIT = 10
+
 # ============ SMS Configuration ============
 # SMS.ir API
 SMSIR_API_KEY = config('SMSIR_API_KEY', default='your-api-key-here')
@@ -339,6 +362,8 @@ else:
     ZIBAL_REQUEST_URL = "https://gateway.zibal.ir/v1/request"
     ZIBAL_VERIFY_URL = "https://gateway.zibal.ir/v1/verify"
     ZIBAL_START_PAY_URL = "https://gateway.zibal.ir/start/{trackId}"
+    
+ZIBAL_CALLBACK_URL_COURSE = 'https://fofofish.app/api/courses/payment/callback/'
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

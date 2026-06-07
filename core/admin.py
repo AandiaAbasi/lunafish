@@ -40,6 +40,14 @@ class AboutAdmin(admin.ModelAdmin):
         (_("Content"), {"fields": ("content_en", "content_fa")}),
     )
 
+    def has_add_permission(self, request):
+        # فقط اگر هیچ رکوردی وجود نداشته باشد، اجازه افزودن بده
+        return not About.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        # هیچ‌وقت اجازه حذف نده
+        return False
+
     def image_tag(self, obj):
         if obj.image:
             return format_html('<img src="{}" width="100" style="border-radius: 10px;"/>', obj.image.url)
@@ -48,12 +56,10 @@ class AboutAdmin(admin.ModelAdmin):
         
     def admin_actions(self, obj):
         edit_url = reverse('admin:core_about_change', args=[obj.id])
-        delete_url = reverse('admin:core_about_delete', args=[obj.id])
         
         return format_html(
-            '<a href="{}" class="button" style="margin-right:10px; padding:5px;">✏️ {}</a>'
-            '<a href="{}" class="button" style="margin-right: 5px; padding:5px; background-color: #ba2121;">🗑 {}</a>',
-            edit_url, _("Edit"), delete_url, _("Delete")
+            '<a href="{}" class="button" style="margin-right:10px; padding:5px;">✏️ {}</a>',
+            edit_url, _("Edit")
         )
     admin_actions.short_description = _("Actions")
 
@@ -67,19 +73,24 @@ class TermAdmin(admin.ModelAdmin):
     list_display = ("title", "created_at_display", "updated_at_display", "admin_actions")
     search_fields = ("title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
+    
     fieldsets = (
         (_("Title"), {"fields": ("title_en", "title_fa")}),
         (_("Content"), {"fields": ("content_en", "content_fa")}),
     )
 
+    def has_add_permission(self, request):
+        return not Term.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
     def admin_actions(self, obj):
         edit_url = reverse('admin:core_term_change', args=[obj.id])
-        delete_url = reverse('admin:core_term_delete', args=[obj.id])
         
         return format_html(
-            '<a href="{}" class="button" style="margin-right:10px; padding:5px;">✏️ {}</a>'
-            '<a href="{}" class="button" style="margin-right: 5px; padding:5px; background-color: #ba2121;">🗑 {}</a>',
-            edit_url, _("Edit"), delete_url, _("Delete")
+            '<a href="{}" class="button" style="margin-right:10px; padding:5px;">✏️ {}</a>',
+            edit_url, _("Edit")
         )
     admin_actions.short_description = _("Actions")
 
@@ -89,19 +100,24 @@ class PrivacyAdmin(admin.ModelAdmin):
     list_display = ("title", "created_at_display", "updated_at_display", "admin_actions")
     search_fields = ("title_fa", "content_fa", "title_en", "content_en")
     ordering = ("-created_at",)
+    
     fieldsets = (
         (_("Title"), {"fields": ("title_en", "title_fa")}),
         (_("Content"), {"fields": ("content_en", "content_fa")}),
     )
 
+    def has_add_permission(self, request):
+        return not Privacy.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
     def admin_actions(self, obj):
         edit_url = reverse('admin:core_privacy_change', args=[obj.id])
-        delete_url = reverse('admin:core_privacy_delete', args=[obj.id])
         
         return format_html(
-            '<a href="{}" class="button" style="margin-right:10px; padding:5px;">✏️ {}</a>'
-            '<a href="{}" class="button" style="margin-right: 5px; padding:5px; background-color: #ba2121;">🗑 {}</a>',
-            edit_url, _("Edit"), delete_url, _("Delete")
+            '<a href="{}" class="button" style="margin-right:10px; padding:5px;">✏️ {}</a>',
+            edit_url, _("Edit")
         )
     admin_actions.short_description = _("Actions")
 
@@ -130,24 +146,30 @@ class ContactAdmin(admin.ModelAdmin):
 
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
-    list_display = ("name", "phone", "subject", "message", "created_at_display", "view_details")
+    list_display = ("name", "phone", "subject", "is_read", "created_at_display", "view_details")
     readonly_fields = ("name", "phone", "subject", "message")
     search_fields = ("name", "phone", "subject")
     actions = None
     list_display_links = ("view_details",)
-    list_filter = ("created_at",)
+    list_filter = ("is_read", "created_at")
     ordering = ("-created_at",)
 
     fieldsets = (
         (_("Contact Information"), {"fields": ("name", "phone")}),
         (_("Message Details"), {"fields": ("subject", "message")}),
+        (_("Status"), {"fields": ("is_read",)}),
     )
     
     def has_change_permission(self, request, obj=None):
-        return False
+        return True
 
     def has_add_permission(self, request):
         return False
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ("name", "phone", "subject", "message")
+        return self.readonly_fields
 
     def view_details(self, obj):
         url = reverse("admin:core_contactmessage_change", args=[obj.id])

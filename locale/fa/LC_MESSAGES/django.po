@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Fofofish\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-26 12:00+0000\n"
+"POT-Creation-Date: 2026-05-10 14:06+0330\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,1898 +17,4982 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: account/models.py
-msgid "Display name"
-msgstr "نام نمایشی"
-
-msgid "User display name (default: username)"
-msgstr "نام نمایشی کاربر (پیش فرض: نام کاربری)"
-
-msgid "User"
-msgstr "کاربر"
-
-msgid "Teacher"
-msgstr "معلم"
-
-msgid "Admin"
-msgstr "مدیر"
-
-msgid "Male"
-msgstr "مرد"
-
-msgid "Female"
-msgstr "زن"
-
-msgid "Custom"
-msgstr "سفارشی"
-
-msgid "Prefer not to say"
-msgstr "ترجیح می‌دهم نگویم"
-
-msgid "User role"
-msgstr "نقش کاربر"
-
-msgid "User: Regular user, Teacher: Teacher, Admin: Administrator"
-msgstr "کاربر: کاربر عادی، معلم: معلم، مدیر: مدیر سیستم"
-
-msgid "email address"
-msgstr "آدرس ایمیل"
-
-msgid "Phone number"
-msgstr "شماره تلفن"
-
-msgid "Phone verified at"
-msgstr "تأیید تلفن در"
-
-msgid "Email verified at"
-msgstr "تأیید ایمیل در"
-
-msgid "Profile photo"
-msgstr "عکس پروفایل"
-
-msgid "Selected avatar"
-msgstr "آواتار انتخاب شده"
-
-msgid "Avatar template selected by user"
-msgstr "قالب آواتار انتخاب شده توسط کاربر"
-
-msgid "Bio"
-msgstr "بیوگرافی"
-
-msgid "Gender"
-msgstr "جنسیت"
-
-#: account/serializers.py
-msgid "Phone number or email is required"
-msgstr "شماره تلفن یا ایمیل ضروری است"
-
-msgid "Invalid purpose. Must be one of: registration, login, phone_verification, email_verification, password_reset"
-msgstr "هدف نامعتبر است"
-
-msgid "Verification code is required"
-msgstr "کد تأیید ضروری است"
-
-msgid "Code must be numeric"
-msgstr "کد باید عددی باشد"
-
-msgid "Code must be 6 digits"
-msgstr "کد باید ۶ رقم باشد"
-
-#: account/services.py
-msgid "The Username field must be set"
-msgstr "فیلد نام کاربری باید تنظیم شود"
-
-msgid "OTP has already been sent. Please try again in a few minutes."
-msgstr "کد OTP قبلاً ارسال شده است. لطفاً چند دقیقه دیگر تلاش کنید."
-
-msgid "Phone number or email cannot be empty"
-msgstr "شماره تلفن یا ایمیل نمی‌تواند خالی باشد"
-
-msgid "No OTP found for this phone/email."
-msgstr "کد OTP برای این شماره تلفن/ایمیل یافت نشد."
-
-msgid "OTP has expired. Please request a new one."
-msgstr "کد OTP منقضی شده است. لطفاً کد جدید درخواست کنید."
-
-msgid "OTP code is incorrect."
-msgstr "کد OTP نادرست است."
-
-msgid "Invalid token"
-msgstr "توکن نامعتبر است"
-
-msgid "Token expired. Please register again."
-msgstr "توکن منقضی شده است. لطفاً دوباره ثبت نام کنید."
-
-msgid "Username already exists"
-msgstr "این نام کاربری قبلاً استفاده شده است"
-
-msgid "User is already a teacher"
-msgstr "این کاربر قبلاً معلم است"
-
-msgid "Teacher promotion request submitted and awaiting approval"
-msgstr "درخواست ارتقاء معلم ارسال شد و در انتظار تأیید است"
-
-msgid "User is not a teacher"
-msgstr "این کاربر معلم نیست"
-
-msgid "Teacher verified"
-msgstr "معلم تأیید شد"
-
-msgid "Teacher verification revoked"
-msgstr "تأیید معلم لغو شد"
-
-#: account/models.py
-msgid "Birth date"
-msgstr "تاریخ تولد"
-
-msgid "Teacher verified"
-msgstr "معلم تأييد شده"
-
-msgid "Whether this teacher is verified by admin"
-msgstr "آيا اين معلم توسط مدير تأييد شده است"
-
-msgid "Teacher verification requested at"
-msgstr "تاریخ درخواست تأييد معلم"
-
-msgid "Special commission rate"
-msgstr "نرخ کمیسیون ویژه"
-
-msgid "Special commission rate for this teacher (if empty, default rate is used). Number between 0 and 100"
-msgstr "نرخ کمیسیون ویژه برای اين معلم (اگر خالی باشد نرخ با لا استفاده میشود). عددی بين 0 و 100"
-
-msgid "Push notification token"
-msgstr "توکن اعلان فشاری"
-
-msgid "Last seen"
-msgstr "آخرين بار رويال"
-
-msgid "Last online time"
-msgstr "آخرين بار براز به اينترنت"
-
-msgid "Is online"
-msgstr "براز به اينترنت"
-
-msgid "Online status"
-msgstr "وضعيت براز به اينترنت"
-
-msgid "Users"
-msgstr "کاربران"
-
-msgid "Registration"
-msgstr "ثبت نام"
-
-msgid "Phone Verification"
-msgstr "تأييد لالکترونيکی"
-
-msgid "Email Verification"
-msgstr "تأييد ايميل"
-
-msgid "Password Reset"
-msgstr "بازنشاني رمز عبور"
-
-msgid "Login"
-msgstr "ورود"
-
-msgid "Hashed code"
-msgstr "کامل رمزگذاریشده"
-
-msgid "Hashed OTP code"
-msgstr "كامل رمزگذاری شده OTP"
-
-msgid "Expires at"
-msgstr "منقضی شده در"
-
-msgid "Is used"
-msgstr "استفاده شده است"
-
-msgid "Purpose"
-msgstr "هدف"
-
-msgid "OTP Code"
-msgstr "کامل OTP"
-
-msgid "OTP Codes"
-msgstr "كامل‌های OTP"
-
-msgid "Token"
-msgstr "توکن"
-
-msgid "Verification Token"
-msgstr "توکن تأييد"
-
-msgid "Verification Tokens"
-msgstr "توکن‌های تأييد"
-
-msgid "Avatar image"
-msgstr "تصوير آواتار"
-
-msgid "Avatar Template"
-msgstr "قالب آواتار"
-
-msgid "Avatar Templates"
-msgstr "قالب‌های آواتار"
-
-#: account/admin.py
+#: account/admin.py:47
 msgid "Email is required."
 msgstr "ايميل ضروری است."
 
+#: account/admin.py:54
 msgid "Phone number is required."
 msgstr "شماره تلفن ضروری است."
 
+#: account/admin.py:61
 msgid "Invalid phone number."
 msgstr "شماره تلفن نامعتبر."
 
+#: account/admin.py:80 account/admin.py:134
 msgid "Registration Date"
 msgstr "تاریخ ثبت نام"
 
+#: account/admin.py:84 account/admin.py:138
 msgid "Last Update"
 msgstr "آخرين بهروزرسانی"
 
+#: account/admin.py:88 account/admin.py:142 account/admin.py:367
 msgid "Last Login"
 msgstr "آخرين ورود"
 
+#: account/admin.py:94 account/admin.py:161 account/admin.py:312
+#: account/admin.py:387 classroom/admin.py:1082 core/admin.py:62
+#: core/admin.py:93 core/admin.py:120 core/admin.py:142 core/admin.py:205
+#: core/admin.py:228 core/admin.py:307
 msgid "Edit"
 msgstr "ويرايش"
 
+#: account/admin.py:96 account/admin.py:163 account/admin.py:314
+#: account/admin.py:389 account/admin.py:535 classroom/admin.py:1084
+#: core/admin.py:64 core/admin.py:95 core/admin.py:122 core/admin.py:144
+#: core/admin.py:207 core/admin.py:230 core/admin.py:309
 msgid "Actions"
 msgstr "عمليات"
 
+#: account/admin.py:104 account/admin.py:171
 msgid "Main Info"
 msgstr "اطلاعات اصلی"
 
-msgid "Permissions"
-msgstr "مجوزه‌ها"
-
+#: account/admin.py:105 account/admin.py:174
 msgid "Personal Info"
 msgstr "اطلاعات شخصی"
 
+#: account/admin.py:106 account/admin.py:175
 msgid "Dates"
 msgstr "تاریخ‌ها"
 
+#: account/admin.py:146
+msgid "Verification Requested At"
+msgstr "تاریخ احراز"
+
+#: account/admin.py:154
+msgid "No photo"
+msgstr "بدون عکس"
+
+#: account/admin.py:155
+msgid "Profile Photo"
+msgstr "عکس پروفایل"
+
+#: account/admin.py:172
 msgid "Teacher Info"
 msgstr "اطلاعات معلم"
 
+#: account/admin.py:173
 msgid "Financial Settings"
 msgstr "تنظيمات مالی"
 
-msgid "Custom commission rate for this teacher. If empty, default rate applies."
+#: account/admin.py:173
+msgid ""
+"Custom commission rate for this teacher. If empty, default rate applies."
 msgstr "نرخ ويژه برای اين معلم. اگر خالی باشد نرخ با لا استفاده میشود."
 
-msgid "Add New Teacher"
-msgstr "افزودن معلم جديد"
-
-msgid "Password will be auto-generated and sent to the teacher via SMS."
-msgstr "رمز عبور بهطور خودکار توليد و ازطريق امس به معلم ارسال میشود."
-
+#: account/admin.py:194
+#, python-format
 msgid "Phone conversion error: %s"
 msgstr "خطا در تبديل تلفن: %s"
 
+#: account/admin.py:224
+#, python-brace-format
 msgid "Teacher successfully created. Password {password} sent to {phone}."
 msgstr "معلم با موفقيت ايجاد شد. رمز عبور {password} به {phone} ارسال شد."
 
+#: account/admin.py:229
+#, python-brace-format
 msgid "Teacher created but SMS failed. Password: {password}"
 msgstr "معلم ايجاد شد اما امس ناموفق بود. رمز عبور: {password}"
 
+#: account/admin.py:238 account/models.py:53 account/models.py:255
+#: account/models.py:417 exercise/models.py:227
+msgid "User"
+msgstr "کاربر"
+
+#: account/admin.py:239
 msgid "User Management"
 msgstr "مديريت کاربران"
 
-msgid "Teacher Management"
-msgstr "مديريت معلمان"
-
-msgid "Avatar Image"
-msgstr "تصوير آواتار"
-
-msgid "Metadata"
-msgstr "اطلاعات فراشروحی"
-
-msgid "Preview"
-msgstr "پيش‌نمايش"
-
-msgid "Delete"
-msgstr "حذف"
-
-#: account/serializers.py
-msgid "This username is already taken"
-msgstr "اين نام کاربری قبلا استفاده شده است"
-
-msgid "New password is required"
-msgstr "رمز عبور جديد ضروری است"
-
-msgid "Password confirmation is required"
-msgstr "تاييد رمز عبور ضروری است"
-
-msgid "Passwords do not match"
-msgstr "رمز عبور مطابقت نداره"
-
-msgid "Username can only contain letters, numbers, and underscores."
-msgstr "نام کاربری بايد تنها حاوی حروف هجدهبا حروف كوچک اعداد و زه باشد."
-
-msgid "Username must be at least 3 characters long."
-msgstr "نام کاربری بايد حداقل 3 کاراکتر باشد."
-
-msgid "This username is already taken. Please choose another one."
-msgstr "اين نام کاربری قبلا استفاده شده است. لطفا یک واردی ديگر انتخاب کنيد."
-
-msgid "User is not a teacher"
-msgstr "اين کاربر معلم نيست"
-
-msgid "Selected avatar does not exist"
-msgstr "آواتار انتخاب شده وجود ندارد"
-
-#: account/templatetags/commission_tags.py
-msgid "Error getting commission rate: %s"
-msgstr "خطا در دريافت نرخ کمیسیون: %s"
-
-msgid "N/A"
-msgstr "در دسترس نيست"
-
-#: account/apps.py
-msgid "User Account Management"
-msgstr "مديريت حساب کاربر"
-
-#: api/views.py
-msgid "This phone number is already registered. Please log in."
-msgstr "این شماره تلفن قبلاً ثبت نام شده است. لطفاً وارد شوید."
-
-msgid "This email is already registered. Please log in."
-msgstr "این ایمیل قبلاً ثبت نام شده است. لطفاً وارد شوید."
-
-msgid "Please wait 2 minutes."
-msgstr "لطفاً 2 دقیقه صبر کنید."
-
-msgid "Email authentication is not configured on this server"
-msgstr "احراز هویت ایمیل در این سرور پیکربندی نشده است"
-
-msgid "Verification code sent."
-msgstr "کد تأیید ارسال شد."
-
-msgid "Verification code is correct. Please complete registration"
-msgstr "کد تأیید صحیح است. لطفاً ثبت نام را تکمیل کنید"
-
-msgid "Login successful"
-msgstr "ورود موفق"
-
-msgid "Invalid data"
-msgstr "داده نامعتبر"
-
-msgid "Registration completed successfully"
-msgstr "ثبت نام با موفقیت انجام شد"
-
-msgid "Profile updated successfully"
-msgstr "پروفایل با موفقیت به روز شد"
-
-msgid "Teacher profile updated successfully"
-msgstr "پروفایل معلم با موفقیت به روز شد"
-
-msgid "Invalid data provided"
-msgstr "داده نامعتبر ارسال شد"
-
-msgid "Username and password are required"
-msgstr "نام کاربری و رمز عبور ضروری است"
-
-msgid "Username or password is incorrect"
-msgstr "نام کاربری یا رمز عبور نادرست است"
-
-msgid "This account is not for a teacher"
-msgstr "این حساب برای معلم نیست"
-
-msgid "This account is not for teachers"
-msgstr "این حساب برای معلمان نیست"
-
-msgid "Teacher registration completed successfully"
-msgstr "ثبت نام معلم با موفقیت انجام شد"
-
-msgid "Sending OTP to email is currently not supported"
-msgstr "ارسال OTP به ایمیل در حال حاضر پشتیبانی نمی‌شود"
-
-msgid "Please provide a valid email address"
-msgstr "لطفاً آدرس ایمیل معتبر وارد کنید"
-
-msgid "This email is registered as a teacher account. Please use teacher login."
-msgstr "این ایمیل به عنوان حساب معلم ثبت شده است. لطفاً از ورود معلم استفاده کنید."
-
-msgid "Verification code has been sent to your email"
-msgstr "کد تأیید به ایمیل شما ارسال شد"
-
-msgid "Email and verification code are required"
-msgstr "ایمیل و کد تأیید ضروری است"
-
-msgid "Invalid verification code format"
-msgstr "فرمت کد تأیید نامعتبر است"
-
-msgid "This email is registered as a regular user account. Please use regular user login."
-msgstr "این ایمیل به عنوان حساب کاربر عادی ثبت شده است. لطفاً از ورود کاربر عادی استفاده کنید."
-
-msgid "Username is required"
-msgstr "نام کاربری ضروری است"
-
-msgid "Username must be at least 3 characters"
-msgstr "نام کاربری باید حداقل 3 کاراکتر باشد"
-
-msgid "This username has already been taken."
-msgstr "این نام کاربری قبلاً استفاده شده است."
-
-msgid "This username is available."
-msgstr "این نام کاربری در دسترس است."
-
-msgid "Username is invalid"
-msgstr "نام کاربری نامعتبر است"
-
-msgid "Avatar selected successfully"
-msgstr "آواتار با موفقیت انتخاب شد"
-
-msgid "Selected avatar does not exist"
-msgstr "آواتار انتخاب شده وجود ندارد"
-
-msgid "You are already a teacher"
-msgstr "شما قبلاً معلم هستید"
-
-msgid "Password changed successfully"
-msgstr "رمز عبور با موفقیت تغییر کرد"
-
-msgid "Refresh token not provided"
-msgstr "توکن تازه‌سازی ارائه نشده است"
-
-msgid "Logout successful"
-msgstr "خروج موفق"
-
-msgid "Logout successful (token not expired)"
-msgstr "خروج موفق (توکن منقضی نشده است)"
-
-msgid "About us content not found"
-msgstr "محتوای درباره ما یافت نشد"
-
-msgid "No phone contact found"
-msgstr "هیچ تماس تلفنی یافت نشد"
-
-msgid "Phone contact retrieved successfully"
-msgstr "تماس تلفنی با موفقیت بازیابی شد"
-
-msgid "Home page data retrieved successfully"
-msgstr "داده‌های صفحه اصلی با موفقیت بازیابی شدند"
-
-#: api/bilingual.py
-msgid "Operation successful"
-msgstr "عملیات موفق"
-
-msgid "An error occurred"
-msgstr "خطایی رخ داد"
-
-#: api/apps.py
-msgid "API Endpoints"
-msgstr "نقاط پایانی API"
-#: core/models.py
-msgid "Title"
-msgstr "عنوان"
-
-msgid "Image"
-msgstr "تصویر"
-
-msgid "Content"
-msgstr "محتوا"
-
-msgid "About us"
-msgstr "درباره ما"
-
-msgid "Terms & Conditions"
-msgstr "شرایط و ضوابط"
-
-msgid "Privacy Policy"
-msgstr "سیاست حریم خصوصی"
-
-msgid "Email"
-msgstr "ایمیل"
-
-msgid "Phone"
-msgstr "تلفن"
-
-msgid "Notification number"
-msgstr "شماره اطلاع‌رسانی"
-
-msgid "Address"
-msgstr "آدرس"
-
-msgid "Instagram"
-msgstr "اینستاگرام"
-
-msgid "Telegram"
-msgstr "تلگرام"
-
-msgid "YouTube"
-msgstr "یوتیوب"
-
-msgid "Spotify"
-msgstr "اسپاتیفای"
-
-msgid "Link"
-msgstr "لینک"
-
-msgid "Type"
-msgstr "نوع"
-
-msgid "Contact Method"
-msgstr "روش تماس"
-
-msgid "Contact Methods"
-msgstr "روش‌های تماس"
-
-msgid "Name"
-msgstr "نام"
-
-msgid "Subject"
-msgstr "موضوع"
-
-msgid "Message"
-msgstr "پیام"
-
-msgid "Contact message"
-msgstr "پیام تماس"
-
-msgid "Contact messages"
-msgstr "پیام‌های تماس"
-
-msgid "Short description"
-msgstr "توضیح مختصر"
-
-msgid "Created at"
-msgstr "ایجاد شده در"
-
-msgid "Article"
-msgstr "مقاله"
-
-msgid "Articles"
-msgstr "مقالات"
-
-msgid "Question"
-msgstr "سؤال"
-
-msgid "Answer"
-msgstr "پاسخ"
-
-msgid "Display status"
-msgstr "وضعیت نمایش"
-
-msgid "FAQ"
-msgstr "سوال‌های متداول"
-
-msgid "FAQs"
-msgstr "سوال‌های متداول"
-
-msgid "Home page"
-msgstr "صفحه اصلی"
-
-msgid "App home"
-msgstr "صفحه اول برنامه"
-
-msgid "Subtitle"
-msgstr "عنوان فرعی"
-
-msgid "Example: https://example.com"
-msgstr "مثال: https://example.com"
-
-msgid "Placement"
-msgstr "محل قرارگیری"
-
-msgid "Display order"
-msgstr "ترتیب نمایش"
-
-msgid "Active"
-msgstr "فعال"
-
-msgid "Banner"
-msgstr "بنر"
-
-msgid "Banners"
-msgstr "بنرها"
-
-#: core/forms.py
-msgid "Enter your name"
-msgstr "نام خود را وارد کنید"
-
-msgid "09xxxxxxxxx"
-msgstr "09xxxxxxxxx"
-
-msgid "Subject of your message"
-msgstr "موضوع پیام خود"
-
-msgid "Write your message here"
-msgstr "پیام خود را اینجا بنویسید"
-
-#: core/views.py
-msgid "Your message has been sent successfully."
-msgstr "پیام شما با موفقیت ارسال شد."
-
-msgid "Please correct the errors in the form."
-msgstr "لطفاً خطاهای فرم را برطرف کنید."
-
-#: core/apps.py
-msgid "Site pages"
-msgstr "صفحات سایت"
-
-#: core/admin.py
-msgid "Edit"
-msgstr "ویرایش"
-
-msgid "Delete"
-msgstr "حذف"
-
-msgid "No image"
-msgstr "بدون تصویر"
-
-msgid "Image preview"
-msgstr "پیش‌نمایش تصویر"
-
-msgid "Actions"
-msgstr "عملیات"
-
-msgid "Title"
-msgstr "عنوان"
-
-msgid "Media"
-msgstr "رسانه"
-
-msgid "Contact Information"
-msgstr "اطلاعات تماس"
-
-msgid "Message Details"
-msgstr "جزئیات پیام"
-
-msgid "Main Information"
-msgstr "اطلاعات اصلی"
-
-msgid "View details"
-msgstr "مشاهده جزئیات"
-
-#: fofofish/settings.py
-msgid "Nozima"
-msgstr "نوزیما"
-
-msgid "Persian"
-msgstr "فارسی"
-
-msgid "English"
-msgstr "انگلیسی"
-
-#: fofofish/middleware/auth_middleware.py
-msgid "Invalid JSON format"
-msgstr "فرمت JSON نامعتبر است"
-
-msgid "An unexpected error occurred"
-msgstr "خطای غیرمنتظره‌ای رخ داد"
-
-msgid "Inactive"
-msgstr "غیرفعال"
-
-msgid "Active"
-msgstr "فعال"
-
-msgid "Service Title"
-msgstr "عنوان سرویس"
-
-msgid "Service title (max 128 characters)"
-msgstr "عنوان سرویس (حداکثر 128 کاراکتر)"
-
-msgid "User Limit"
-msgstr "حد کاربر"
-
-msgid "Maximum concurrent users"
-msgstr "حداکثر کاربران همزمان"
-
-msgid "Video Limit"
-msgstr "حد ویدئو"
-
-msgid "Maximum concurrent videos per room"
-msgstr "حداکثر ویدئوهای همزمان در هر اتاق"
-
-msgid "Time Limit (seconds)"
-msgstr "حد زمان (ثانیه)"
-
-msgid "Person-second time limit"
-msgstr "حد زمان بر حسب فرد-ثانیه"
-
-msgid "Time Usage (seconds)"
-msgstr "زمان مصرف شده (ثانیه)"
-
-msgid "Person-second time used"
-msgstr "زمان مصرف بر حسب فرد-ثانیه"
-
-msgid "Start Time"
-msgstr "زمان شروع"
-
-msgid "Service start time (Unix timestamp)"
-msgstr "زمان شروع سرویس (Unix timestamp)"
-
-msgid "Stop Time"
-msgstr "زمان خاتمه"
-
-msgid "Service stop time (Unix timestamp)"
-msgstr "زمان خاتمه سرویس (Unix timestamp)"
-
-msgid "Service"
-msgstr "سرویس"
-
-msgid "Services"
-msgstr "سرویس‌ها"
-
-msgid "0: Inactive, 1: Active"
-msgstr "0: غیرفعال, 1: فعال"
-
-msgid "Service this room belongs to"
-msgstr "سرویسی که این اتاق به آن تعلق دارد"
-
-msgid "Room Name"
-msgstr "نام اتاق"
-
-msgid "Room name in Latin (max 100 characters)"
-msgstr "نام اتاق به لاتین (حداکثر 100 کاراکتر)"
-
-msgid "Room Title"
-msgstr "عنوان اتاق"
-
-msgid "Room display title (max 100 characters)"
-msgstr "عنوان نمایش اتاق (حداکثر 100 کاراکتر)"
-
-msgid "Description"
-msgstr "توضیح"
-
-msgid "Room description (max 512 characters)"
-msgstr "قضغقرانی اتاق (حداکثر 512 کاراکتر)"
-
-msgid "Allow Guest Login"
-msgstr "اجازه ورود مهمان"
-
-msgid "Allow guest login"
-msgstr "اجازه ورود به عنوان مهمان"
-
-msgid "Guest Limit"
-msgstr "حد مهمان"
-
-msgid "Maximum guests (0 = unlimited)"
-msgstr "حداکثر مهمانان (0 = بی حد)"
-
-msgid "Operator Login First"
-msgstr "ورود اپراتور اول"
-
-msgid "Require operator to login first"
-msgstr "الزام به ورود اپراتور ابتدا"
-
-msgid "Max Users"
-msgstr "حداکثر کاربران"
-
-msgid "Session Duration (seconds)"
-msgstr "مدت نشست (ثانیه)"
-
-msgid "Maximum session duration in seconds"
-msgstr "حداکثر مدت نشست بر ثانیه"
-
-msgid "Person-second time used in current session"
-msgstr "زمان مصرف شده بر حسب فرد-ثانیه در نشست فعلی"
-
-msgid "Total Time Usage (seconds)"
-msgstr "کل زمان مصرف شده (ثانیه)"
-
-msgid "Total person-second time used"
-msgstr "کل زمان مصرف شده بر حسب فرد-ثانیه"
-
-msgid "Room"
-msgstr "اتاق"
-
-msgid "Rooms"
-msgstr "اتاقها"
-
-msgid "Unknown"
-msgstr "نامعلوم"
-
-msgid "Male"
-msgstr "مرد"
-
-msgid "Female"
-msgstr "زن"
-
-msgid "Username"
-msgstr "نام کاربری"
-
-msgid "Username in Latin (max 32 characters)"
-msgstr "نام کاربری به لاتین (حداکثر 32 کاراکتر)"
-
-msgid "Nickname"
-msgstr "نام مستعار"
-
-msgid "Display name (max 100 characters)"
-msgstr "نام نمایش (حداکثر 100 کاراکتر)"
-
-msgid "Password Hash"
-msgstr "هش رمز عبور"
-
-msgid "Password hash (max 24 characters original)"
-msgstr "هش رمز عبور (حداکثر 24 کاراکتر اصلی)"
-
-msgid "Email address (max 100 characters)"
-msgstr "آدرس ایمیل (حداکثر 100 کاراکتر)"
-
-msgid "First Name"
-msgstr "نام"
-
-msgid "First name (max 100 characters)"
-msgstr "نام (حداکثر 100 کاراکتر)"
-
-msgid "Last Name"
-msgstr "نام خانوادگی"
-
-msgid "Last name (max 100 characters)"
-msgstr "نام خانوادگی (حداکثر 100 کاراکتر)"
-
-msgid "0: Unknown, 1: Male, 2: Female"
-msgstr "0: نامعلوم, 1: مرد, 2: زن"
-
-msgid "Is Public"
-msgstr "عمومی"
-
-msgid "Is this a public/shared account"
-msgstr "آیا این حساب عمومی/رایگان است"
-
-msgid "Concurrent Limit"
-msgstr "حد رز زمانی"
-
-msgid "Concurrent usage limit (0 = unlimited)"
-msgstr "حد استفاده همزمان (0 = بی حد)"
-
-msgid "Maximum time allowed (seconds)"
-msgstr "حداکثر زمان مجاز (ثانیه)"
-
-msgid "Current time used (seconds)"
-msgstr "زمان مصرف فعلی (ثانیه)"
-
-msgid "Total time used across all sessions (seconds)"
-msgstr "کل زمان مصرف در تمام نشست‌ها (ثانیه)"
-
-msgid "Expiry Date"
-msgstr "تاریخ انقضاء"
-
-msgid "Account expiry date (Unix timestamp)"
-msgstr "تاریخ انقضاء حساب (Unix timestamp)"
-
-msgid "Normal User"
-msgstr "کاربر عادی"
-
-msgid "Presenter"
-msgstr "ارائه دهنده"
-
-msgid "Operator"
-msgstr "اپراتور"
-
-msgid "Access Level"
-msgstr "سطح دسترسی"
-
-msgid "1: Normal User, 2: Presenter, 3: Operator"
-msgstr "1: کاربر عادی, 2: ارائه دهنده, 3: اپراتور"
-
-msgid "Room User Access"
-msgstr "دسترسی کاربر به اتاق"
-
-msgid "Room User Accesses"
-msgstr "دسترسی‌های کاربر به اتاقها"
-
-msgid "Display name for this login"
-msgstr "نام نمایش برای این ورود"
-
-msgid "Number of concurrent users allowed"
-msgstr "تعداد کاربران همزمان مجاز"
-
-msgid "Login URL"
-msgstr "URL ورود"
-
-msgid "TTL (seconds)"
-msgstr "TTL (ثانیه)"
-
-msgid "Time to live for this login URL"
-msgstr "زمان زنده برای این URL ورود"
-
-msgid "Is Active"
-msgstr "فعال است"
-
-msgid "Expires At"
-msgstr "منقضی شده در"
-
-msgid "When this login URL expires"
-msgstr "زمان انقضاء این URL ورود"
-
-msgid "Login URLs"
-msgstr "URLهای ورود"
-
-msgid "Basic Information"
-msgstr "اطلاعات اساسی"
-
-msgid "Limits"
-msgstr "محدودیت‌ها"
-
-msgid "Usage"
-msgstr "مصرف"
-
-msgid "Timestamps"
-msgstr "مهرزمان‌ها"
-
-msgid "Access Control"
-msgstr "کنترل دسترسی"
-
-msgid "Credentials"
-msgstr "اعتبارات"
-
-msgid "Personal Information"
-msgstr "اطلاعات شخصی"
-
-msgid "Status & Access"
-msgstr "وضعیت و دسترسی"
-
-msgid "Time Management"
-msgstr "مدیریت زمان"
-
-msgid "Access Information"
-msgstr "اطلاعات دسترسی"
-
-msgid "Room & User"
-msgstr "اتاق و کاربر"
-
-msgid "Access Settings"
-msgstr "تنظیمات دسترسی"
-
-msgid "URL"
-msgstr "URL"
-
-msgid "Expiry"
-msgstr "انقضاء"
-
-msgid "Users added successfully"
-msgstr "کاربران با موفقیت افزوده شدند"
-
-msgid "Users removed successfully"
-msgstr "کاربران با موفقیت حذف شدند"
-
-msgid "Rooms added successfully"
-msgstr "اتاق‌ها با موفقیت افزوده شدند"
-
-msgid "Rooms removed successfully"
-msgstr "اتاق‌ها با موفقیت حذف شدند"
-
-#: account/models.py
-msgid "Birth date in Jalali calendar format (YYYY-MM-DD)"
-msgstr "تاریخ تولد در فرمت تقویم جلالی (YYYY-MM-DD)"
-
-msgid "Birth date must be in YYYY-MM-DD format (Jalali calendar)"
-msgstr "تاریخ تولد باید به فرمت YYYY-MM-DD (تقویم جلالی) باشد"
-
-msgid "invalid_jalali_date"
-msgstr "تاریخ جلالی نامعتبر"
-
-#: account/models.py (Teacher Profile Fields)
-msgid "Educational qualifications"
-msgstr "مدرک تحصیلی"
-
-msgid "Degrees, certifications, and professional qualifications"
-msgstr "درجات تحصیلی، گواهینامه‌ها و مدارک حرفه‌ای"
-
-msgid "Languages taught"
-msgstr "زبان‌های تدریس‌شده"
-
-msgid "Languages that can be taught (comma-separated or JSON)"
-msgstr "زبان‌هایی که می‌توان تدریس کرد (جدا شده با کاما یا JSON)"
-
-msgid "Specialization"
-msgstr "تخصص"
-
-msgid "Area of specialization or expertise"
-msgstr "زمینه تخصص یا تخصص"
-
-msgid "Resume summary"
-msgstr "خلاصه رزومه"
-
-msgid "Brief summary of professional experience and background"
-msgstr "خلاصه مختصر تجربیات حرفه‌ای و سابقه"
-
-msgid "Introduction video URL"
-msgstr "آدرس ویدئو معرفی"
-
-msgid "YouTube or video URL for teacher introduction"
-msgstr "آدرس یوتیوب یا ویدئو برای معرفی معلم"
-
-msgid "Hourly rate"
-msgstr "قیمت ساعتی"
-
-msgid "Suggested hourly teaching rate in default currency"
-msgstr "قیمت ساعتی پیشنهادی تدریس در ارز پیش فرض"
-
-msgid "Available times"
-msgstr "زمان‌های در دسترس"
-
-msgid "JSON object with available teaching times"
-msgstr "شی JSON با زمان‌های تدریس در دسترس"
-
-msgid "Years of experience"
-msgstr "سال‌های تجربه"
-
-msgid "Number of years of teaching experience"
-msgstr "تعداد سال‌های تجربه تدریس"
-
-#: account/serializers.py
-msgid "Birth date in Jalali format (YYYY-MM-DD), e.g., 1403-05-24"
-msgstr "تاریخ تولد به فرمت جلالی (YYYY-MM-DD)، مثلاً 1403-05-24"
-
-msgid "ID of the avatar template to select"
-msgstr "شناسه الگوی آواتار برای انتخاب"
-
-msgid "Selected avatar does not exist"
-msgstr "آواتار انتخاب‌شده موجود نیست"
-
-msgid "Profile completed successfully"
-msgstr "پروفایل با موفقیت تکمیل شد"
-
-msgid "Teacher profile completed successfully"
-msgstr "پروفایل معلم با موفقیت تکمیل شد"
-
-msgid "Only students can use this endpoint"
-msgstr "فقط دانش‌آموزان می‌توانند از این نقطه پایانی استفاده کنند"
-
-msgid "Only teachers can use this endpoint"
-msgstr "فقط معلمان می‌توانند از این نقطه پایانی استفاده کنند"
-
-msgid "Invalid data or invalid avatar"
-msgstr "داده نامعتبر یا آواتار نامعتبر"
-
-msgid "Invalid data or validation error"
-msgstr "داده نامعتبر یا خطای اعتبارسنجی"
-
-#: api/views.py
-msgid "Complete student profile information"
-msgstr "تکمیل اطلاعات پروفایل دانش‌آموز"
-
-msgid "Complete teacher profile with professional information"
-msgstr "تکمیل پروفایل معلم با اطلاعات حرفه‌ای"
-
-msgid "Hourly rate must be greater than zero"
-msgstr "قیمت ساعتی باید بیشتر از صفر باشد"
-
-msgid "Experience years cannot be negative"
-msgstr "سال‌های تجربه نمی‌تواند منفی باشد"
-
-msgid "Introduction video must be a valid URL"
-msgstr "ویدئو معرفی باید یک آدرس معتبر باشد"
-
-msgid "Introduction video URL is too long"
-msgstr "آدرس ویدئو معرفی خیلی طولانی است"
-
-msgid "User is not a teacher"
-msgstr "کاربر معلم نیست"
-
-msgid "No verification code found for this email. Please request a new one."
-msgstr "هیچ کد تایید برای این ایمیل یافت نشد. لطفاً یک مورد جدید درخواست کنید."
-
-msgid "No verification code found for this phone number. Please request a new one."
-msgstr "هیچ کد تایید برای این شماره تلفن یافت نشد. لطفاً یک مورد جدید درخواست کنید."
-
-msgid "User account not found. Please register first."
-msgstr "حساب کاربری یافت نشد. لطفاً ابتدا ثبت‌نام کنید."
-
-msgid "Unable to process OTP verification."
-msgstr "امکان پردازش تایید OTP وجود ندارد."
-
-
-#: exercise/models.py
-msgid "Title"
-msgstr "عنوان"
-
-msgid "Sort"
-msgstr "ترتیب"
-
-msgid "Type"
-msgstr "نوع"
-
-msgid "Is Required"
-msgstr "ضروری است"
-
-msgid "Is Required Help"
-msgstr "به عنوان ضروری یا اختیاری علامت‌گذاری کنید"
-
-msgid "Image"
-msgstr "تصویر"
-
-msgid "Audio"
-msgstr "صدا"
-
-msgid "Video"
-msgstr "فیلم"
-
-msgid "Icon"
-msgstr "نماد"
-
-msgid "Guide"
-msgstr "راهنمایی"
-
-msgid "Description"
-msgstr "توضیح"
-
-msgid "Question"
-msgstr "سؤال"
-
-msgid "Questions"
-msgstr "سؤالات"
-
-msgid "Second Title"
-msgstr "عنوان دوم"
-
-msgid "Is Correct"
-msgstr "صحیح است"
-
-msgid "Option"
-msgstr "گزینه"
-
-msgid "Options"
-msgstr "گزینه‌ها"
-
-msgid "Classroom Teaching Subject"
-msgstr "موضوع تدریس کلاس"
-
-msgid "Step"
-msgstr "مرحله"
-
-msgid "Is Conditional"
-msgstr "شرطی است"
-
-msgid "Exam"
-msgstr "آزمون"
-
-msgid "Exams"
-msgstr "آزمون‌ها"
-
-msgid "Teaching Subject"
-msgstr "موضوع تدریس"
-
-msgid "Score"
-msgstr "امتیاز"
-
-msgid "Correct"
-msgstr "صحیح"
-
-msgid "Incorrect"
-msgstr "غلط"
-
-msgid "Attempt"
-msgstr "نتیجه آزمون"
-
-msgid "Attempts"
-msgstr "نتایج آزمون"
-
-msgid "Answer"
-msgstr "پاسخ"
-
-msgid "Answers"
-msgstr "پاسخ‌ها"
-
-msgid "Correct Answer"
-msgstr "پاسخ صحیح"
-
-msgid "For text/input questions - teacher's answer key for grading"
-msgstr "برای سوالات تایپی: پاسخ درست را وارد کنید"
-
-msgid "برای سوالات تایپی: پاسخ درست را وارد کنید"
-msgstr "برای سوالات تایپی: پاسخ درست را وارد کنید"
-
-#: classroom/models.py
+#: account/admin.py:245 account/admin.py:514 account/models.py:54
+#: account/models.py:717 classroom/models.py:859 exercise/models.py:23
+#: exercise/models.py:362 exercise/models.py:471
 msgid "Teacher"
 msgstr "معلم"
 
-msgid "Date"
-msgstr "تاریخ"
+#: account/admin.py:246
+msgid "Teacher Management"
+msgstr "مديريت معلمان"
 
-msgid "Specific date for this availability"
-msgstr "تاریخ مشخص برای این دسترسی"
+#: account/admin.py:278
+msgid "Avatar Image"
+msgstr "تصوير آواتار"
 
-msgid "Start Time"
-msgstr "ساعت شروع"
+#: account/admin.py:281
+msgid "Metadata"
+msgstr "اطلاعات فراشروحی"
 
-msgid "Time that teacher starts teaching (example: 09:00)"
-msgstr "زمانی که معلم تدریس را شروع می‌کند (مثال: 09:00)"
+#: account/admin.py:289 account/admin.py:359 account/admin.py:438
+#: account/admin.py:500 core/abstract_models.py:8 core/abstract_models.py:35
+#: core/models.py:95
+msgid "Created at"
+msgstr "ایجاد شده در"
 
-msgid "End Time"
-msgstr "ساعت پایان"
+#: account/admin.py:293 account/admin.py:363 account/admin.py:442
+#: account/admin.py:504 classroom/models.py:809 core/abstract_models.py:9
+#: core/abstract_models.py:39
+msgid "Updated at"
+msgstr "تاریخ به‌روزرسانی"
 
-msgid "Time that teacher ends teaching (example: 17:00)"
-msgstr "زمانی که معلم تدریس را پایان می‌دهد (مثال: 17:00)"
+#: account/admin.py:303 core/admin.py:273
+msgid "Preview"
+msgstr "پيش‌نمايش"
 
-msgid "Available"
-msgstr "در دسترس"
+#: account/admin.py:312 account/admin.py:533 core/admin.py:142
+#: core/admin.py:205 core/admin.py:228 core/admin.py:307
+msgid "Delete"
+msgstr "حذف"
 
-msgid "Is this time slot available for booking?"
-msgstr "آیا این بازه زمانی برای رزرو در دسترس است؟"
+#: account/admin.py:334
+msgid "Student & Contact"
+msgstr "دانش‌آموز و تماس"
 
-msgid "Booked"
-msgstr "رزرو شده"
+#: account/admin.py:337
+msgid "Permissions"
+msgstr "مجوزه‌ها"
 
-msgid "Is this time slot already booked?"
-msgstr "آیا این بازه زمانی قبلاً رزرو شده است؟"
+#: account/admin.py:340
+msgid "Usage Time Control"
+msgstr "کنترل زمان استفاده"
 
-msgid "Price"
-msgstr "قیمت"
-
-msgid "Price of teaching for this time slot"
-msgstr "قیمت تدریس برای این بازه زمانی"
-
-msgid "Discount Price"
-msgstr "قیمت با تخفیف"
-
-msgid "Price of teaching with discount for this time slot"
-msgstr "قیمت تدریس با تخفیف برای این بازه زمانی"
-
-msgid "Notes"
-msgstr "یادداشت‌ها"
-
-msgid "Additional notes about this availability"
-msgstr "یادداشت‌های اضافی درباره این دسترسی"
-
-msgid "Teacher Class Scheduling"
-msgstr "زمان‌بندی کلاس معلم"
-
-msgid "Teacher Class Scheduling (Plural)"
-msgstr "زمان‌بندی کلاس‌های معلم"
-
-msgid "Subject Title (example: English Beginner - Alphabet)"
-msgstr "عنوان موضوع (مثال: انگلیسی مبتدی - الفبا)"
-
-msgid "Description of what will be taught in this class"
-msgstr "توضیح در مورد آنچه در این درس تدریس خواهد شد"
-
-msgid "Cover Image"
-msgstr "عکس کاور"
-
-msgid "Demo Video"
-msgstr "ویدیوی نمونه"
-
-msgid "Short demo video of teaching"
-msgstr "ویدیوی نمونه کوتاه تدریس"
-
-msgid "Minimum Age"
-msgstr "حداقل سن"
-
-msgid "Maximum Age"
-msgstr "حداکثر سن"
-
-msgid "Level"
-msgstr "سطح"
-
-msgid "Beginner"
-msgstr "مبتدی"
-
-msgid "Intermediate"
-msgstr "متوسط"
-
-msgid "Advanced"
-msgstr "پیشرفته"
-
-msgid "Active"
-msgstr "فعال"
-
-msgid "Teaching Subject"
-msgstr "موضوع تدریس"
-
-msgid "Teaching Subjects"
-msgstr "موضوعات تدریس"
-
-msgid "Availability"
-msgstr "دسترسی"
-
-msgid "Student"
-msgstr "دانش‌آموز"
-
-msgid "Subject"
-msgstr "موضوع"
-
+#: account/admin.py:344 classroom/models.py:884 core/admin.py:160
+#: core/admin.py:299
 msgid "Status"
 msgstr "وضعیت"
 
-msgid "Reserved"
-msgstr "رزرو شده"
-
-msgid "Completed"
-msgstr "تکمیل شده"
-
-msgid "Cancelled"
-msgstr "لغو شده"
-
-msgid "No Show"
-msgstr "حاضر نشد"
-
-msgid "Discount Amount"
-msgstr "مبلغ تخفیف"
-
-msgid "Final Price"
-msgstr "قیمت نهایی"
-
-msgid "Class Booking"
-msgstr "رزرو کلاس"
-
-msgid "Class Bookings"
-msgstr "رزروهای کلاس"
-
-msgid "Full Name"
-msgstr "نام کامل"
-
-msgid "Bank Name"
-msgstr "نام بانک"
-
-msgid "Account Number"
-msgstr "شماره حساب"
-
-msgid "IBAN"
-msgstr "شماب (IBAN)"
-
-msgid "IR + 24 digits"
-msgstr "IR + 24 رقم"
-
-msgid "Card Number"
-msgstr "شماره کارت"
-
-msgid "Account Holder Name"
-msgstr "نام صاحب حساب"
-
-msgid "Minimum Settlement Amount"
-msgstr "حداقل مبلغ تسویه"
-
-msgid "Minimum amount for settlement request"
-msgstr "حداقل موجودی برای درخواست تسویه"
-
-msgid "Next Settlement Date"
-msgstr "تاریخ تسویه بعدی"
-
-msgid "Total Earned"
-msgstr "درآمد کل"
-
-msgid "Total amount of all earnings"
-msgstr "مجموع کل درآمدهای دریافتی"
-
-msgid "Total Withdrawn"
-msgstr "برداشت کل"
-
-msgid "Total amount of all settled amounts"
-msgstr "مجموع کل مبالغ تسویه شده"
-
-msgid "Verified"
-msgstr "تایید شده"
-
-msgid "Bank information verified"
-msgstr "اطلاعات بانکی تایید شده"
-
-msgid "Verified At"
-msgstr "تاریخ تایید"
-
-msgid "Teacher Wallet"
-msgstr "کیف پول معلم"
-
-msgid "Teacher Wallets"
-msgstr "کیف پول‌های معلم"
-
-msgid "Booked Classes"
-msgstr "کلاس‌های رزرو شده"
-
-msgid "Wallet Balance"
-msgstr "موجودی کیف پول"
-
-msgid "Pending Balance"
-msgstr "موجودی در انتظار"
-
-msgid "Available Balance"
-msgstr "موجودی قابل برداشت"
-
-msgid "Original Price"
-msgstr "قیمت اولیه"
-
-msgid "Original price of the class"
-msgstr "قیمت اولیه کلاس"
-
-msgid "Total Amount"
-msgstr "مبلغ کل"
-
-msgid "Final price of the class"
-msgstr "قیمت نهایی کلاس"
-
-msgid "Platform Fee Percentage"
-msgstr "درصد کارمزد پلتفرم"
-
-msgid "Platform fee percentage"
-msgstr "درصد کارمزد پلتفرم"
-
-msgid "Platform Fee"
-msgstr "کارمزد پلتفرم"
-
-msgid "Platform fee (auto-calculated)"
-msgstr "کارمزد پلتفرم (محاسبه خودکار)"
-
-msgid "Teacher Share"
-msgstr "سهم معلم"
-
-msgid "Teacher share (auto-calculated)"
-msgstr "سهم معلم (محاسبه خودکار)"
-
-msgid "Confirmed"
-msgstr "تایید شده"
-
-msgid "Revenue confirmed by admin"
-msgstr "درآمد توسط ادمین تایید شده است"
-
-msgid "Confirmed At"
-msgstr "تاریخ تایید"
-
-msgid "Settled"
-msgstr "تسویه شده"
-
-msgid "Settled At"
-msgstr "تاریخ تسویه"
-
-msgid "Class Revenue"
-msgstr "درآمد کلاس"
-
-msgid "Class Revenues"
-msgstr "درآمدهای کلاس"
-
-msgid "Revenues"
-msgstr "درآمدها"
-
-msgid "Payment Method"
-msgstr "روش پرداخت"
-
-msgid "Bank Transfer"
-msgstr "انتقال بانکی"
-
-msgid "Card to Card"
-msgstr "کارت به کارت"
-
-msgid "Wallet"
-msgstr "کیف پول"
-
-msgid "Other"
-msgstr "سایر"
-
-msgid "Account Information"
-msgstr "اطلاعات حساب"
-
-msgid "Card number, IBAN, etc."
-msgstr "شماره کارت، شماب و غیره"
-
-msgid "Transaction ID"
-msgstr "شناسه تراکنش"
-
-msgid "Pending"
-msgstr "در انتظار"
-
-msgid "Processing"
-msgstr "در حال پردازش"
-
-msgid "Failed"
-msgstr "ناموفق"
-
-msgid "Admin Notes"
-msgstr "یادداشت‌های ادمین"
-
-msgid "Completed At"
-msgstr "تاریخ تکمیل"
-
-msgid "Withdrawal Request"
-msgstr "درخواست برداشت"
-
-msgid "Withdrawal Requests"
-msgstr "درخواست‌های برداشت"
-
-msgid "Transaction Type"
-msgstr "نوع تراکنش"
-
-msgid "Revenue"
-msgstr "درآمد"
-
-msgid "Confirmation"
-msgstr "تایید"
-
-msgid "Withdrawal"
-msgstr "برداشت"
-
-msgid "Refund"
-msgstr "بازگشت"
-
-msgid "Adjustment"
-msgstr "تعدیل"
-
-msgid "Bonus"
-msgstr "جایزه"
-
-msgid "Penalty"
-msgstr "جریمه"
-
-msgid "Amount"
-msgstr "مبلغ"
-
-msgid "Balance Before"
-msgstr "موجودی قبل"
-
-msgid "Balance After"
-msgstr "موجودی بعد"
-
-msgid "Admin Note"
-msgstr "یادداشت ادمین"
-
-msgid "Wallet Transaction"
-msgstr "تراکنش کیف پول"
-
-msgid "Wallet Transactions"
-msgstr "تراکنش‌های کیف پول"
-
-msgid "Class Payment"
-msgstr "پرداخت کلاس"
-
-msgid "Refunded"
-msgstr "بازگشت‌شده"
-
-msgid "Payment Date"
-msgstr "تاریخ پرداخت"
-
-msgid "Student Transaction"
-msgstr "تراکنش دانش‌آموز"
-
-msgid "Student Transactions"
-msgstr "تراکنش‌های دانش‌آموز"
-
-msgid "Commission Rate Class"
-msgstr "درصد کمیسیون کلاس"
-
-msgid "Platform commission percentage for teaching classes (0-100)"
-msgstr "درصد کمیسیون پلتفرم برای کلاس‌های تدریس شده (0-100)"
-
-msgid "Updated By"
-msgstr "به‌روزرسانی‌شده توسط"
-
-msgid "Updated At"
-msgstr "تاریخ به‌روزرسانی"
-
-msgid "Platform Settings"
-msgstr "تنظیمات پلتفرم"
-
-#: exercise/admin.py
-msgid "اطلاعات پایه"
-msgstr "اطلاعات پایه"
-
-msgid "نیاز"
-msgstr "نیاز"
-
-msgid "توصیف"
-msgstr "توصیف"
-
-msgid "پاسخ صحیح"
-msgstr "پاسخ صحیح"
-
-msgid "رسانه"
-msgstr "رسانه"
-
-msgid "اطلاعات سیستم"
-msgstr "اطلاعات سیستم"
-
-msgid "نوع سؤال"
-msgstr "نوع سؤال"
-
-msgid "الزامی"
-msgstr "الزامی"
-
-msgid "اختیاری"
-msgstr "اختیاری"
-
-msgid "الزامی/اختیاری"
-msgstr "الزامی/اختیاری"
-
-msgid "صحیح"
-msgstr "صحیح"
-
-msgid "غلط"
-msgstr "غلط"
-
-msgid "صحیح؟"
-msgstr "صحیح؟"
-
-msgid "سؤال"
-msgstr "سؤال"
-
-msgid "عنوان و توصیف"
-msgstr "عنوان و توصیف"
-
-msgid "درستی"
-msgstr "درستی"
-
-msgid "راهنمایی"
-msgstr "راهنمایی"
-
-msgid "ترتیب"
-msgstr "ترتیب"
-
-msgid "شرط"
-msgstr "شرط"
-
-msgid "شرطی"
-msgstr "شرطی"
-
-msgid "عادی"
-msgstr "عادی"
-
-msgid "نوع"
-msgstr "نوع"
-
-msgid "دانش‌آموز"
-msgstr "دانش‌آموز"
-
-msgid "کلاس"
-msgstr "کلاس"
-
-msgid "نتایج"
-msgstr "نتایج"
-
-msgid "امتیاز"
-msgstr "امتیاز"
-
-msgid "پیشرفت"
-msgstr "پیشرفت"
-
-msgid "درصد"
-msgstr "درصد"
-
-msgid "تلاش"
-msgstr "تلاش"
-
-msgid "پاسخ"
-msgstr "پاسخ"
-
-msgid "نتیجه"
-msgstr "نتیجه"
-
-#: classroom/models.py
-msgid "حضور و غیاب"
-msgstr "حضور و غیاب"
-
-msgid "رزرو کلاس"
-msgstr "رزرو کلاس"
-
-msgid "دانش‌آموز"
-msgstr "دانش‌آموز"
-
-msgid "وضعیت"
-msgstr "وضعیت"
-
-msgid "حاضر"
-msgstr "حاضر"
-
-msgid "غایب"
-msgstr "غایب"
-
-msgid "تاریخ ثبت"
-msgstr "تاریخ ثبت"
-
-#: api/views.py classroom/admin.py
-msgid "student_id and status are required"
-msgstr "student_id و status ضروری است"
-
-msgid "status must be \"present\" or \"absent\""
-msgstr "status باید \"present\" یا \"absent\" باشد"
-
-msgid "Booking not found"
-msgstr "رزرو پیدا نشد"
-
-msgid "Student not found"
-msgstr "دانش‌آموز پیدا نشد"
-
-msgid "موضوع"
-msgstr "موضوع"
-
-#: api/parent_serializers.py
-msgid "شناسه دانش‌آموز یا شماره تماس یا ایمیل"
-msgstr "شناسه دانش‌آموز یا شماره تماس یا ایمیل"
-
-msgid "رمز والدین"
-msgstr "رمز والدین"
-
-msgid "Student not found. Please check your student ID, phone number or email."
-msgstr "دانش‌آموز پیدا نشد. لطفاً شناسه، شماره تماس یا ایمیل دانش‌آموز را بررسی کنید."
-
-msgid "Invalid identifier format"
-msgstr "فرمت شناسه نامعتبر"
-
-msgid "No parent profile found for this student"
-msgstr "پروفایل والدی برای این دانش‌آموز پیدا نشد"
-
-msgid "Invalid parent password"
-msgstr "رمز والدین نادرست"
-
-msgid "Usage limit cannot be negative"
-msgstr "محدودیت استفاده نمی‌تواند منفی باشد"
-
-msgid "Usage limit cannot exceed 24 hours (1440 minutes)"
-msgstr "محدودیت استفاده نمی‌تواند از 24 ساعت (1440 دقیقه) تجاوز کند"
-
-msgid "End time must be after start time"
-msgstr "زمان پایان باید بعد از زمان شروع باشد"
-
-msgid "Passwords do not match"
-msgstr "رمزها مطابقت ندارند"
-
-msgid "Password must be at least 6 characters"
-msgstr "رمز باید حداقل 6 کاراکتر باشد"
-
-#: api/views.py
-msgid "Parent login requires identifier and parent_password"
-msgstr "ورود والد نیاز به شناسه و رمز والدین دارد"
-
-msgid "Parent dashboard requires child_id"
-msgstr "داشبورد والد نیاز به child_id دارد"
-
-msgid "Child class history requires child_id"
-msgstr "تاریخچه کلاس‌های کودک نیاز به child_id دارد"
-
-msgid "Child payment history requires child_id"
-msgstr "تاریخچه پرداخت کودک نیاز به child_id دارد"
-
-msgid "Payment summary requires child_id"
-msgstr "خلاصه پرداخت نیاز به child_id دارد"
-
-msgid "Update usage time requires child_id"
-msgstr "بروزرسانی زمان استفاده نیاز به child_id دارد"
-
-msgid "Parent profile requires child_id"
-msgstr "پروفایل والدین نیاز به child_id دارد"
-
-#: account/models.py
+#: account/admin.py:347 account/admin.py:425 account/admin.py:484
+msgid "Timestamps"
+msgstr "تاریخ ها"
+
+#: account/admin.py:380 account/models.py:517 account/models.py:708
+#: exercise/models.py:371 exercise/models.py:480
 msgid "Student"
 msgstr "دانش‌آموز"
 
-msgid "Parent full name"
-msgstr "نام کامل والد"
+#: account/admin.py:396
+msgid "{} parent profiles activated"
+msgstr "{} پروفایل والدین فعال شد"
 
-msgid "Phone number"
-msgstr "شماره تماس"
+#: account/admin.py:397
+msgid "Activate selected parents"
+msgstr "فعال‌سازی والدین انتخاب‌شده"
 
-msgid "Email"
-msgstr "ایمیل"
+#: account/admin.py:402
+msgid "{} parent profiles deactivated"
+msgstr "{} پروفایل والدین غیرفعال شد"
 
-msgid "Parent password (hashed)"
-msgstr "رمز والدین (هش‌شده)"
+#: account/admin.py:403
+msgid "Deactivate selected parents"
+msgstr "غیرفعال‌سازی والدین انتخاب‌شده"
 
-msgid "Hashed password for parent portal login"
-msgstr "رمز هش‌شده برای ورود به درگاه والدین"
-
-msgid "Can view class history"
-msgstr "می‌تواند تاریخچه کلاس را ببیند"
-
-msgid "Can view payments"
-msgstr "می‌تواند پرداخت‌ها را ببیند"
-
-msgid "Can select teacher"
-msgstr "می‌تواند معلم را انتخاب کند"
-
-msgid "Can set usage time"
-msgstr "می‌تواند زمان استفاده را تنظیم کند"
-
-msgid "Daily usage limit (minutes)"
-msgstr "محدودیت استفاده روزانه (دقیقه)"
-
-msgid "Allowed start time for app usage"
-msgstr "زمان شروع مجاز برای استفاده از اپ"
-
-msgid "Allowed end time for app usage"
-msgstr "زمان پایان مجاز برای استفاده از اپ"
-
-msgid "Is active"
-msgstr "فعال است"
-
-msgid "Last login"
-msgstr "آخرین ورود"
-
-msgid "Parent Profile"
-msgstr "پروفایل والد"
-
-msgid "Parent Profiles"
-msgstr "پروفایل‌های والدین"
-
+#: account/admin.py:419 account/admin.py:448 account/models.py:650
+#: account/models.py:709
 msgid "Parent"
 msgstr "والد"
 
+#: account/admin.py:422
+msgid "Usage"
+msgstr "مصرف"
+
+#: account/admin.py:434 account/models.py:653
 msgid "Date"
 msgstr "تاریخ"
 
-msgid "App usage date"
-msgstr "تاریخ استفاده از اپ"
+#: account/admin.py:475
+msgid "Rating Info"
+msgstr "اطلاعات امتیاز"
 
+#: account/admin.py:478 account/models.py:750 exercise/models.py:424
+msgid "Comment"
+msgstr "نظر"
+
+#: account/admin.py:481
+msgid "Settings"
+msgstr "تنظیمات"
+
+#: account/admin.py:519
+msgid "Anonymous"
+msgstr "ناشناس"
+
+#: account/admin.py:526 account/models.py:725
+msgid "Rater"
+msgstr "ارزیابی‌کننده"
+
+#: account/admin.py:542
+msgid "{} ratings verified"
+msgstr "{} امتیاز تأیید شد"
+
+#: account/admin.py:543
+msgid "Verify selected ratings"
+msgstr "تأیید امتیازهای انتخاب‌شده"
+
+#: account/admin.py:548
+msgid "{} ratings unverified"
+msgstr "{} امتیاز از حالت تأیید خارج شد"
+
+#: account/admin.py:549
+msgid "Unverify selected ratings"
+msgstr "لغو تأیید امتیازهای انتخاب‌شده"
+
+#: account/apps.py:7
+msgid "User Account Management"
+msgstr "مديريت حساب کاربر"
+
+#: account/models.py:21
+msgid "The Username field must be set"
+msgstr "فیلد نام کاربری باید تنظیم شود"
+
+#: account/models.py:48
+msgid "Display name"
+msgstr "نام نمایشی"
+
+#: account/models.py:49
+msgid "User display name (default: username)"
+msgstr "نام نمایشی کاربر (پیش فرض: نام کاربری)"
+
+#: account/models.py:55
+msgid "Admin"
+msgstr "مدیر"
+
+#: account/models.py:59
+msgid "Male"
+msgstr "مرد"
+
+#: account/models.py:60
+msgid "Female"
+msgstr "زن"
+
+#: account/models.py:61 exercise/models.py:463
+msgid "Custom"
+msgstr "سفارشی"
+
+#: account/models.py:62
+msgid "Prefer not to say"
+msgstr "ترجیح می‌دهم نگویم"
+
+#: account/models.py:70
+msgid "User role"
+msgstr "نقش کاربر"
+
+#: account/models.py:71
+msgid "User: Regular user, Teacher: Teacher, Admin: Administrator"
+msgstr "کاربر: کاربر عادی، معلم: معلم، مدیر: مدیر سیستم"
+
+#: account/models.py:76
+msgid "email address"
+msgstr "آدرس ایمیل"
+
+#: account/models.py:88 account/models.py:428 account/models.py:472
+#: account/models.py:528 core/forms.py:34 core/models.py:74
+msgid "Phone number"
+msgstr "شماره تلفن"
+
+#: account/models.py:90
+msgid "Phone verified at"
+msgstr "تأیید تلفن در"
+
+#: account/models.py:91
+msgid "Email verified at"
+msgstr "تأیید ایمیل در"
+
+#: account/models.py:99
+msgid "Profile photo"
+msgstr "عکس پروفایل"
+
+#: account/models.py:108
+msgid "Selected avatar"
+msgstr "آواتار انتخاب شده"
+
+#: account/models.py:109
+msgid "Avatar template selected by user"
+msgstr "قالب آواتار انتخاب شده توسط کاربر"
+
+#: account/models.py:114
+msgid "Bio"
+msgstr "بیوگرافی"
+
+#: account/models.py:121
+msgid "Gender"
+msgstr "جنسیت"
+
+#: account/models.py:127
+msgid "Birth date"
+msgstr "تاریخ تولد"
+
+#: account/models.py:128
+msgid "Birth date in Jalali calendar format (YYYY-MM-DD), e.g., 1403-05-24"
+msgstr "تاریخ تولد به فرمت تقویم جلالی (YYYY-MM-DD)، مثلاً 1403-05-24"
+
+#: account/models.py:132
+msgid "Birth date must be in YYYY-MM-DD format (Jalali calendar)"
+msgstr "تاریخ تولد باید به فرمت YYYY-MM-DD (تقویم جلالی) باشد"
+
+#: account/models.py:141 account/services.py:512
+msgid "Teacher verified"
+msgstr "معلم تأیید شد"
+
+#: account/models.py:142
+msgid "Whether this teacher is verified by admin"
+msgstr "آيا اين معلم توسط مدير تأييد شده است"
+
+#: account/models.py:147
+msgid "Teacher verification requested at"
+msgstr "تاریخ درخواست تأييد معلم"
+
+#: account/models.py:156
+msgid "Special commission rate"
+msgstr "نرخ کمیسیون ویژه"
+
+#: account/models.py:157
+msgid ""
+"Special commission rate for this teacher (if empty, default rate is used). "
+"Number between 0 and 100"
+msgstr ""
+"نرخ کمیسیون ویژه برای اين معلم (اگر خالی باشد نرخ با لا استفاده میشود). عددی "
+"بين 0 و 100"
+
+#: account/models.py:165
+msgid "Educational qualifications"
+msgstr "مدرک تحصیلی"
+
+#: account/models.py:166
+msgid "Degrees, certifications, and professional qualifications"
+msgstr "درجات تحصیلی، گواهینامه‌ها و مدارک حرفه‌ای"
+
+#: account/models.py:174
+msgid "Languages taught"
+msgstr "زبان‌های تدریس‌شده"
+
+#: account/models.py:175
+msgid "Languages that can be taught (comma-separated or JSON)"
+msgstr "زبان‌هایی که می‌توان تدریس کرد (جدا شده با کاما یا JSON)"
+
+#: account/models.py:182
+msgid "Specialization"
+msgstr "تخصص"
+
+#: account/models.py:183
+msgid "Area of specialization or expertise"
+msgstr "زمینه تخصص یا تخصص"
+
+#: account/models.py:189
+msgid "Resume summary"
+msgstr "خلاصه رزومه"
+
+#: account/models.py:190
+msgid "Brief summary of professional experience and background"
+msgstr "خلاصه مختصر تجربیات حرفه‌ای و سابقه"
+
+#: account/models.py:199
+msgid "Introduction video"
+msgstr "ویدئو معرفی"
+
+#: account/models.py:200
+msgid ""
+"Video file for teacher introduction (MP4, AVI, MOV, WebM, FLV, MKV, 3GP, "
+"M4V, OGV)"
+msgstr ""
+"فایل ویدئویی برای معرفی معلم (MP4, AVI, MOV, WebM, FLV, MKV, 3GP, M4V, OGV)"
+
+#: account/models.py:209
+msgid "Hourly rate"
+msgstr "قیمت ساعتی"
+
+#: account/models.py:210
+msgid "Suggested hourly teaching rate in default currency"
+msgstr "قیمت ساعتی پیشنهادی تدریس در ارز پیش فرض"
+
+#: account/models.py:217
+msgid "Available times"
+msgstr "زمان‌های در دسترس"
+
+#: account/models.py:218
+msgid "JSON object with available teaching times"
+msgstr "شی JSON با زمان‌های تدریس در دسترس"
+
+#: account/models.py:224
+msgid "Years of experience"
+msgstr "سال‌های تجربه"
+
+#: account/models.py:225
+msgid "Number of years of teaching experience"
+msgstr "تعداد سال‌های تجربه تدریس"
+
+#: account/models.py:232
+msgid "Push notification token"
+msgstr "توکن اعلان فشاری"
+
+#: account/models.py:239
+msgid "Last seen"
+msgstr "آخرين بار رويال"
+
+#: account/models.py:240
+msgid "Last online time"
+msgstr "آخرين بار براز به اينترنت"
+
+#: account/models.py:244
+msgid "Is online"
+msgstr "براز به اينترنت"
+
+#: account/models.py:245
+msgid "Online status"
+msgstr "وضعيت براز به اينترنت"
+
+#: account/models.py:256
+msgid "Users"
+msgstr "کاربران"
+
+#: account/models.py:404
+msgid "Registration"
+msgstr "ثبت نام"
+
+#: account/models.py:405
+msgid "Phone Verification"
+msgstr "تأييد لالکترونيکی"
+
+#: account/models.py:406
+msgid "Email Verification"
+msgstr "تأييد ايميل"
+
+#: account/models.py:407
+msgid "Password Reset"
+msgstr "بازنشاني رمز عبور"
+
+#: account/models.py:408
+msgid "Login"
+msgstr "ورود"
+
+#: account/models.py:421
+msgid "Hashed code"
+msgstr "کامل رمزگذاریشده"
+
+#: account/models.py:422
+msgid "Hashed OTP code"
+msgstr "كامل رمزگذاری شده OTP"
+
+#: account/models.py:433 account/models.py:473 account/models.py:533
+#: core/models.py:49
+msgid "Email"
+msgstr "ایمیل"
+
+#: account/models.py:437 account/models.py:474
+msgid "Expires at"
+msgstr "منقضی شده در"
+
+#: account/models.py:441 account/models.py:475
+msgid "Is used"
+msgstr "استفاده شده است"
+
+#: account/models.py:447
+msgid "Purpose"
+msgstr "هدف"
+
+#: account/models.py:452
+msgid "OTP Code"
+msgstr "کامل OTP"
+
+#: account/models.py:453
+msgid "OTP Codes"
+msgstr "كامل‌های OTP"
+
+#: account/models.py:471
+msgid "Token"
+msgstr "توکن"
+
+#: account/models.py:479
+msgid "Verification Token"
+msgstr "توکن تأييد"
+
+#: account/models.py:480
+msgid "Verification Tokens"
+msgstr "توکن‌های تأييد"
+
+#: account/models.py:494
+msgid "Avatar image"
+msgstr "تصوير آواتار"
+
+#: account/models.py:499
+msgid "Avatar Template"
+msgstr "قالب آواتار"
+
+#: account/models.py:500
+msgid "Avatar Templates"
+msgstr "قالب‌های آواتار"
+
+#: account/models.py:521
+msgid "Parent full name"
+msgstr "نام کامل والد"
+
+#: account/models.py:522
+msgid "نام کامل والد"
+msgstr "نام کامل والد"
+
+#: account/models.py:538
+msgid "Parent password (hashed)"
+msgstr "رمز والدین (هش‌شده)"
+
+#: account/models.py:539
+msgid "Hashed password for parent portal login"
+msgstr "رمز هش‌شده برای ورود به درگاه والدین"
+
+#: account/models.py:545
+msgid "Can view class history"
+msgstr "می‌تواند تاریخچه کلاس را ببیند"
+
+#: account/models.py:546
+msgid "آیا والد می‌تواند تاریخچه کلاس‌ها را مشاهده کند؟"
+msgstr "آیا والد می‌تواند تاریخچه کلاس‌ها را مشاهده کند؟"
+
+#: account/models.py:550
+msgid "Can view payments"
+msgstr "می‌تواند پرداخت‌ها را ببیند"
+
+#: account/models.py:551
+msgid "آیا والد می‌تواند پرداخت‌ها را مشاهده کند؟"
+msgstr "آیا والد می‌تواند پرداخت‌ها را مشاهده کند؟"
+
+#: account/models.py:555
+msgid "Can select teacher"
+msgstr "می‌تواند معلم را انتخاب کند"
+
+#: account/models.py:556
+msgid "آیا والد می‌تواند معلم برای کودک انتخاب کند؟"
+msgstr "آیا والد می‌تواند معلم برای کودک انتخاب کند؟"
+
+#: account/models.py:560
+msgid "Can set app usage time"
+msgstr "می‌تواند زمان استفاده از اپ را تنظیم کند"
+
+#: account/models.py:561
+msgid "آیا والد می‌تواند محدودیت زمان استفاده اپلیکیشن را تنظیم کند؟"
+msgstr "آیا والد می‌تواند محدودیت زمان استفاده اپلیکیشن را تنظیم کند؟"
+
+#: account/models.py:568
+msgid "Daily usage limit (minutes)"
+msgstr "محدودیت استفاده روزانه (دقیقه)"
+
+#: account/models.py:569
+msgid "حداکثر دقایق استفاده روزانه از اپلیکیشن"
+msgstr "حداکثر دقایق استفاده روزانه از اپلیکیشن"
+
+#: account/models.py:574
+msgid "Allowed start time"
+msgstr "زمان شروع مجاز"
+
+#: account/models.py:575
+msgid "ساعت شروع مجاز استفاده (مثال: 08:00)"
+msgstr "ساعت شروع مجاز استفاده (مثال: 08:00)"
+
+#: account/models.py:580
+msgid "Allowed end time"
+msgstr "زمان پایان مجاز"
+
+#: account/models.py:581
+msgid "ساعت پایان مجاز استفاده (مثال: 22:00)"
+msgstr "ساعت پایان مجاز استفاده (مثال: 22:00)"
+
+#: account/models.py:587
+msgid "Is active"
+msgstr "فعال است"
+
+#: account/models.py:588
+msgid "آیا دسترسی والد فعال است؟"
+msgstr "آیا دسترسی والد فعال است؟"
+
+#: account/models.py:594
+msgid "Last login at"
+msgstr "آخرین زمان ورود"
+
+#: account/models.py:595
+msgid "آخرین بار ورود والد"
+msgstr "آخرین بار ورود والد"
+
+#: account/models.py:600
+msgid "Parent Profile"
+msgstr "پروفایل والد"
+
+#: account/models.py:601
+msgid "Parent Profiles"
+msgstr "پروفایل‌های والدین"
+
+#: account/models.py:654
+msgid "تاریخ استفاده"
+msgstr "تاریخ استفاده"
+
+#: account/models.py:658
 msgid "Total minutes used"
 msgstr "کل دقایق استفاده شده"
 
+#: account/models.py:659
+msgid "کل دقایق استفاده در این روز"
+msgstr "کل دقایق استفاده در این روز"
+
+#: account/models.py:663
 msgid "Number of sessions"
 msgstr "تعداد جلسات"
 
+#: account/models.py:664
+msgid "تعداد جلسات استفاده در این روز"
+msgstr "تعداد جلسات استفاده در این روز"
+
+#: account/models.py:668
+msgid "Total seconds used"
+msgstr "کل ثانیه‌های استفاده شده"
+
+#: account/models.py:669
+msgid "کل ثانیه‌های استفاده در این روز"
+msgstr "کل ثانیه‌های استفاده در این روز"
+
+#: account/models.py:674
+msgid "Last report at"
+msgstr "آخرین زمان گزارش"
+
+#: account/models.py:675
+msgid "آخرین زمان گزارش مصرف از اپ"
+msgstr "آخرین زمان گزارش مصرف از اپ"
+
+#: account/models.py:680
 msgid "Parent App Usage Log"
 msgstr "ثبت استفاده اپ والدین"
 
+#: account/models.py:681
 msgid "Parent App Usage Logs"
 msgstr "ثبت‌های استفاده اپ والدین"
 
-msgid "Support Message"
-msgstr "پیام پشتیبانی"
+#: account/models.py:718
+msgid "معلمی که این امتیاز را دریافت کرده است"
+msgstr "معلمی که این امتیاز را دریافت کرده است"
 
-msgid "Support Messages"
-msgstr "پیام‌های پشتیبانی"
+#: account/models.py:726
+msgid "فردی که این امتیاز را داده است (دانش‌آموز یا والدین)"
+msgstr "فردی که این امتیاز را داده است (دانش‌آموز یا والدین)"
 
-msgid "Support Message Attachment"
-msgstr "فایل پیوست پیام پشتیبانی"
+#: account/models.py:733
+msgid "Rater Type"
+msgstr "نوع ارزیابی‌کننده"
 
-msgid "Support Message Attachments"
-msgstr "فایل‌های پیوست پیام‌های پشتیبانی"
+#: account/models.py:734
+msgid "نوع فردی که امتیاز می‌دهد"
+msgstr "نوع فردی که امتیاز می‌دهد"
 
-msgid "Send Support Message"
-msgstr "ارسال پیام به پشتیبانی"
+#: account/models.py:743 exercise/models.py:417
+msgid "Stars"
+msgstr "ستاره"
 
-msgid "List Support Messages"
-msgstr "لیست پیام‌های پشتیبانی"
+#: account/models.py:744
+msgid "ستاره (1-5)"
+msgstr "ستاره (1-5)"
 
-msgid "Mark Message as Read"
-msgstr "علامت‌گذاری پیام به‌عنوان خوانده‌شده"
+#: account/models.py:751
+msgid "نظر و بازخورد در مورد معلم"
+msgstr "نظر و بازخورد در مورد معلم"
 
-msgid "Teacher not found"
-msgstr "معلم یافت نشد"
+#: account/models.py:756
+msgid "Is Anonymous"
+msgstr "ناشناس است"
 
-msgid "Sender not found"
-msgstr "فرستنده یافت نشد"
+#: account/models.py:757
+msgid "آیا نام ارائه‌دهنده نمایش داده شود؟"
+msgstr "آیا نام ارائه‌دهنده نمایش داده شود؟"
 
+#: account/models.py:762
+msgid "Is Verified"
+msgstr "تایید شده است"
+
+#: account/models.py:763
+msgid "آیا این امتیاز تایید شده است؟"
+msgstr "آیا این امتیاز تایید شده است؟"
+
+#: account/models.py:767
+msgid "Teacher Rating"
+msgstr "امتیاز معلم"
+
+#: account/models.py:768
+msgid "Teacher Ratings"
+msgstr "امتیازهای معلم"
+
+#: account/serializers.py:37 account/serializers.py:68
+msgid "Phone number or email is required"
+msgstr "شماره تلفن یا ایمیل ضروری است"
+
+#: account/serializers.py:50 account/serializers.py:95
+#, python-brace-format
+msgid "Invalid purpose. Must be one of: {valid_purposes}"
+msgstr "هدف نامعتبر است. باید یکی از موارد زیر باشد: {valid_purposes}"
+
+#: account/serializers.py:77
+msgid "Verification code is required"
+msgstr "کد تأیید ضروری است"
+
+#: account/serializers.py:81
+msgid "Code must be numeric"
+msgstr "کد باید عددی باشد"
+
+#: account/serializers.py:84
+msgid "Code must be 6 digits"
+msgstr "کد باید ۶ رقم باشد"
+
+#: account/serializers.py:116 account/serializers.py:143
+msgid "This username is already taken"
+msgstr "اين نام کاربری قبلا استفاده شده است"
+
+#: account/serializers.py:167
+msgid "New password is required"
+msgstr "رمز عبور جديد ضروری است"
+
+#: account/serializers.py:169
+msgid "Password confirmation is required"
+msgstr "تاييد رمز عبور ضروری است"
+
+#: account/serializers.py:171 api/parent_serializers.py:389
+#: api/parent_serializers.py:476
+msgid "Passwords do not match"
+msgstr "رمز عبور مطابقت نداره"
+
+#: account/serializers.py:205 account/serializers.py:257
+msgid "Birth date in Jalali format (YYYY-MM-DD), e.g., 1403-05-24"
+msgstr "تاریخ تولد به فرمت جلالی (YYYY-MM-DD)، مثلاً 1403-05-24"
+
+#: account/serializers.py:219 account/serializers.py:280
+msgid ""
+"Birth date must be in YYYY-MM-DD format (Jalali calendar), e.g., 1403-05-24"
+msgstr ""
+"تاریخ تولد باید به فرمت YYYY-MM-DD (تقویم جلالی) باشد، مثال: 1403-05-24"
+
+#: account/serializers.py:233 account/serializers.py:408
+msgid "Username can only contain letters, numbers, and underscores."
+msgstr "نام کاربری فقط می‌تواند شامل حروف، اعداد و زیرخط باشد."
+
+#: account/serializers.py:237 account/serializers.py:412
+msgid "Username must be at least 3 characters long."
+msgstr "نام کاربری باید حداقل ۳ کاراکتر باشد."
+
+#: account/serializers.py:242 account/serializers.py:417
+msgid "This username is already taken. Please choose another one."
+msgstr "این نام کاربری قبلاً استفاده شده است. لطفاً یکی دیگر انتخاب کنید."
+
+#: account/serializers.py:262
+msgid "ID of the avatar template to select"
+msgstr "شناسه الگوی آواتار برای انتخاب"
+
+#: account/serializers.py:288 account/serializers.py:611 api/views.py:1727
+msgid "Selected avatar does not exist"
+msgstr "آواتار انتخاب شده وجود ندارد"
+
+#: account/serializers.py:323 account/serializers.py:477
+msgid "Birth date in Jalali format (YYYY-MM-DD or YYYY/MM/DD)"
+msgstr "تاریخ تولد به فرمت جلالی (YYYY-MM-DD یا YYYY/MM/DD)"
+
+#: account/serializers.py:371 account/serializers.py:526
+msgid "Birth date must be in YYYY-MM-DD or YYYY/MM/DD format (Jalali calendar)"
+msgstr "تاریخ تولد باید به فرمت YYYY-MM-DD یا YYYY/MM/DD (تقویم جلالی) باشد"
+
+#: account/serializers.py:393 account/serializers.py:548
+msgid "Gender must be: m, f, male, female, custom, or prefer_not_to_say"
+msgstr ""
+"جنسیت باید یکی از موارد زیر باشد: m, f, male, female, custom, "
+"prefer_not_to_say"
+
+#: account/serializers.py:428
+msgid "This email is already registered."
+msgstr "این ایمیل قبلاً ثبت شده است."
+
+#: account/serializers.py:439
+msgid "This phone number is already registered."
+msgstr "این شماره تلفن قبلاً ثبت شده است."
+
+#: account/serializers.py:445 account/serializers.py:561
+#: account/services.py:506
+msgid "User is not a teacher"
+msgstr "کاربر معلم نیست"
+
+#: account/serializers.py:466
+msgid "Teacher profile photo"
+msgstr "عکس پروفایل معلم"
+
+#: account/serializers.py:467
+msgid "Educational qualifications and certifications"
+msgstr "مدارک تحصیلی و گواهینامه‌ها"
+
+#: account/serializers.py:468
+msgid "Languages that can be taught"
+msgstr "زبان‌هایی که قابل تدریس هستند"
+
+#: account/serializers.py:469
+msgid "Area of specialization"
+msgstr "حوزه تخصصی"
+
+#: account/serializers.py:470
+msgid "Brief professional summary"
+msgstr "خلاصه حرفه‌ای"
+
+#: account/serializers.py:471
+msgid "Introduction video file"
+msgstr "فایل ویدئو معرفی"
+
+#: account/serializers.py:472
+msgid "Hourly teaching rate"
+msgstr "نرخ ساعتی تدریس"
+
+#: account/serializers.py:473
+msgid "Available teaching times (JSON format)"
+msgstr "زمان‌های تدریس موجود (فرمت JSON)"
+
+#: account/serializers.py:474
+msgid "Years of teaching experience"
+msgstr "سال‌های تجربه تدریس"
+
+#: account/serializers.py:475
+msgid "Gender (m/f/male/female/custom/prefer_not_to_say)"
+msgstr "جنسیت (m/f/male/female/custom/prefer_not_to_say)"
+
+#: account/serializers.py:476
+msgid "User bio/biography"
+msgstr "بیوگرافی کاربر"
+
+#: account/serializers.py:499
+msgid "Teacher full name"
+msgstr "نام کامل معلم"
+
+#: account/serializers.py:505
+msgid "Hourly rate must be greater than zero"
+msgstr "قیمت ساعتی باید بیشتر از صفر باشد"
+
+#: account/serializers.py:511
+msgid "Experience years cannot be negative"
+msgstr "سال‌های تجربه نمی‌تواند منفی باشد"
+
+#: account/services.py:74
+msgid "OTP has already been sent. Please try again in a few minutes."
+msgstr "کد OTP قبلاً ارسال شده است. لطفاً چند دقیقه دیگر تلاش کنید."
+
+#: account/services.py:81
+msgid "Phone number or email cannot be empty"
+msgstr "شماره تلفن یا ایمیل نمی‌تواند خالی باشد"
+
+#: account/services.py:251
+#, python-brace-format
+msgid ""
+"No verification code found for this {identifier_type}. Please request a new "
+"one."
+msgstr ""
+"هیچ کد تأیید برای این {identifier_type} یافت نشد. لطفاً یک مورد جدید درخواست "
+"کنید."
+
+#: account/services.py:255
+msgid "OTP has expired. Please request a new one."
+msgstr "کد OTP منقضی شده است. لطفاً کد جدید درخواست کنید."
+
+#: account/services.py:308 account/services.py:324
+msgid "User account not found. Please register first."
+msgstr "حساب کاربری یافت نشد. لطفاً ابتدا ثبت‌نام کنید."
+
+#: account/services.py:335
+msgid "Unable to process OTP verification."
+msgstr "امکان پردازش تایید OTP وجود ندارد."
+
+#: account/services.py:339
+msgid "OTP code is incorrect."
+msgstr "کد OTP نادرست است."
+
+#: account/services.py:351 account/services.py:411
+msgid "Invalid token"
+msgstr "توکن نامعتبر است"
+
+#: account/services.py:355 account/services.py:415
+msgid "Token expired. Please register again."
+msgstr "توکن منقضی شده است. لطفاً دوباره ثبت نام کنید."
+
+#: account/services.py:367 account/services.py:427
+msgid "Username already exists"
+msgstr "این نام کاربری قبلاً استفاده شده است"
+
+#: account/services.py:494
+msgid "User is already a teacher"
+msgstr "این کاربر قبلاً معلم است"
+
+#: account/services.py:500
+msgid "Teacher promotion request submitted and awaiting approval"
+msgstr "درخواست ارتقاء معلم ارسال شد و در انتظار تأیید است"
+
+#: account/services.py:514
+msgid "Teacher verification revoked"
+msgstr "تأیید معلم لغو شد"
+
+#: account/templatetags/commission_tags.py:43
+#, python-format
+msgid "Error getting commission rate: %s"
+msgstr "خطا در دريافت نرخ کمیسیون: %s"
+
+#: account/templatetags/commission_tags.py:61
+msgid "N/A"
+msgstr "در دسترس نيست"
+
+#: api/apps.py:8
+msgid "API Endpoints"
+msgstr "نقاط پایانی API"
+
+#: api/bilingual.py:45
+msgid "Operation successful"
+msgstr "عملیات موفق"
+
+#: api/bilingual.py:57
+msgid "An error occurred"
+msgstr "خطایی رخ داد"
+
+#: api/classroom_serializers.py:200
+msgid "زمان‌بندی یافت نشد"
+msgstr "زمان‌بندی یافت نشد"
+
+#: api/classroom_serializers.py:203 api/views.py:3184
+msgid "این زمان‌بندی دیگر در دسترس نیست"
+msgstr "این زمان‌بندی دیگر در دسترس نیست"
+
+#: api/classroom_serializers.py:206
+msgid "این زمان‌بندی قبلاً رزرو شده است"
+msgstr "این زمان‌بندی قبلاً رزرو شده است"
+
+#: api/classroom_serializers.py:209
+msgid "این زمان‌بندی منقضی شده است"
+msgstr "این زمان‌بندی منقضی شده است"
+
+#: api/classroom_serializers.py:218 api/views.py:3221
+msgid "درس یافت نشد"
+msgstr "درس یافت نشد"
+
+#: api/classroom_serializers.py:221
+msgid "این درس فعال نیست"
+msgstr "این درس فعال نیست"
+
+#: api/classroom_serializers.py:235
+msgid "درس باید متعلق به همان معلم باشد"
+msgstr "درس باید متعلق به همان معلم باشد"
+
+#: api/classroom_serializers.py:269
+msgid "شماره شبا باید با IR شروع شود"
+msgstr "شماره شبا باید با IR شروع شود"
+
+#: api/classroom_serializers.py:271
+msgid "شماره شبا باید 26 کاراکتر باشد (IR + 24 رقم)"
+msgstr "شماره شبا باید 26 کاراکتر باشد (IR + 24 رقم)"
+
+#: api/classroom_serializers.py:273
+msgid "شماره شبا باید فقط شامل اعداد باشد (بعد از IR)"
+msgstr "شماره شبا باید فقط شامل اعداد باشد (بعد از IR)"
+
+#: api/classroom_serializers.py:281
+msgid "شماره کارت باید فقط شامل اعداد باشد"
+msgstr "شماره کارت باید فقط شامل اعداد باشد"
+
+#: api/classroom_serializers.py:283
+msgid "شماره کارت باید 16 رقم باشد"
+msgstr "شماره کارت باید 16 رقم باشد"
+
+#: api/classroom_serializers.py:576 api/views.py:7414
 msgid "Message text or attachment is required"
 msgstr "متن پیام یا فایل پیوست الزامی است"
 
-msgid "Message not found"
-msgstr "پیام یافت نشد"
+#: api/classroom_serializers.py:893
+msgid "شماره موبایل معتبر نیست"
+msgstr "شماره موبایل معتبر نیست"
 
-msgid "Sent"
-msgstr "ارسال‌شده"
+#: api/classroom_serializers.py:938
+msgid "تعداد جلسات باید حداقل 1 باشد"
+msgstr "تعداد جلسات باید حداقل 1 باشد"
 
-msgid "Read"
-msgstr "خوانده‌شده"
+#: api/classroom_serializers.py:948
+msgid "قیمت باید بزرگتر از 0 باشد"
+msgstr "قیمت باید بزرگتر از 0 باشد"
 
-msgid "Message text"
-msgstr "متن پیام"
+#: api/classroom_serializers.py:1029
+#, python-brace-format
+msgid "شماره جلسه باید بین 1 و {package.total_sessions} باشد"
+msgstr "شماره جلسه باید بین 1 و {package.total_sessions} باشد"
 
-msgid "Status"
-msgstr "وضعیت"
+#: api/classroom_serializers.py:1046
+msgid "این شماره جلسه قبلاً برای این بسه تعریف شده است"
+msgstr "این شماره جلسه قبلاً برای این بسته تعریف شده است"
 
-msgid "Read at"
-msgstr "خوانده‌شده در"
+#: api/classroom_serializers.py:1057
+msgid "مبلغ قسط باید بزرگتر از 0 باشد"
+msgstr "مبلغ قسط باید بزرگتر از 0 باشد"
 
-msgid "Sender"
-msgstr "فرستنده"
+#: api/classroom_serializers.py:1068
+msgid "بسه مشخص نشده است"
+msgstr "بسته مشخص نشده است"
 
-msgid "Message preview"
-msgstr "پیش‌نمایش پیام"
+#: api/exercise_serializers.py:48
+msgid "نوع سوال باید یکی از این مقادیر باشد: input, checkbox, radioButton"
+msgstr "نوع سوال باید یکی از این مقادیر باشد: input, checkbox, radioButton"
 
-msgid "Attachment"
-msgstr "فایل پیوست"
+#: api/exercise_serializers.py:122
+msgid "حداقل یک detail الزامی است"
+msgstr "حداقل یک detail الزامی است"
 
-msgid "Attachments"
-msgstr "فایل‌های پیوست"
+#: api/exercise_serializers.py:130
+msgid "Field not found in context"
+msgstr "فیلد در زمینه یافت نشد"
 
-msgid "File"
-msgstr "فایل"
+#: api/exercise_serializers.py:143 api/exercise_serializers.py:345
+msgid "برای سوالات تایپی، correct_answer الزامی است"
+msgstr "برای سوالات تایپی، correct_answer الزامی است"
 
-msgid "Message status: sent or read"
-msgstr "وضعیت پیام: ارسال‌شده یا خوانده‌شده"
+#: api/exercise_serializers.py:155
+msgid "برای سوالات انتخابی، is_correct الزامی است"
+msgstr "برای سوالات انتخابی، is_correct الزامی است"
 
-msgid "Page number"
-msgstr "شماره صفحه"
+#: api/exercise_serializers.py:164
+msgid "is_correct باید 0 یا 1 یا -1 باشد"
+msgstr "is_correct باید 0 یا 1 یا -1 باشد"
 
-msgid "Teacher ID to filter messages"
-msgstr "شناسه معلم برای فیلتر کردن پیام‌ها"
+#: api/exercise_serializers.py:335
+msgid "FieldDetail instance not found"
+msgstr "نمونه FieldDetail یافت نشد"
 
+#: api/exercise_serializers.py:349
+msgid "برای سوالات تایپی، is_correct نباید استفاده شود"
+msgstr "برای سوالات تایپی، is_correct نباید استفاده شود"
+
+#: api/exercise_serializers.py:356
+msgid "برای سوالات چند گزینه‌ای، is_correct باید 0، 1 یا -1 باشد"
+msgstr "برای سوالات چند گزینه‌ای، is_correct باید 0، 1 یا -1 باشد"
+
+#: api/exercise_serializers.py:360
+msgid "برای سوالات چند گزینه‌ای، correct_answer نباید استفاده شود"
+msgstr "برای سوالات چند گزینه‌ای، correct_answer نباید استفاده شود"
+
+#: api/exercise_serializers.py:412 exercise/admin.py:90 exercise/admin.py:218
+#: exercise/admin.py:351 exercise/models.py:13 exercise/models.py:175
+msgid "تایپی"
+msgstr "تایپی"
+
+#: api/exercise_serializers.py:413
+msgid "چند گزینه‌ای"
+msgstr "چند گزینه‌ای"
+
+#: api/exercise_serializers.py:414
+msgid "تک گزینه‌ای"
+msgstr "تک گزینه‌ای"
+
+#: api/exercise_serializers.py:476
+msgid ""
+"Either field_detail_id (for choice questions) or value (for typing) must be "
+"provided"
+msgstr ""
+"یا field_detail_id (برای سوالات چند گزینه‌ای) یا value (برای سوالات تایپی) "
+"باید ارائه شود"
+
+#: api/package_service.py:39
+msgid "وضعیت ثبت‌نام: {enrollment.get_status_display()}"
+msgstr "وضعیت ثبت‌نام: {enrollment.get_status_display()}"
+
+#: api/package_service.py:43
+msgid "شماره جلسه معتبر نیست"
+msgstr "شماره جلسه معتبر نیست"
+
+#: api/package_service.py:52 api/package_service.py:61
+msgid "دسترسی مجاز است"
+msgstr "دسترسی مجاز است"
+
+#: api/package_service.py:57
+#, python-brace-format
+msgid "قسط {required_payment.installment.installment_number} "
+msgstr "قسط {required_payment.installment.installment_number} "
+
+#: api/parent_serializers.py:45
+msgid "نام کاربری دانش‌آموز"
+msgstr "نام کاربری دانش‌آموز"
+
+#: api/parent_serializers.py:50
+msgid "رمز والدین"
+msgstr "رمز والدین"
+
+#: api/parent_serializers.py:65
+msgid "Student not found. Please check the student username."
+msgstr "دانش‌آموز پیدا نشد. لطفاً نام کاربری دانش‌آموز را بررسی کنید."
+
+#: api/parent_serializers.py:69
+msgid "Invalid username format"
+msgstr "فرمت نام کاربری نامعتبر"
+
+#: api/parent_serializers.py:77
+msgid "No parent profile found for this student"
+msgstr "پروفایل والدی برای این دانش‌آموز پیدا نشد"
+
+#: api/parent_serializers.py:83
+msgid "Invalid parent password"
+msgstr "رمز والدین نادرست"
+
+#: api/parent_serializers.py:263
+msgid "Usage limit cannot be negative"
+msgstr "محدودیت استفاده نمی‌تواند منفی باشد"
+
+#: api/parent_serializers.py:267
+msgid "Usage limit cannot exceed 24 hours (1440 minutes)"
+msgstr "محدودیت استفاده نمی‌تواند از 24 ساعت (1440 دقیقه) تجاوز کند"
+
+#: api/parent_serializers.py:275
+msgid "End time must be after start time"
+msgstr "زمان پایان باید بعد از زمان شروع باشد"
+
+#: api/parent_serializers.py:309
+msgid "حداکثر دقایق استفاده روزانه"
+msgstr "حداکثر دقایق استفاده روزانه"
+
+#: api/parent_serializers.py:313
+msgid "ساعت شروع مجاز"
+msgstr "ساعت شروع مجاز"
+
+#: api/parent_serializers.py:317
+msgid "ساعت پایان مجاز"
+msgstr "ساعت پایان مجاز"
+
+#: api/parent_serializers.py:320
+msgid "زمان فعلی سرور"
+msgstr "زمان فعلی سرور"
+
+#: api/parent_serializers.py:323
+msgid "تاریخ فعلی سرور"
+msgstr "تاریخ فعلی سرور"
+
+#: api/parent_serializers.py:326
+msgid "ساعت فعلی سرور"
+msgstr "ساعت فعلی سرور"
+
+#: api/parent_serializers.py:329
+msgid "ثانیه‌های استفاده شده امروز"
+msgstr "ثانیه‌های استفاده شده امروز"
+
+#: api/parent_serializers.py:333
+msgid "ثانیه‌های باقی‌مانده"
+msgstr "ثانیه‌های باقی‌مانده"
+
+#: api/parent_serializers.py:336
+msgid "آیا دسترسی بلاک شده است"
+msgstr "آیا دسترسی بلاک شده است"
+
+#: api/parent_serializers.py:340
+msgid "دلیل بلاک"
+msgstr "دلیل بلاک"
+
+#: api/parent_serializers.py:349
+msgid "تعداد ثانیه‌های این جلسه (حداکثر 24 ساعت)"
+msgstr "تعداد ثانیه‌های این جلسه (حداکثر 24 ساعت)"
+
+#: api/parent_serializers.py:355
+msgid "شناسه دستگاه (اختیاری)"
+msgstr "شناسه دستگاه (اختیاری)"
+
+#: api/parent_serializers.py:360
+msgid "زمان شروع در دستگاه کاربر (غیرقابل اعتماد)"
+msgstr "زمان شروع در دستگاه کاربر (غیرقابل اعتماد)"
+
+#: api/parent_serializers.py:365
+msgid "زمان پایان در دستگاه کاربر (غیرقابل اعتماد)"
+msgstr "زمان پایان در دستگاه کاربر (غیرقابل اعتماد)"
+
+#: api/parent_serializers.py:373
+msgid "رمز فعلی والد"
+msgstr "رمز فعلی والد"
+
+#: api/parent_serializers.py:378
+msgid "رمز جدید (حداقل 8 کاراکتر)"
+msgstr "رمز جدید (حداقل 8 کاراکتر)"
+
+#: api/parent_serializers.py:382
+msgid "تکرار رمز جدید"
+msgstr "تکرار رمز جدید"
+
+#: api/parent_serializers.py:450
+msgid "رمز والدین (برای ورود به درگاه والدین)"
+msgstr "رمز والدین (برای ورود به درگاه والدین)"
+
+#: api/parent_serializers.py:456
+msgid "تایید رمز"
+msgstr "تایید رمز"
+
+#: api/parent_serializers.py:481
+msgid "Password must be at least 6 characters"
+msgstr "رمز باید حداقل 6 کاراکتر باشد"
+
+#: api/permissions.py:53
+msgid "Access is not allowed at this time. Please check with your parent."
+msgstr "دسترسی در این زمان مجاز نیست. لطفاً با والدین خود تماس بگیرید."
+
+#: api/permissions.py:78
+msgid "You have reached your daily usage limit. Please try again tomorrow."
+msgstr ""
+"شما به محدودیت استفاده روزانه خود رسیده‌اید. لطفاً فردا دوباره تلاش کنید."
+
+#: api/rating_medal_serializers.py:28
+msgid "Score must be between 0 and 100"
+msgstr "امتیاز باید بین 0 تا 100 باشد"
+
+#: api/rating_medal_serializers.py:33
+msgid "Stars must be between 0 and 5"
+msgstr "ستاره‌ها باید بین 0 تا 5 باشد"
+
+#: api/rating_medal_serializers.py:147
+msgid "Stars must be between 1 and 5"
+msgstr "ستاره‌ها باید بین 1 تا 5 باشد"
+
+#: api/views.py:161
+msgid "This phone number is already registered. Please log in."
+msgstr "این شماره تلفن قبلاً ثبت نام شده است. لطفاً وارد شوید."
+
+#: api/views.py:169
+msgid "This email is already registered. Please log in."
+msgstr "این ایمیل قبلاً ثبت نام شده است. لطفاً وارد شوید."
+
+#: api/views.py:201
+msgid "Please wait 2 minutes."
+msgstr "لطفاً 2 دقیقه صبر کنید."
+
+#: api/views.py:211 api/views.py:962 api/views.py:1095
+msgid "Email authentication is not configured on this server"
+msgstr "احراز هویت ایمیل در این سرور پیکربندی نشده است"
+
+#: api/views.py:221
+msgid "Verification code sent."
+msgstr "کد تأیید ارسال شد."
+
+#: api/views.py:226
+msgid "Error sending code: {str(e)}"
+msgstr "خطا در ارسال کد: {str(e)}"
+
+#: api/views.py:240 api/views.py:724 api/views.py:810 api/views.py:1462
+#: api/views.py:1531 api/views.py:1635 api/views.py:1732 api/views.py:1811
+#: api/views.py:1879 api/views.py:4052
+msgid "Invalid data provided"
+msgstr "داده نامعتبر ارسال شد"
+
+#: api/views.py:290
+msgid "Verification code is correct. Please complete registration"
+msgstr "کد تأیید صحیح است. لطفاً ثبت نام را تکمیل کنید"
+
+#: api/views.py:305 api/views.py:541 api/views.py:616 api/views.py:798
+#: api/views.py:1035 api/views.py:1172
+msgid "Login successful"
+msgstr "ورود موفق"
+
+#: api/views.py:326 api/views.py:464 api/views.py:889
+msgid "Invalid data"
+msgstr "داده نامعتبر"
+
+#: api/views.py:452
+msgid "Registration completed successfully"
+msgstr "ثبت نام با موفقیت انجام شد"
+
+#: api/views.py:528 api/views.py:598
+msgid "Username and password are required"
+msgstr "نام کاربری و رمز عبور ضروری است"
+
+#: api/views.py:548 api/views.py:623
+msgid "Username or password is incorrect"
+msgstr "نام کاربری یا رمز عبور نادرست است"
+
+#: api/views.py:608
+msgid "This account is not for a teacher"
+msgstr "این حساب برای معلم نیست"
+
+#: api/views.py:704
+msgid "Please wait 2 minutes before requesting a new code."
+msgstr "لطفاً قبل از درخواست کد جدید، ۲ دقیقه صبر کنید."
+
+#: api/views.py:714
+msgid "Verification code sent successfully."
+msgstr "کد تأیید با موفقیت ارسال شد."
+
+#: api/views.py:719
+msgid "Error sending verification code: {str(e)}"
+msgstr "خطا در ارسال کد تأیید: {str(e)}"
+
+#: api/views.py:790
+msgid "This account is not for teachers"
+msgstr "این حساب برای معلمان نیست"
+
+#: api/views.py:877
+msgid "Teacher registration completed successfully"
+msgstr "ثبت نام معلم با موفقیت انجام شد"
+
+#: api/views.py:940 api/views.py:1073
+msgid "Please provide a valid email address"
+msgstr "لطفاً آدرس ایمیل معتبر وارد کنید"
+
+#: api/views.py:956 api/views.py:1022
+msgid ""
+"This email is registered as a teacher account. Please use teacher login."
+msgstr ""
+"این ایمیل به عنوان حساب معلم ثبت شده است. لطفاً از ورود معلم استفاده کنید."
+
+#: api/views.py:969 api/views.py:1102
+msgid "Verification code has been sent to your email"
+msgstr "کد تأیید به ایمیل شما ارسال شد"
+
+#: api/views.py:975 api/views.py:1108
+msgid "Error sending OTP: {str(e)}"
+msgstr "خطا در ارسال رمز یکبار مصرف: {str(e)}"
+
+#: api/views.py:1004 api/views.py:1141
+msgid "Email and verification code are required"
+msgstr "ایمیل و کد تأیید ضروری است"
+
+#: api/views.py:1010 api/views.py:1147
+msgid "Invalid verification code format"
+msgstr "فرمت کد تأیید نامعتبر است"
+
+#: api/views.py:1089 api/views.py:1159
+msgid ""
+"This email is registered as a regular user account. Please use regular user "
+"login."
+msgstr ""
+"این ایمیل به عنوان حساب کاربر عادی ثبت شده است. لطفاً از ورود کاربر عادی "
+"استفاده کنید."
+
+#: api/views.py:1249
+msgid "Username is required"
+msgstr "نام کاربری ضروری است"
+
+#: api/views.py:1255 api/views.py:1310
+msgid "Username must be at least 3 characters"
+msgstr "نام کاربری باید حداقل 3 کاراکتر باشد"
+
+#: api/views.py:1265 api/views.py:1320
+msgid "This username has already been taken."
+msgstr "این نام کاربری قبلاً استفاده شده است."
+
+#: api/views.py:1271 api/views.py:1326
+msgid "This username is available."
+msgstr "این نام کاربری در دسترس است."
+
+#: api/views.py:1302
+msgid "Username is invalid"
+msgstr "نام کاربری نامعتبر است"
+
+#: api/views.py:1442
+msgid "Teacher profile updated successfully"
+msgstr "پروفایل معلم با موفقیت به روز شد"
+
+#: api/views.py:1447
+msgid "Profile updated successfully"
+msgstr "پروفایل با موفقیت به روز شد"
+
+#: api/views.py:1517
+msgid "Only students can use this endpoint"
+msgstr "فقط دانش‌آموزان می‌توانند از این نقطه پایانی استفاده کنند"
+
+#: api/views.py:1525
+msgid "Profile completed successfully"
+msgstr "پروفایل با موفقیت تکمیل شد"
+
+#: api/views.py:1621
+msgid "Only teachers can use this endpoint"
+msgstr "فقط معلمان می‌توانند از این نقطه پایانی استفاده کنند"
+
+#: api/views.py:1629
+msgid "Teacher profile saved successfully"
+msgstr "پروفایل معلم با موفقیت ذخیره شد"
+
+#: api/views.py:1720
+msgid "Avatar selected successfully"
+msgstr "آواتار با موفقیت انتخاب شد"
+
+#: api/views.py:1785
+msgid "You are already a teacher"
+msgstr "شما قبلاً معلم هستید"
+
+#: api/views.py:1869
+msgid "Password changed successfully"
+msgstr "رمز عبور با موفقیت تغییر کرد"
+
+#: api/views.py:1945
+msgid "Refresh token not provided"
+msgstr "توکن تازه‌سازی ارائه نشده است"
+
+#: api/views.py:1953
+msgid "Logout successful"
+msgstr "خروج موفق"
+
+#: api/views.py:1959
+msgid "Logout successful (token not expired)"
+msgstr "خروج موفق (توکن منقضی نشده است)"
+
+#: api/views.py:1964
+msgid "Token is invalid: {str(e)}"
+msgstr "توکن نامعتبر است: {str(e)}"
+
+#: api/views.py:1969
+msgid "Error logging out: {str(e)}"
+msgstr "خطا در خروج از حساب: {str(e)}"
+
+#: api/views.py:2097
+msgid "About us content not found"
+msgstr "محتوای درباره ما یافت نشد"
+
+#: api/views.py:2209
+msgid "No phone contact found"
+msgstr "هیچ تماس تلفنی یافت نشد"
+
+#: api/views.py:2216
+msgid "Phone contact retrieved successfully"
+msgstr "تماس تلفنی با موفقیت بازیابی شد"
+
+#: api/views.py:2333 core/models.py:143
+msgid "Banners"
+msgstr "بنرها"
+
+#: api/views.py:2339
+msgid "Recent Courses"
+msgstr "دوره‌های اخیر"
+
+#: api/views.py:2345
+msgid "Best Selling Subjects"
+msgstr "موضوعات پرفروش"
+
+#: api/views.py:2351
+msgid "Top Rated Teachers"
+msgstr "معلمان برتر"
+
+#: api/views.py:2355
+msgid "Home page data retrieved successfully"
+msgstr "داده‌های صفحه اصلی با موفقیت بازیابی شدند"
+
+#: api/views.py:2471 api/views.py:2591
+msgid "شما معلم نیستید"
+msgstr "شما معلم نیستید"
+
+#: api/views.py:2489
+msgid "لطفاً تمام فیلدهای الزامی را پر کنید"
+msgstr "لطفاً تمام فیلدهای الزامی را پر کنید"
+
+#: api/views.py:2499
+msgid "فرمت تاریخ نادرست است. لطفاً از فرمت YYYY/MM/DD استفاده کنید"
+msgstr "فرمت تاریخ نادرست است. لطفاً از فرمت YYYY/MM/DD استفاده کنید"
+
+#: api/views.py:2513
+msgid "مقادیر باید مثبت باشند"
+msgstr "مقادیر باید مثبت باشند"
+
+#: api/views.py:2516
+msgid "خطا در پردازش داده‌های زمان یا قیمت"
+msgstr "خطا در پردازش داده‌های زمان یا قیمت"
+
+#: api/views.py:2556 api/views.py:2686
+msgid "بازه‌های زمانی با موفقیت ایجاد شدند"
+msgstr "بازه‌های زمانی با موفقیت ایجاد شدند"
+
+#: api/views.py:2558 api/views.py:2690
+msgid ""
+"هیچ بازه زمانی جدیدی اضافه نشد. احتمالاً تمام این بازه‌ها قبلاً ثبت شده بودند."
+msgstr ""
+"هیچ بازه زمانی جدیدی اضافه نشد. احتمالاً تمام این بازه‌ها قبلاً ثبت شده بودند."
+
+#: api/views.py:2618
+msgid "قیمت الزامی است"
+msgstr "قیمت الزامی است"
+
+#: api/views.py:2635
+msgid "داده‌های ورودی نامعتبر است"
+msgstr "داده‌های ورودی نامعتبر است"
+
+#: api/views.py:2643
+msgid "فیلدهای الزامی گم شده است"
+msgstr "فیلدهای الزامی گم شده است"
+
+#: api/views.py:2915 api/views.py:3020 api/views.py:3093 api/views.py:3216
+msgid "بازه زمانی یافت نشد"
+msgstr "بازه زمانی یافت نشد"
+
+#: api/views.py:2922 api/views.py:3027 api/views.py:3100
+msgid "شما دسترسی به این بازه زمانی ندارید"
+msgstr "شما دسترسی به این بازه زمانی ندارید"
+
+#: api/views.py:2928
+msgid "جزئیات بازه زمانی با موفقیت دریافت شد"
+msgstr "جزئیات بازه زمانی با موفقیت دریافت شد"
+
+#: api/views.py:3034
+msgid "این بازه زمانی رزرو شده است و نمی‌تواند تغییر کند"
+msgstr "این بازه زمانی رزرو شده است و نمی‌تواند تغییر کند"
+
+#: api/views.py:3042
+msgid "بازه زمانی با موفقیت ویرایش شد"
+msgstr "بازه زمانی با موفقیت ویرایش شد"
+
+#: api/views.py:3107
+msgid "این بازه زمانی رزرو شده است و نمی‌تواند حذف شود"
+msgstr "این بازه زمانی رزرو شده است و نمی‌تواند حذف شود"
+
+#: api/views.py:3113
+msgid "بازه زمانی با موفقیت حذف شد"
+msgstr "بازه زمانی با موفقیت حذف شد"
+
+#: api/views.py:3148
+msgid "تنها دانش‌آموزان می‌توانند کلاس خریداری کنند"
+msgstr "تنها دانش‌آموزان می‌توانند کلاس خریداری کنند"
+
+#: api/views.py:3157 api/views.py:4218 api/views.py:4401 api/views.py:4518
+#: api/views.py:4702 api/views.py:4791 api/views.py:6246
+msgid "داده‌های نامعتبر"
+msgstr "داده‌های نامعتبر"
+
+#: api/views.py:3211
+msgid "کلاس با موفقیت خریداری شد"
+msgstr "کلاس با موفقیت خریداری شد"
+
+#: api/views.py:3226
+msgid "خطای داخلی سرور: "
+msgstr "خطای داخلی سرور: "
+
+#: api/views.py:3261
+msgid "فقط دانش‌آموزان می‌توانند این endpoint رو استفاده کنند"
+msgstr "فقط دانش‌آموزان می‌توانند از این endpoint استفاده کنند"
+
+#: api/views.py:3318
+msgid "معلمان می‌توانند تنها رزروهای خود را ببینند"
+msgstr "معلمان می‌توانند تنها رزروهای خود را ببینند"
+
+#: api/views.py:3379 api/views.py:3438 api/views.py:3503 api/views.py:3710
+#: api/views.py:3851 api/views.py:3894
+msgid "رزرو یافت نشد"
+msgstr "رزرو یافت نشد"
+
+#: api/views.py:3386 api/views.py:3445 api/views.py:3510 api/views.py:3901
+msgid "شما دسترسی ندارید"
+msgstr "شما دسترسی ندارید"
+
+#: api/views.py:3395
+msgid "وضعیت نامعتبر است"
+msgstr "وضعیت نامعتبر است"
+
+#: api/views.py:3405
+msgid "وضعیت رزرو با موفقیت به‌روزرسانی شد"
+msgstr "وضعیت رزرو با موفقیت به‌روزرسانی شد"
+
+#: api/views.py:3452
+msgid "این رزرو نمی‌تواند لغو شود"
+msgstr "این رزرو نمی‌تواند لغو شود"
+
+#: api/views.py:3468
+msgid "رزرو با موفقیت لغو شد"
+msgstr "رزرو با موفقیت لغو شد"
+
+#: api/views.py:3517
+msgid "این رزرو قبلاً پرداخت شده است"
+msgstr "این رزرو قبلاً پرداخت شده است"
+
+#: api/views.py:3553
+msgid "کلاس رایگان است - پرداخت ثبت شد"
+msgstr "کلاس رایگان است - پرداخت ثبت شد"
+
+#: api/views.py:3586
+msgid "خطا در اتصال به درگاه پرداخت"
+msgstr "خطا در اتصال به درگاه پرداخت"
+
+#: api/views.py:3594
+msgid "خطای نامشخص"
+msgstr "خطای نامشخص"
+
+#: api/views.py:3604
+msgid "خطا در دریافت شناسه پرداخت"
+msgstr "خطا در دریافت شناسه پرداخت"
+
+#: api/views.py:3619
+msgid "پرداخت آغاز شد"
+msgstr "پرداخت آغاز شد"
+
+#: api/views.py:3625
+msgid "درخواست به درگاه پرداخت تایم‌اوت شد"
+msgstr "درخواست به درگاه پرداخت تایم‌اوت شد"
+
+#: api/views.py:3630
+msgid "خطا در برقراری ارتباط با درگاه پرداخت"
+msgstr "خطا در برقراری ارتباط با درگاه پرداخت"
+
+#: api/views.py:3635 api/views.py:3856
+msgid "خطای داخلی سرور"
+msgstr "خطای داخلی سرور"
+
+#: api/views.py:3701
+msgid "اطلاعات ناقص"
+msgstr "اطلاعات ناقص"
+
+#: api/views.py:3998 api/views.py:4037
+msgid "تنها معلمان می‌توانند موضوع تدریس ایجاد کنند"
+msgstr "تنها معلمان می‌توانند موضوع تدریس ایجاد کنند"
+
+#: api/views.py:4086 api/views.py:4145 api/views.py:4256 api/views.py:5034
+#: api/views.py:5184 api/views.py:5310 api/views.py:5534 api/views.py:5792
+#: api/views.py:5987 api/views.py:6223
+msgid "موضوع تدریسی یافت نشد"
+msgstr "موضوع تدریسی یافت نشد"
+
+#: api/views.py:4094
+msgid "دسترسی محدود است"
+msgstr "دسترسی محدود است"
+
+#: api/views.py:4153
+msgid "شما دسترسی به ویرایش این موضوع ندارید"
+msgstr "شما دسترسی به ویرایش این موضوع ندارید"
+
+#: api/views.py:4158
+msgid "تنها معلمان یا ادمین می‌توانند موضوع را ویرایش کنند"
+msgstr "تنها معلمان یا ادمین می‌توانند موضوع را ویرایش کنند"
+
+#: api/views.py:4211
+msgid "موضوع تدریسی با موفقیت ویرایش شد"
+msgstr "موضوع تدریسی با موفقیت ویرایش شد"
+
+#: api/views.py:4263
+msgid "شما دسترسی به حذف این موضوع ندارید"
+msgstr "شما دسترسی به حذف این موضوع ندارید"
+
+#: api/views.py:4268
+msgid "تنها معلمان و ادمین می‌توانند موضوع را حذف کنند"
+msgstr "تنها معلمان و ادمین می‌توانند موضوع را حذف کنند"
+
+#: api/views.py:4278
+msgid "این موضوع تدریسی دارای دوره‌های وابسته است و قابل حذف نیست"
+msgstr "این موضوع تدریسی دارای دوره‌های وابسته است و قابل حذف نیست"
+
+#: api/views.py:4287
+msgid "موضوع تدریسی با موفقیت حذف شد"
+msgstr "موضوع تدریسی با موفقیت حذف شد"
+
+#: api/views.py:4364
+msgid "تنها معلمان می‌توانند سؤال ایجاد کنند"
+msgstr "تنها معلمان می‌توانند سؤال ایجاد کنند"
+
+#: api/views.py:4476 api/views.py:4560 api/views.py:4609 api/views.py:4663
+#: api/views.py:5433 api/views.py:6002
+msgid "سؤال یافت نشد"
+msgstr "سؤال یافت نشد"
+
+#: api/views.py:4483
+msgid "تنها معلمان می‌توانند details ایجاد کنند"
+msgstr "تنها معلمان می‌توانند جزئیات ایجاد کنند"
+
+#: api/views.py:4491 api/views.py:4670
+msgid "شما مجاز به ویرایش این سؤال نیستید"
+msgstr "شما مجاز به ویرایش این سؤال نیستید"
+
+#: api/views.py:4551 api/views.py:5425
+msgid "تنها معلمان می‌توانند سؤال حذف کنند"
+msgstr "تنها معلمان می‌توانند سؤال حذف کنند"
+
+#: api/views.py:4567
+msgid "شما مجاز به حذف این سؤال نیستید"
+msgstr "شما مجاز به حذف این سؤال نیستید"
+
+#: api/views.py:4575 api/views.py:5471
+msgid "سؤال با موفقیت حذف شد"
+msgstr "سؤال با موفقیت حذف شد"
+
+#: api/views.py:4654
+msgid "تنها معلمان می‌توانند سؤال ویرایش کنند"
+msgstr "تنها معلمان می‌توانند سؤال ویرایش کنند"
+
+#: api/views.py:4697
+msgid "سؤال با موفقیت ویرایش شد"
+msgstr "سؤال با موفقیت ویرایش شد"
+
+#: api/views.py:4741
+msgid "تنها معلمان می‌توانند جزئیات سؤال ویرایش کنند"
+msgstr "تنها معلمان می‌توانند جزئیات سؤال ویرایش کنند"
+
+#: api/views.py:4750
+msgid "جزئیات سؤال یافت نشد"
+msgstr "جزئیات سؤال یافت نشد"
+
+#: api/views.py:4757
+msgid "شما مجاز به ویرایش این جزئیات نیستید"
+msgstr "شما مجاز به ویرایش این جزئیات نیستید"
+
+#: api/views.py:4786
+msgid "جزئیات سؤال با موفقیت ویرایش شد"
+msgstr "جزئیات سؤال با موفقیت ویرایش شد"
+
+#: api/views.py:4892
+msgid "تنها معلمان می‌توانند لیست سوالات خود را مشاهده کنند"
+msgstr "تنها معلمان می‌توانند لیست سوالات خود را مشاهده کنند"
+
+#: api/views.py:5011
+msgid "تنها معلمان می‌توانند آزمون ایجاد کنند"
+msgstr "تنها معلمان می‌توانند آزمون ایجاد کنند"
+
+#: api/views.py:5020
+msgid "شناسه موضوع الزامی است"
+msgstr "شناسه موضوع الزامی است"
+
+#: api/views.py:5026
+msgid "حداقل یک سؤال الزامی است"
+msgstr "حداقل یک سؤال الزامی است"
+
+#: api/views.py:5041
+msgid "شما می‌توانید تنها برای موضوعات خود آزمون ایجاد کنید"
+msgstr "شما می‌توانید تنها برای موضوعات خود آزمون ایجاد کنید"
+
+#: api/views.py:5117
+msgid "آزمون با موفقیت ایجاد شد"
+msgstr "آزمون با موفقیت ایجاد شد"
+
+#: api/views.py:5193 api/views.py:5317
+msgid "شما دسترسی به این موضوع ندارید"
+msgstr "شما دسترسی به این موضوع ندارید"
+
+#: api/views.py:5198 api/views.py:5322
+msgid "این موضوع دسترس پذیر نیست"
+msgstr "این موضوع دسترس‌پذیر نیست"
+
+#: api/views.py:5440
+msgid "شما دسترسی به حذف این سؤال ندارید"
+msgstr "شما دسترسی به حذف این سؤال ندارید"
+
+#: api/views.py:5526
+msgid "تنها معلمان می‌توانند مرحله حذف کنند"
+msgstr "تنها معلمان می‌توانند مرحله حذف کنند"
+
+#: api/views.py:5541
+msgid "شما دسترسی به حذف این مرحله ندارید"
+msgstr "شما دسترسی به حذف این مرحله ندارید"
+
+#: api/views.py:5553
+msgid "مرحله مورد نظر یافت نشد"
+msgstr "مرحله مورد نظر یافت نشد"
+
+#: api/views.py:5576
+msgid "مرحله با موفقیت حذف شد"
+msgstr "مرحله با موفقیت حذف شد"
+
+#: api/views.py:5799 api/views.py:5994
+msgid "این موضوع فعال نیست"
+msgstr "این موضوع فعال نیست"
+
+#: api/views.py:5979
+msgid "شناسه سؤال الزامی است"
+msgstr "شناسه سؤال الزامی است"
+
+#: api/views.py:6010
+msgid "این سؤال به این موضوع تعلق ندارد"
+msgstr "این سؤال به این موضوع تعلق ندارد"
+
+#: api/views.py:6023
+msgid "گزینه یافت نشد"
+msgstr "گزینه یافت نشد"
+
+#: api/views.py:6131
+msgid "پاسخ حذف شد"
+msgstr "پاسخ حذف شد"
+
+#: api/views.py:6131
+msgid "پاسخ با موفقیت ذخیره شد"
+msgstr "پاسخ با موفقیت ذخیره شد"
+
+#: api/views.py:6215
+msgid "شناسه موضوع و جوابات الزامی هستند"
+msgstr "شناسه موضوع و پاسخ‌ها الزامی هستند"
+
+#: api/views.py:6242
+msgid "پاسخ‌ها با موفقیت ثبت شدند"
+msgstr "پاسخ‌ها با موفقیت ثبت شدند"
+
+#: api/views.py:6397
+msgid "تلاش برای امتحان یافت نشد"
+msgstr "تلاش برای امتحان یافت نشد"
+
+#: api/views.py:6404 api/views.py:6410
+msgid "شما دسترسی به این نتایج ندارید"
+msgstr "شما دسترسی به این نتایج ندارید"
+
+#: api/views.py:6571 api/views.py:9106 api/views.py:9763 api/views.py:9810
+#: api/views.py:9849
+msgid "معلم یافت نشد"
+msgstr "معلم یافت نشد"
+
+#: api/views.py:6714
+msgid "Invalid credentials"
+msgstr "اطلاعات ورود نامعتبر است"
+
+#: api/views.py:6730
+msgid "Parent login successful"
+msgstr "ورود والد موفق بود"
+
+#: api/views.py:6797 api/views.py:7011 api/views.py:7325
+msgid "Student not found"
+msgstr "دانش‌آموز یافت نشد"
+
+#: api/views.py:6803 api/views.py:6808
+msgid "Parent profile not found"
+msgstr "پروفایل والد یافت نشد"
+
+#: api/views.py:7003 api/views.py:7067 api/views.py:7125
+msgid "Child ID is required"
+msgstr "شناسه فرزند الزامی است"
+
+#: api/views.py:7076 api/views.py:7134
+msgid "Student or parent not found"
+msgstr "دانش‌آموز یا والد یافت نشد"
+
+#: api/views.py:7083
+msgid "You do not have permission to set usage time"
+msgstr "شما مجوز تنظیم زمان استفاده را ندارید"
+
+#: api/views.py:7193
+msgid "Student ID is required"
+msgstr "شناسه دانش‌آموز الزامی است"
+
+#: api/views.py:7203
+msgid "Student or parent profile not found"
+msgstr "دانش‌آموز یا پروفایل والد یافت نشد"
+
+#: api/views.py:7221
+msgid "Current password is incorrect"
+msgstr "رمز عبور فعلی نادرست است"
+
+#: api/views.py:7230
+msgid "Password updated successfully"
+msgstr "رمز عبور با موفقیت به‌روزرسانی شد"
+
+#: api/views.py:7301
+msgid "student_id and status are required"
+msgstr "student_id و status ضروری است"
+
+#: api/views.py:7307
+msgid "status must be \"present\" or \"absent\""
+msgstr "status باید \"present\" یا \"absent\" باشد"
+
+#: api/views.py:7316 api/views.py:7784
+msgid "Booking not found"
+msgstr "رزرو پیدا نشد"
+
+#: api/views.py:7351
+msgid "Send Support Message"
+msgstr "ارسال پیام به پشتیبانی"
+
+#: api/views.py:7352
 msgid "Send a message to support team with optional file attachments"
 msgstr "ارسال پیام به تیم پشتیبانی با فایل‌های پیوست اختیاری"
 
+#: api/views.py:7397
+msgid "Recipient not found"
+msgstr "گیرنده یافت نشد"
+
+#: api/views.py:7406
+msgid "Sender not found"
+msgstr "فرستنده یافت نشد"
+
+#: api/views.py:7460
+msgid "List Support Messages"
+msgstr "لیست پیام‌های پشتیبانی"
+
+#: api/views.py:7461
 msgid "Get list of support messages for a teacher"
 msgstr "دریافت لیست پیام‌های پشتیبانی برای معلم"
 
+#: api/views.py:7467
+msgid "Teacher ID to filter messages"
+msgstr "شناسه معلم برای فیلتر کردن پیام‌ها"
+
+#: api/views.py:7473
+msgid "Message status: sent or read"
+msgstr "وضعیت پیام: ارسال‌شده یا خوانده‌شده"
+
+#: api/views.py:7479
+msgid "Page number"
+msgstr "شماره صفحه"
+
+#: api/views.py:7560
+msgid "Mark Message as Read"
+msgstr "علامت‌گذاری پیام به‌عنوان خوانده‌شده"
+
+#: api/views.py:7561
 msgid "Mark a support message as read"
 msgstr "علامت‌گذاری پیام پشتیبانی به‌عنوان خوانده‌شده"
 
-msgid "without text ({} files)"
+#: api/views.py:7589 api/views.py:7613
+msgid "Message not found"
+msgstr "پیام یافت نشد"
+
+#: api/views.py:7607
+msgid "Message deleted successfully"
+msgstr "پیام با موفقیت حذف شد"
+
+#: api/views.py:7683
+msgid "Teacher not found"
+msgstr "معلم یافت نشد"
+
+#: api/views.py:8142
+msgid "فقط معلمان می‌توانند کیف پول خود را ببینند"
+msgstr "فقط معلمان می‌توانند کیف پول خود را ببینند"
+
+#: api/views.py:8154 api/views.py:9099
+msgid "teacher_id الزامی است"
+msgstr "teacher_id الزامی است"
+
+#: api/views.py:8161 api/views.py:8308 api/views.py:8574 api/views.py:9114
+msgid "کیف پول یافت نشد"
+msgstr "کیف پول یافت نشد"
+
+#: api/views.py:8301
+msgid "فقط معلمان می‌توانند اطلاعات بانکی خود را ویرایش کنند"
+msgstr "فقط معلمان می‌توانند اطلاعات بانکی خود را ویرایش کنند"
+
+#: api/views.py:8329
+msgid "اطلاعات بانکی با موفقیت به‌روزرسانی شد"
+msgstr "اطلاعات بانکی با موفقیت به‌روزرسانی شد"
+
+#: api/views.py:8452 api/views.py:8953 api/views.py:9088
+msgid "فقط معلمان و مدیران می‌توانند این endpoint را استفاده کنند"
+msgstr "فقط معلمان و مدیران می‌توانند این endpoint را استفاده کنند"
+
+#: api/views.py:8544
+msgid "فقط معلمان می‌توانند درخواست تسویه حساب کنند"
+msgstr "فقط معلمان می‌توانند درخواست تسویه حساب کنند"
+
+#: api/views.py:8556
+msgid "مبلغ و روش پرداخت الزامی هستند"
+msgstr "مبلغ و روش پرداخت الزامی هستند"
+
+#: api/views.py:8566
+msgid "مبلغ نامعتبر است"
+msgstr "مبلغ نامعتبر است"
+
+#: api/views.py:8580 api/views.py:8623
+msgid "موجودی کافی نیست"
+msgstr "موجودی کافی نیست"
+
+#: api/views.py:8587
+#, python-format
+msgid "مبلغ از حداقل درخواست (%(min)s) کمتر است"
+msgstr "مبلغ از حداقل درخواست (%(min)s) کمتر است"
+
+#: api/views.py:8595
+msgid "روش پرداخت نامعتبر است"
+msgstr "روش پرداخت نامعتبر است"
+
+#: api/views.py:8612
+msgid "اطلاعات حساب بانکی مورد نیاز است"
+msgstr "اطلاعات حساب بانکی مورد نیاز است"
+
+#: api/views.py:8654
+msgid "درخواست تسویه حساب ایجاد شد و در انتظار تایید ادمین است"
+msgstr "درخواست تسویه حساب ایجاد شد و در انتظار تایید ادمین است"
+
+#: api/views.py:9287
+msgid "فقط مدیران می‌توانند درخواست‌ها را تأیید کنند"
+msgstr "فقط مدیران می‌توانند درخواست‌ها را تأیید کنند"
+
+#: api/views.py:9294
+msgid "درخواست تسویه حساب یافت نشد"
+msgstr "درخواست تسویه حساب یافت نشد"
+
+#: api/views.py:9300
+msgid "تنها درخواست‌های در انتظار تأیید را می‌توان تأیید کرد"
+msgstr "تنها درخواست‌های در انتظار تأیید را می‌توان تأیید کرد"
+
+#: api/views.py:9325
+msgid "درخواست تسویه حساب تأیید شد"
+msgstr "درخواست تسویه حساب تأیید شد"
+
+#: api/views.py:9406
+msgid "فقط دانش‌آموزان و مدیران می‌توانند این endpoint را استفاده کنند"
+msgstr "فقط دانش‌آموزان و مدیران می‌توانند این endpoint را استفاده کنند"
+
+#: api/views.py:9493
+msgid "فقط معلمان می‌توانند امتیاز بدهند"
+msgstr "فقط معلمان می‌توانند امتیاز بدهند"
+
+#: api/views.py:9503
+msgid "امتیاز ثبت شد"
+msgstr "امتیاز ثبت شد"
+
+#: api/views.py:9531 api/views.py:9615 api/views.py:9684
+msgid "شما مجاز نیستید"
+msgstr "شما مجاز نیستید"
+
+#: api/views.py:9541
+msgid "امتیاز بروزرسانی شد"
+msgstr "امتیاز بروزرسانی شد"
+
+#: api/views.py:9578
+msgid "فقط معلمان می‌توانند مدال بدهند"
+msgstr "فقط معلمان می‌توانند مدال بدهند"
+
+#: api/views.py:9588
+msgid "مدال اعطا شد"
+msgstr "مدال اعطا شد"
+
+#: api/views.py:9621
+msgid "مدال حذف شد"
+msgstr "مدال حذف شد"
+
+#: api/views.py:9735
+msgid "امتیاز داده شد"
+msgstr "امتیاز داده شد"
+
+#: api/views.py:9862
+msgid "شما هنوز برای این معلم نظری ثبت نکرده‌اید"
+msgstr "شما هنوز برای این معلم نظری ثبت نکرده‌اید"
+
+#: api/views.py:9871
+msgid "نظر شما برای این معلم"
+msgstr "نظر شما برای این معلم"
+
+#: api/views.py:9974 api/views.py:10107
+msgid "This endpoint is only for students"
+msgstr "این endpoint فقط برای دانش‌آموزان است"
+
+#: api/views.py:9986 api/views.py:10119
+msgid "No active parent profile found for this student"
+msgstr "پروفایل والد فعالی برای این دانش‌آموز یافت نشد"
+
+#: api/views.py:10207
+msgid "Usage recorded successfully"
+msgstr "استفاده با موفقیت ثبت شد"
+
+#: api/views.py:10279 api/views.py:10441 api/views.py:10507 api/views.py:10811
+#: api/views.py:10967
+msgid "Only teachers can access this endpoint"
+msgstr "فقط معلمان می‌توانند به این endpoint دسترسی داشته باشند"
+
+#: api/views.py:10361
+msgid "Students list retrieved successfully"
+msgstr "لیست دانش‌آموزان با موفقیت بازیابی شد"
+
+#: api/views.py:10460
+msgid "Classes retrieved successfully"
+msgstr "کلاس‌ها با موفقیت بازیابی شدند"
+
+#: api/views.py:10523
+msgid "No paid classes found"
+msgstr "کلاس پرداخت‌شده‌ای یافت نشد"
+
+#: api/views.py:10535
+msgid "No exercises found"
+msgstr "تمرینی یافت نشد"
+
+#: api/views.py:10731
+msgid "Exercises retrieved successfully"
+msgstr "تمرین‌ها با موفقیت بازیابی شدند"
+
+#: api/views.py:10827
+msgid "Student not found or has no paid classes with this teacher"
+msgstr "دانش‌آموز یافت نشد یا کلاس پرداخت‌شده‌ای با این معلم ندارد"
+
+#: api/views.py:10897
+msgid "Student profile retrieved successfully"
+msgstr "پروفایل دانش‌آموز با موفقیت بازیابی شد"
+
+#: api/views.py:11137
+msgid "Dashboard data retrieved successfully"
+msgstr "داده‌های داشبورد با موفقیت بازیابی شدند"
+
+#: api/views.py:11174 api/views.py:11621
+msgid "Error retrieving packages"
+msgstr "خطا در بازیابی بسته‌ها"
+
+#: api/views.py:11207
+msgid "Error retrieving enrollments"
+msgstr "خطا در بازیابی ثبت‌نام‌ها"
+
+#: api/views.py:11245
+msgid "enrollment_id and session_number are required"
+msgstr "enrollment_id و session_number الزامی هستند"
+
+#: api/views.py:11257
+msgid "Enrollment not found"
+msgstr "ثبت‌نام یافت نشد"
+
+#: api/views.py:11289
+msgid "Error checking session access"
+msgstr "خطا در بررسی دسترسی جلسه"
+
+#: api/views.py:11325 api/views.py:11649 api/views.py:11752 api/views.py:11883
+#: api/views.py:11965
+msgid "Invalid input"
+msgstr "ورودی نامعتبر"
+
+#: api/views.py:11343
+msgid "Enrollment not found or inactive"
+msgstr "ثبت‌نام یافت نشد یا غیرفعال است"
+
+#: api/views.py:11353
+msgid "No pending installment"
+msgstr "قسط در انتظاری وجود ندارد"
+
+#: api/views.py:11363
+msgid "This installment is already paid"
+msgstr "این قسط قبلاً پرداخت شده است"
+
+#: api/views.py:11394 api/views.py:11401 api/views.py:11411
+msgid "Payment gateway error"
+msgstr "خطای درگاه پرداخت"
+
+#: api/views.py:11419
+msgid "No track ID received from payment gateway"
+msgstr "کد پیگیری از درگاه پرداخت دریافت نشد"
+
+#: api/views.py:11432
+msgid "Payment initiated successfully"
+msgstr "پرداخت با موفقیت آغاز شد"
+
+#: api/views.py:11446
+msgid "Error processing payment"
+msgstr "خطا در پردازش پرداخت"
+
+#: api/views.py:11490
+msgid "Missing required parameters"
+msgstr "پارامترهای الزامی وجود ندارند"
+
+#: api/views.py:11502
+msgid "Payment failed"
+msgstr "پرداخت ناموفق بود"
+
+#: api/views.py:11519
+msgid "Error verifying payment"
+msgstr "خطا در تأیید پرداخت"
+
+#: api/views.py:11526
+msgid "Error verifying payment with gateway"
+msgstr "خطا در تأیید پرداخت با درگاه"
+
+#: api/views.py:11535
+msgid "Payment verification failed"
+msgstr "تأیید پرداخت ناموفق بود"
+
+#: api/views.py:11547
+msgid "Payment record not found"
+msgstr "رکورد پرداخت یافت نشد"
+
+#: api/views.py:11570
+msgid "Payment verified successfully"
+msgstr "پرداخت با موفقیت تأیید شد"
+
+#: api/views.py:11583
+msgid "Error processing payment verification"
+msgstr "خطا در پردازش تأیید پرداخت"
+
+#: api/views.py:11666
+msgid "Package created successfully"
+msgstr "بسته با موفقیت ایجاد شد"
+
+#: api/views.py:11675
+msgid "Error creating package"
+msgstr "خطا در ایجاد بسته"
+
+#: api/views.py:11712 api/views.py:11739 api/views.py:11781 api/views.py:11837
+#: api/views.py:11872
+msgid "Package not found"
+msgstr "بسته یافت نشد"
+
+#: api/views.py:11725
+msgid "Error retrieving package"
+msgstr "خطا در بازیابی بسته"
+
+#: api/views.py:11760
+msgid "Package updated successfully"
+msgstr "بسته با موفقیت به‌روزرسانی شد"
+
+#: api/views.py:11767
+msgid "Error updating package"
+msgstr "خطا در به‌روزرسانی بسته"
+
+#: api/views.py:11788
+msgid "Cannot delete package with active enrollments"
+msgstr "امکان حذف بسته با ثبت‌نام‌های فعال وجود ندارد"
+
+#: api/views.py:11795
+msgid "Package deleted successfully"
+msgstr "بسته با موفقیت حذف شد"
+
+#: api/views.py:11801
+msgid "Error deleting package"
+msgstr "خطا در حذف بسته"
+
+#: api/views.py:11852
+msgid "Error retrieving installments"
+msgstr "خطا در بازیابی اقساط"
+
+#: api/views.py:11900
+msgid "Installment created successfully"
+msgstr "قسط با موفقیت ایجاد شد"
+
+#: api/views.py:11909
+msgid "Error creating installment"
+msgstr "خطا در ایجاد قسط"
+
+#: api/views.py:11952 api/views.py:11996
+msgid "Installment not found"
+msgstr "قسط یافت نشد"
+
+#: api/views.py:11973
+msgid "Installment updated successfully"
+msgstr "قسط با موفقیت به‌روزرسانی شد"
+
+#: api/views.py:11980
+msgid "Error updating installment"
+msgstr "خطا در به‌روزرسانی قسط"
+
+#: api/views.py:12003
+msgid "Cannot delete installment with paid payments"
+msgstr "امکان حذف قسط با پرداخت‌های انجام‌شده وجود ندارد"
+
+#: api/views.py:12014
+msgid "Installment deleted successfully"
+msgstr "قسط با موفقیت حذف شد"
+
+#: api/views.py:12020
+msgid "Error deleting installment"
+msgstr "خطا در حذف قسط"
+
+#: api/views.py:12064
+msgid "این دوره دارای دانش‌آموزان ثبت‌نام شده است و قابل حذف نیست"
+msgstr "این دوره دارای دانش‌آموزان ثبت‌نام شده است و قابل حذف نیست"
+
+#: api/views.py:12074
+msgid "دوره با موفقیت حذف شد"
+msgstr "دوره با موفقیت حذف شد"
+
+#: api/views.py:12079
+msgid "این دوره دارای اطلاعات وابسته است و قابل حذف نیست"
+msgstr "این دوره دارای اطلاعات وابسته است و قابل حذف نیست"
+
+#: classroom/admin.py:93
+msgid "تاریخ میلادی"
+msgstr "تاریخ میلادی"
+
+#: classroom/admin.py:97
+msgid "تاریخ شمسی"
+msgstr "تاریخ شمسی"
+
+#: classroom/admin.py:101
+msgid "دسترسی‌پذیر"
+msgstr "دسترسی‌پذیر"
+
+#: classroom/admin.py:101
+msgid "غیردسترسی‌پذیر"
+msgstr "غیردسترسی‌پذیر"
+
+#: classroom/admin.py:103 classroom/models.py:24
+msgid "در دسترس"
+msgstr "در دسترس"
+
+#: classroom/admin.py:107
+msgid "رزرو‌شده"
+msgstr "رزرو‌شده"
+
+#: classroom/admin.py:107
+msgid "آزاد"
+msgstr "آزاد"
+
+#: classroom/admin.py:109
+msgid "وضعیت رزرو"
+msgstr "وضعیت رزرو"
+
+#: classroom/admin.py:297
+msgid "اطلاعات اساسی"
+msgstr "اطلاعات اساسی"
+
+#: classroom/admin.py:300 classroom/admin.py:362 classroom/admin.py:397
+#: classroom/admin.py:431 classroom/models.py:108 classroom/models.py:139
+msgid "وضعیت تایید"
+msgstr "وضعیت تایید"
+
+#: classroom/admin.py:303 classroom/admin.py:944 classroom/admin.py:1012
+#: exercise/admin.py:186
+msgid "توصیف"
+msgstr "توصیف"
+
+#: classroom/admin.py:306 exercise/admin.py:189 exercise/admin.py:266
+msgid "رسانه"
+msgstr "رسانه"
+
+#: classroom/admin.py:309
+msgid "محدودیت سن"
+msgstr "محدودیت سن"
+
+#: classroom/admin.py:312 classroom/admin.py:465 classroom/admin.py:541
+#: classroom/admin.py:593 classroom/admin.py:673 classroom/admin.py:843
+#: classroom/admin.py:947 classroom/admin.py:1018 classroom/admin.py:1065
+#: exercise/admin.py:192 exercise/admin.py:275 exercise/admin.py:329
+#: exercise/admin.py:401 exercise/admin.py:531 exercise/admin.py:602
+#: exercise/admin.py:670
+msgid "اطلاعات سیستم"
+msgstr "اطلاعات سیستم"
+
+#: classroom/admin.py:346
+msgid "تصویری وجود ندارد"
+msgstr ""
+
+#: classroom/admin.py:347
+msgid "پیش‌نمایش عکس کاور"
+msgstr "پیش‌نمایش عکس کاور"
+
+#: classroom/admin.py:366 classroom/admin.py:635 classroom/models.py:107
+#: classroom/models.py:128 classroom/models.py:358 classroom/models.py:973
+#: classroom/models.py:1081
+msgid "فعال"
+msgstr "فعال"
+
+#: classroom/admin.py:366 classroom/admin.py:635
+msgid "غیرفعال"
+msgstr "غیرفعال"
+
+#: classroom/admin.py:372 classroom/admin.py:437 classroom/admin.py:538
+#: classroom/admin.py:557 classroom/admin.py:637 classroom/admin.py:830
+#: classroom/admin.py:908 classroom/admin.py:1015 classroom/admin.py:1053
+#: classroom/admin.py:1214 classroom/models.py:275 classroom/models.py:541
+#: classroom/models.py:707 classroom/models.py:738 classroom/models.py:1111
+msgid "وضعیت"
+msgstr "وضعیت"
+
+#: classroom/admin.py:376 classroom/admin.py:441
+msgid "علت رد کردن الزامی است."
+msgstr "علت رد کردن الزامی است."
+
+#: classroom/admin.py:388
+msgid "اطلاعات اصلی"
+msgstr "اطلاعات اصلی"
+
+#: classroom/admin.py:391 classroom/admin.py:535
+msgid "قیمت‌گذاری"
+msgstr "قیمت‌گذاری"
+
+#: classroom/admin.py:394
+msgid "تنظیمات"
+msgstr "تنظیمات"
+
+#: classroom/admin.py:401
+msgid "تاریخچه"
+msgstr "تاریخچه"
+
+#: classroom/admin.py:416 classroom/admin.py:575 classroom/admin.py:1192
+#: classroom/models.py:20 classroom/models.py:99 classroom/models.py:272
+#: classroom/models.py:345 classroom/models.py:421 classroom/models.py:535
+#: classroom/models.py:928 exercise/admin.py:209 exercise/admin.py:623
+#: exercise/admin.py:691
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:138
+msgid "معلم"
+msgstr "معلم"
+
+#: classroom/admin.py:459
+msgid "اطلاعات ثبت‌نام"
+msgstr "اطلاعات ثبت‌نام"
+
+#: classroom/admin.py:462
+msgid "پرداخت"
+msgstr "پرداخت"
+
+#: classroom/admin.py:480 classroom/admin.py:1026 classroom/models.py:170
+#: classroom/models.py:297 classroom/models.py:708
+msgid "تاریخ پرداخت"
+msgstr "تاریخ پرداخت"
+
+#: classroom/admin.py:494 classroom/models.py:167 classroom/models.py:294
+#: classroom/models.py:1221
+msgid "وضعیت پرداخت"
+msgstr "وضعیت پرداخت"
+
+#: classroom/admin.py:511
+msgid "تایید پرداخت و ایجاد رزروها"
+msgstr "تایید پرداخت و ایجاد رزروها"
+
+#: classroom/admin.py:532
+msgid "طرف‌های کلاس"
+msgstr "طرف‌های کلاس"
+
+#: classroom/admin.py:578
+msgid "موجودی"
+msgstr "موجودی"
+
+#: classroom/admin.py:581 classroom/admin.py:655 classroom/models.py:658
+#: classroom/models.py:671
+msgid "درآمد"
+msgstr "درآمد"
+
+#: classroom/admin.py:584
+msgid "اطلاعات بانکی"
+msgstr "اطلاعات بانکی"
+
+#: classroom/admin.py:587
+msgid "تنظیمات تسویه"
+msgstr "تنظیمات تسویه"
+
+#: classroom/admin.py:590 classroom/admin.py:631 classroom/admin.py:664
+#: classroom/admin.py:693 classroom/models.py:659
+msgid "تایید"
+msgstr "تایید"
+
+#: classroom/admin.py:612 classroom/models.py:348
+msgid "موجودی قابل برداشت"
+msgstr "موجودی قابل برداشت"
+
+#: classroom/admin.py:624 classroom/models.py:347
+msgid "موجودی در انتظار"
+msgstr "موجودی در انتظار"
+
+#: classroom/admin.py:629 classroom/admin.py:691 classroom/models.py:96
+#: classroom/models.py:135 classroom/models.py:359 classroom/models.py:436
+msgid "تایید شده"
+msgstr "تایید شده"
+
+#: classroom/admin.py:629 classroom/admin.py:691
+msgid "تایید نشده"
+msgstr "تایید نشده"
+
+#: classroom/admin.py:658 classroom/admin.py:938
+msgid "مبالغ"
+msgstr "مبالغ"
+
+#: classroom/admin.py:661
+msgid "کارمزد و سهم"
+msgstr "کارمزد و سهم"
+
+#: classroom/admin.py:667
+msgid "تسویه"
+msgstr "تسویه"
+
+#: classroom/admin.py:670
+msgid "یادداشت"
+msgstr "یادداشت"
+
+#: classroom/admin.py:682 classroom/models.py:431
+msgid "مبلغ کل"
+msgstr "مبلغ کل"
+
+#: classroom/admin.py:687 classroom/models.py:435
+msgid "سهم معلم"
+msgstr "سهم معلم"
+
+#: classroom/admin.py:723
+msgid "لطفاً قبل از تایید، فیش واریزی را آپلود کنید"
+msgstr "لطفاً قبل از تایید، فیش واریزی را آپلود کنید"
+
+#: classroom/admin.py:762
+msgid "تایید و پرداخت درخواست‌های انتخاب‌شده"
+msgstr "تایید و پرداخت درخواست‌های انتخاب‌شده"
+
+#: classroom/admin.py:782
+#, python-format
+msgid "%(count)d درخواست با موفقیت تایید و پرداخت شد و SMS ارسال شد"
+msgstr ""
+
+#: classroom/admin.py:789 classroom/admin.py:816
+msgid "خطاها: "
+msgstr ""
+
+#: classroom/admin.py:793
+msgid "رد کردن درخواست‌های انتخاب‌شده"
+msgstr "رد کردن درخواست‌های انتخاب‌شده"
+
+#: classroom/admin.py:809
+#, python-format
+msgid "%(count)d درخواست رد شد و SMS ارسال شد"
+msgstr ""
+
+#: classroom/admin.py:821
+msgid "درخواست کننده"
+msgstr "درخواست کننده"
+
+#: classroom/admin.py:824
+msgid "درآمدهای انتخاب‌شده"
+msgstr "درآمدهای انتخاب‌شده"
+
+#: classroom/admin.py:827 classroom/admin.py:912 classroom/models.py:538
+msgid "روش پرداخت"
+msgstr "روش پرداخت"
+
+#: classroom/admin.py:833 classroom/admin.py:1006
+msgid "تراکنش"
+msgstr "تراکنش"
+
+#: classroom/admin.py:837 classroom/models.py:551
+msgid "فیش واریزی"
+msgstr ""
+
+#: classroom/admin.py:840 classroom/models.py:29 classroom/models.py:440
+#: classroom/models.py:542 classroom/models.py:1121 classroom/models.py:1251
+msgid "یادداشت‌ها"
+msgstr "یادداشت‌ها"
+
+#: classroom/admin.py:858
+msgid "پیش‌نمایش فیش"
+msgstr ""
+
+#: classroom/admin.py:887 classroom/models.py:539
+msgid "اطلاعات حساب"
+msgstr "اطلاعات حساب"
+
+#: classroom/admin.py:895 classroom/admin.py:979 classroom/admin.py:1041
+#: classroom/models.py:536 classroom/models.py:668 classroom/models.py:704
+msgid "مبلغ"
+msgstr "مبلغ"
+
+#: classroom/admin.py:919
+msgid "تاریخ درخواست"
+msgstr "تاریخ درخواست"
+
+#: classroom/admin.py:923
+msgid "تاریخ درخواست (شمسی)"
+msgstr "تاریخ درخواست (شمسی)"
+
+#: classroom/admin.py:935 classroom/models.py:525 classroom/models.py:666
+msgid "کیف پول"
+msgstr "کیف پول"
+
+#: classroom/admin.py:941
+msgid "ارجاع"
+msgstr "ارجاع"
+
+#: classroom/admin.py:972 classroom/admin.py:1036 classroom/models.py:667
+#: classroom/models.py:703
+msgid "نوع تراکنش"
+msgstr "نوع تراکنش"
+
+#: classroom/admin.py:985 classroom/models.py:21
+msgid "تاریخ"
+msgstr "تاریخ"
+
+#: classroom/admin.py:1003 classroom/admin.py:1117 classroom/models.py:157
+#: classroom/models.py:273 classroom/models.py:702 classroom/models.py:731
+#: classroom/models.py:1092 exercise/admin.py:389 exercise/admin.py:418
+#: exercise/admin.py:619 exercise/admin.py:687
+msgid "دانش‌آموز"
+msgstr "دانش‌آموز"
+
+#: classroom/admin.py:1009 exercise/admin.py:392
+msgid "کلاس"
+msgstr "کلاس"
+
+#: classroom/admin.py:1062
+msgid "کمیسیون"
+msgstr "کمیسیون"
+
+#: classroom/admin.py:1097
+msgid "اطلاعات"
+msgstr "اطلاعات"
+
+#: classroom/admin.py:1100
+msgid "سیستم"
+msgstr "سیستم"
+
+#: classroom/admin.py:1121 classroom/models.py:122 classroom/models.py:274
+msgid "موضوع"
+msgstr "موضوع"
+
+#: classroom/admin.py:1139
+msgid "فایل"
+msgstr "فایل"
+
+#: classroom/admin.py:1153
+msgid "اطلاعات پیام"
+msgstr "اطلاعات پیام"
+
+#: classroom/admin.py:1156
+msgid "زمان‌ها"
+msgstr "زمان‌ها"
+
+#: classroom/admin.py:1177
+msgid "مدیریت پیام‌های پشتیبانی"
+msgstr "مدیریت پیام‌های پشتیبانی"
+
+#: classroom/admin.py:1188
+msgid "مدیریت"
+msgstr "مدیریت"
+
+#: classroom/admin.py:1198
+msgid "فرستنده"
+msgstr "فرستنده"
+
+#: classroom/admin.py:1204
+msgid "خوانده‌شده"
+msgstr "خوانده‌شده"
+
+#: classroom/admin.py:1207
+msgid "ارسال‌شده"
+msgstr "ارسال‌شده"
+
+#: classroom/admin.py:1225
+msgid "بدون متن ({} فایل)"
 msgstr "بدون متن ({} فایل)"
+
+#: classroom/admin.py:1226
+msgid "پیام"
+msgstr "پیام"
+
+#: classroom/apps.py:8
+msgid "مدیریت کلاس‌ها"
+msgstr "مدیریت کلاس‌ها"
+
+#: classroom/models.py:21
+msgid "تاریخ مشخص برای این دسترسی"
+msgstr "تاریخ مشخص برای این دسترسی"
+
+#: classroom/models.py:22
+msgid "ساعت شروع"
+msgstr "ساعت شروع"
+
+#: classroom/models.py:22
+msgid "زمانی که معلم تدریس را شروع می‌کند (مثال: 09:00)"
+msgstr "زمانی که معلم تدریس را شروع می‌کند (مثال: 09:00)"
+
+#: classroom/models.py:23
+msgid "ساعت پایان"
+msgstr "ساعت پایان"
+
+#: classroom/models.py:23
+msgid "زمانی که معلم تدریس را پایان می‌دهد (مثال: 17:00)"
+msgstr "زمانی که معلم تدریس را پایان می‌دهد (مثال: 17:00)"
+
+#: classroom/models.py:24
+msgid "آیا این بازه زمانی برای رزرو در دسترس است؟"
+msgstr "آیا این بازه زمانی برای رزرو در دسترس است؟"
+
+#: classroom/models.py:25 classroom/models.py:275
+msgid "رزرو شده"
+msgstr "رزرو شده"
+
+#: classroom/models.py:25
+msgid "آیا این بازه زمانی قبلاً رزرو شده است؟"
+msgstr "آیا این بازه زمانی قبلاً رزرو شده است؟"
+
+#: classroom/models.py:26
+msgid "منقضی شده"
+msgstr "منقضی شده"
+
+#: classroom/models.py:26
+msgid "آیا این بازه زمانی منقضی شده است؟"
+msgstr "آیا این بازه زمانی منقضی شده است؟"
+
+#: classroom/models.py:27 classroom/models.py:125 classroom/models.py:278
+msgid "قیمت"
+msgstr "قیمت"
+
+#: classroom/models.py:27
+msgid "قیمت تدریس برای این بازه زمانی"
+msgstr "قیمت تدریس برای این بازه زمانی"
+
+#: classroom/models.py:28 classroom/models.py:126
+msgid "قیمت با تخفیف"
+msgstr "قیمت با تخفیف"
+
+#: classroom/models.py:28
+msgid "قیمت تدریس با تخفیف برای این بازه زمانی"
+msgstr "قیمت تدریس با تخفیف برای این بازه زمانی"
+
+#: classroom/models.py:29
+msgid "یادداشت‌های اضافی درباره این دسترسی"
+msgstr "یادداشت‌های اضافی درباره این دسترسی"
+
+#: classroom/models.py:33
+msgid "زمان‌بندی کلاس معلم"
+msgstr "زمان‌بندی کلاس معلم"
+
+#: classroom/models.py:34
+msgid "زمان‌بندی کلاس‌های معلم"
+msgstr "زمان‌بندی کلاس‌های معلم"
+
+#: classroom/models.py:95 classroom/models.py:134
+msgid "در انتظار تایید"
+msgstr "در انتظار تایید"
+
+#: classroom/models.py:97 classroom/models.py:136
+msgid "رد شده"
+msgstr "رد شده"
+
+#: classroom/models.py:100
+msgid "عنوان"
+msgstr "عنوان"
+
+#: classroom/models.py:100
+msgid "مثال: انگلیسی مبتدی - الفبا"
+msgstr "مثال: انگلیسی مبتدی - الفبا"
+
+#: classroom/models.py:101 classroom/models.py:673 classroom/models.py:706
+#: classroom/models.py:1036
+msgid "توضیح"
+msgstr "توضیح"
+
+#: classroom/models.py:101
+msgid "توضیح در مورد آنچه در این درس تدریس خواهد شد"
+msgstr "توضیح در مورد آنچه در این درس تدریس خواهد شد"
+
+#: classroom/models.py:102 classroom/models.py:129
+msgid "عکس کاور"
+msgstr "عکس کاور"
+
+#: classroom/models.py:103
+msgid "ویدیوی نمونه"
+msgstr "ویدیوی نمونه"
+
+#: classroom/models.py:103
+msgid "ویدیوی نمونه کوتاه تدریس (MP4, WebM, etc)"
+msgstr "ویدیوی نمونه کوتاه تدریس (MP4, WebM, etc)"
+
+#: classroom/models.py:104
+msgid "حداقل سن"
+msgstr "حداقل سن"
+
+#: classroom/models.py:105
+msgid "حداکثر سن"
+msgstr "حداکثر سن"
+
+#: classroom/models.py:106
+msgid "مبتدی"
+msgstr "مبتدی"
+
+#: classroom/models.py:106
+msgid "متوسط"
+msgstr "متوسط"
+
+#: classroom/models.py:106
+msgid "پیشرفته"
+msgstr "پیشرفته"
+
+#: classroom/models.py:106
+msgid "سطح"
+msgstr "سطح"
+
+#: classroom/models.py:109
+msgid "دلیل رد"
+msgstr "دلیل رد"
+
+#: classroom/models.py:109
+msgid "در صورت رد، دلیل را وارد کنید"
+msgstr "در صورت رد، دلیل را وارد کنید"
+
+#: classroom/models.py:112
+msgid "موضوع تدریس"
+msgstr "موضوع تدریس"
+
+#: classroom/models.py:113
+msgid "موضوعات تدریس"
+msgstr "موضوعات تدریس"
+
+#: classroom/models.py:123
+msgid "عنوان دوره"
+msgstr "عنوان دوره"
+
+#: classroom/models.py:124
+msgid "توضیحات"
+msgstr "توضیحات"
+
+#: classroom/models.py:127
+msgid "تعداد جلسات"
+msgstr "تعداد جلسات"
+
+#: classroom/models.py:141
+msgid "علت رد"
+msgstr "علت رد"
+
+#: classroom/models.py:144
+msgid "دوره آموزشی"
+msgstr "دوره آموزشی"
+
+#: classroom/models.py:145
+msgid "دوره‌های آموزشی"
+msgstr "دوره‌های آموزشی"
+
+#: classroom/models.py:156
+msgid "دوره"
+msgstr "دوره"
+
+#: classroom/models.py:158 classroom/models.py:284 classroom/models.py:1214
+msgid "مبلغ پرداختی"
+msgstr "مبلغ پرداختی"
+
+#: classroom/models.py:162 classroom/models.py:288
+msgid "پرداخت نشده"
+msgstr "پرداخت نشده"
+
+#: classroom/models.py:163 classroom/models.py:290
+msgid "پرداخت شده"
+msgstr "پرداخت شده"
+
+#: classroom/models.py:164 classroom/models.py:291 classroom/models.py:532
+#: classroom/models.py:699 classroom/models.py:1186
+msgid "ناموفق"
+msgstr "ناموفق"
+
+#: classroom/models.py:169 classroom/models.py:296 classroom/models.py:540
+#: classroom/models.py:1228
+msgid "شناسه تراکنش"
+msgstr "شناسه تراکنش"
+
+#: classroom/models.py:173
+msgid "ثبت‌نام دوره"
+msgstr "ثبت‌نام دوره"
+
+#: classroom/models.py:174
+msgid "ثبت‌نام‌های دوره"
+msgstr "ثبت‌نام‌های دوره"
+
+#: classroom/models.py:271
+msgid "دسترسی"
+msgstr "دسترسی"
+
+#: classroom/models.py:275 classroom/models.py:531 classroom/models.py:698
+msgid "تکمیل شده"
+msgstr "تکمیل شده"
+
+#: classroom/models.py:275 classroom/models.py:533
+msgid "لغو شده"
+msgstr "لغو شده"
+
+#: classroom/models.py:275
+msgid "حاضر نشد"
+msgstr "حاضر نشد"
+
+#: classroom/models.py:280 classroom/models.py:428
+msgid "مبلغ تخفیف"
+msgstr "مبلغ تخفیف"
+
+#: classroom/models.py:281
+msgid "قیمت نهایی"
+msgstr "قیمت نهایی"
+
+#: classroom/models.py:289 classroom/models.py:1184
+msgid "جزئی"
+msgstr "جزئی"
+
+#: classroom/models.py:303
+msgid "دوره مرتبط"
+msgstr "دوره مرتبط"
+
+#: classroom/models.py:306 classroom/models.py:422 classroom/models.py:705
+#: classroom/models.py:730
+msgid "رزرو کلاس"
+msgstr "رزرو کلاس"
+
+#: classroom/models.py:307
+msgid "رزروهای کلاس"
+msgstr "رزروهای کلاس"
+
+#: classroom/models.py:315
+msgid "Discount code is not valid"
+msgstr "کد تخفیف معتبر نیست"
+
+#: classroom/models.py:321
+msgid "Discount amount is zero"
+msgstr "مبلغ تخفیف صفر است"
+
+#: classroom/models.py:332
+msgid "Discount applied successfully"
+msgstr "تخفیف با موفقیت اعمال شد"
+
+#: classroom/models.py:346
+msgid "موجودی کل"
+msgstr "موجودی کل"
+
+#: classroom/models.py:346
+msgid "کل موجودی"
+msgstr "کل موجودی"
+
+#: classroom/models.py:347
+msgid "درآمدهای در انتظار تایید"
+msgstr "درآمدهای در انتظار تایید"
+
+#: classroom/models.py:349
+msgid "نام بانک"
+msgstr "نام بانک"
+
+#: classroom/models.py:350
+msgid "شماره حساب"
+msgstr "شماره حساب"
+
+#: classroom/models.py:351
+msgid "شماب (IBAN)"
+msgstr "شماب (IBAN)"
+
+#: classroom/models.py:351
+msgid "IR + 24 رقم"
+msgstr "IR + 24 رقم"
+
+#: classroom/models.py:352
+msgid "شماره کارت"
+msgstr "شماره کارت"
+
+#: classroom/models.py:353
+msgid "نام صاحب حساب"
+msgstr "نام صاحب حساب"
+
+#: classroom/models.py:354
+msgid "حداقل مبلغ تسویه"
+msgstr "حداقل مبلغ تسویه"
+
+#: classroom/models.py:354
+msgid "حداقل موجودی برای درخواست تسویه"
+msgstr "حداقل موجودی برای درخواست تسویه"
+
+#: classroom/models.py:355
+msgid "تاریخ تسویه بعدی"
+msgstr "تاریخ تسویه بعدی"
+
+#: classroom/models.py:356
+msgid "درآمد کل"
+msgstr "درآمد کل"
+
+#: classroom/models.py:356
+msgid "مجموع کل درآمدهای دریافتی"
+msgstr "مجموع کل درآمدهای دریافتی"
+
+#: classroom/models.py:357
+msgid "برداشت کل"
+msgstr "برداشت کل"
+
+#: classroom/models.py:357
+msgid "مجموع کل مبالغ تسویه شده"
+msgstr "مجموع کل مبالغ تسویه شده"
+
+#: classroom/models.py:359
+msgid "اطلاعات بانکی تایید شده"
+msgstr "اطلاعات بانکی تایید شده"
+
+#: classroom/models.py:360 classroom/models.py:437
+msgid "تاریخ تایید"
+msgstr "تاریخ تایید"
+
+#: classroom/models.py:363
+msgid "کیف پول معلم"
+msgstr "کیف پول معلم"
+
+#: classroom/models.py:364
+msgid "کیف پول‌های معلم"
+msgstr "کیف پول‌های معلم"
+
+#: classroom/models.py:425
+msgid "قیمت اولیه"
+msgstr "قیمت اولیه"
+
+#: classroom/models.py:425
+msgid "قیمت اولیه کلاس"
+msgstr "قیمت اولیه کلاس"
+
+#: classroom/models.py:428
+msgid "مبلغ تخفیف اعمال شده"
+msgstr "مبلغ تخفیف اعمال شده"
+
+#: classroom/models.py:431
+msgid "قیمت نهایی کلاس"
+msgstr "قیمت نهایی کلاس"
+
+#: classroom/models.py:433
+msgid "درصد کارمزد پلتفرم"
+msgstr "درصد کارمزد پلتفرم"
+
+#: classroom/models.py:434
+msgid "کارمزد پلتفرم"
+msgstr "کارمزد پلتفرم"
+
+#: classroom/models.py:434
+msgid "کارمزد پلتفرم (محاسبه خودکار)"
+msgstr "کارمزد پلتفرم (محاسبه خودکار)"
+
+#: classroom/models.py:435
+msgid "سهم معلم (محاسبه خودکار)"
+msgstr "سهم معلم (محاسبه خودکار)"
+
+#: classroom/models.py:436
+msgid "درآمد توسط ادمین تایید شده است"
+msgstr "درآمد توسط ادمین تایید شده است"
+
+#: classroom/models.py:438
+msgid "تسویه شده"
+msgstr "تسویه شده"
+
+#: classroom/models.py:439
+msgid "تاریخ تسویه"
+msgstr "تاریخ تسویه"
+
+#: classroom/models.py:443
+msgid "درآمد کلاس"
+msgstr "درآمد کلاس"
+
+#: classroom/models.py:444
+msgid "درآمدهای کلاس"
+msgstr "درآمدهای کلاس"
+
+#: classroom/models.py:458
+msgid "Revenue already confirmed"
+msgstr "درآمد قبلاً تایید شده است"
+
+#: classroom/models.py:480
+msgid "Revenue confirmed successfully"
+msgstr "درآمد با موفقیت تایید شد"
+
+#: classroom/models.py:482
+msgid "Insufficient pending balance"
+msgstr "موجودی در انتظار کافی نیست"
+
+#: classroom/models.py:484 classroom/models.py:600
+msgid "Wallet not found"
+msgstr "کیف پول پیدا نشد"
+
+#: classroom/models.py:523
+msgid "انتقال بانکی"
+msgstr "انتقال بانکی"
+
+#: classroom/models.py:524
+msgid "کارت به کارت"
+msgstr "کارت به کارت"
+
+#: classroom/models.py:526
+msgid "سایر"
+msgstr "سایر"
+
+#: classroom/models.py:529 classroom/models.py:697
+msgid "در انتظار"
+msgstr "در انتظار"
+
+#: classroom/models.py:530
+msgid "در حال پردازش"
+msgstr "در حال پردازش"
+
+#: classroom/models.py:537
+msgid "درآمدها"
+msgstr "درآمدها"
+
+#: classroom/models.py:539
+msgid "شماره کارت، شماب و غیره"
+msgstr "شماره کارت، شماب و غیره"
+
+#: classroom/models.py:543
+msgid "یادداشت‌های ادمین"
+msgstr "یادداشت‌های ادمین"
+
+#: classroom/models.py:544 classroom/models.py:1246
+msgid "تاریخ تکمیل"
+msgstr "تاریخ تکمیل"
+
+#: classroom/models.py:555
+msgid "درخواست برداشت"
+msgstr "درخواست برداشت"
+
+#: classroom/models.py:556
+msgid "درخواست‌های برداشت"
+msgstr "درخواست‌های برداشت"
+
+#: classroom/models.py:594
+msgid "Withdrawal completed successfully"
+msgstr "برداشت با موفقیت انجام شد"
+
+#: classroom/models.py:596
+msgid "Error withdrawing from wallet"
+msgstr "خطا در برداشت از کیف پول"
+
+#: classroom/models.py:602
+msgid "Withdrawal status cannot be completed"
+msgstr "وضعیت برداشت قابل تکمیل نیست"
+
+#: classroom/models.py:613
+msgid "Withdrawal cancelled"
+msgstr "برداشت لغو شد"
+
+#: classroom/models.py:614
+msgid "Cannot cancel withdrawal in current status"
+msgstr "امکان لغو برداشت در وضعیت فعلی وجود ندارد"
+
+#: classroom/models.py:660 classroom/models.py:672
+msgid "برداشت"
+msgstr "برداشت"
+
+#: classroom/models.py:661 classroom/models.py:694
+msgid "بازگشت"
+msgstr "بازگشت"
+
+#: classroom/models.py:662
+msgid "تعدیل"
+msgstr "تعدیل"
+
+#: classroom/models.py:663
+msgid "جایزه"
+msgstr "جایزه"
+
+#: classroom/models.py:664
+msgid "جریمه"
+msgstr "جریمه"
+
+#: classroom/models.py:669
+msgid "موجودی قبل"
+msgstr "موجودی قبل"
+
+#: classroom/models.py:670
+msgid "موجودی بعد"
+msgstr "موجودی بعد"
+
+#: classroom/models.py:674
+msgid "یادداشت ادمین"
+msgstr "یادداشت ادمین"
+
+#: classroom/models.py:677
+msgid "تراکنش کیف پول"
+msgstr "تراکنش کیف پول"
+
+#: classroom/models.py:678
+msgid "تراکنش‌های کیف پول"
+msgstr "تراکنش‌های کیف پول"
+
+#: classroom/models.py:693
+msgid "پرداخت کلاس"
+msgstr "پرداخت کلاس"
+
+#: classroom/models.py:700 classroom/models.py:1187
+msgid "بازگشت‌شده"
+msgstr "بازگشت‌شده"
+
+#: classroom/models.py:711
+msgid "تراکنش دانش‌آموز"
+msgstr "تراکنش دانش‌آموز"
+
+#: classroom/models.py:712
+msgid "تراکنش‌های دانش‌آموز"
+msgstr "تراکنش‌های دانش‌آموز"
+
+#: classroom/models.py:735
+msgid "حاضر"
+msgstr "حاضر"
+
+#: classroom/models.py:736
+msgid "غایب"
+msgstr "غایب"
+
+#: classroom/models.py:740 classroom/models.py:774
+msgid "تاریخ ثبت"
+msgstr "تاریخ ثبت"
+
+#: classroom/models.py:743 classroom/models.py:744
+msgid "حضور و غیاب"
+msgstr "حضور و غیاب"
+
+#: classroom/models.py:784
+msgid "درصد کمیسیون کلاس"
+msgstr "درصد کمیسیون کلاس"
+
+#: classroom/models.py:784
+msgid "درصد کمیسیون پلتفرم برای کلاس‌های تدریس شده (0-100)"
+msgstr "درصد کمیسیون پلتفرم برای کلاس‌های تدریس شده (0-100)"
+
+#: classroom/models.py:786
+msgid "به‌روزرسانی‌شده توسط"
+msgstr "به‌روزرسانی‌شده توسط"
+
+#: classroom/models.py:787
+msgid "تاریخ به‌روزرسانی"
+msgstr "تاریخ به‌روزرسانی"
+
+#: classroom/models.py:812 classroom/models.py:813
+msgid "تنظیمات پلتفرم"
+msgstr "تنظیمات پلتفرم"
+
+#: classroom/models.py:834 classroom/models.py:895
+msgid "Support Message"
+msgstr "پیام پشتیبانی"
+
+#: classroom/models.py:838
+msgid "Attachment file"
+msgstr "فایل پیوست"
+
+#: classroom/models.py:839
+msgid "فایل پیوست (عکس، PDF، صدا، و غیره)"
+msgstr "فایل پیوست (عکس، PDF، صدا، و غیره)"
+
+#: classroom/models.py:843
+msgid "Support Message Attachment"
+msgstr "فایل پیوست پیام پشتیبانی"
+
+#: classroom/models.py:844
+msgid "Support Message Attachments"
+msgstr "فایل‌های پیوست پیام‌های پشتیبانی"
+
+#: classroom/models.py:860
+msgid "معلمی که پیام را ارسال کرد"
+msgstr "معلمی که پیام را ارسال کرد"
+
+#: classroom/models.py:868
+msgid "Sender"
+msgstr "فرستنده"
+
+#: classroom/models.py:869
+msgid "فردی که پیام را فرستاد (معلم یا پشتیبان)"
+msgstr "فردی که پیام را فرستاد (معلم یا پشتیبان)"
+
+#: classroom/models.py:874
+msgid "Message text"
+msgstr "متن پیام"
+
+#: classroom/models.py:875
+msgid "متن پیام"
+msgstr "متن پیام"
+
+#: classroom/models.py:880
+msgid "Sent"
+msgstr "ارسال‌شده"
+
+#: classroom/models.py:881 core/models.py:77
+msgid "Read"
+msgstr "خوانده‌شده"
+
+#: classroom/models.py:885
+msgid "وضعیت پیام"
+msgstr "وضعیت پیام"
+
+#: classroom/models.py:890
+msgid "Read at"
+msgstr "خوانده‌شده در"
+
+#: classroom/models.py:891
+msgid "زمان خواندن پیام"
+msgstr "زمان خواندن پیام"
+
+#: classroom/models.py:896
+msgid "Support Messages"
+msgstr "پیام‌های پشتیبانی"
+
+#: classroom/models.py:929
+msgid "معلمی که این پکیج را تعریف کرده"
+msgstr "معلمی که این پکیج را تعریف کرده"
+
+#: classroom/models.py:933
+msgid "نام پکیج"
+msgstr "نام پکیج"
+
+#: classroom/models.py:934
+msgid "نام پکیج آموزشی (مثال: انگلیسی مبتدی - ۳۰ جلسه)"
+msgstr "نام پکیج آموزشی (مثال: انگلیسی مبتدی - ۳۰ جلسه)"
+
+#: classroom/models.py:938
+msgid "توضیح پکیج"
+msgstr "توضیح پکیج"
+
+#: classroom/models.py:939
+msgid "توضیح تفصیلی درباره محتوای پکیج"
+msgstr "توضیح تفصیلی درباره محتوای پکیج"
+
+#: classroom/models.py:945
+msgid "تصویر پکیج"
+msgstr "تصویر پکیج"
+
+#: classroom/models.py:946
+msgid "تصویر کاور برای نمایش در فروشگاه"
+msgstr "تصویر کاور برای نمایش در فروشگاه"
+
+#: classroom/models.py:951
+msgid "موضوعات"
+msgstr "موضوعات"
+
+#: classroom/models.py:952
+msgid "یک یا چند موضوع تدریس که این پکیج شامل آن است"
+msgstr "یک یا چند موضوع تدریس که این پکیج شامل آن است"
+
+#: classroom/models.py:956
+msgid "تعداد کل جلسات"
+msgstr "تعداد کل جلسات"
+
+#: classroom/models.py:957
+msgid "کل تعداد جلسات در این پکیج"
+msgstr "کل تعداد جلسات در این پکیج"
+
+#: classroom/models.py:963
+msgid "قیمت کل پکیج"
+msgstr "قیمت کل پکیج"
+
+#: classroom/models.py:964
+msgid "قیمت کل پکیج (جمع همه اقساط)"
+msgstr "قیمت کل پکیج (جمع همه اقساط)"
+
+#: classroom/models.py:968
+msgid "قسط‌بندی تعریف‌شده"
+msgstr "قسط‌بندی تعریف‌شده"
+
+#: classroom/models.py:969
+msgid "آیا معلم قسط‌بندی برای این پکیج تعریف کرده؟"
+msgstr "آیا معلم قسط‌بندی برای این پکیج تعریف کرده؟"
+
+#: classroom/models.py:974
+msgid "آیا این پکیج برای فروش فعال است؟"
+msgstr "آیا این پکیج برای فروش فعال است؟"
+
+#: classroom/models.py:978 classroom/models.py:1100
+msgid "پکیج آموزشی"
+msgstr "پکیج آموزشی"
+
+#: classroom/models.py:979
+msgid "پکیج‌های آموزشی"
+msgstr "پکیج‌های آموزشی"
+
+#: classroom/models.py:1015 classroom/models.py:1099
+msgid "پکیج"
+msgstr "پکیج"
+
+#: classroom/models.py:1016
+msgid "پکیجی که این قسط متعلق به آن است"
+msgstr "پکیجی که این قسط متعلق به آن است"
+
+#: classroom/models.py:1020
+msgid "شماره قسط"
+msgstr "شماره قسط"
+
+#: classroom/models.py:1021
+msgid "ترتیب قسط (1، 2، 3، ...)"
+msgstr "ترتیب قسط (1، 2، 3، ...)"
+
+#: classroom/models.py:1027
+msgid "مبلغ قسط"
+msgstr "مبلغ قسط"
+
+#: classroom/models.py:1028
+msgid "مبلغ این قسط به تومان"
+msgstr "مبلغ این قسط به تومان"
+
+#: classroom/models.py:1031
+msgid "شماره جلسه"
+msgstr "شماره جلسه"
+
+#: classroom/models.py:1032
+msgid "قسط باید قبل از شروع این جلسه پرداخت شود"
+msgstr "قسط باید قبل از شروع این جلسه پرداخت شود"
+
+#: classroom/models.py:1037
+msgid "توضیح اضافی درباره این قسط"
+msgstr "توضیح اضافی درباره این قسط"
+
+#: classroom/models.py:1041
+msgid "قسط پکیج"
+msgstr "قسط پکیج"
+
+#: classroom/models.py:1042
+msgid "اقساط پکیج"
+msgstr "اقساط پکیج"
+
+#: classroom/models.py:1063
+#, python-format
+msgid "شماره جلسه نمی‌تواند بیشتر از تعداد کل جلسات (%(total)d) باشد"
+msgstr "شماره جلسه نمی‌تواند بیشتر از تعداد کل جلسات (%(total)d) باشد"
+
+#: classroom/models.py:1070
+msgid "شماره جلسه باید حداقل ۱ باشد"
+msgstr "شماره جلسه باید حداقل ۱ باشد"
+
+#: classroom/models.py:1082
+msgid "تکمیل‌شده"
+msgstr "تکمیل‌شده"
+
+#: classroom/models.py:1083
+msgid "لغو‌شده"
+msgstr "لغو‌شده"
+
+#: classroom/models.py:1084
+msgid "تعلیق‌شده"
+msgstr "تعلیق‌شده"
+
+#: classroom/models.py:1093
+msgid "دانش‌آموزی که برای پکیج ثبت‌نام کرد"
+msgstr "دانش‌آموزی که برای پکیج ثبت‌نام کرد"
+
+#: classroom/models.py:1104
+msgid "تاریخ ثبت‌نام"
+msgstr "تاریخ ثبت‌نام"
+
+#: classroom/models.py:1105
+msgid "تاریخ و زمان ثبت‌نام دانش‌آموز"
+msgstr "تاریخ و زمان ثبت‌نام دانش‌آموز"
+
+#: classroom/models.py:1112
+msgid "وضعیت فعلی ثبت‌نام"
+msgstr "وضعیت فعلی ثبت‌نام"
+
+#: classroom/models.py:1116
+msgid "تعداد جلسات تکمیل‌شده"
+msgstr "تعداد جلسات تکمیل‌شده"
+
+#: classroom/models.py:1117
+msgid "تعداد جلسات‌ای که دانش‌آموز حضور داشته است"
+msgstr "تعداد جلسات‌ای که دانش‌آموز حضور داشته است"
+
+#: classroom/models.py:1122
+msgid "یادداشت‌های اضافی درباره ثبت‌نام"
+msgstr "یادداشت‌های اضافی درباره ثبت‌نام"
+
+#: classroom/models.py:1126 classroom/models.py:1195
+msgid "ثبت‌نام دانش‌آموز به پکیج"
+msgstr "ثبت‌نام دانش‌آموز به پکیج"
+
+#: classroom/models.py:1127
+msgid "ثبت‌نام‌های دانش‌آموزان به پکیج‌ها"
+msgstr "ثبت‌نام‌های دانش‌آموزان به پکیج‌ها"
+
+#: classroom/models.py:1183
+msgid "در انتظار پرداخت"
+msgstr "در انتظار پرداخت"
+
+#: classroom/models.py:1185
+msgid "پرداخت‌شده"
+msgstr "پرداخت‌شده"
+
+#: classroom/models.py:1194
+msgid "ثبت‌نام"
+msgstr "ثبت‌نام"
+
+#: classroom/models.py:1201
+msgid "قسط"
+msgstr "قسط"
+
+#: classroom/models.py:1202
+msgid "قسطی که پرداخت برای آن است"
+msgstr "قسطی که پرداخت برای آن است"
+
+#: classroom/models.py:1207
+msgid "مبلغ مقرر"
+msgstr "مبلغ مقرر"
+
+#: classroom/models.py:1208
+msgid "مبلغ مقرر برای این قسط"
+msgstr "مبلغ مقرر برای این قسط"
+
+#: classroom/models.py:1215
+msgid "مبلغ پرداخت‌شده (ممکن است جزئی باشد)"
+msgstr "مبلغ پرداخت‌شده (ممکن است جزئی باشد)"
+
+#: classroom/models.py:1222
+msgid "وضعیت فعلی پرداخت"
+msgstr "وضعیت فعلی پرداخت"
+
+#: classroom/models.py:1229
+msgid "شناسه تراکنش درگاه پرداخت"
+msgstr "شناسه تراکنش درگاه پرداخت"
+
+#: classroom/models.py:1234
+msgid "تاریخ اولین پرداخت"
+msgstr "تاریخ اولین پرداخت"
+
+#: classroom/models.py:1235
+msgid "تاریخ اولین پرداخت برای این قسط"
+msgstr "تاریخ اولین پرداخت برای این قسط"
+
+#: classroom/models.py:1240
+msgid "تاریخ آخرین پرداخت"
+msgstr "تاریخ آخرین پرداخت"
+
+#: classroom/models.py:1241
+msgid "تاریخ آخرین پرداخت برای این قسط"
+msgstr "تاریخ آخرین پرداخت برای این قسط"
+
+#: classroom/models.py:1247
+msgid "تاریخ تکمیل پرداخت (زمانی که مبلغ کامل پرداخت شود)"
+msgstr "تاریخ تکمیل پرداخت (زمانی که مبلغ کامل پرداخت شود)"
+
+#: classroom/models.py:1252
+msgid "یادداشت‌های اضافی درباره پرداخت"
+msgstr "یادداشت‌های اضافی درباره پرداخت"
+
+#: classroom/models.py:1256
+msgid "پرداخت قسط پکیج"
+msgstr "پرداخت قسط پکیج"
+
+#: classroom/models.py:1257
+msgid "پرداخت‌های قسط‌های پکیج"
+msgstr "پرداخت‌های قسط‌های پکیج"
+
+#: core/admin.py:38 core/admin.py:78 core/admin.py:105 core/models.py:11
+#: core/models.py:24 core/models.py:36 core/models.py:59 core/models.py:88
+#: core/models.py:124 exercise/models.py:29 exercise/models.py:111
+msgid "Title"
+msgstr "عنوان"
+
+#: core/admin.py:39 core/admin.py:189 core/admin.py:254
+msgid "Media"
+msgstr "رسانه"
+
+#: core/admin.py:40 core/admin.py:79 core/admin.py:106 core/models.py:13
+#: core/models.py:25 core/models.py:37 core/models.py:91
+msgid "Content"
+msgstr "محتوا"
+
+#: core/admin.py:54 core/admin.py:195 core/admin.py:272
+msgid "No image"
+msgstr "بدون تصویر"
+
+#: core/admin.py:55 core/admin.py:196
+msgid "Image preview"
+msgstr "پیش‌نمایش تصویر"
+
+#: core/admin.py:132
+msgid "Contact Details"
+msgstr "جزئیات تماس"
+
+#: core/admin.py:158
+msgid "Contact Information"
+msgstr "اطلاعات تماس"
+
+#: core/admin.py:159
+msgid "Message Details"
+msgstr "جزئیات پیام"
+
+#: core/admin.py:176 core/admin.py:177
+msgid "View details"
+msgstr "مشاهده جزئیات"
+
+#: core/admin.py:188 core/admin.py:251
+msgid "Main Information"
+msgstr "اطلاعات اصلی"
+
+#: core/admin.py:217 core/models.py:105 exercise/models.py:92
+#: exercise/models.py:106 exercise/models.py:191 exercise/models.py:306
+msgid "Question"
+msgstr "سؤال"
+
+#: core/admin.py:218 core/models.py:106 exercise/models.py:299
+#: exercise/models.py:322 exercise/models.py:331
+msgid "Answer"
+msgstr "پاسخ"
+
+#: core/admin.py:257
+msgid "Display Settings"
+msgstr "تنظیمات نمایش"
+
+#: core/admin.py:260
+msgid "History"
+msgstr "تاریخچه"
+
+#: core/admin.py:286 core/models.py:128
+msgid "Placement"
+msgstr "محل قرارگیری"
+
+#: core/admin.py:292 core/models.py:130
+msgid "Active"
+msgstr "فعال"
+
+#: core/admin.py:297
+msgid "Inactive"
+msgstr "غیرفعال"
+
+#: core/apps.py:8
+msgid "Site pages"
+msgstr "صفحات سایت"
+
+#: core/forms.py:15
+msgid "Enter your name"
+msgstr "نام خود را وارد کنید"
+
+#: core/forms.py:19
+msgid "09xxxxxxxxx"
+msgstr "09xxxxxxxxx"
+
+#: core/forms.py:23
+msgid "Subject of your message"
+msgstr "موضوع پیام خود"
+
+#: core/forms.py:27
+msgid "Write your message here"
+msgstr "پیام خود را اینجا بنویسید"
+
+#: core/forms.py:33 core/models.py:73
+msgid "Name"
+msgstr "نام"
+
+#: core/forms.py:35 core/models.py:75
+msgid "Subject"
+msgstr "موضوع"
+
+#: core/forms.py:36 core/models.py:76
+msgid "Message"
+msgstr "پیام"
+
+#: core/models.py:12 core/models.py:89 core/models.py:126 exercise/models.py:54
+#: exercise/models.py:130
+msgid "Image"
+msgstr "تصویر"
+
+#: core/models.py:19 core/models.py:20
+msgid "About us"
+msgstr "درباره ما"
+
+#: core/models.py:31 core/models.py:32
+msgid "Terms & Conditions"
+msgstr "شرایط و ضوابط"
+
+#: core/models.py:43 core/models.py:44
+msgid "Privacy Policy"
+msgstr "سیاست حریم خصوصی"
+
+#: core/models.py:50
+msgid "Phone"
+msgstr "تلفن"
+
+#: core/models.py:51
+msgid "Notification number"
+msgstr "شماره اطلاع‌رسانی"
+
+#: core/models.py:52
+msgid "Address"
+msgstr "آدرس"
+
+#: core/models.py:53
+msgid "Instagram"
+msgstr "اینستاگرام"
+
+#: core/models.py:54
+msgid "Telegram"
+msgstr "تلگرام"
+
+#: core/models.py:55
+msgid "YouTube"
+msgstr "یوتیوب"
+
+#: core/models.py:56
+msgid "Spotify"
+msgstr "اسپاتیفای"
+
+#: core/models.py:60 core/models.py:127
+msgid "Link"
+msgstr "لینک"
+
+#: core/models.py:61
+msgid "Value"
+msgstr "مقدار"
+
+#: core/models.py:62 exercise/models.py:40 exercise/models.py:205
+msgid "Type"
+msgstr "نوع"
+
+#: core/models.py:68
+msgid "Contact Method"
+msgstr "روش تماس"
+
+#: core/models.py:69
+msgid "Contact Methods"
+msgstr "روش‌های تماس"
+
+#: core/models.py:83
+msgid "Contact message"
+msgstr "پیام تماس"
+
+#: core/models.py:84
+msgid "Contact messages"
+msgstr "پیام‌های تماس"
+
+#: core/models.py:90
+msgid "Short description"
+msgstr "توضیح مختصر"
+
+#: core/models.py:100
+msgid "Article"
+msgstr "مقاله"
+
+#: core/models.py:101
+msgid "Articles"
+msgstr "مقالات"
+
+#: core/models.py:107
+msgid "Display status"
+msgstr "وضعیت نمایش"
+
+#: core/models.py:113
+msgid "FAQ"
+msgstr "سوال‌های متداول"
+
+#: core/models.py:114
+msgid "FAQs"
+msgstr "سوال‌های متداول"
+
+#: core/models.py:120
+msgid "Home page"
+msgstr "صفحه اصلی"
+
+#: core/models.py:121
+msgid "App home"
+msgstr "صفحه اول برنامه"
+
+#: core/models.py:125
+msgid "Subtitle"
+msgstr "عنوان فرعی"
+
+#: core/models.py:127
+msgid "Example: https://example.com"
+msgstr "مثال: https://example.com"
+
+#: core/models.py:129
+msgid "Display order"
+msgstr "ترتیب نمایش"
+
+#: core/models.py:142
+msgid "Banner"
+msgstr "بنر"
+
+#: core/views.py:150
+msgid "Your message has been sent successfully."
+msgstr "پیام شما با موفقیت ارسال شد."
+
+#: core/views.py:164
+msgid "Please correct the errors in the form."
+msgstr "لطفاً خطاهای فرم را برطرف کنید."
+
+#: exercise/admin.py:68
+msgid "✓"
+msgstr ""
+
+#: exercise/admin.py:68
+msgid "✗"
+msgstr ""
+
+#: exercise/admin.py:70 exercise/admin.py:263 exercise/admin.py:296
+msgid "درستی"
+msgstr "درستی"
+
+#: exercise/admin.py:91
+msgid "چند گزینه"
+msgstr "چند گزینه"
+
+#: exercise/admin.py:92
+msgid "تک گزینه"
+msgstr "تک گزینه"
+
+#: exercise/admin.py:97 exercise/admin.py:358
+msgid "نوع"
+msgstr "نوع"
+
+#: exercise/admin.py:114 exercise/admin.py:525 exercise/admin.py:558
+msgid "پاسخ"
+msgstr "پاسخ"
+
+#: exercise/admin.py:122 exercise/admin.py:422 exercise/admin.py:566
+#: exercise/admin.py:596 exercise/admin.py:631
+msgid "امتیاز"
+msgstr "امتیاز"
+
+#: exercise/admin.py:138 exercise/admin.py:636
+msgid "ستاره"
+msgstr "ستاره"
+
+#: exercise/admin.py:167 exercise/admin.py:725 exercise/models.py:507
+msgid "نوع مدال"
+msgstr "نوع مدال"
+
+#: exercise/admin.py:180
+msgid "اطلاعات پایه"
+msgstr "اطلاعات پایه"
+
+#: exercise/admin.py:183
+msgid "نیاز"
+msgstr "نیاز"
+
+#: exercise/admin.py:219 exercise/admin.py:352 exercise/models.py:14
+#: exercise/models.py:176
+msgid "چند گزینه ای"
+msgstr "چند گزینه ای"
+
+#: exercise/admin.py:220 exercise/admin.py:353 exercise/models.py:15
+#: exercise/models.py:177
+msgid "تک گزینه ای"
+msgstr "تک گزینه ای"
+
+#: exercise/admin.py:225
+msgid "نوع سؤال"
+msgstr "نوع سؤال"
+
+#: exercise/admin.py:231
+msgid "الزامی"
+msgstr "الزامی"
+
+#: exercise/admin.py:231
+msgid "اختیاری"
+msgstr "اختیاری"
+
+#: exercise/admin.py:233
+msgid "الزامی/اختیاری"
+msgstr "الزامی/اختیاری"
+
+#: exercise/admin.py:237 exercise/admin.py:300 exercise/admin.py:368
+#: exercise/admin.py:499 exercise/admin.py:570 exercise/admin.py:640
+#: exercise/admin.py:729
+msgid "تاریخ ایجاد"
+msgstr "تاریخ ایجاد"
+
+#: exercise/admin.py:245 exercise/admin.py:308 exercise/admin.py:376
+#: exercise/admin.py:507 exercise/admin.py:578 exercise/admin.py:648
+#: exercise/admin.py:737
+msgid "عملیات"
+msgstr ""
+
+#: exercise/admin.py:257 exercise/admin.py:522 exercise/admin.py:552
+msgid "سؤال"
+msgstr "سؤال"
+
+#: exercise/admin.py:260
+msgid "عنوان و توصیف"
+msgstr "عنوان و توصیف"
+
+#: exercise/admin.py:269
+msgid "راهنمایی"
+msgstr "راهنمایی"
+
+#: exercise/admin.py:272 exercise/admin.py:323
+msgid "ترتیب"
+msgstr "ترتیب"
+
+#: exercise/admin.py:294
+msgid "✓ صحیح"
+msgstr "✓ صحیح"
+
+#: exercise/admin.py:294
+msgid "✗ غلط"
+msgstr "✗ غلط"
+
+#: exercise/admin.py:320
+msgid "کلاس و سؤال"
+msgstr "کلاس و سؤال"
+
+#: exercise/admin.py:326 exercise/admin.py:364
+msgid "شرط"
+msgstr "شرط"
+
+#: exercise/admin.py:362
+msgid "شرطی"
+msgstr "شرطی"
+
+#: exercise/admin.py:362
+msgid "عادی"
+msgstr "عادی"
+
+#: exercise/admin.py:395
+msgid "نتایج"
+msgstr "نتایج"
+
+#: exercise/admin.py:398
+msgid "امتیاز و مدال"
+msgstr "امتیاز و مدال"
+
+#: exercise/admin.py:434
+msgid "پیشرفت"
+msgstr "پیشرفت"
+
+#: exercise/admin.py:446
+msgid "درصد"
+msgstr "درصد"
+
+#: exercise/admin.py:457
+msgid "امتیاز معلم"
+msgstr "امتیاز معلم"
+
+#: exercise/admin.py:467
+msgid "مدال‌ها"
+msgstr ""
+
+#: exercise/admin.py:484
+msgid "جزئیات امتیاز"
+msgstr "جزئیات امتیاز"
+
+#: exercise/admin.py:495
+msgid "جزئیات مدال‌ها"
+msgstr "جزئیات مدال‌ها"
+
+#: exercise/admin.py:519 exercise/admin.py:548
+msgid "تلاش"
+msgstr "تلاش"
+
+#: exercise/admin.py:528
+msgid "نتیجه"
+msgstr "نتیجه"
+
+#: exercise/admin.py:590 exercise/admin.py:661
+msgid "معلم و دانش‌آموز"
+msgstr "معلم و دانش‌آموز"
+
+#: exercise/admin.py:593 exercise/admin.py:664
+msgid "کلاس و تمرین"
+msgstr "کلاس و تمرین"
+
+#: exercise/admin.py:599
+msgid "نظر"
+msgstr ""
+
+#: exercise/admin.py:667
+msgid "مدال"
+msgstr "مدال"
+
+#: exercise/apps.py:7
+msgid "مدیریت تمرینات و کوییز ها"
+msgstr "مدیریت تمرینات و کوییز ها"
+
+#: exercise/models.py:24
+msgid "Teacher who created this question"
+msgstr "معلمی که این سوال را ایجاد کرده است"
+
+#: exercise/models.py:34 exercise/models.py:160 exercise/models.py:199
+msgid "Sort"
+msgstr "ترتیب"
+
+#: exercise/models.py:46 exercise/models.py:123
+msgid "Is Required"
+msgstr "ضروری است"
+
+#: exercise/models.py:47
+msgid "Is Required Help"
+msgstr "به عنوان ضروری یا اختیاری علامت‌گذاری کنید"
+
+#: exercise/models.py:61
+msgid "Audio"
+msgstr "صدا"
+
+#: exercise/models.py:68
+msgid "Video"
+msgstr "فیلم"
+
+#: exercise/models.py:75
+msgid "Icon"
+msgstr "نماد"
+
+#: exercise/models.py:82 exercise/models.py:149
+msgid "Guide"
+msgstr "راهنمایی"
+
+#: exercise/models.py:88 exercise/models.py:155 exercise/models.py:519
+msgid "Description"
+msgstr "توضیح"
+
+#: exercise/models.py:93
+msgid "Questions"
+msgstr "سؤالات"
+
+#: exercise/models.py:118
+msgid "Second Title"
+msgstr "عنوان دوم"
+
+#: exercise/models.py:135
+msgid "Is Correct"
+msgstr "صحیح است"
+
+#: exercise/models.py:141
+msgid "Correct Answer"
+msgstr "پاسخ صحیح"
+
+#: exercise/models.py:142
+msgid "For text/input questions - teacher's answer key for grading"
+msgstr "برای سوالات تایپی: پاسخ درست را وارد کنید"
+
+#: exercise/models.py:164 exercise/models.py:313
+msgid "Option"
+msgstr "گزینه"
+
+#: exercise/models.py:165
+msgid "Options"
+msgstr "گزینه‌ها"
+
+#: exercise/models.py:184
+msgid "Classroom Teaching Subject"
+msgstr "موضوع تدریس کلاس"
+
+#: exercise/models.py:195
+msgid "Step"
+msgstr "مرحله"
+
+#: exercise/models.py:210
+msgid "Is Conditional"
+msgstr "شرطی است"
+
+#: exercise/models.py:215
+msgid "Exam"
+msgstr "آزمون"
+
+#: exercise/models.py:216
+msgid "Exams"
+msgstr "آزمون‌ها"
+
+#: exercise/models.py:234 exercise/models.py:379 exercise/models.py:488
+msgid "Teaching Subject"
+msgstr "موضوع تدریس"
+
+#: exercise/models.py:239 exercise/models.py:327 exercise/models.py:407
+msgid "Score"
+msgstr "امتیاز"
+
+#: exercise/models.py:244
+msgid "Correct"
+msgstr "صحیح"
+
+#: exercise/models.py:249
+msgid "Incorrect"
+msgstr "غلط"
+
+#: exercise/models.py:253
+msgid "Attempt"
+msgstr "نتیجه آزمون"
+
+#: exercise/models.py:254
+msgid "Attempts"
+msgstr "نتایج آزمون"
+
+#: exercise/models.py:332
+msgid "Answers"
+msgstr "پاسخ‌ها"
+
+#: exercise/models.py:350
+msgid "Exercise"
+msgstr "تمرین"
+
+#: exercise/models.py:351
+msgid "Class Activity"
+msgstr "فعالیت کلاسی"
+
+#: exercise/models.py:352
+msgid "Participation"
+msgstr "مشارکت"
+
+#: exercise/models.py:353
+msgid "Behavior"
+msgstr "رفتار"
+
+#: exercise/models.py:354
+msgid "Other"
+msgstr "سایر"
+
+#: exercise/models.py:363
+msgid "معلمی که این امتیاز را داده است"
+msgstr "معلمی که این امتیاز را داده است"
+
+#: exercise/models.py:372
+msgid "دانش‌آموزی که امتیاز دریافت کرده است"
+msgstr "دانش‌آموزی که امتیاز دریافت کرده است"
+
+#: exercise/models.py:380
+msgid "درسی که این امتیاز برای آن است"
+msgstr "درسی که این امتیاز برای آن است"
+
+#: exercise/models.py:389 exercise/models.py:498
+msgid "Exercise/Attempt"
+msgstr "تمرین/آزمون"
+
+#: exercise/models.py:390
+msgid "تمرین یا آزمونی که این امتیاز برای آن است (اختیاری)"
+msgstr "تمرین یا آزمونی که این امتیاز برای آن است (اختیاری)"
+
+#: exercise/models.py:397
+msgid "Rating Type"
+msgstr "نوع امتیازدهی"
+
+#: exercise/models.py:398
+msgid "نوع امتیازدهی"
+msgstr "نوع امتیازدهی"
+
+#: exercise/models.py:408
+msgid "امتیاز (0-100)"
+msgstr "امتیاز (0-100)"
+
+#: exercise/models.py:418
+msgid "ستاره (0-5)"
+msgstr "ستاره (0-5)"
+
+#: exercise/models.py:425
+msgid "نظر معلم در مورد عملکرد دانش‌آموز"
+msgstr "نظر معلم در مورد عملکرد دانش‌آموز"
+
+#: exercise/models.py:429
+msgid "Student Rating"
+msgstr "امتیاز دانش‌آموز"
+
+#: exercise/models.py:430
+msgid "Student Ratings"
+msgstr "امتیازهای دانش‌آموز"
+
+#: exercise/models.py:454
+msgid "Gold"
+msgstr "طلا"
+
+#: exercise/models.py:455
+msgid "Silver"
+msgstr "نقره"
+
+#: exercise/models.py:456
+msgid "Bronze"
+msgstr "برنز"
+
+#: exercise/models.py:457
+msgid "Star"
+msgstr "ستاره"
+
+#: exercise/models.py:458
+msgid "Heart"
+msgstr "قلب"
+
+#: exercise/models.py:459
+msgid "Trophy"
+msgstr "جام"
+
+#: exercise/models.py:460
+msgid "Certificate"
+msgstr "گواهینامه"
+
+#: exercise/models.py:461
+msgid "Badge"
+msgstr "نشان"
+
+#: exercise/models.py:462
+msgid "Achievement"
+msgstr "دستاورد"
+
+#: exercise/models.py:472
+msgid "معلمی که این مدال را داده است"
+msgstr "معلمی که این مدال را داده است"
+
+#: exercise/models.py:481
+msgid "دانش‌آموزی که مدال دریافت کرده است"
+msgstr "دانش‌آموزی که مدال دریافت کرده است"
+
+#: exercise/models.py:489
+msgid "درسی که این مدال برای آن است"
+msgstr "درسی که این مدال برای آن است"
+
+#: exercise/models.py:499
+msgid "تمرین یا آزمونی که این مدال برای آن است (اختیاری)"
+msgstr "تمرین یا آزمونی که این مدال برای آن است (اختیاری)"
+
+#: exercise/models.py:506
+msgid "Medal Type"
+msgstr "نوع مدال"
+
+#: exercise/models.py:512
+msgid "Medal Title"
+msgstr "عنوان مدال"
+
+#: exercise/models.py:513
+msgid "عنوان مدال (مثال: حل صحیح تمام سؤالات)"
+msgstr "عنوان مدال (مثال: حل صحیح تمام سؤالات)"
+
+#: exercise/models.py:520
+msgid "توضیح مدال"
+msgstr "توضیح مدال"
+
+#: exercise/models.py:527
+msgid "Icon URL"
+msgstr "آدرس آیکون"
+
+#: exercise/models.py:528
+msgid "URL تصویر مدال"
+msgstr "آدرس تصویر مدال"
+
+#: exercise/models.py:532
+msgid "Student Medal"
+msgstr "مدال دانش‌آموز"
+
+#: exercise/models.py:533
+msgid "Student Medals"
+msgstr "مدال‌های دانش‌آموز"
+
+#: fofofish/middleware/auth_middleware.py:85
+msgid "Invalid JSON format"
+msgstr "فرمت JSON نامعتبر است"
+
+#: fofofish/middleware/auth_middleware.py:92
+msgid "An unexpected error occurred"
+msgstr "خطای غیرمنتظره‌ای رخ داد"
+
+#: fofofish/settings.py:25
+msgid "Nozima"
+msgstr "نوزیما"
+
+#: fofofish/settings.py:192
+msgid "Persian"
+msgstr "فارسی"
+
+#: fofofish/settings.py:193
+msgid "English"
+msgstr "انگلیسی"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:4
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:126
+msgid "افزودن گروهی بازه های زمانی"
+msgstr "افزودن گروهی بازه های زمانی"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:129
+msgid ""
+"از این صفحه می‌توانید بازه های زمانی متعددی را برای معلمی در یک بازه زمانی و "
+"الگوی دوره‌ای ایجاد کنید."
+msgstr ""
+"از این صفحه می‌توانید بازه های زمانی متعددی را برای معلمی در یک بازه زمانی و "
+"الگوی دوره‌ای ایجاد کنید."
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:140
+msgid "انتخاب کنید..."
+msgstr "انتخاب کنید..."
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:151
+msgid "تاریخ شروع"
+msgstr "تاریخ شروع"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:155
+msgid "تاریخ پایان"
+msgstr "تاریخ پایان"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:162
+msgid "تنظیمات زمانی"
+msgstr "تنظیمات زمانی"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:166
+msgid "ساعت شروع روزانه"
+msgstr "ساعت شروع روزانه"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:170
+msgid "ساعت پایان روزانه"
+msgstr "ساعت پایان روزانه"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:177
+msgid "مدت هر جلسه (دقیقه)"
+msgstr "مدت هر جلسه (دقیقه)"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:181
+msgid "مدت تعطیل (دقیقه)"
+msgstr "مدت تعطیل (دقیقه)"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:190
+msgid "قیمت برای هر بازه (تومان)"
+msgstr "قیمت برای هر بازه (تومان)"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:194
+msgid "قیمت با تخفیف برای هر بازه (تومان)"
+msgstr "قیمت با تخفیف برای هر بازه (تومان)"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:202
+msgid "ایجاد بازه‌های زمانی"
+msgstr "ایجاد بازه‌های زمانی"
+
+#: templates/admin/classroom/teacherAvailability/bulk_create.html:203
+msgid "لغو"
+msgstr "لغو"
+
+#: templates/admin/classroom/teacherAvailability/change_list.html:23
+msgid "افزودن گروهی"
+msgstr "افزودن گروهی"
+
+#: templates/admin/support_message_chat.html:453
+msgid "Teachers"
+msgstr "معلمان"
+
+#: templates/admin/support_message_chat.html:454
+msgid "Refresh"
+msgstr "بارگذاری مجدد"
+
+#: templates/admin/support_message_chat.html:458
+#: templates/admin/support_message_chat.html:494
+msgid "Loading"
+msgstr "در حال بارگذاری"
+
+#: templates/admin/support_message_chat.html:469
+msgid "Select a teacher to view conversations"
+msgstr "یک معلم را برای مشاهده گفتگوها انتخاب کنید"
+
+#: templates/admin/support_message_chat.html:531
+msgid "messages"
+msgstr "پیام ها"
+
+#~ msgid "Add New Teacher"
+#~ msgstr "افزودن معلم جديد"
+
+#~ msgid "Password will be auto-generated and sent to the teacher via SMS."
+#~ msgstr "رمز عبور بهطور خودکار توليد و ازطريق امس به معلم ارسال میشود."
+
+#~ msgid "معلم و تاریخ"
+#~ msgstr "معلم و تاریخ"
+
+#~ msgid "ساعات"
+#~ msgstr "ساعات"
+
+#~ msgid "فرمت تاریخ نادرست است"
+#~ msgstr "فرمت تاریخ نادرست است"
+
+#~ msgid "افزودن گروهی بازه‌های زمانی"
+#~ msgstr "افزودن گروهی بازه‌های زمانی"
+
+#~ msgid "خطا در پردازش داده‌های وقت یا قیمت"
+#~ msgstr "خطا در پردازش داده‌های وقت یا قیمت"
+
+#, python-brace-format
+#~ msgid "ایجاد شد: {created} بازه زمانی"
+#~ msgstr "ایجاد شد: {created} بازه زمانی"
+
+#, python-brace-format
+#~ msgid "{updated} بازه زمانی به عنوان دسترسی‌پذیر علامت‌گذاری شد"
+#~ msgstr "{updated} بازه زمانی به عنوان دسترسی‌پذیر علامت‌گذاری شد"
+
+#~ msgid "علامت‌گذاری به عنوان دسترسی‌پذیر"
+#~ msgstr "علامت‌گذاری به عنوان دسترسی‌پذیر"
+
+#, python-brace-format
+#~ msgid "{updated} بازه زمانی به عنوان غیردسترسی‌پذیر علامت‌گذاری شد"
+#~ msgstr "{updated} بازه زمانی به عنوان غیردسترسی‌پذیر علامت‌گذاری شد"
+
+#~ msgid "علامت‌گذاری به عنوان غیردسترسی‌پذیر"
+#~ msgstr "علامت‌گذاری به عنوان غیردسترسی‌پذیر"
+
+#, python-brace-format
+#~ msgid "{count} بازه زمانی حذف شد"
+#~ msgstr "{count} بازه زمانی حذف شد"
+
+#~ msgid "حذف بازه های آزاد"
+#~ msgstr "حذف بازه‌های آزاد"
+
+#~ msgid "پاسخ صحیح"
+#~ msgstr "پاسخ صحیح"
+
+#~ msgid "برای سوالات تایپی: پاسخ درست را وارد کنید"
+#~ msgstr "برای سوالات تایپی: پاسخ درست را وارد کنید"
+
+#~ msgid "صحیح"
+#~ msgstr "صحیح"
+
+#~ msgid "غلط"
+#~ msgstr "غلط"
+
+#~ msgid "صحیح؟"
+#~ msgstr "صحیح؟"
+
+#~ msgid ""
+#~ "Invalid purpose. Must be one of: registration, login, phone_verification, "
+#~ "email_verification, password_reset"
+#~ msgstr "هدف نامعتبر است"
+
+#~ msgid "No OTP found for this phone/email."
+#~ msgstr "کد OTP برای این شماره تلفن/ایمیل یافت نشد."
+
+#~ msgid "Sending OTP to email is currently not supported"
+#~ msgstr "ارسال OTP به ایمیل در حال حاضر پشتیبانی نمی‌شود"
+
+#~ msgid "Service Title"
+#~ msgstr "عنوان سرویس"
+
+#~ msgid "Service title (max 128 characters)"
+#~ msgstr "عنوان سرویس (حداکثر 128 کاراکتر)"
+
+#~ msgid "User Limit"
+#~ msgstr "حد کاربر"
+
+#~ msgid "Maximum concurrent users"
+#~ msgstr "حداکثر کاربران همزمان"
+
+#~ msgid "Video Limit"
+#~ msgstr "حد ویدئو"
+
+#~ msgid "Maximum concurrent videos per room"
+#~ msgstr "حداکثر ویدئوهای همزمان در هر اتاق"
+
+#~ msgid "Time Limit (seconds)"
+#~ msgstr "حد زمان (ثانیه)"
+
+#~ msgid "Person-second time limit"
+#~ msgstr "حد زمان بر حسب فرد-ثانیه"
+
+#~ msgid "Time Usage (seconds)"
+#~ msgstr "زمان مصرف شده (ثانیه)"
+
+#~ msgid "Person-second time used"
+#~ msgstr "زمان مصرف بر حسب فرد-ثانیه"
+
+#~ msgid "Start Time"
+#~ msgstr "زمان شروع"
+
+#~ msgid "Service start time (Unix timestamp)"
+#~ msgstr "زمان شروع سرویس (Unix timestamp)"
+
+#~ msgid "Stop Time"
+#~ msgstr "زمان خاتمه"
+
+#~ msgid "Service stop time (Unix timestamp)"
+#~ msgstr "زمان خاتمه سرویس (Unix timestamp)"
+
+#~ msgid "Service"
+#~ msgstr "سرویس"
+
+#~ msgid "Services"
+#~ msgstr "سرویس‌ها"
+
+#~ msgid "0: Inactive, 1: Active"
+#~ msgstr "0: غیرفعال, 1: فعال"
+
+#~ msgid "Service this room belongs to"
+#~ msgstr "سرویسی که این اتاق به آن تعلق دارد"
+
+#~ msgid "Room Name"
+#~ msgstr "نام اتاق"
+
+#~ msgid "Room name in Latin (max 100 characters)"
+#~ msgstr "نام اتاق به لاتین (حداکثر 100 کاراکتر)"
+
+#~ msgid "Room Title"
+#~ msgstr "عنوان اتاق"
+
+#~ msgid "Room display title (max 100 characters)"
+#~ msgstr "عنوان نمایش اتاق (حداکثر 100 کاراکتر)"
+
+#~ msgid "Room description (max 512 characters)"
+#~ msgstr "قضغقرانی اتاق (حداکثر 512 کاراکتر)"
+
+#~ msgid "Allow Guest Login"
+#~ msgstr "اجازه ورود مهمان"
+
+#~ msgid "Allow guest login"
+#~ msgstr "اجازه ورود به عنوان مهمان"
+
+#~ msgid "Guest Limit"
+#~ msgstr "حد مهمان"
+
+#~ msgid "Maximum guests (0 = unlimited)"
+#~ msgstr "حداکثر مهمانان (0 = بی حد)"
+
+#~ msgid "Operator Login First"
+#~ msgstr "ورود اپراتور اول"
+
+#~ msgid "Require operator to login first"
+#~ msgstr "الزام به ورود اپراتور ابتدا"
+
+#~ msgid "Max Users"
+#~ msgstr "حداکثر کاربران"
+
+#~ msgid "Session Duration (seconds)"
+#~ msgstr "مدت نشست (ثانیه)"
+
+#~ msgid "Maximum session duration in seconds"
+#~ msgstr "حداکثر مدت نشست بر ثانیه"
+
+#~ msgid "Person-second time used in current session"
+#~ msgstr "زمان مصرف شده بر حسب فرد-ثانیه در نشست فعلی"
+
+#~ msgid "Total Time Usage (seconds)"
+#~ msgstr "کل زمان مصرف شده (ثانیه)"
+
+#~ msgid "Room"
+#~ msgstr "اتاق"
+
+#~ msgid "Rooms"
+#~ msgstr "اتاقها"
+
+#~ msgid "Unknown"
+#~ msgstr "نامعلوم"
+
+#~ msgid "Username"
+#~ msgstr "نام کاربری"
+
+#~ msgid "Username in Latin (max 32 characters)"
+#~ msgstr "نام کاربری به لاتین (حداکثر 32 کاراکتر)"
+
+#~ msgid "Nickname"
+#~ msgstr "نام مستعار"
+
+#~ msgid "Display name (max 100 characters)"
+#~ msgstr "نام نمایش (حداکثر 100 کاراکتر)"
+
+#~ msgid "Password Hash"
+#~ msgstr "هش رمز عبور"
+
+#~ msgid "Password hash (max 24 characters original)"
+#~ msgstr "هش رمز عبور (حداکثر 24 کاراکتر اصلی)"
+
+#~ msgid "Email address (max 100 characters)"
+#~ msgstr "آدرس ایمیل (حداکثر 100 کاراکتر)"
+
+#~ msgid "First Name"
+#~ msgstr "نام"
+
+#~ msgid "First name (max 100 characters)"
+#~ msgstr "نام (حداکثر 100 کاراکتر)"
+
+#~ msgid "Last Name"
+#~ msgstr "نام خانوادگی"
+
+#~ msgid "Last name (max 100 characters)"
+#~ msgstr "نام خانوادگی (حداکثر 100 کاراکتر)"
+
+#~ msgid "0: Unknown, 1: Male, 2: Female"
+#~ msgstr "0: نامعلوم, 1: مرد, 2: زن"
+
+#~ msgid "Is Public"
+#~ msgstr "عمومی"
+
+#~ msgid "Is this a public/shared account"
+#~ msgstr "آیا این حساب عمومی/رایگان است"
+
+#~ msgid "Concurrent Limit"
+#~ msgstr "حد رز زمانی"
+
+#~ msgid "Concurrent usage limit (0 = unlimited)"
+#~ msgstr "حد استفاده همزمان (0 = بی حد)"
+
+#~ msgid "Maximum time allowed (seconds)"
+#~ msgstr "حداکثر زمان مجاز (ثانیه)"
+
+#~ msgid "Current time used (seconds)"
+#~ msgstr "زمان مصرف فعلی (ثانیه)"
+
+#~ msgid "Total time used across all sessions (seconds)"
+#~ msgstr "کل زمان مصرف در تمام نشست‌ها (ثانیه)"
+
+#~ msgid "Expiry Date"
+#~ msgstr "تاریخ انقضاء"
+
+#~ msgid "Account expiry date (Unix timestamp)"
+#~ msgstr "تاریخ انقضاء حساب (Unix timestamp)"
+
+#~ msgid "Normal User"
+#~ msgstr "کاربر عادی"
+
+#~ msgid "Presenter"
+#~ msgstr "ارائه دهنده"
+
+#~ msgid "Operator"
+#~ msgstr "اپراتور"
+
+#~ msgid "Access Level"
+#~ msgstr "سطح دسترسی"
+
+#~ msgid "1: Normal User, 2: Presenter, 3: Operator"
+#~ msgstr "1: کاربر عادی, 2: ارائه دهنده, 3: اپراتور"
+
+#~ msgid "Room User Access"
+#~ msgstr "دسترسی کاربر به اتاق"
+
+#~ msgid "Room User Accesses"
+#~ msgstr "دسترسی‌های کاربر به اتاقها"
+
+#~ msgid "Display name for this login"
+#~ msgstr "نام نمایش برای این ورود"
+
+#~ msgid "Number of concurrent users allowed"
+#~ msgstr "تعداد کاربران همزمان مجاز"
+
+#~ msgid "TTL (seconds)"
+#~ msgstr "TTL (ثانیه)"
+
+#~ msgid "Time to live for this login URL"
+#~ msgstr "زمان زنده برای این URL ورود"
+
+#~ msgid "Expires At"
+#~ msgstr "منقضی شده در"
+
+#~ msgid "When this login URL expires"
+#~ msgstr "زمان انقضاء این URL ورود"
+
+#~ msgid "Login URLs"
+#~ msgstr "URLهای ورود"
+
+#~ msgid "Basic Information"
+#~ msgstr "اطلاعات اساسی"
+
+#~ msgid "Limits"
+#~ msgstr "محدودیت‌ها"
+
+#~ msgid "Access Control"
+#~ msgstr "کنترل دسترسی"
+
+#~ msgid "Credentials"
+#~ msgstr "اعتبارات"
+
+#~ msgid "Personal Information"
+#~ msgstr "اطلاعات شخصی"
+
+#~ msgid "Status & Access"
+#~ msgstr "وضعیت و دسترسی"
+
+#~ msgid "Time Management"
+#~ msgstr "مدیریت زمان"
+
+#~ msgid "Access Information"
+#~ msgstr "اطلاعات دسترسی"
+
+#~ msgid "Room & User"
+#~ msgstr "اتاق و کاربر"
+
+#~ msgid "URL"
+#~ msgstr "URL"
+
+#~ msgid "Expiry"
+#~ msgstr "انقضاء"
+
+#~ msgid "Users added successfully"
+#~ msgstr "کاربران با موفقیت افزوده شدند"
+
+#~ msgid "Rooms added successfully"
+#~ msgstr "اتاق‌ها با موفقیت افزوده شدند"
+
+#~ msgid "Rooms removed successfully"
+#~ msgstr "اتاق‌ها با موفقیت حذف شدند"
+
+#~ msgid "invalid_jalali_date"
+#~ msgstr "تاریخ جلالی نامعتبر"
+
+#~ msgid "YouTube or video URL for teacher introduction"
+#~ msgstr "آدرس یوتیوب یا ویدئو برای معرفی معلم"
+
+#~ msgid "Invalid data or invalid avatar"
+#~ msgstr "داده نامعتبر یا آواتار نامعتبر"
+
+#~ msgid "Invalid data or validation error"
+#~ msgstr "داده نامعتبر یا خطای اعتبارسنجی"
+
+#~ msgid "Complete student profile information"
+#~ msgstr "تکمیل اطلاعات پروفایل دانش‌آموز"
+
+#~ msgid "Complete teacher profile with professional information"
+#~ msgstr "تکمیل پروفایل معلم با اطلاعات حرفه‌ای"
+
+#~ msgid "Introduction video must be a valid URL"
+#~ msgstr "ویدئو معرفی باید یک آدرس معتبر باشد"
+
+#~ msgid "Introduction video URL is too long"
+#~ msgstr "آدرس ویدئو معرفی خیلی طولانی است"
+
+#~ msgid ""
+#~ "No verification code found for this phone number. Please request a new one."
+#~ msgstr ""
+#~ "هیچ کد تایید برای این شماره تلفن یافت نشد. لطفاً یک مورد جدید درخواست کنید."
+
+#~ msgid "Specific date for this availability"
+#~ msgstr "تاریخ مشخص برای این دسترسی"
+
+#~ msgid "Time that teacher starts teaching (example: 09:00)"
+#~ msgstr "زمانی که معلم تدریس را شروع می‌کند (مثال: 09:00)"
+
+#~ msgid "End Time"
+#~ msgstr "ساعت پایان"
+
+#~ msgid "Time that teacher ends teaching (example: 17:00)"
+#~ msgstr "زمانی که معلم تدریس را پایان می‌دهد (مثال: 17:00)"
+
+#~ msgid "Available"
+#~ msgstr "در دسترس"
+
+#~ msgid "Is this time slot available for booking?"
+#~ msgstr "آیا این بازه زمانی برای رزرو در دسترس است؟"
+
+#~ msgid "Booked"
+#~ msgstr "رزرو شده"
+
+#~ msgid "Is this time slot already booked?"
+#~ msgstr "آیا این بازه زمانی قبلاً رزرو شده است؟"
+
+#~ msgid "Price"
+#~ msgstr "قیمت"
+
+#~ msgid "Price of teaching for this time slot"
+#~ msgstr "قیمت تدریس برای این بازه زمانی"
+
+#~ msgid "Discount Price"
+#~ msgstr "قیمت با تخفیف"
+
+#~ msgid "Price of teaching with discount for this time slot"
+#~ msgstr "قیمت تدریس با تخفیف برای این بازه زمانی"
+
+#~ msgid "Notes"
+#~ msgstr "یادداشت‌ها"
+
+#~ msgid "Additional notes about this availability"
+#~ msgstr "یادداشت‌های اضافی درباره این دسترسی"
+
+#~ msgid "Teacher Class Scheduling"
+#~ msgstr "زمان‌بندی کلاس معلم"
+
+#~ msgid "Teacher Class Scheduling (Plural)"
+#~ msgstr "زمان‌بندی کلاس‌های معلم"
+
+#~ msgid "Subject Title (example: English Beginner - Alphabet)"
+#~ msgstr "عنوان موضوع (مثال: انگلیسی مبتدی - الفبا)"
+
+#~ msgid "Description of what will be taught in this class"
+#~ msgstr "توضیح در مورد آنچه در این درس تدریس خواهد شد"
+
+#~ msgid "Cover Image"
+#~ msgstr "عکس کاور"
+
+#~ msgid "Demo Video"
+#~ msgstr "ویدیوی نمونه"
+
+#~ msgid "Short demo video of teaching"
+#~ msgstr "ویدیوی نمونه کوتاه تدریس"
+
+#~ msgid "Minimum Age"
+#~ msgstr "حداقل سن"
+
+#~ msgid "Maximum Age"
+#~ msgstr "حداکثر سن"
+
+#~ msgid "Level"
+#~ msgstr "سطح"
+
+#~ msgid "Beginner"
+#~ msgstr "مبتدی"
+
+#~ msgid "Intermediate"
+#~ msgstr "متوسط"
+
+#~ msgid "Advanced"
+#~ msgstr "پیشرفته"
+
+#~ msgid "Availability"
+#~ msgstr "دسترسی"
+
+#~ msgid "Reserved"
+#~ msgstr "رزرو شده"
+
+#~ msgid "Completed"
+#~ msgstr "تکمیل شده"
+
+#~ msgid "Cancelled"
+#~ msgstr "لغو شده"
+
+#~ msgid "No Show"
+#~ msgstr "حاضر نشد"
+
+#~ msgid "Final Price"
+#~ msgstr "قیمت نهایی"
+
+#~ msgid "Class Booking"
+#~ msgstr "رزرو کلاس"
+
+#~ msgid "Class Bookings"
+#~ msgstr "رزروهای کلاس"
+
+#~ msgid "Full Name"
+#~ msgstr "نام کامل"
+
+#~ msgid "Bank Name"
+#~ msgstr "نام بانک"
+
+#~ msgid "Account Number"
+#~ msgstr "شماره حساب"
+
+#~ msgid "IBAN"
+#~ msgstr "شماب (IBAN)"
+
+#~ msgid "IR + 24 digits"
+#~ msgstr "IR + 24 رقم"
+
+#~ msgid "Card Number"
+#~ msgstr "شماره کارت"
+
+#~ msgid "Account Holder Name"
+#~ msgstr "نام صاحب حساب"
+
+#~ msgid "Minimum Settlement Amount"
+#~ msgstr "حداقل مبلغ تسویه"
+
+#~ msgid "Minimum amount for settlement request"
+#~ msgstr "حداقل موجودی برای درخواست تسویه"
+
+#~ msgid "Next Settlement Date"
+#~ msgstr "تاریخ تسویه بعدی"
+
+#~ msgid "Total Earned"
+#~ msgstr "درآمد کل"
+
+#~ msgid "Total amount of all earnings"
+#~ msgstr "مجموع کل درآمدهای دریافتی"
+
+#~ msgid "Total Withdrawn"
+#~ msgstr "برداشت کل"
+
+#~ msgid "Total amount of all settled amounts"
+#~ msgstr "مجموع کل مبالغ تسویه شده"
+
+#~ msgid "Verified At"
+#~ msgstr "تاریخ تایید"
+
+#~ msgid "Booked Classes"
+#~ msgstr "کلاس‌های رزرو شده"
+
+#~ msgid "Wallet Balance"
+#~ msgstr "موجودی کیف پول"
+
+#~ msgid "Available Balance"
+#~ msgstr "موجودی قابل برداشت"
+
+#~ msgid "Original Price"
+#~ msgstr "قیمت اولیه"
+
+#~ msgid "Original price of the class"
+#~ msgstr "قیمت اولیه کلاس"
+
+#~ msgid "Total Amount"
+#~ msgstr "مبلغ کل"
+
+#~ msgid "Final price of the class"
+#~ msgstr "قیمت نهایی کلاس"
+
+#~ msgid "Platform Fee Percentage"
+#~ msgstr "درصد کارمزد پلتفرم"
+
+#~ msgid "Platform fee percentage"
+#~ msgstr "درصد کارمزد پلتفرم"
+
+#~ msgid "Platform Fee"
+#~ msgstr "کارمزد پلتفرم"
+
+#~ msgid "Platform fee (auto-calculated)"
+#~ msgstr "کارمزد پلتفرم (محاسبه خودکار)"
+
+#~ msgid "Teacher Share"
+#~ msgstr "سهم معلم"
+
+#~ msgid "Teacher share (auto-calculated)"
+#~ msgstr "سهم معلم (محاسبه خودکار)"
+
+#~ msgid "Confirmed"
+#~ msgstr "تایید شده"
+
+#~ msgid "Confirmed At"
+#~ msgstr "تاریخ تایید"
+
+#~ msgid "Settled"
+#~ msgstr "تسویه شده"
+
+#~ msgid "Settled At"
+#~ msgstr "تاریخ تسویه"
+
+#~ msgid "Class Revenue"
+#~ msgstr "درآمد کلاس"
+
+#~ msgid "Class Revenues"
+#~ msgstr "درآمدهای کلاس"
+
+#~ msgid "Revenues"
+#~ msgstr "درآمدها"
+
+#~ msgid "Payment Method"
+#~ msgstr "روش پرداخت"
+
+#~ msgid "Bank Transfer"
+#~ msgstr "انتقال بانکی"
+
+#~ msgid "Card to Card"
+#~ msgstr "کارت به کارت"
+
+#~ msgid "Wallet"
+#~ msgstr "کیف پول"
+
+#~ msgid "Account Information"
+#~ msgstr "اطلاعات حساب"
+
+#~ msgid "Card number, IBAN, etc."
+#~ msgstr "شماره کارت، شماب و غیره"
+
+#~ msgid "Transaction ID"
+#~ msgstr "شناسه تراکنش"
+
+#~ msgid "Pending"
+#~ msgstr "در انتظار"
+
+#~ msgid "Processing"
+#~ msgstr "در حال پردازش"
+
+#~ msgid "Failed"
+#~ msgstr "ناموفق"
+
+#~ msgid "Admin Notes"
+#~ msgstr "یادداشت‌های ادمین"
+
+#~ msgid "Completed At"
+#~ msgstr "تاریخ تکمیل"
+
+#~ msgid "Withdrawal Requests"
+#~ msgstr "درخواست‌های برداشت"
+
+#~ msgid "Revenue"
+#~ msgstr "درآمد"
+
+#~ msgid "Confirmation"
+#~ msgstr "تایید"
+
+#~ msgid "Withdrawal"
+#~ msgstr "برداشت"
+
+#~ msgid "Refund"
+#~ msgstr "بازگشت"
+
+#~ msgid "Adjustment"
+#~ msgstr "تعدیل"
+
+#~ msgid "Bonus"
+#~ msgstr "جایزه"
+
+#~ msgid "Penalty"
+#~ msgstr "جریمه"
+
+#~ msgid "Amount"
+#~ msgstr "مبلغ"
+
+#~ msgid "Balance Before"
+#~ msgstr "موجودی قبل"
+
+#~ msgid "Balance After"
+#~ msgstr "موجودی بعد"
+
+#~ msgid "Admin Note"
+#~ msgstr "یادداشت ادمین"
+
+#~ msgid "Wallet Transaction"
+#~ msgstr "تراکنش کیف پول"
+
+#~ msgid "Wallet Transactions"
+#~ msgstr "تراکنش‌های کیف پول"
+
+#~ msgid "Class Payment"
+#~ msgstr "پرداخت کلاس"
+
+#~ msgid "Refunded"
+#~ msgstr "بازگشت‌شده"
+
+#~ msgid "Commission Rate Class"
+#~ msgstr "درصد کمیسیون کلاس"
+
+#~ msgid "Platform commission percentage for teaching classes (0-100)"
+#~ msgstr "درصد کمیسیون پلتفرم برای کلاس‌های تدریس شده (0-100)"
+
+#~ msgid "Updated By"
+#~ msgstr "به‌روزرسانی‌شده توسط"
+
+#~ msgid "Platform Settings"
+#~ msgstr "تنظیمات پلتفرم"
+
+#~ msgid "Parent login requires identifier and parent_password"
+#~ msgstr "ورود والد نیاز به شناسه و رمز والدین دارد"
+
+#~ msgid "Parent dashboard requires child_id"
+#~ msgstr "داشبورد والد نیاز به child_id دارد"
+
+#~ msgid "Child class history requires child_id"
+#~ msgstr "تاریخچه کلاس‌های کودک نیاز به child_id دارد"
+
+#~ msgid "Child payment history requires child_id"
+#~ msgstr "تاریخچه پرداخت کودک نیاز به child_id دارد"
+
+#~ msgid "Payment summary requires child_id"
+#~ msgstr "خلاصه پرداخت نیاز به child_id دارد"
+
+#~ msgid "Update usage time requires child_id"
+#~ msgstr "بروزرسانی زمان استفاده نیاز به child_id دارد"
+
+#~ msgid "Parent profile requires child_id"
+#~ msgstr "پروفایل والدین نیاز به child_id دارد"
+
+#~ msgid "App usage date"
+#~ msgstr "تاریخ استفاده از اپ"
+
+#~ msgid "Message preview"
+#~ msgstr "پیش‌نمایش پیام"
+
+#~ msgid "Attachments"
+#~ msgstr "فایل‌های پیوست"
+
+#~ msgid "File"
+#~ msgstr "فایل"
+
+#~ msgid "without text ({} files)"
+#~ msgstr "بدون متن ({} فایل)"

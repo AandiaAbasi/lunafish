@@ -758,7 +758,7 @@ class TeacherRating(BaseModel):
     )
     
     is_verified = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name=_("Is Verified"),
         help_text=_("آیا این امتیاز تایید شده است؟")
     )

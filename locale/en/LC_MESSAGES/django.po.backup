@@ -1,0 +1,1808 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Fofofish\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-12-26 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: account/models.py
+msgid "Display name"
+msgstr "Display name"
+
+msgid "User display name (default: username)"
+msgstr "User display name (default: username)"
+
+msgid "User"
+msgstr "User"
+
+msgid "Teacher"
+msgstr "Teacher"
+
+msgid "Admin"
+msgstr "Admin"
+
+msgid "Male"
+msgstr "Male"
+
+msgid "Female"
+msgstr "Female"
+
+msgid "Custom"
+msgstr "Custom"
+
+msgid "Prefer not to say"
+msgstr "Prefer not to say"
+
+msgid "User role"
+msgstr "User role"
+
+msgid "User: Regular user, Teacher: Teacher, Admin: Administrator"
+msgstr "User: Regular user, Teacher: Teacher, Admin: Administrator"
+
+msgid "email address"
+msgstr "email address"
+
+msgid "Phone number"
+msgstr "Phone number"
+
+msgid "Phone verified at"
+msgstr "Phone verified at"
+
+msgid "Email verified at"
+msgstr "Email verified at"
+
+msgid "Profile photo"
+msgstr "Profile photo"
+
+msgid "Selected avatar"
+msgstr "Selected avatar"
+
+msgid "Avatar template selected by user"
+msgstr "Avatar template selected by user"
+
+msgid "Bio"
+msgstr "Bio"
+
+msgid "Gender"
+msgstr "Gender"
+
+#: account/serializers.py
+msgid "Phone number or email is required"
+msgstr "Phone number or email is required"
+
+msgid "Invalid purpose. Must be one of: registration, login, phone_verification, email_verification, password_reset"
+msgstr "Invalid purpose"
+
+msgid "Verification code is required"
+msgstr "Verification code is required"
+
+msgid "Code must be numeric"
+msgstr "Code must be numeric"
+
+msgid "Code must be 6 digits"
+msgstr "Code must be 6 digits"
+
+#: account/services.py
+msgid "The Username field must be set"
+msgstr "The Username field must be set"
+
+msgid "OTP has already been sent. Please try again in a few minutes."
+msgstr "OTP has already been sent. Please try again in a few minutes."
+
+msgid "Phone number or email cannot be empty"
+msgstr "Phone number or email cannot be empty"
+
+msgid "No OTP found for this phone/email."
+msgstr "No OTP found for this phone/email."
+
+msgid "OTP has expired. Please request a new one."
+msgstr "OTP has expired. Please request a new one."
+
+msgid "OTP code is incorrect."
+msgstr "OTP code is incorrect."
+
+msgid "Invalid token"
+msgstr "Invalid token"
+
+msgid "Token expired. Please register again."
+msgstr "Token expired. Please register again."
+
+msgid "Username already exists"
+msgstr "Username already exists"
+
+msgid "User is already a teacher"
+msgstr "User is already a teacher"
+
+msgid "Teacher promotion request submitted and awaiting approval"
+msgstr "Teacher promotion request submitted and awaiting approval"
+
+msgid "User is not a teacher"
+msgstr "User is not a teacher"
+
+msgid "Teacher verified"
+msgstr "Teacher verified"
+
+msgid "Teacher verification revoked"
+msgstr "Teacher verification revoked"
+
+#: account/models.py
+msgid "Birth date"
+msgstr "Birth date"
+
+msgid "Teacher verified"
+msgstr "Teacher verified"
+
+msgid "Whether this teacher is verified by admin"
+msgstr "Whether this teacher is verified by admin"
+
+msgid "Teacher verification requested at"
+msgstr "Teacher verification requested at"
+
+msgid "Special commission rate"
+msgstr "Special commission rate"
+
+msgid "Special commission rate for this teacher (if empty, default rate is used). Number between 0 and 100"
+msgstr "Special commission rate for this teacher (if empty, default rate is used). Number between 0 and 100"
+
+msgid "Push notification token"
+msgstr "Push notification token"
+
+msgid "Last seen"
+msgstr "Last seen"
+
+msgid "Last online time"
+msgstr "Last online time"
+
+msgid "Is online"
+msgstr "Is online"
+
+msgid "Online status"
+msgstr "Online status"
+
+msgid "Users"
+msgstr "Users"
+
+msgid "Registration"
+msgstr "Registration"
+
+msgid "Phone Verification"
+msgstr "Phone Verification"
+
+msgid "Email Verification"
+msgstr "Email Verification"
+
+msgid "Password Reset"
+msgstr "Password Reset"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Hashed code"
+msgstr "Hashed code"
+
+msgid "Hashed OTP code"
+msgstr "Hashed OTP code"
+
+msgid "Expires at"
+msgstr "Expires at"
+
+msgid "Is used"
+msgstr "Is used"
+
+msgid "Purpose"
+msgstr "Purpose"
+
+msgid "OTP Code"
+msgstr "OTP Code"
+
+msgid "OTP Codes"
+msgstr "OTP Codes"
+
+msgid "Token"
+msgstr "Token"
+
+msgid "Verification Token"
+msgstr "Verification Token"
+
+msgid "Verification Tokens"
+msgstr "Verification Tokens"
+
+msgid "Avatar image"
+msgstr "Avatar image"
+
+msgid "Avatar Template"
+msgstr "Avatar Template"
+
+msgid "Avatar Templates"
+msgstr "Avatar Templates"
+
+#: account/admin.py
+msgid "Email is required."
+msgstr "Email is required."
+
+msgid "Phone number is required."
+msgstr "Phone number is required."
+
+msgid "Invalid phone number."
+msgstr "Invalid phone number."
+
+msgid "Registration Date"
+msgstr "Registration Date"
+
+msgid "Last Update"
+msgstr "Last Update"
+
+msgid "Last Login"
+msgstr "Last Login"
+
+msgid "Edit"
+msgstr "Edit"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Main Info"
+msgstr "Main Info"
+
+msgid "Permissions"
+msgstr "Permissions"
+
+msgid "Personal Info"
+msgstr "Personal Info"
+
+msgid "Dates"
+msgstr "Dates"
+
+msgid "Teacher Info"
+msgstr "Teacher Info"
+
+msgid "Financial Settings"
+msgstr "Financial Settings"
+
+msgid "Custom commission rate for this teacher. If empty, default rate applies."
+msgstr "Custom commission rate for this teacher. If empty, default rate applies."
+
+msgid "Add New Teacher"
+msgstr "Add New Teacher"
+
+msgid "Password will be auto-generated and sent to the teacher via SMS."
+msgstr "Password will be auto-generated and sent to the teacher via SMS."
+
+msgid "Phone conversion error: %s"
+msgstr "Phone conversion error: %s"
+
+msgid "Teacher successfully created. Password {password} sent to {phone}."
+msgstr "Teacher successfully created. Password {password} sent to {phone}."
+
+msgid "Teacher created but SMS failed. Password: {password}"
+msgstr "Teacher created but SMS failed. Password: {password}"
+
+msgid "User Management"
+msgstr "User Management"
+
+msgid "Teacher Management"
+msgstr "Teacher Management"
+
+msgid "Avatar Image"
+msgstr "Avatar Image"
+
+msgid "Metadata"
+msgstr "Metadata"
+
+msgid "Preview"
+msgstr "Preview"
+
+msgid "Delete"
+msgstr "Delete"
+
+#: account/serializers.py
+msgid "This username is already taken"
+msgstr "This username is already taken"
+
+msgid "New password is required"
+msgstr "New password is required"
+
+msgid "Password confirmation is required"
+msgstr "Password confirmation is required"
+
+msgid "Passwords do not match"
+msgstr "Passwords do not match"
+
+msgid "Username can only contain letters, numbers, and underscores."
+msgstr "Username can only contain letters, numbers, and underscores."
+
+msgid "Username must be at least 3 characters long."
+msgstr "Username must be at least 3 characters long."
+
+msgid "This username is already taken. Please choose another one."
+msgstr "This username is already taken. Please choose another one."
+
+msgid "User is not a teacher"
+msgstr "User is not a teacher"
+
+msgid "Selected avatar does not exist"
+msgstr "Selected avatar does not exist"
+
+#: account/templatetags/commission_tags.py
+msgid "Error getting commission rate: %s"
+msgstr "Error getting commission rate: %s"
+
+msgid "N/A"
+msgstr "N/A"
+
+#: account/apps.py
+msgid "User Account Management"
+msgstr "User Account Management"
+
+#: api/views.py
+msgid "This phone number is already registered. Please log in."
+msgstr "This phone number is already registered. Please log in."
+
+msgid "This email is already registered. Please log in."
+msgstr "This email is already registered. Please log in."
+
+msgid "Please wait 2 minutes."
+msgstr "Please wait 2 minutes."
+
+msgid "Email authentication is not configured on this server"
+msgstr "Email authentication is not configured on this server"
+
+msgid "Verification code sent."
+msgstr "Verification code sent."
+
+msgid "Verification code is correct. Please complete registration"
+msgstr "Verification code is correct. Please complete registration"
+
+msgid "Login successful"
+msgstr "Login successful"
+
+msgid "Invalid data"
+msgstr "Invalid data"
+
+msgid "Registration completed successfully"
+msgstr "Registration completed successfully"
+
+msgid "Profile updated successfully"
+msgstr "Profile updated successfully"
+
+msgid "Teacher profile updated successfully"
+msgstr "Teacher profile updated successfully"
+
+msgid "Invalid data provided"
+msgstr "Invalid data provided"
+
+msgid "Username and password are required"
+msgstr "Username and password are required"
+
+msgid "Username or password is incorrect"
+msgstr "Username or password is incorrect"
+
+msgid "This account is not for a teacher"
+msgstr "This account is not for a teacher"
+
+msgid "This account is not for teachers"
+msgstr "This account is not for teachers"
+
+msgid "Teacher registration completed successfully"
+msgstr "Teacher registration completed successfully"
+
+msgid "Sending OTP to email is currently not supported"
+msgstr "Sending OTP to email is currently not supported"
+
+msgid "Please provide a valid email address"
+msgstr "Please provide a valid email address"
+
+msgid "This email is registered as a teacher account. Please use teacher login."
+msgstr "This email is registered as a teacher account. Please use teacher login."
+
+msgid "Verification code has been sent to your email"
+msgstr "Verification code has been sent to your email"
+
+msgid "Email and verification code are required"
+msgstr "Email and verification code are required"
+
+msgid "Invalid verification code format"
+msgstr "Invalid verification code format"
+
+msgid "This email is registered as a regular user account. Please use regular user login."
+msgstr "This email is registered as a regular user account. Please use regular user login."
+
+msgid "Username is required"
+msgstr "Username is required"
+
+msgid "Username must be at least 3 characters"
+msgstr "Username must be at least 3 characters"
+
+msgid "This username has already been taken."
+msgstr "This username has already been taken."
+
+msgid "This username is available."
+msgstr "This username is available."
+
+msgid "Username is invalid"
+msgstr "Username is invalid"
+
+msgid "Avatar selected successfully"
+msgstr "Avatar selected successfully"
+
+msgid "Selected avatar does not exist"
+msgstr "Selected avatar does not exist"
+
+msgid "You are already a teacher"
+msgstr "You are already a teacher"
+
+msgid "Password changed successfully"
+msgstr "Password changed successfully"
+
+msgid "Refresh token not provided"
+msgstr "Refresh token not provided"
+
+msgid "Logout successful"
+msgstr "Logout successful"
+
+msgid "Logout successful (token not expired)"
+msgstr "Logout successful (token not expired)"
+
+msgid "About us content not found"
+msgstr "About us content not found"
+
+msgid "No phone contact found"
+msgstr "No phone contact found"
+
+msgid "Phone contact retrieved successfully"
+msgstr "Phone contact retrieved successfully"
+
+msgid "Home page data retrieved successfully"
+msgstr "Home page data retrieved successfully"
+
+#: api/bilingual.py
+msgid "Operation successful"
+msgstr "Operation successful"
+
+msgid "An error occurred"
+msgstr "An error occurred"
+
+#: api/apps.py
+msgid "API Endpoints"
+msgstr "API Endpoints"
+#: core/models.py
+msgid "Title"
+msgstr "Title"
+
+msgid "Image"
+msgstr "Image"
+
+msgid "Content"
+msgstr "Content"
+
+msgid "About us"
+msgstr "About us"
+
+msgid "Terms & Conditions"
+msgstr "Terms & Conditions"
+
+msgid "Privacy Policy"
+msgstr "Privacy Policy"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Phone"
+msgstr "Phone"
+
+msgid "Notification number"
+msgstr "Notification number"
+
+msgid "Address"
+msgstr "Address"
+
+msgid "Instagram"
+msgstr "Instagram"
+
+msgid "Telegram"
+msgstr "Telegram"
+
+msgid "YouTube"
+msgstr "YouTube"
+
+msgid "Spotify"
+msgstr "Spotify"
+
+msgid "Link"
+msgstr "Link"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Contact Method"
+msgstr "Contact Method"
+
+msgid "Contact Methods"
+msgstr "Contact Methods"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Subject"
+msgstr "Subject"
+
+msgid "Message"
+msgstr "Message"
+
+msgid "Contact message"
+msgstr "Contact message"
+
+msgid "Contact messages"
+msgstr "Contact messages"
+
+msgid "Short description"
+msgstr "Short description"
+
+msgid "Created at"
+msgstr "Created at"
+
+msgid "Article"
+msgstr "Article"
+
+msgid "Articles"
+msgstr "Articles"
+
+msgid "Question"
+msgstr "Question"
+
+msgid "Answer"
+msgstr "Answer"
+
+msgid "Display status"
+msgstr "Display status"
+
+msgid "FAQ"
+msgstr "FAQ"
+
+msgid "FAQs"
+msgstr "FAQs"
+
+msgid "Home page"
+msgstr "Home page"
+
+msgid "App home"
+msgstr "App home"
+
+msgid "Subtitle"
+msgstr "Subtitle"
+
+msgid "Example: https://example.com"
+msgstr "Example: https://example.com"
+
+msgid "Placement"
+msgstr "Placement"
+
+msgid "Display order"
+msgstr "Display order"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "Banner"
+msgstr "Banner"
+
+msgid "Banners"
+msgstr "Banners"
+
+#: core/forms.py
+msgid "Enter your name"
+msgstr "Enter your name"
+
+msgid "09xxxxxxxxx"
+msgstr "09xxxxxxxxx"
+
+msgid "Subject of your message"
+msgstr "Subject of your message"
+
+msgid "Write your message here"
+msgstr "Write your message here"
+
+#: core/views.py
+msgid "Your message has been sent successfully."
+msgstr "Your message has been sent successfully."
+
+msgid "Please correct the errors in the form."
+msgstr "Please correct the errors in the form."
+
+#: core/apps.py
+msgid "Site pages"
+msgstr "Site pages"
+
+#: core/admin.py
+msgid "Edit"
+msgstr "Edit"
+
+msgid "Delete"
+msgstr "Delete"
+
+msgid "No image"
+msgstr "No image"
+
+msgid "Image preview"
+msgstr "Image preview"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Title"
+msgstr "Title"
+
+msgid "Media"
+msgstr "Media"
+
+msgid "Contact Information"
+msgstr "Contact Information"
+
+msgid "Message Details"
+msgstr "Message Details"
+
+msgid "Main Information"
+msgstr "Main Information"
+
+msgid "View details"
+msgstr "View details"
+
+#: fofofish/settings.py
+msgid "Nozima"
+msgstr "Nozima"
+
+msgid "Persian"
+msgstr "Persian"
+
+msgid "English"
+msgstr "English"
+
+#: fofofish/middleware/auth_middleware.py
+msgid "Invalid JSON format"
+msgstr "Invalid JSON format"
+
+msgid "An unexpected error occurred"
+msgstr "An unexpected error occurred"
+
+msgid "Inactive"
+msgstr "Inactive"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "Service Title"
+msgstr "Service Title"
+
+msgid "Service title (max 128 characters)"
+msgstr "Service title (max 128 characters)"
+
+msgid "User Limit"
+msgstr "User Limit"
+
+msgid "Maximum concurrent users"
+msgstr "Maximum concurrent users"
+
+msgid "Video Limit"
+msgstr "Video Limit"
+
+msgid "Maximum concurrent videos per room"
+msgstr "Maximum concurrent videos per room"
+
+msgid "Time Limit (seconds)"
+msgstr "Time Limit (seconds)"
+
+msgid "Person-second time limit"
+msgstr "Person-second time limit"
+
+msgid "Time Usage (seconds)"
+msgstr "Time Usage (seconds)"
+
+msgid "Person-second time used"
+msgstr "Person-second time used"
+
+msgid "Start Time"
+msgstr "Start Time"
+
+msgid "Service start time (Unix timestamp)"
+msgstr "Service start time (Unix timestamp)"
+
+msgid "Stop Time"
+msgstr "Stop Time"
+
+msgid "Service stop time (Unix timestamp)"
+msgstr "Service stop time (Unix timestamp)"
+
+msgid "Service"
+msgstr "Service"
+
+msgid "Services"
+msgstr "Services"
+
+msgid "0: Inactive, 1: Active"
+msgstr "0: Inactive, 1: Active"
+
+msgid "Service this room belongs to"
+msgstr "Service this room belongs to"
+
+msgid "Room Name"
+msgstr "Room Name"
+
+msgid "Room name in Latin (max 100 characters)"
+msgstr "Room name in Latin (max 100 characters)"
+
+msgid "Room Title"
+msgstr "Room Title"
+
+msgid "Room display title (max 100 characters)"
+msgstr "Room display title (max 100 characters)"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Room description (max 512 characters)"
+msgstr "Room description (max 512 characters)"
+
+msgid "Allow Guest Login"
+msgstr "Allow Guest Login"
+
+msgid "Allow guest login"
+msgstr "Allow guest login"
+
+msgid "Guest Limit"
+msgstr "Guest Limit"
+
+msgid "Maximum guests (0 = unlimited)"
+msgstr "Maximum guests (0 = unlimited)"
+
+msgid "Operator Login First"
+msgstr "Operator Login First"
+
+msgid "Require operator to login first"
+msgstr "Require operator to login first"
+
+msgid "Max Users"
+msgstr "Max Users"
+
+msgid "Session Duration (seconds)"
+msgstr "Session Duration (seconds)"
+
+msgid "Maximum session duration in seconds"
+msgstr "Maximum session duration in seconds"
+
+msgid "Person-second time used in current session"
+msgstr "Person-second time used in current session"
+
+msgid "Total Time Usage (seconds)"
+msgstr "Total Time Usage (seconds)"
+
+msgid "Total person-second time used"
+msgstr "Total person-second time used"
+
+msgid "Room"
+msgstr "Room"
+
+msgid "Rooms"
+msgstr "Rooms"
+
+msgid "Unknown"
+msgstr "Unknown"
+
+msgid "Male"
+msgstr "Male"
+
+msgid "Female"
+msgstr "Female"
+
+msgid "Username"
+msgstr "Username"
+
+msgid "Username in Latin (max 32 characters)"
+msgstr "Username in Latin (max 32 characters)"
+
+msgid "Nickname"
+msgstr "Nickname"
+
+msgid "Display name (max 100 characters)"
+msgstr "Display name (max 100 characters)"
+
+msgid "Password Hash"
+msgstr "Password Hash"
+
+msgid "Password hash (max 24 characters original)"
+msgstr "Password hash (max 24 characters original)"
+
+msgid "Email address (max 100 characters)"
+msgstr "Email address (max 100 characters)"
+
+msgid "First Name"
+msgstr "First Name"
+
+msgid "First name (max 100 characters)"
+msgstr "First name (max 100 characters)"
+
+msgid "Last Name"
+msgstr "Last Name"
+
+msgid "Last name (max 100 characters)"
+msgstr "Last name (max 100 characters)"
+
+msgid "0: Unknown, 1: Male, 2: Female"
+msgstr "0: Unknown, 1: Male, 2: Female"
+
+msgid "Is Public"
+msgstr "Is Public"
+
+msgid "Is this a public/shared account"
+msgstr "Is this a public/shared account"
+
+msgid "Concurrent Limit"
+msgstr "Concurrent Limit"
+
+msgid "Concurrent usage limit (0 = unlimited)"
+msgstr "Concurrent usage limit (0 = unlimited)"
+
+msgid "Maximum time allowed (seconds)"
+msgstr "Maximum time allowed (seconds)"
+
+msgid "Current time used (seconds)"
+msgstr "Current time used (seconds)"
+
+msgid "Total time used across all sessions (seconds)"
+msgstr "Total time used across all sessions (seconds)"
+
+msgid "Expiry Date"
+msgstr "Expiry Date"
+
+msgid "Account expiry date (Unix timestamp)"
+msgstr "Account expiry date (Unix timestamp)"
+
+msgid "Normal User"
+msgstr "Normal User"
+
+msgid "Presenter"
+msgstr "Presenter"
+
+msgid "Operator"
+msgstr "Operator"
+
+msgid "Access Level"
+msgstr "Access Level"
+
+msgid "1: Normal User, 2: Presenter, 3: Operator"
+msgstr "1: Normal User, 2: Presenter, 3: Operator"
+
+msgid "Room User Access"
+msgstr "Room User Access"
+
+msgid "Room User Accesses"
+msgstr "Room User Accesses"
+
+msgid "Display name for this login"
+msgstr "Display name for this login"
+
+msgid "Number of concurrent users allowed"
+msgstr "Number of concurrent users allowed"
+
+msgid "Login URL"
+msgstr "Login URL"
+
+msgid "TTL (seconds)"
+msgstr "TTL (seconds)"
+
+msgid "Time to live for this login URL"
+msgstr "Time to live for this login URL"
+
+msgid "Is Active"
+msgstr "Is Active"
+
+msgid "Expires At"
+msgstr "Expires At"
+
+msgid "When this login URL expires"
+msgstr "When this login URL expires"
+
+msgid "Login URLs"
+msgstr "Login URLs"
+
+msgid "Basic Information"
+msgstr "Basic Information"
+
+msgid "Limits"
+msgstr "Limits"
+
+msgid "Usage"
+msgstr "Usage"
+
+msgid "Timestamps"
+msgstr "Timestamps"
+
+msgid "Access Control"
+msgstr "Access Control"
+
+msgid "Credentials"
+msgstr "Credentials"
+
+msgid "Personal Information"
+msgstr "Personal Information"
+
+msgid "Status & Access"
+msgstr "Status & Access"
+
+msgid "Time Management"
+msgstr "Time Management"
+
+msgid "Access Information"
+msgstr "Access Information"
+
+msgid "Room & User"
+msgstr "Room & User"
+
+msgid "Access Settings"
+msgstr "Access Settings"
+
+msgid "URL"
+msgstr "URL"
+
+msgid "Expiry"
+msgstr "Expiry"
+
+msgid "Users added successfully"
+msgstr "Users added successfully"
+
+msgid "Users removed successfully"
+msgstr "Users removed successfully"
+
+msgid "Rooms added successfully"
+msgstr "Rooms added successfully"
+
+msgid "Rooms removed successfully"
+msgstr "Rooms removed successfully"
+
+#: account/models.py
+msgid "Birth date in Jalali calendar format (YYYY-MM-DD)"
+msgstr "Birth date in Jalali calendar format (YYYY-MM-DD)"
+
+msgid "Birth date must be in YYYY-MM-DD format (Jalali calendar)"
+msgstr "Birth date must be in YYYY-MM-DD format (Jalali calendar)"
+
+msgid "invalid_jalali_date"
+msgstr "Invalid Jalali date"
+
+#: account/models.py (Teacher Profile Fields)
+msgid "Educational qualifications"
+msgstr "Educational qualifications"
+
+msgid "Degrees, certifications, and professional qualifications"
+msgstr "Degrees, certifications, and professional qualifications"
+
+msgid "Languages taught"
+msgstr "Languages taught"
+
+msgid "Languages that can be taught (comma-separated or JSON)"
+msgstr "Languages that can be taught (comma-separated or JSON)"
+
+msgid "Specialization"
+msgstr "Specialization"
+
+msgid "Area of specialization or expertise"
+msgstr "Area of specialization or expertise"
+
+msgid "Resume summary"
+msgstr "Resume summary"
+
+msgid "Brief summary of professional experience and background"
+msgstr "Brief summary of professional experience and background"
+
+msgid "Introduction video URL"
+msgstr "Introduction video URL"
+
+msgid "YouTube or video URL for teacher introduction"
+msgstr "YouTube or video URL for teacher introduction"
+
+msgid "Hourly rate"
+msgstr "Hourly rate"
+
+msgid "Suggested hourly teaching rate in default currency"
+msgstr "Suggested hourly teaching rate in default currency"
+
+msgid "Available times"
+msgstr "Available times"
+
+msgid "JSON object with available teaching times"
+msgstr "JSON object with available teaching times"
+
+msgid "Years of experience"
+msgstr "Years of experience"
+
+msgid "Number of years of teaching experience"
+msgstr "Number of years of teaching experience"
+
+#: account/serializers.py
+msgid "Birth date in Jalali format (YYYY-MM-DD), e.g., 1403-05-24"
+msgstr "Birth date in Jalali format (YYYY-MM-DD), e.g., 1403-05-24"
+
+msgid "ID of the avatar template to select"
+msgstr "ID of the avatar template to select"
+
+msgid "Selected avatar does not exist"
+msgstr "Selected avatar does not exist"
+
+msgid "Profile completed successfully"
+msgstr "Profile completed successfully"
+
+msgid "Teacher profile completed successfully"
+msgstr "Teacher profile completed successfully"
+
+msgid "Only students can use this endpoint"
+msgstr "Only students can use this endpoint"
+
+msgid "Only teachers can use this endpoint"
+msgstr "Only teachers can use this endpoint"
+
+msgid "Invalid data or invalid avatar"
+msgstr "Invalid data or invalid avatar"
+
+msgid "Invalid data or validation error"
+msgstr "Invalid data or validation error"
+
+#: api/views.py
+msgid "Complete student profile information"
+msgstr "Complete student profile information"
+
+msgid "Complete teacher profile with professional information"
+msgstr "Complete teacher profile with professional information"
+
+msgid "Hourly rate must be greater than zero"
+msgstr "Hourly rate must be greater than zero"
+
+msgid "Experience years cannot be negative"
+msgstr "Experience years cannot be negative"
+
+msgid "Introduction video must be a valid URL"
+msgstr "Introduction video must be a valid URL"
+
+msgid "Introduction video URL is too long"
+msgstr "Introduction video URL is too long"
+
+msgid "User is not a teacher"
+msgstr "User is not a teacher"
+
+msgid "No verification code found for this email. Please request a new one."
+msgstr "No verification code found for this email. Please request a new one."
+
+msgid "No verification code found for this phone number. Please request a new one."
+msgstr "No verification code found for this phone number. Please request a new one."
+
+msgid "User account not found. Please register first."
+msgstr "User account not found. Please register first."
+
+msgid "Unable to process OTP verification."
+msgstr "Unable to process OTP verification."
+#: exercise/models.py
+msgid "Title"
+msgstr "Title"
+
+msgid "Sort"
+msgstr "Sort"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Is Required"
+msgstr "Is Required"
+
+msgid "Is Required Help"
+msgstr "Mark as required or optional"
+
+msgid "Image"
+msgstr "Image"
+
+msgid "Audio"
+msgstr "Audio"
+
+msgid "Video"
+msgstr "Video"
+
+msgid "Icon"
+msgstr "Icon"
+
+msgid "Guide"
+msgstr "Guide"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Question"
+msgstr "Question"
+
+msgid "Questions"
+msgstr "Questions"
+
+msgid "Second Title"
+msgstr "Second Title"
+
+msgid "Is Correct"
+msgstr "Is Correct"
+
+msgid "Option"
+msgstr "Option"
+
+msgid "Options"
+msgstr "Options"
+
+msgid "Classroom Teaching Subject"
+msgstr "Classroom Teaching Subject"
+
+msgid "Step"
+msgstr "Step"
+
+msgid "Is Conditional"
+msgstr "Is Conditional"
+
+msgid "Exam"
+msgstr "Exam"
+
+msgid "Exams"
+msgstr "Exams"
+
+msgid "Teaching Subject"
+msgstr "Teaching Subject"
+
+msgid "Score"
+msgstr "Score"
+
+msgid "Correct"
+msgstr "Correct"
+
+msgid "Incorrect"
+msgstr "Incorrect"
+
+msgid "Attempt"
+msgstr "Attempt"
+
+msgid "Attempts"
+msgstr "Attempts"
+
+msgid "Answer"
+msgstr "Answer"
+
+msgid "Answers"
+msgstr "Answers"
+
+#: classroom/models.py
+msgid "Teacher"
+msgstr "Teacher"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Specific date for this availability"
+msgstr "Specific date for this availability"
+
+msgid "Start Time"
+msgstr "Start Time"
+
+msgid "Time that teacher starts teaching (example: 09:00)"
+msgstr "Time that teacher starts teaching (example: 09:00)"
+
+msgid "End Time"
+msgstr "End Time"
+
+msgid "Time that teacher ends teaching (example: 17:00)"
+msgstr "Time that teacher ends teaching (example: 17:00)"
+
+msgid "Available"
+msgstr "Available"
+
+msgid "Is this time slot available for booking?"
+msgstr "Is this time slot available for booking?"
+
+msgid "Booked"
+msgstr "Booked"
+
+msgid "Is this time slot already booked?"
+msgstr "Is this time slot already booked?"
+
+msgid "Price"
+msgstr "Price"
+
+msgid "Price of teaching for this time slot"
+msgstr "Price of teaching for this time slot"
+
+msgid "Discount Price"
+msgstr "Discount Price"
+
+msgid "Price of teaching with discount for this time slot"
+msgstr "Price of teaching with discount for this time slot"
+
+msgid "Notes"
+msgstr "Notes"
+
+msgid "Additional notes about this availability"
+msgstr "Additional notes about this availability"
+
+msgid "Teacher Class Scheduling"
+msgstr "Teacher Class Scheduling"
+
+msgid "Teacher Class Scheduling (Plural)"
+msgstr "Teacher Class Scheduling (Plural)"
+
+msgid "Subject Title (example: English Beginner - Alphabet)"
+msgstr "Subject Title (example: English Beginner - Alphabet)"
+
+msgid "Description of what will be taught in this class"
+msgstr "Description of what will be taught in this class"
+
+msgid "Cover Image"
+msgstr "Cover Image"
+
+msgid "Demo Video"
+msgstr "Demo Video"
+
+msgid "Short demo video of teaching"
+msgstr "Short demo video of teaching"
+
+msgid "Minimum Age"
+msgstr "Minimum Age"
+
+msgid "Maximum Age"
+msgstr "Maximum Age"
+
+msgid "Level"
+msgstr "Level"
+
+msgid "Beginner"
+msgstr "Beginner"
+
+msgid "Intermediate"
+msgstr "Intermediate"
+
+msgid "Advanced"
+msgstr "Advanced"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "Teaching Subject"
+msgstr "Teaching Subject"
+
+msgid "Teaching Subjects"
+msgstr "Teaching Subjects"
+
+msgid "Availability"
+msgstr "Availability"
+
+msgid "Student"
+msgstr "Student"
+
+msgid "Subject"
+msgstr "Subject"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Reserved"
+msgstr "Reserved"
+
+msgid "Completed"
+msgstr "Completed"
+
+msgid "Cancelled"
+msgstr "Cancelled"
+
+msgid "No Show"
+msgstr "No Show"
+
+msgid "Discount Amount"
+msgstr "Discount Amount"
+
+msgid "Final Price"
+msgstr "Final Price"
+
+msgid "Class Booking"
+msgstr "Class Booking"
+
+msgid "Class Bookings"
+msgstr "Class Bookings"
+
+msgid "Full Name"
+msgstr "Full Name"
+
+msgid "Bank Name"
+msgstr "Bank Name"
+
+msgid "Account Number"
+msgstr "Account Number"
+
+msgid "IBAN"
+msgstr "IBAN"
+
+msgid "IR + 24 digits"
+msgstr "IR + 24 digits"
+
+msgid "Card Number"
+msgstr "Card Number"
+
+msgid "Account Holder Name"
+msgstr "Account Holder Name"
+
+msgid "Minimum Settlement Amount"
+msgstr "Minimum Settlement Amount"
+
+msgid "Minimum amount for settlement request"
+msgstr "Minimum amount for settlement request"
+
+msgid "Next Settlement Date"
+msgstr "Next Settlement Date"
+
+msgid "Total Earned"
+msgstr "Total Earned"
+
+msgid "Total amount of all earnings"
+msgstr "Total amount of all earnings"
+
+msgid "Total Withdrawn"
+msgstr "Total Withdrawn"
+
+msgid "Total amount of all settled amounts"
+msgstr "Total amount of all settled amounts"
+
+msgid "Verified"
+msgstr "Verified"
+
+msgid "Bank information verified"
+msgstr "Bank information verified"
+
+msgid "Verified At"
+msgstr "Verified At"
+
+msgid "Teacher Wallet"
+msgstr "Teacher Wallet"
+
+msgid "Teacher Wallets"
+msgstr "Teacher Wallets"
+
+msgid "Booked Classes"
+msgstr "Booked Classes"
+
+msgid "Wallet Balance"
+msgstr "Wallet Balance"
+
+msgid "Pending Balance"
+msgstr "Pending Balance"
+
+msgid "Available Balance"
+msgstr "Available Balance"
+
+msgid "Original Price"
+msgstr "Original Price"
+
+msgid "Original price of the class"
+msgstr "Original price of the class"
+
+msgid "Total Amount"
+msgstr "Total Amount"
+
+msgid "Final price of the class"
+msgstr "Final price of the class"
+
+msgid "Platform Fee Percentage"
+msgstr "Platform Fee Percentage"
+
+msgid "Platform fee percentage"
+msgstr "Platform fee percentage"
+
+msgid "Platform Fee"
+msgstr "Platform Fee"
+
+msgid "Platform fee (auto-calculated)"
+msgstr "Platform fee (auto-calculated)"
+
+msgid "Teacher Share"
+msgstr "Teacher Share"
+
+msgid "Teacher share (auto-calculated)"
+msgstr "Teacher share (auto-calculated)"
+
+msgid "Confirmed"
+msgstr "Confirmed"
+
+msgid "Revenue confirmed by admin"
+msgstr "Revenue confirmed by admin"
+
+msgid "Confirmed At"
+msgstr "Confirmed At"
+
+msgid "Settled"
+msgstr "Settled"
+
+msgid "Settled At"
+msgstr "Settled At"
+
+msgid "Class Revenue"
+msgstr "Class Revenue"
+
+msgid "Class Revenues"
+msgstr "Class Revenues"
+
+msgid "Revenues"
+msgstr "Revenues"
+
+msgid "Payment Method"
+msgstr "Payment Method"
+
+msgid "Bank Transfer"
+msgstr "Bank Transfer"
+
+msgid "Card to Card"
+msgstr "Card to Card"
+
+msgid "Wallet"
+msgstr "Wallet"
+
+msgid "Other"
+msgstr "Other"
+
+msgid "Account Information"
+msgstr "Account Information"
+
+msgid "Card number, IBAN, etc."
+msgstr "Card number, IBAN, etc."
+
+msgid "Transaction ID"
+msgstr "Transaction ID"
+
+msgid "Pending"
+msgstr "Pending"
+
+msgid "Processing"
+msgstr "Processing"
+
+msgid "Failed"
+msgstr "Failed"
+
+msgid "Admin Notes"
+msgstr "Admin Notes"
+
+msgid "Completed At"
+msgstr "Completed At"
+
+msgid "Withdrawal Request"
+msgstr "Withdrawal Request"
+
+msgid "Withdrawal Requests"
+msgstr "Withdrawal Requests"
+
+msgid "Transaction Type"
+msgstr "Transaction Type"
+
+msgid "Revenue"
+msgstr "Revenue"
+
+msgid "Confirmation"
+msgstr "Confirmation"
+
+msgid "Withdrawal"
+msgstr "Withdrawal"
+
+msgid "Refund"
+msgstr "Refund"
+
+msgid "Adjustment"
+msgstr "Adjustment"
+
+msgid "Bonus"
+msgstr "Bonus"
+
+msgid "Penalty"
+msgstr "Penalty"
+
+msgid "Amount"
+msgstr "Amount"
+
+msgid "Balance Before"
+msgstr "Balance Before"
+
+msgid "Balance After"
+msgstr "Balance After"
+
+msgid "Admin Note"
+msgstr "Admin Note"
+
+msgid "Wallet Transaction"
+msgstr "Wallet Transaction"
+
+msgid "Wallet Transactions"
+msgstr "Wallet Transactions"
+
+msgid "Class Payment"
+msgstr "Class Payment"
+
+msgid "Refunded"
+msgstr "Refunded"
+
+msgid "Payment Date"
+msgstr "Payment Date"
+
+msgid "Student Transaction"
+msgstr "Student Transaction"
+
+msgid "Student Transactions"
+msgstr "Student Transactions"
+
+msgid "Commission Rate Class"
+msgstr "Commission Rate Class"
+
+msgid "Platform commission percentage for teaching classes (0-100)"
+msgstr "Platform commission percentage for teaching classes (0-100)"
+
+msgid "Updated By"
+msgstr "Updated By"
+
+msgid "Updated At"
+msgstr "Updated At"
+
+msgid "Platform Settings"
+msgstr "Platform Settings"
+
+#: classroom/models.py
+msgid "حضور و غیاب"
+msgstr "Attendance"
+
+msgid "رزرو کلاس"
+msgstr "Class Booking"
+
+msgid "دانش‌آموز"
+msgstr "Student"
+
+msgid "وضعیت"
+msgstr "Status"
+
+msgid "حاضر"
+msgstr "Present"
+
+msgid "غایب"
+msgstr "Absent"
+
+msgid "تاریخ ثبت"
+msgstr "Marked At"
+
+#: api/views.py classroom/admin.py
+msgid "student_id and status are required"
+msgstr "student_id and status are required"
+
+msgid "status must be \"present\" or \"absent\""
+msgstr "status must be \"present\" or \"absent\""
+
+msgid "Booking not found"
+msgstr "Booking not found"
+
+msgid "Student not found"
+msgstr "Student not found"
+
+msgid "موضوع"
+msgstr "Subject"
+
+#: api/parent_serializers.py
+msgid "شناسه دانش‌آموز یا شماره تماس یا ایمیل"
+msgstr "Student ID or Phone or Email"
+
+msgid "رمز والدین"
+msgstr "Parent Password"
+
+msgid "Student not found. Please check your student ID, phone number or email."
+msgstr "Student not found. Please check your student ID, phone number or email."
+
+msgid "Invalid identifier format"
+msgstr "Invalid identifier format"
+
+msgid "No parent profile found for this student"
+msgstr "No parent profile found for this student"
+
+msgid "Invalid parent password"
+msgstr "Invalid parent password"
+
+msgid "Usage limit cannot be negative"
+msgstr "Usage limit cannot be negative"
+
+msgid "Usage limit cannot exceed 24 hours (1440 minutes)"
+msgstr "Usage limit cannot exceed 24 hours (1440 minutes)"
+
+msgid "End time must be after start time"
+msgstr "End time must be after start time"
+
+msgid "Passwords do not match"
+msgstr "Passwords do not match"
+
+msgid "Password must be at least 6 characters"
+msgstr "Password must be at least 6 characters"
+
+#: api/views.py
+msgid "Parent login requires identifier and parent_password"
+msgstr "Parent login requires identifier and parent_password"
+
+msgid "Parent dashboard requires child_id"
+msgstr "Parent dashboard requires child_id"
+
+msgid "Child class history requires child_id"
+msgstr "Child class history requires child_id"
+
+msgid "Child payment history requires child_id"
+msgstr "Child payment history requires child_id"
+
+msgid "Payment summary requires child_id"
+msgstr "Payment summary requires child_id"
+
+msgid "Update usage time requires child_id"
+msgstr "Update usage time requires child_id"
+
+msgid "Parent profile requires child_id"
+msgstr "Parent profile requires child_id"
+
+#: account/models.py
+msgid "Student"
+msgstr "Student"
+
+msgid "Parent full name"
+msgstr "Parent full name"
+
+msgid "Phone number"
+msgstr "Phone number"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Parent password (hashed)"
+msgstr "Parent password (hashed)"
+
+msgid "Hashed password for parent portal login"
+msgstr "Hashed password for parent portal login"
+
+msgid "Can view class history"
+msgstr "Can view class history"
+
+msgid "Can view payments"
+msgstr "Can view payments"
+
+msgid "Can select teacher"
+msgstr "Can select teacher"
+
+msgid "Can set usage time"
+msgstr "Can set usage time"
+
+msgid "Daily usage limit (minutes)"
+msgstr "Daily usage limit (minutes)"
+
+msgid "Allowed start time for app usage"
+msgstr "Allowed start time for app usage"
+
+msgid "Allowed end time for app usage"
+msgstr "Allowed end time for app usage"
+
+msgid "Is active"
+msgstr "Is active"
+
+msgid "Last login"
+msgstr "Last login"
+
+msgid "Parent Profile"
+msgstr "Parent Profile"
+
+msgid "Parent Profiles"
+msgstr "Parent Profiles"
+
+msgid "Parent"
+msgstr "Parent"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "App usage date"
+msgstr "App usage date"
+
+msgid "Total minutes used"
+msgstr "Total minutes used"
+
+msgid "Number of sessions"
+msgstr "Number of sessions"
+
+msgid "Parent App Usage Log"
+msgstr "Parent App Usage Log"
+
+msgid "Parent App Usage Logs"
+msgstr "Parent App Usage Logs"
+
+msgid "Support Message"
+msgstr "Support Message"
+
+msgid "Support Messages"
+msgstr "Support Messages"
+
+msgid "Support Message Attachment"
+msgstr "Support Message Attachment"
+
+msgid "Support Message Attachments"
+msgstr "Support Message Attachments"
+
+msgid "Send Support Message"
+msgstr "Send Support Message"
+
+msgid "List Support Messages"
+msgstr "List Support Messages"
+
+msgid "Mark Message as Read"
+msgstr "Mark Message as Read"
+
+msgid "Teacher not found"
+msgstr "Teacher not found"
+
+msgid "Sender not found"
+msgstr "Sender not found"
+
+msgid "Message text or attachment is required"
+msgstr "Message text or attachment is required"
+
+msgid "Message not found"
+msgstr "Message not found"
+
+msgid "Sent"
+msgstr "Sent"
+
+msgid "Read"
+msgstr "Read"
+
+msgid "Message text"
+msgstr "Message text"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Read at"
+msgstr "Read at"
+
+msgid "Sender"
+msgstr "Sender"
+
+msgid "Message preview"
+msgstr "Message preview"
+
+msgid "Attachment"
+msgstr "Attachment"
+
+msgid "Attachments"
+msgstr "Attachments"
+
+msgid "File"
+msgstr "File"
+
+msgid "Message status: sent or read"
+msgstr "Message status: sent or read"
+
+msgid "Page number"
+msgstr "Page number"
+
+msgid "Teacher ID to filter messages"
+msgstr "Teacher ID to filter messages"
+
+msgid "Send a message to support team with optional file attachments"
+msgstr "Send a message to support team with optional file attachments"
+
+msgid "Get list of support messages for a teacher"
+msgstr "Get list of support messages for a teacher"
+
+msgid "Mark a support message as read"
+msgstr "Mark a support message as read"
+
+msgid "without text ({} files)"
+msgstr "without text ({} files)"

@@ -1,0 +1,29 @@
+from django.conf import settings
+
+USER_ROLE_FIELD = getattr(settings, 'CLASSES_USER_ROLE_FIELD', 'role')
+TEACHER_ROLE_VALUE = getattr(settings, 'CLASSES_TEACHER_ROLE_VALUE', 'teacher')
+STUDENT_ROLE_VALUE = getattr(settings, 'CLASSES_STUDENT_ROLE_VALUE', 'user')
+TEACHER_MODEL = getattr(settings, 'CLASSES_TEACHER_MODEL', None)
+STUDENT_MODEL = getattr(settings, 'CLASSES_STUDENT_MODEL', None)
+TEACHER_USER_FIELD = getattr(settings, 'CLASSES_TEACHER_USER_FIELD', 'user')
+STUDENT_USER_FIELD = getattr(settings, 'CLASSES_STUDENT_USER_FIELD', 'user')
+IS_TEACHER_METHOD = getattr(settings, 'CLASSES_IS_TEACHER_METHOD', None)
+IS_STUDENT_METHOD = getattr(settings, 'CLASSES_IS_STUDENT_METHOD', None)
+USER_ROLE_RESOLVER = getattr(settings, 'CLASSES_USER_ROLE_RESOLVER', None)
+MAX_STUDENTS_DEFAULT = getattr(settings, 'CLASSES_MAX_STUDENTS_DEFAULT', 100)
+MAX_STUDENTS_HARD_LIMIT = getattr(settings, 'CLASSES_MAX_STUDENTS_HARD_LIMIT', 500)
+MESSAGE_HISTORY_LIMIT = getattr(settings, 'CLASSES_MESSAGE_HISTORY_LIMIT', 300)
+REACTION_RATE_LIMIT = getattr(settings, 'CLASSES_REACTION_RATE_LIMIT', 10)
+
+
+CENTRIFUGO_TOKEN_TTL_SECONDS = getattr(settings, 'CENTRIFUGO_TOKEN_TTL_SECONDS', 7200)
+CENTRIFUGO_API_URL = getattr(settings, 'CENTRIFUGO_API_URL', None)
+CENTRIFUGO_API_KEY = getattr(settings, 'CENTRIFUGO_API_KEY', None)
+CENTRIFUGO_TOKEN_SECRET = getattr(settings, 'CENTRIFUGO_TOKEN_SECRET', settings.SECRET_KEY)
+CENTRIFUGO_WS_URL = getattr(settings, 'CENTRIFUGO_WS_URL', '')
+
+RTC_JWT_SECRET = getattr(settings, 'RTC_JWT_SECRET', settings.SECRET_KEY)
+RTC_WS_URL = getattr(settings, 'RTC_WS_URL', '')
+RTC_ICE_SERVERS = getattr(settings, 'RTC_ICE_SERVERS', [])
+RTC_TOKEN_TTL_SECONDS = getattr(settings, 'RTC_TOKEN_TTL_SECONDS', 3600)
+

@@ -8,7 +8,13 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Field(BaseModel):
     _safedelete_policy = SOFT_DELETE_CASCADE
-
+    
+    TYPE_CHOICES = [
+        ('input', _('تایپی')),          
+        ('checkbox', _('چند گزینه ای')),   
+        ('radioButton', _('تک گزینه ای')),             
+    ]
+    
     teacher = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -30,6 +36,7 @@ class Field(BaseModel):
 
     type = models.CharField(
         max_length=50,
+        choices=TYPE_CHOICES,
         verbose_name=_("Type")
     )
 
@@ -163,7 +170,13 @@ class FieldDetail(BaseModel):
 
 class CategoryField(BaseModel):
     _safedelete_policy = SOFT_DELETE_CASCADE
-
+    
+    TYPE_CHOICES = [
+        ('input', _('تایپی')),          
+        ('checkbox', _('چند گزینه ای')),   
+        ('radioButton', _('تک گزینه ای')),             
+    ]
+    
     teachingsubject = models.ForeignKey(
         'classroom.TeachingSubject',
         on_delete=models.CASCADE,
@@ -188,6 +201,7 @@ class CategoryField(BaseModel):
 
     type = models.CharField(
         max_length=50,
+        choices=TYPE_CHOICES,
         verbose_name=_("Type")
     )
 

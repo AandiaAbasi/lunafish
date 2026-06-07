@@ -1,0 +1,9 @@
+# Placeholder — replace with actual requirements when Django project is ready
+Django>=5.2,<6.0
+djangorestframework>=3.16,<4.0
+django-cors-headers>=4.0,<5.0
+PyJWT>=2.8,<3.0
+requests>=2.31,<3.0
+gunicorn>=22.0,<24.0
+psycopg[binary]>=3.2,<4.0
+redis>=5.0,<6.0

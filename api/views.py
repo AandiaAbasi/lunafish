@@ -24,6 +24,7 @@ from django.contrib import messages
 from django.db import models, transaction
 from django.http import StreamingHttpResponse, HttpResponse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.views.generic import TemplateView
 import boto3
 import re
 import jdatetime
@@ -54,7 +55,11 @@ from .parent_serializers import (
     ParentLoginSerializer, ParentProfileSerializer, ParentUpdateUsageTimeSerializer,
     ChildClassHistorySerializer, ChildPaymentHistorySerializer
 )
-
+from classroom.serializers import (
+    CourseSerializer
+)
+from rest_framework import generics, status
+from classroom.serializers import *
 # Import email function with fallback
 try:
     from account.utils import send_email_otp
@@ -66,6 +71,9 @@ from core.serializers import (
     AboutSerializer, TermSerializer, PrivacySerializer, ContactSerializer,
     BannerSerializer
 )
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+from django.db import transaction
+from classroom.models import TeacherWallet
 
 User = get_user_model()
 
@@ -619,20 +627,6 @@ class TeacherLoginPasswordAPIView(APIView):
 
 
 class TeacherSendOTPAPIView(APIView):
-    """
-    Teacher Send OTP API
-    
-    Send OTP to teacher phone or email for authentication.
-    
-    post:
-        Send OTP to teacher's phone or email.
-        
-        Request parameters:
-        - identifier: Phone or email (required)
-        - purpose: 'login' or 'registration' (optional)
-        
-        Returns: Confirmation of OTP sent
-    """
     permission_classes = [AllowAny]
     
     @extend_schema(
@@ -647,26 +641,64 @@ class TeacherSendOTPAPIView(APIView):
         }
     )
     def post(self, request):
+        import phonenumbers
+        
         serializer = SendOTPSerializer(data=request.data)
         if serializer.is_valid():
             identifier = serializer.validated_data['identifier']
+            purpose = request.data.get('purpose', 'login')
+            
+            # Convert Persian/Arabic digits to English
+            identifier = convert_persian_to_english(identifier)
             
             # Determine if it's email or phone
             is_email = '@' in str(identifier)
             
-            # Check cooldown
+            # Normalize phone for consistent lookup
+            normalized_identifier = identifier
+            phone_formats = [identifier]
+            
+            if not is_email:
+                is_phone = identifier.startswith('09') or identifier.startswith('+98')
+                if is_phone:
+                    try:
+                        if identifier.startswith('09'):
+                            phone_obj = phonenumbers.parse(identifier, "IR")
+                            normalized_identifier = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
+                        elif identifier.startswith('+98'):
+                            normalized_identifier = identifier
+                        
+                        # Add alternative formats
+                        phone_formats = [normalized_identifier]
+                        if identifier.startswith('09'):
+                            phone_formats.append(identifier)
+                        elif identifier.startswith('+98'):
+                            try:
+                                phone_obj = phonenumbers.parse(identifier, None)
+                                local_phone = '0' + str(phone_obj.national_number)
+                                phone_formats.append(local_phone)
+                            except:
+                                pass
+                    except Exception as e:
+                        logger.error(f"Phone normalization error: {e}")
+            
+            # Check cooldown with all phone formats
+            recent_otp = None
             if is_email:
                 recent_otp = OTP.objects.filter(
                     email=identifier,
-                    purpose='login',
+                    purpose=purpose,
                     is_used=False
                 ).order_by('-created_at').first()
             else:
-                recent_otp = OTP.objects.filter(
-                    phone=identifier,
-                    purpose='login',
-                    is_used=False
-                ).order_by('-created_at').first()
+                for phone_format in phone_formats:
+                    recent_otp = OTP.objects.filter(
+                        phone=phone_format,
+                        purpose=purpose,
+                        is_used=False
+                    ).order_by('-created_at').first()
+                    if recent_otp:
+                        break
             
             if recent_otp and (timezone.now() - recent_otp.created_at).seconds < 120:
                 return Response({
@@ -675,12 +707,13 @@ class TeacherSendOTPAPIView(APIView):
                 }, status=status.HTTP_429_TOO_MANY_REQUESTS)
             
             # Generate and send OTP with teacher template
+            # استفاده از normalized_identifier به جای identifier
             try:
-                generate_and_send_otp(identifier, purpose='login', user=None, is_teacher=True)
+                generate_and_send_otp(normalized_identifier, purpose=purpose, user=None, is_teacher=True)
                     
                 return Response({
                     "success": True,
-                    "message": _("Verification code sent successfully.") if is_email else _("Verification code sent.")
+                    "message": _("Verification code sent successfully.")
                 }, status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({
@@ -692,49 +725,67 @@ class TeacherSendOTPAPIView(APIView):
             "success": False,
             "message": _("Invalid data provided"),
             "errors": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-
+        }, status=status.HTTP_400_BAD_REQUEST)        
+        
 class TeacherVerifyOTPAPIView(APIView):
-    """
-    Teacher Verify OTP API
-    
-    Verify OTP and login teacher or return verification token for registration.
-    
-    post:
-        Verify OTP code for teacher.
-        
-        Request parameters:
-        - identifier: Phone or email (required)
-        - code: OTP code (required)
-        - purpose: 'login' or 'registration' (optional)
-        
-        Returns: User tokens and profile or verification token
-    """
     permission_classes = [AllowAny]
     
     @extend_schema(
         tags=['Teacher Authentication - OTP'],
         summary='Verify Teacher OTP',
-        description='Verify OTP code for teacher login or registration',
+        description='Verify OTP code for teacher authentication or registration',
+        request=VerifyOTPSerializer,
         responses={
             200: OpenApiResponse(description="OTP verified successfully"),
-            400: OpenApiResponse(description="Invalid OTP"),
-            403: OpenApiResponse(description="Account is not for teachers"),
+            400: OpenApiResponse(description="Invalid OTP or data"),
+            403: OpenApiResponse(description="Not a teacher account"),
         }
     )
     def post(self, request):
+        import phonenumbers
+        
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
             identifier = serializer.validated_data['identifier']
             code = serializer.validated_data['code']
+            purpose = request.data.get('purpose', 'login')
             
-            ok, result = validate_otp(identifier, code, purpose='login')
+            # Convert Persian/Arabic digits to English
+            identifier = convert_persian_to_english(identifier)
+            
+            # Normalize phone before validation
+            is_email = '@' in str(identifier)
+            normalized_identifier = identifier
+            
+            if not is_email:
+                is_phone = identifier.startswith('09') or identifier.startswith('+98')
+                if is_phone:
+                    try:
+                        if identifier.startswith('09'):
+                            phone_obj = phonenumbers.parse(identifier, "IR")
+                            normalized_identifier = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
+                        elif identifier.startswith('+98'):
+                            normalized_identifier = identifier
+                    except Exception as e:
+                        logger.error(f"Phone normalization error: {e}")
+            
+            # استفاده از normalized_identifier
+            ok, result = validate_otp(normalized_identifier, code, purpose=purpose)
             
             if ok:
+                # اگر purpose='registration'، result یک dict است
+                if purpose == 'registration':
+                    return Response({
+                        "success": True,
+                        "verification_token": result['verification_token'],
+                        "phone": result.get('phone'),
+                        "email": result.get('email')
+                    }, status=status.HTTP_200_OK)
+                
+                # اگر purpose='login'، result یک User object است
                 user = result
                 
-                # Check if user is teacher
+                # فقط برای login چک کنیم که teacher باشد
                 if user.role != 'teacher':
                     return Response({
                         "success": False,
@@ -761,7 +812,6 @@ class TeacherVerifyOTPAPIView(APIView):
             "message": _("Invalid data provided"),
             "errors": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
 
 class TeacherCompleteRegistrationAPIView(APIView):
     """
@@ -821,6 +871,7 @@ class TeacherCompleteRegistrationAPIView(APIView):
             
             if ok:
                 user = result
+                wallet = TeacherWallet.objects.create(teacher=user)
                 tokens = get_tokens_for_user(user)
                 user_data = UserProfileSerializer(user).data
                 
@@ -1517,7 +1568,7 @@ class CompleteTeacherProfileAPIView(APIView):
         
         - **200 OK**: Profile updated successfully
             - success: boolean (true)
-            - message: string - "Teacher profile completed successfully"
+            - message: string - "Teacher profile saved successfully"
             - user: object - Updated teacher profile data with all fields
                 
         - **400 Bad Request**: Validation error
@@ -1559,7 +1610,7 @@ class CompleteTeacherProfileAPIView(APIView):
     @extend_schema(
         request=CompleteTeacherProfileSerializer,
         responses={
-            200: OpenApiResponse(description="Teacher profile completed successfully"),
+            200: OpenApiResponse(description="Teacher profile saved successfully"),
             400: OpenApiResponse(description="Invalid data or validation error"),
             401: OpenApiResponse(description="User not authenticated"),
             403: OpenApiResponse(description="User is not a teacher"),
@@ -1578,7 +1629,7 @@ class CompleteTeacherProfileAPIView(APIView):
             serializer.save()
             return Response({
                 "success": True,
-                "message": _("Teacher profile completed successfully"),
+                "message": _("Teacher profile saved successfully"),
                 "user": UserProfileSerializer(request.user).data
             }, status=status.HTTP_200_OK)
         
@@ -2183,12 +2234,19 @@ class IsTeacher(permissions.BasePermission):
         return request.user.is_authenticated and request.user.role == 'teacher'
 
 
+
+class IsStudent(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role == 'user'
+        
+
 # ========== Home Page API ==========
 class HomePageAPIView(APIView):
     """
     Home Page Content API
     
-    Retrieve home page content including banners and featured sections.
+    Retrieve home page content including banners, recent courses, 
+    best-selling subjects, and top-rated teachers.
     
     get:
         Get home page data for mobile app home screen.
@@ -2196,22 +2254,85 @@ class HomePageAPIView(APIView):
         Returns:
             200 OK:
                 - data: array of sections
-                    - id: section identifier
-                    - type: section type (banners, featured, etc.)
-                    - data: section content
-                - message: Status message
+                    - banners: تبلیغات و بنرها
+                    - recent_courses: دوره‌های اخیر
+                    - best_selling_subjects: پرفروش‌ترین موضوعات
+                    - top_teachers: محبوب‌ترین معلم‌ها
     """
     permission_classes = [AllowAny]
     
     @extend_schema(
         tags=['Content'],
         summary='Get Home Page Content',
-        description='Retrieve home page content including banners and featured sections'
+        description='Retrieve home page content including banners, courses, subjects, and teachers'
     )
     def get(self, request):
+        from django.db.models import Count, Avg, Q
+        from .classroom_serializers import TeachingSubjectSerializer
+        
         # 1. Main banners
         banners = Banner.objects.filter(is_active=True, placement='app_home').order_by('sort', '-created_at')[:5]
         banners_data = BannerSerializer(banners, many=True).data
+        
+        # 2. Recent courses (دوره‌های اخیر) - با CourseSerializer
+        recent_courses = Course.objects.filter(
+            is_active=True,
+            status='approved',
+            subject__teacher__is_teacher_verified=True  # اعمال شرط تایید معلم از طریق رابطه subject
+        ).select_related('subject__teacher').order_by('-created_at')[:10]
+        
+        recent_courses_data = CourseSerializer(
+            recent_courses, 
+            many=True, 
+            context={'request': request}
+        ).data
+        # 3. Best-selling subjects (پرفروش‌ترین موضوعات) - با fallback به جدیدترین‌ها
+        best_selling_subjects = TeachingSubject.objects.filter(
+            is_active=True,
+            status='approved',
+            teacher__is_teacher_verified=True  # اضافه کردن شرط تایید معلم
+        ).annotate(
+            total_enrollments=Count(
+                'courses__enrollments',
+                filter=Q(courses__enrollments__payment_status='paid')
+            )
+        ).filter(total_enrollments__gt=0).select_related('teacher').order_by('-total_enrollments')[:10]
+        
+        # اگر موضوع فروش رفته‌ای نداشتیم، جدیدترین‌ها رو نشون بده
+        if not best_selling_subjects.exists():
+            best_selling_subjects = TeachingSubject.objects.filter(
+                is_active=True,
+                status='approved',
+                teacher__is_teacher_verified=True  # اضافه کردن شرط تایید معلم
+            ).select_related('teacher').order_by('-created_at')[:10]
+        
+        best_selling_subjects_data = TeachingSubjectSerializer(
+            best_selling_subjects, 
+            many=True, 
+            context={'request': request}
+        ).data
+        
+        # 4. Top-rated teachers (محبوب‌ترین معلم‌ها بر اساس امتیاز)
+        top_teachers = User.objects.filter(
+            role='teacher',
+            is_teacher_verified=True,
+            is_active=True
+        ).annotate(
+            avg_rating=Avg('received_teacher_ratings__stars', filter=Q(received_teacher_ratings__is_verified=True)),
+            total_ratings=Count('received_teacher_ratings', filter=Q(received_teacher_ratings__is_verified=True))
+        ).filter(total_ratings__gt=0).order_by('-avg_rating', '-total_ratings')[:10]
+        
+        top_teachers_data = [{
+            'id': teacher.id,
+            'name': teacher.name or teacher.username,
+            'bio': teacher.bio,
+            'profile_photo': request.build_absolute_uri(teacher.profile_photo_path.url) if teacher.profile_photo_path else None,
+            'specialization': teacher.specialization,
+            'experience_years': teacher.experience_years,
+            'average_rating': round(teacher.avg_rating or 0, 2),
+            'total_ratings': teacher.total_ratings,
+            'subjects_count': teacher.subjects.filter(is_active=True).count()
+        } for teacher in top_teachers]
 
         return Response({
             'status': 'success',
@@ -2219,11 +2340,31 @@ class HomePageAPIView(APIView):
                 {
                     "id": "banners",
                     "type": "banners",
+                    "title": _("Banners"),
                     "data": banners_data
+                },
+                {
+                    "id": "recent_courses",
+                    "type": "courses",
+                    "title": _("Recent Courses"),
+                    "data": recent_courses_data
+                },
+                {
+                    "id": "best_selling_subjects",
+                    "type": "subjects",
+                    "title": _("Best Selling Subjects"),
+                    "data": best_selling_subjects_data
+                },
+                {
+                    "id": "top_teachers",
+                    "type": "teachers",
+                    "title": _("Top Rated Teachers"),
+                    "data": top_teachers_data
                 }
             ],
             'message': _("Home page data retrieved successfully")
         })
+
 
 
 # ===== Teacher Time Slot (Availability) APIs =====
@@ -3131,7 +3272,7 @@ class StudentBookingsListAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        bookings = ClassBooking.objects.filter(student=request.user)
+        bookings = ClassBooking.objects.filter(student=request.user, payment_status='paid')
         
         # فیلتر بر اساس وضعیت
         status_filter = request.query_params.get('status')
@@ -3190,7 +3331,7 @@ class TeacherBookingsListAPIView(APIView):
         
         # دریافت کلاس‌های معلم
         subjects = TeachingSubject.objects.filter(teacher=request.user).values_list('id', flat=True)
-        bookings = ClassBooking.objects.filter(subject_id__in=subjects)
+        bookings = ClassBooking.objects.filter(subject_id__in=subjects, payment_status='paid')
         
         # فیلتر بر اساس وضعیت
         status_filter = request.query_params.get('status')
@@ -3551,7 +3692,7 @@ class PaymentCallbackAPIView(APIView):
             }
     
     def _process_callback(self, request):
-        from classroom.models import ClassBooking, ClassRevenue, StudentTransaction
+        from classroom.models import ClassBooking, ClassRevenue, StudentTransaction, TeacherAvailability
         from django.db import transaction
         from django.utils import timezone
         from decimal import Decimal
@@ -3573,7 +3714,7 @@ class PaymentCallbackAPIView(APIView):
             
             # دریافت رزرو بر اساس order_id
             try:
-                booking = ClassBooking.objects.get(id=order_id)
+                booking = ClassBooking.objects.select_related('availability').get(id=order_id)
             except ClassBooking.DoesNotExist:
                 return Response(
                     {'error': _('رزرو یافت نشد')},
@@ -3589,13 +3730,18 @@ class PaymentCallbackAPIView(APIView):
             # اگر پرداخت ناموفق بود
             if not success:
                 with transaction.atomic():
-                    booking.payment_status = 'failed'
-                    booking.payment_ref = track_id
-                    booking.save()
+                    # آزادسازی availability
+                    if booking.availability:
+                        booking.availability.is_available = True
+                        booking.availability.is_booked = False
+                        booking.availability.save()
+                    
+                    # حذف booking ناموفق
+                    booking.delete()
                 
                 from django.urls import reverse
                 redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
-                return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={booking.id}&message=Payment+unsuccessful')
+                return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={order_id}&message=Payment+unsuccessful')
             
             # تأیید پرداخت از طریق Zibal Verify API
             zibal_verify_url = settings.ZIBAL_VERIFY_URL
@@ -3611,26 +3757,36 @@ class PaymentCallbackAPIView(APIView):
                 
                 if verify_response.status_code != 200:
                     with transaction.atomic():
-                        booking.payment_status = 'failed'
-                        booking.payment_ref = track_id
-                        booking.save()
+                        # آزادسازی availability
+                        if booking.availability:
+                            booking.availability.is_available = True
+                            booking.availability.is_booked = False
+                            booking.availability.save()
+                        
+                        # حذف booking ناموفق
+                        booking.delete()
                     
                     from django.urls import reverse
                     redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
-                    return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={booking.id}&message=Verification+error')
+                    return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={order_id}&message=Verification+error')
                 
                 verify_data = verify_response.json()
                 
                 # بررسی نتیجه تأیید
                 if verify_data.get('result') != 100:
                     with transaction.atomic():
-                        booking.payment_status = 'failed'
-                        booking.payment_ref = track_id
-                        booking.save()
+                        # آزادسازی availability
+                        if booking.availability:
+                            booking.availability.is_available = True
+                            booking.availability.is_booked = False
+                            booking.availability.save()
+                        
+                        # حذف booking ناموفق
+                        booking.delete()
                     
                     from django.urls import reverse
                     redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
-                    return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={booking.id}&message=Payment+verification+failed')
+                    return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={order_id}&message=Payment+verification+failed')
                 
                 # پرداخت موفق و تأیید شد
                 amount = verify_data.get('amount')
@@ -3639,8 +3795,6 @@ class PaymentCallbackAPIView(APIView):
                     # تبدیل amount به Decimal (handle string/None/int)
                     try:
                         if amount:
-                            # Zibal amount را بر حسب ریال برمی‌گرداند (1 unit = 1 ریال)
-                            # و قبلاً divide by 100 می‌شود
                             paid_amount = Decimal(str(amount)) / Decimal('100')
                         else:
                             paid_amount = booking.final_price
@@ -3679,7 +3833,7 @@ class PaymentCallbackAPIView(APIView):
                         payment_date=timezone.now()
                     )
                 
-                # Redirect کاربر به صفحه نتیجه (برای نمایش در مرورگر و سپس redirect به اپ)
+                # Redirect کاربر به صفحه نتیجه
                 from django.urls import reverse
                 redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
                 redirect_params = f'?status=success&orderId={booking.id}'
@@ -3688,6 +3842,16 @@ class PaymentCallbackAPIView(APIView):
             
             except requests.exceptions.RequestException as e:
                 # خطا در اتصال به Zibal Verify
+                with transaction.atomic():
+                    # آزادسازی availability
+                    if booking.availability:
+                        booking.availability.is_available = True
+                        booking.availability.is_booked = False
+                        booking.availability.save()
+                    
+                    # حذف booking ناموفق
+                    booking.delete()
+                
                 from django.urls import reverse
                 redirect_url = request.build_absolute_uri(reverse('api:payment_redirect'))
                 return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={order_id}&message=Gateway+connection+error')
@@ -3708,7 +3872,6 @@ class PaymentCallbackAPIView(APIView):
     
     def post(self, request):
         return self._process_callback(request)
-
 
 class PaymentStatusAPIView(APIView):
     """
@@ -4092,8 +4255,9 @@ class TeachingSubjectDeleteAPIView(APIView):
             404: OpenApiResponse(description="Subject not found"),
         }
     )
+    
     def post(self, request, id):
-        from classroom.models import TeachingSubject
+        from classroom.models import TeachingSubject, Course
         
         try:
             subject = TeachingSubject.objects.get(id=id)
@@ -4103,7 +4267,7 @@ class TeachingSubjectDeleteAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # بررسی دسترسی - فقط صاحب یا ادمین
+        # بررسی دسترسی
         if request.user.role == 'teacher' and subject.teacher_id != request.user.id:
             return Response(
                 {'error': _('شما دسترسی به حذف این موضوع ندارید')},
@@ -4113,6 +4277,19 @@ class TeachingSubjectDeleteAPIView(APIView):
             return Response(
                 {'error': _('تنها معلمان و ادمین می‌توانند موضوع را حذف کنند')},
                 status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # بررسی وجود دوره وابسته
+        related_courses = Course.objects.filter(subject=subject)
+        if related_courses.exists():
+            course_names = ', '.join([c.title for c in related_courses[:3]])
+            return Response(
+                {
+                    'error': _('این موضوع تدریسی دارای دوره‌های وابسته است و قابل حذف نیست'),
+                    'courses': course_names,
+                    'count': related_courses.count()
+                },
+                status=status.HTTP_400_BAD_REQUEST
             )
         
         subject.delete()
@@ -5416,26 +5593,6 @@ class DeleteExamStepAPIView(APIView):
 class StudentSubjectsWithExercisesAPIView(APIView):
     """
     Student: List Teaching Subjects with Exercises API
-    
-    Returns list of teaching subjects that have exercises (CategoryFields) assigned.
-    Only shows active subjects.
-    
-    get:
-        Get list of subjects with exercises for student.
-        
-        Returns:
-            200 OK:
-                - subjects: array
-                    - id: integer - Subject ID
-                    - title: string - Subject title
-                    - description: string
-                    - teacher_name: string
-                    - total_questions: integer - Number of questions
-                    - total_steps: integer - Number of steps
-                    - has_started: boolean - If student has started this exam
-                    - order_id: integer or null - Existing order ID if started
-                    - correct_answers: integer - Number of correct answers
-                    - completion_percentage: float - Percentage of correct answers (0-100)
     """
     permission_classes = [IsAuthenticated]
     
@@ -5448,59 +5605,81 @@ class StudentSubjectsWithExercisesAPIView(APIView):
         }
     )
     def get(self, request):
-        from exercise.models import CategoryField, Order, OrderDetail, FieldDetail
+        from exercise.models import CategoryField, Order, OrderDetail, FieldDetail, Field
         from classroom.models import TeachingSubject
-        from django.db.models import Count
+        from django.db.models import Prefetch
         
-        # دریافت موضوعات فعال که تمرین دارند
         subjects_with_exercises = TeachingSubject.objects.filter(
             is_active=True,
-            category_fields__isnull=False
-        ).annotate(
-            total_questions=Count('category_fields'),
+            category_fields__isnull=False,
+            bookings__student=request.user,
+            bookings__payment_status='paid'
         ).distinct()
         
         subjects_data = []
+        
         for subject in subjects_with_exercises:
-            # بررسی اینکه آیا دانش‌آموز این آزمون را شروع کرده
+            # تمام سوالات این subject
+            category_fields = CategoryField.objects.filter(
+                teachingsubject=subject
+            ).select_related('field').values_list('field_id', 'field__type')
+            
+            field_ids = [cf[0] for cf in category_fields]
+            field_types = {cf[0]: cf[1] for cf in category_fields}
+            
+            total_questions = len(field_ids)
+            
+            steps_count = CategoryField.objects.filter(
+                teachingsubject=subject
+            ).values('step').distinct().count()
+            
             order = Order.objects.filter(
                 user=request.user,
                 teachingsubject=subject
             ).first()
             
-            # تعداد step‌ها
-            steps_count = CategoryField.objects.filter(
-                teachingsubject=subject
-            ).values('step').distinct().count()
+            answered_count = 0
+            correct_count = 0
             
-            # محاسبه درصد تکمیل بر اساس پاسخ‌های صحیح
-            correct_answers = 0
-            total_questions = subject.total_questions
-            
-            if order:
-                # دریافت تمام پاسخ‌های دانش‌آموز برای این آزمون
-                order_details = OrderDetail.objects.filter(order=order).select_related('field', 'field_detail')
+            if order and total_questions > 0:
+                # آخرین پاسخ هر سوال
+                all_answers = OrderDetail.objects.filter(
+                    order=order,
+                    field_id__in=field_ids
+                ).order_by('field_id', '-created_at')
                 
-                for detail in order_details:
-                    if detail.field_detail:
-                        # سوال چند گزینه‌ای: بررسی is_correct
-                        if detail.field_detail.is_correct == 1:
-                            correct_answers += 1
-                    else:
-                        # سوال متنی: مقایسه value با correct_answer
-                        # پیدا کردن correct_answer از اولین FieldDetail مربوط به این Field
-                        field_detail = FieldDetail.objects.filter(field=detail.field).first()
-                        if field_detail and field_detail.correct_answer:
-                            # مقایسه بدون حساسیت به حروف و فاصله
-                            student_answer = (detail.value or '').strip().lower()
-                            correct_answer = field_detail.correct_answer.strip().lower()
-                            if student_answer == correct_answer:
-                                correct_answers += 1
+                latest_answers = {}
+                for ans in all_answers:
+                    if ans.field_id not in latest_answers:
+                        latest_answers[ans.field_id] = ans
+                
+                answered_count = len(latest_answers)
+                
+                # محاسبه صحت
+                for field_id, answer in latest_answers.items():
+                    field_type = field_types.get(field_id)
+                    
+                    if field_type in ['radioButton', 'checkbox']:
+                        if answer.field_detail_id:
+                            detail = FieldDetail.objects.filter(
+                                id=answer.field_detail_id,
+                                is_correct=1
+                            ).exists()
+                            if detail:
+                                correct_count += 1
+                    
+                    elif field_type in ['input']:
+                        correct_detail = FieldDetail.objects.filter(
+                            field_id=field_id,
+                            correct_answer__isnull=False
+                        ).exclude(correct_answer='').first()
+                        
+                        if correct_detail and answer.value:
+                            if str(answer.value).strip().lower() == str(correct_detail.correct_answer).strip().lower():
+                                correct_count += 1
             
-            # محاسبه درصد
-            completion_percentage = 0.0
-            if total_questions > 0:
-                completion_percentage = round((correct_answers / total_questions) * 100, 1)
+            progress = int((answered_count / total_questions) * 100) if total_questions > 0 else 0
+            accuracy = int((correct_count / answered_count) * 100) if answered_count > 0 else 0
             
             subjects_data.append({
                 'id': subject.id,
@@ -5508,14 +5687,16 @@ class StudentSubjectsWithExercisesAPIView(APIView):
                 'description': subject.description,
                 'cover_image': subject.cover_image.url if subject.cover_image else None,
                 'teacher_id': subject.teacher_id,
-                'teacher_name': subject.teacher.name or subject.teacher.username,
+                'teacher_name': subject.teacher.name if hasattr(subject.teacher, 'name') and subject.teacher.name else subject.teacher.username,
                 'level': subject.level,
                 'total_questions': total_questions,
                 'total_steps': steps_count,
                 'has_started': order is not None,
                 'order_id': order.id if order else None,
-                'correct_answers': correct_answers,
-                'completion_percentage': completion_percentage
+                'answered_questions': answered_count,
+                'correct_answers': correct_count,
+                'exercise_progress': progress,
+                'exercise_accuracy': accuracy
             })
         
         return Response({
@@ -5524,6 +5705,7 @@ class StudentSubjectsWithExercisesAPIView(APIView):
                 'total': len(subjects_data)
             }
         }, status=status.HTTP_200_OK)
+
 
 
 class StudentExamByStepsAPIView(APIView):
@@ -6337,7 +6519,7 @@ class TeacherDetailAPIView(APIView):
     
     Description:
         Returns complete teacher profile including qualifications, teaching
-        subjects, and available time slots.
+        subjects, available time slots, and courses.
     
     Permissions:
         - Allow any user (public access)
@@ -6383,6 +6565,7 @@ class TeacherDetailAPIView(APIView):
                 - is_booked: boolean
                 - is_expired: boolean
                 - notes: string
+            - courses: array of course objects
         
         404 Not Found:
             - error: string - "معلم یافت نشد"
@@ -6421,6 +6604,11 @@ class TeacherDetailAPIView(APIView):
             'students_given_ratings': stats_serializer.data.get('students_given_ratings'),
             'total_student_ratings_given': stats_serializer.data.get('total_student_ratings_given'),
         }
+        
+        # Add teacher courses
+        courses = Course.objects.filter(subject__teacher=teacher, status='approved').select_related('subject')
+        courses_serializer = CourseSerializer(courses, many=True, context={'request': request})
+        base_data['courses'] = courses_serializer.data
         
         return Response(base_data, status=status.HTTP_200_OK)
 
@@ -8331,70 +8519,6 @@ class WithdrawalRequestCreateAPIView(APIView):
     Teacher requests to withdraw money from their wallet.
     Validates that available_balance >= amount and minimum_settlement_amount is met.
     Requires authentication (teacher only).
-    
-    post:
-        Create new withdrawal request.
-        
-        Request body parameters:
-        - amount: decimal (required) - Amount to withdraw
-        - payment_method: string (required) - Payment method: bank_transfer, card_transfer
-        - account_info: object (optional) - Bank details (overrides default if provided)
-            - bank_name: string - Bank name
-            - account_number: string - Account number
-            - iban: string - IBAN
-            - card_number: string - Card number
-        - notes: string (optional) - Request notes/description
-        
-        Returns:
-            201 Created:
-                - id: integer - Withdrawal request ID
-                - teacher_id: integer
-                - amount: decimal
-                - payment_method: string
-                - payment_method_display: string
-                - account_info: object
-                - status: string (default: pending)
-                - created_at: datetime
-                - message: string - "درخواست تسویه حساب ایجاد شد"
-                
-            400 Bad Request:
-                - Invalid amount (must be positive)
-                - Insufficient balance
-                - Amount below minimum settlement
-                - Invalid payment method
-                - Account info missing
-                
-            403 Forbidden - User is not a teacher
-            404 Not Found - Wallet not found
-    
-    Example POST Request:
-    ```json
-    {
-        "amount": "100000.00",
-        "payment_method": "bank_transfer",
-        "notes": "تقاضای کسب درآمد از دوره‌های آنلاین"
-    }
-    ```
-    
-    Example POST Response:
-    ```json
-    {
-        "id": 5,
-        "teacher_id": 42,
-        "amount": "100000.00",
-        "payment_method": "bank_transfer",
-        "payment_method_display": "انتقال بانکی",
-        "account_info": {
-            "bank_name": "بانک ملی",
-            "account_number": "1234567890",
-            "iban": "IR123456789"
-        },
-        "status": "pending",
-        "notes": "تقاضای کسب درآمد",
-        "created_at": "2024-12-20T12:00:00Z",
-        "message": "درخواست تسویه حساب ایجاد شد"
-    }
-    ```
     """
     permission_classes = [IsAuthenticated]
     
@@ -8406,7 +8530,7 @@ class WithdrawalRequestCreateAPIView(APIView):
             name='CreateWithdrawalRequest',
             fields={
                 'amount': serializers.DecimalField(max_digits=12, decimal_places=2, help_text='مبلغ درخواستی'),
-                'payment_method': serializers.ChoiceField(choices=['bank_transfer', 'card_transfer'], help_text='روش پرداخت'),
+                'payment_method': serializers.ChoiceField(choices=['bank_transfer', 'card_to_card', 'other'], help_text='روش پرداخت'),
                 'notes': serializers.CharField(required=False, allow_blank=True, help_text='یادداشت‌های اضافی'),
                 'account_info': serializers.JSONField(required=False, help_text='اطلاعات حساب بانکی'),
             }
@@ -8476,7 +8600,7 @@ class WithdrawalRequestCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # بررسی روش پرداخت
-        if payment_method not in ['bank_transfer', 'card_transfer']:
+        if payment_method not in ['bank_transfer', 'card_to_card', 'wallet', 'other']:
             return Response({
                 'error': _('روش پرداخت نامعتبر است')
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -8498,21 +8622,17 @@ class WithdrawalRequestCreateAPIView(APIView):
                 'error': _('اطلاعات حساب بانکی مورد نیاز است')
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # ایجاد درخواست تسویه حساب با استفاده از transaction.atomic
+        # ایجاد درخواست تسویه حساب
         try:
             with transaction.atomic():
                 # قفل کردن کیف پول برای جلوگیری از تغییرات همزمان
                 wallet = TeacherWallet.objects.select_for_update().get(teacher=request.user)
                 
-                # بررسی دوباره موجودی (در صورت تغییر توسط درخواست دیگری)
+                # بررسی دوباره موجودی
                 if wallet.available_balance < amount:
                     raise ValueError(_('موجودی کافی نیست'))
                 
-                # کاهش available_balance
-                wallet.available_balance -= amount
-                wallet.save()
-                
-                # ایجاد درخواست
+                # فقط ایجاد درخواست - بدون کم کردن موجودی
                 withdrawal = WithdrawalRequest.objects.create(
                     teacher=request.user,
                     amount=amount,
@@ -8522,22 +8642,26 @@ class WithdrawalRequestCreateAPIView(APIView):
                     status='pending'
                 )
                 
-                # ثبت تراکنش
-                from classroom.models import WalletTransaction
-                WalletTransaction.objects.create(
-                    wallet=wallet,
-                    transaction_type='withdrawal',
-                    amount=amount,
-                    balance_before=wallet.available_balance + amount,
-                    balance_after=wallet.available_balance,
-                    withdrawal=withdrawal,
-                    description=f'درخواست تسویه حساب - {payment_method}'
-                )
+                from account.utils import send_sms_general
+                from core.models import Contact
+                try:
+                    admin_contact = Contact.objects.filter(type='sms').first()
+                    if admin_contact and admin_contact.value:
+                        send_sms_general(
+                            phone_number=admin_contact.value,
+                            template_id='629637',
+                            parameters=[
+                                {'name': 'ID', 'value': str(withdrawal.id)}
+                            ]
+                        )
+                except Exception as sms_error:
+                    logger.warning(f"Failed to send admin SMS: {sms_error}")
+            
             
             serializer = WithdrawalRequestSerializer(withdrawal)
             return Response({
                 'data': serializer.data,
-                'message': _('درخواست تسویه حساب ایجاد شد')
+                'message': _('درخواست تسویه حساب ایجاد شد و در انتظار تایید ادمین است')
             }, status=status.HTTP_201_CREATED)
         
         except ValueError as e:
@@ -8548,6 +8672,218 @@ class WithdrawalRequestCreateAPIView(APIView):
             return Response({
                 'error': f'خطا: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# class WithdrawalRequestCreateAPIView(APIView):
+#     """
+#     Create Withdrawal Request API
+    
+#     Teacher requests to withdraw money from their wallet.
+#     Validates that available_balance >= amount and minimum_settlement_amount is met.
+#     Requires authentication (teacher only).
+    
+#     post:
+#         Create new withdrawal request.
+        
+#         Request body parameters:
+#         - amount: decimal (required) - Amount to withdraw
+#         - payment_method: string (required) - Payment method: bank_transfer, card_transfer
+#         - account_info: object (optional) - Bank details (overrides default if provided)
+#             - bank_name: string - Bank name
+#             - account_number: string - Account number
+#             - iban: string - IBAN
+#             - card_number: string - Card number
+#         - notes: string (optional) - Request notes/description
+        
+#         Returns:
+#             201 Created:
+#                 - id: integer - Withdrawal request ID
+#                 - teacher_id: integer
+#                 - amount: decimal
+#                 - payment_method: string
+#                 - payment_method_display: string
+#                 - account_info: object
+#                 - status: string (default: pending)
+#                 - created_at: datetime
+#                 - message: string - "درخواست تسویه حساب ایجاد شد"
+                
+#             400 Bad Request:
+#                 - Invalid amount (must be positive)
+#                 - Insufficient balance
+#                 - Amount below minimum settlement
+#                 - Invalid payment method
+#                 - Account info missing
+                
+#             403 Forbidden - User is not a teacher
+#             404 Not Found - Wallet not found
+    
+#     Example POST Request:
+#     ```json
+#     {
+#         "amount": "100000.00",
+#         "payment_method": "bank_transfer",
+#         "notes": "تقاضای کسب درآمد از دوره‌های آنلاین"
+#     }
+#     ```
+    
+#     Example POST Response:
+#     ```json
+#     {
+#         "id": 5,
+#         "teacher_id": 42,
+#         "amount": "100000.00",
+#         "payment_method": "bank_transfer",
+#         "payment_method_display": "انتقال بانکی",
+#         "account_info": {
+#             "bank_name": "بانک ملی",
+#             "account_number": "1234567890",
+#             "iban": "IR123456789"
+#         },
+#         "status": "pending",
+#         "notes": "تقاضای کسب درآمد",
+#         "created_at": "2024-12-20T12:00:00Z",
+#         "message": "درخواست تسویه حساب ایجاد شد"
+#     }
+#     ```
+#     """
+#     permission_classes = [IsAuthenticated]
+    
+#     @extend_schema(
+#         tags=['Financial - Withdrawal'],
+#         summary='Create Withdrawal Request',
+#         description='Create new withdrawal request from teacher wallet',
+#         request=inline_serializer(
+#             name='CreateWithdrawalRequest',
+#             fields={
+#                 'amount': serializers.DecimalField(max_digits=12, decimal_places=2, help_text='مبلغ درخواستی'),
+#                 'payment_method': serializers.ChoiceField(choices=['bank_transfer', 'card_transfer'], help_text='روش پرداخت'),
+#                 'notes': serializers.CharField(required=False, allow_blank=True, help_text='یادداشت‌های اضافی'),
+#                 'account_info': serializers.JSONField(required=False, help_text='اطلاعات حساب بانکی'),
+#             }
+#         ),
+#         responses={
+#             201: OpenApiResponse(description="Withdrawal request created successfully"),
+#             400: OpenApiResponse(description="Invalid amount, insufficient balance, or invalid data"),
+#             403: OpenApiResponse(description="User is not a teacher"),
+#             404: OpenApiResponse(description="Wallet not found"),
+#         }
+#     )
+#     def post(self, request):
+#         from classroom.models import TeacherWallet, WithdrawalRequest
+#         from .classroom_serializers import WithdrawalRequestSerializer
+#         from decimal import Decimal
+#         from django.db import transaction
+        
+#         # فقط معلمان
+#         if request.user.role != 'teacher':
+#             return Response({
+#                 'error': _('فقط معلمان می‌توانند درخواست تسویه حساب کنند')
+#             }, status=status.HTTP_403_FORBIDDEN)
+        
+#         # دریافت داده‌ها
+#         amount_str = request.data.get('amount')
+#         payment_method = request.data.get('payment_method')
+#         notes = request.data.get('notes', '').strip()
+#         account_info = request.data.get('account_info')
+        
+#         # اعتبارسنجی
+#         if not amount_str or not payment_method:
+#             return Response({
+#                 'error': _('مبلغ و روش پرداخت الزامی هستند')
+#             }, status=status.HTTP_400_BAD_REQUEST)
+        
+#         # تبدیل مبلغ
+#         try:
+#             amount = Decimal(str(amount_str))
+#             if amount <= 0:
+#                 raise ValueError("Amount must be positive")
+#         except (ValueError, TypeError):
+#             return Response({
+#                 'error': _('مبلغ نامعتبر است')
+#             }, status=status.HTTP_400_BAD_REQUEST)
+        
+#         # دریافت کیف پول معلم
+#         try:
+#             wallet = TeacherWallet.objects.get(teacher=request.user)
+#         except TeacherWallet.DoesNotExist:
+#             return Response({
+#                 'error': _('کیف پول یافت نشد')
+#             }, status=status.HTTP_404_NOT_FOUND)
+        
+#         # بررسی موجودی
+#         if wallet.available_balance < amount:
+#             return Response({
+#                 'error': _('موجودی کافی نیست'),
+#                 'available': str(wallet.available_balance)
+#             }, status=status.HTTP_400_BAD_REQUEST)
+        
+#         # بررسی حداقل مبلغ
+#         if amount < wallet.minimum_settlement_amount:
+#             return Response({
+#                 'error': _('مبلغ از حداقل درخواست (%(min)s) کمتر است') % {
+#                     'min': wallet.minimum_settlement_amount
+#                 }
+#             }, status=status.HTTP_400_BAD_REQUEST)
+        
+#         # بررسی روش پرداخت
+#         if payment_method not in ['bank_transfer', 'card_to_card', 'other']:
+#             return Response({
+#                 'error': _('روش پرداخت نامعتبر است')
+#             }, status=status.HTTP_400_BAD_REQUEST)
+        
+#         # استفاده از account_info ارائه شده یا اطلاعات بانکی کیف پول
+#         if not account_info:
+#             account_info = {
+#                 'bank_name': wallet.bank_name,
+#                 'account_number': wallet.account_number,
+#                 'iban': wallet.iban,
+#                 'card_number': wallet.card_number,
+#                 'account_holder_name': wallet.account_holder_name
+#             }
+#             # فیلتر کردن مقادیر خالی
+#             account_info = {k: v for k, v in account_info.items() if v}
+        
+#         if not account_info:
+#             return Response({
+#                 'error': _('اطلاعات حساب بانکی مورد نیاز است')
+#             }, status=status.HTTP_400_BAD_REQUEST)
+        
+#         # ایجاد درخواست تسویه حساب با استفاده از transaction.atomic
+#         try:
+#             with transaction.atomic():
+#                 # قفل کردن کیف پول برای جلوگیری از تغییرات همزمان
+#                 wallet = TeacherWallet.objects.select_for_update().get(teacher=request.user)
+                
+#                 # بررسی دوباره موجودی (در صورت تغییر توسط درخواست دیگری)
+#                 if wallet.available_balance < amount:
+#                     raise ValueError(_('موجودی کافی نیست'))
+                
+                
+#                 # ایجاد درخواست
+#                 withdrawal = WithdrawalRequest.objects.create(
+#                     teacher=request.user,
+#                     amount=amount,
+#                     payment_method=payment_method,
+#                     account_info=account_info,
+#                     notes=notes,
+#                     status='pending'
+#                 )
+                
+               
+            
+#             serializer = WithdrawalRequestSerializer(withdrawal)
+#             return Response({
+#                 'data': serializer.data,
+#                 'message': _('درخواست تسویه حساب ایجاد شد')
+#             }, status=status.HTTP_201_CREATED)
+        
+#         except ValueError as e:
+#             return Response({
+#                 'error': str(e)
+#             }, status=status.HTTP_400_BAD_REQUEST)
+#         except Exception as e:
+#             return Response({
+#                 'error': f'خطا: {str(e)}'
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class WalletTransactionListAPIView(APIView):
@@ -9675,7 +10011,7 @@ class ParentalLimitsAPIView(APIView):
         used_today_seconds = usage_log.total_seconds
         
         # Compute remaining seconds
-        remaining_seconds = None
+        remaining_seconds = 24*60*60
         if parent.daily_usage_limit_minutes:
             limit_seconds = parent.daily_usage_limit_minutes * 60
             remaining_seconds = max(0, limit_seconds - used_today_seconds)
@@ -9723,7 +10059,7 @@ class ParentalUsageReportAPIView(APIView):
     POST: Report usage chunk from student device
     
     Request body:
-        - session_seconds: int (1-600) - تعداد ثانیه‌های این جلسه
+        - session_seconds: int (1-86400) - تعداد ثانیه‌های این جلسه
         - device_id: string (optional) - شناسه دستگاه
         - client_started_at: datetime (optional) - زمان شروع در دستگاه
         - client_ended_at: datetime (optional) - زمان پایان در دستگاه
@@ -9740,7 +10076,7 @@ class ParentalUsageReportAPIView(APIView):
         request=inline_serializer(
             name='UsageReportRequest',
             fields={
-                'session_seconds': serializers.IntegerField(min_value=1, max_value=600),
+                'session_seconds': serializers.IntegerField(min_value=1, max_value=86400),
                 'device_id': serializers.CharField(required=False, allow_blank=True),
                 'client_started_at': serializers.DateTimeField(required=False),
                 'client_ended_at': serializers.DateTimeField(required=False)
@@ -9756,7 +10092,7 @@ class ParentalUsageReportAPIView(APIView):
         """Report usage chunk"""
         from account.models import ParentProfile, ParentAppUsageLog
         from .parent_serializers import UsageReportRequestSerializer, ParentalLimitsSerializer
-        from django.db.models import F
+        from django.db.models import F, ExpressionWrapper, IntegerField
         import logging
         
         logger = logging.getLogger(__name__)
@@ -9807,7 +10143,8 @@ class ParentalUsageReportAPIView(APIView):
             )
         
         # Use server time as source of truth
-        server_now = timezone.localtime(timezone.now())
+        iran_tz = pytz.timezone("Asia/Tehran")
+        server_now = timezone.now().astimezone(iran_tz)
         today = server_now.date()
         
         # Upsert usage log (atomic update)
@@ -9825,7 +10162,10 @@ class ParentalUsageReportAPIView(APIView):
         # Atomically update usage (use F() to avoid race conditions)
         ParentAppUsageLog.objects.filter(pk=usage_log.pk).update(
             total_seconds=F('total_seconds') + session_seconds,
-            total_minutes=F('total_seconds') // 60,  # Derived from seconds
+            total_minutes = ExpressionWrapper(
+                F('total_seconds') / 60,
+                output_field=IntegerField()
+            ),
             session_count=F('session_count') + 1,
             last_reported_at=server_now
         )
@@ -10138,38 +10478,6 @@ class StudentExercisesListAPIView(APIView):
     
     Returns all CategoryField (exercise templates) from subjects where the student
     has paid classes with this teacher. Includes student's answers and correctness.
-    
-    Permission: Authenticated, Teacher only (can only see their own students)
-    
-    GET /api/teacher/student/<student_id>/exercises/
-    
-    Returns:
-        200 OK:
-            {
-                'success': true,
-                'message': 'Exercises retrieved successfully',
-                'data': [
-                    {
-                        'exercise_id': 789,
-                        'subject_id': 123,
-                        'subject_title': 'انگلیسی مبتدی',
-                        'field_id': 456,
-                        'field_title': 'سوال اول',
-                        'step': 1,
-                        'sort': 0,
-                        'type': 'input',
-                        'is_conditional': false,
-                        'answered': true,
-                        'answer_value': 'پاسخ دانش‌آموز',
-                        'answer_field_detail_id': 10,
-                        'is_correct': true
-                    },
-                    ...
-                ]
-            }
-        
-        403 Forbidden: User is not a teacher or not their student
-        404 Not Found: Student not found
     """
     permission_classes = [IsAuthenticated]
     
@@ -10198,6 +10506,8 @@ class StudentExercisesListAPIView(APIView):
     )
     def get(self, request, student_id):
         """Get all exercise templates for a student"""
+        from exercise.models import Order, OrderDetail, FieldDetail
+        
         teacher = request.user
         
         # Check if user is a teacher
@@ -10211,19 +10521,30 @@ class StudentExercisesListAPIView(APIView):
         student = get_object_or_404(User, id=student_id)
         
         # Get all subjects where this student has paid classes with this teacher
-        subject_ids = ClassBooking.objects.filter(
+        subject_ids = list(ClassBooking.objects.filter(
             teacher=teacher,
             student=student,
             payment_status='paid'
-        ).values_list('subject_id', flat=True).distinct()
+        ).values_list('subject_id', flat=True).distinct())
+        
+        if not subject_ids:
+            return Response({
+                'success': True,
+                'message': _('No paid classes found'),
+                'data': []
+            }, status=status.HTTP_200_OK)
         
         # Get all CategoryField exercises from these subjects
         exercises = CategoryField.objects.filter(
             teachingsubject_id__in=subject_ids
         ).select_related('teachingsubject', 'field').order_by('teachingsubject', 'step', 'sort')
         
-        # دریافت پاسخ‌های دانش‌آموز
-        from exercise.models import Order, OrderDetail, FieldDetail
+        if not exercises.exists():
+            return Response({
+                'success': True,
+                'message': _('No exercises found'),
+                'data': []
+            }, status=status.HTTP_200_OK)
         
         # Get all orders for this student
         student_orders = Order.objects.filter(
@@ -10236,47 +10557,164 @@ class StudentExercisesListAPIView(APIView):
         
         # Get all order details for student's orders
         order_ids = [o['id'] for o in student_orders]
-        order_details = OrderDetail.objects.filter(
-            order_id__in=order_ids
-        ).select_related('field_detail')
         
-        # Build a dict: {(order_id, field_id): {'value': ..., 'field_detail_id': ..., 'is_correct': ..., 'field_detail': ...}}
-        student_answers = {}
-        for od in order_details:
-            key = (od.order_id, od.field_id)
-            is_correct = False
-            field_detail_info = None
+        if order_ids:
+            order_details = OrderDetail.objects.filter(
+                order_id__in=order_ids
+            ).select_related('field_detail', 'field', 'order').order_by('field_id', '-created_at')
             
-            if od.field_detail:
-                # سوال چند گزینه‌ای
-                is_correct = od.field_detail.is_correct == 1
-                field_detail_info = {
-                    'id': od.field_detail.id,
-                    'title': od.field_detail.title,
-                    'second_title': od.field_detail.second_title,
-                    'image_path': od.field_detail.image_path,
-                    'is_correct': od.field_detail.is_correct,
-                }
-            else:
-                # سوال متنی - مقایسه با correct_answer
-                field_detail_obj = FieldDetail.objects.filter(field_id=od.field_id).first()
-                if field_detail_obj and field_detail_obj.correct_answer:
-                    student_val = (od.value or '').strip().lower()
-                    correct_val = field_detail_obj.correct_answer.strip().lower()
-                    is_correct = student_val == correct_val
+            # Build a dict: {(order_id, field_id): [OrderDetail objects]}
+            student_answers = {}
+            for od in order_details:
+                key = (od.order_id, od.field_id)
+                if key not in student_answers:
+                    student_answers[key] = []
+                student_answers[key].append(od)
+        else:
+            student_answers = {}
+        
+        # دریافت تمام field_idها
+        field_ids = [ex.field_id for ex in exercises]
+        
+        # برای سوالات متنی: دریافت correct_answer
+        correct_answers_text = {}
+        text_correct_details = FieldDetail.objects.filter(
+            field_id__in=field_ids,
+            field__type='input',
+            correct_answer__isnull=False
+        ).exclude(correct_answer='').values('field_id', 'correct_answer')
+        
+        for detail in text_correct_details:
+            correct_answers_text[detail['field_id']] = detail['correct_answer']
+        
+        # برای سوالات گزینه‌ای: دریافت همه گزینه‌ها
+        all_field_details = FieldDetail.objects.filter(
+            field_id__in=field_ids
+        ).values('field_id', 'id', 'title', 'second_title', 'image_path', 'is_correct')
+        
+        # {field_id: [list of all details]}
+        field_details_map = {}
+        correct_answers_choice = {}
+        for detail in all_field_details:
+            field_id = detail['field_id']
+            if field_id not in field_details_map:
+                field_details_map[field_id] = []
+            field_details_map[field_id].append(detail)
             
-            student_answers[key] = {
-                'value': od.value,
-                'field_detail_id': od.field_detail_id,
-                'is_correct': is_correct,
-                'field_detail': field_detail_info
-            }
+            # ذخیره گزینه‌های صحیح
+            if detail['is_correct'] == 1:
+                if field_id not in correct_answers_choice:
+                    correct_answers_choice[field_id] = []
+                correct_answers_choice[field_id].append(detail)
         
         # Serialize data
         result = []
         for exercise in exercises:
             order_id = subject_order_map.get(exercise.teachingsubject_id)
-            answer_data = student_answers.get((order_id, exercise.field_id)) if order_id else None
+            answer_ods = student_answers.get((order_id, exercise.field_id), []) if order_id else []
+            
+            # محاسبه صحت پاسخ
+            is_correct = None
+            answer_value = None
+            answer_field_detail_id = None
+            answer_field_detail = None
+            correct_answer = None
+            
+            # بررسی نوع سوال از Field
+            field_type = exercise.field.type
+            
+            # تعیین correct_answer بر اساس نوع سوال
+            if field_type == 'input':
+                correct_answer = correct_answers_text.get(exercise.field_id)
+            elif field_type == 'radioButton':
+                correct_details = correct_answers_choice.get(exercise.field_id, [])
+                if correct_details:
+                    correct_answer = {
+                        'id': correct_details[0]['id'],
+                        'title': correct_details[0]['title'],
+                        'second_title': correct_details[0]['second_title'],
+                        'image_path': correct_details[0]['image_path']
+                    }
+            elif field_type == 'checkbox':
+                correct_details = correct_answers_choice.get(exercise.field_id, [])
+                correct_answer = [
+                    {
+                        'id': d['id'],
+                        'title': d['title'],
+                        'second_title': d['second_title'],
+                        'image_path': d['image_path']
+                    }
+                    for d in correct_details
+                ]
+            
+            # پردازش پاسخ دانش‌آموز
+            if answer_ods:
+                if field_type == 'checkbox':
+                    selected_detail_ids = set()
+                    for ans in answer_ods:
+                        if ans.field_detail_id:
+                            selected_detail_ids.add(int(ans.field_detail_id))
+                
+                    all_options = field_details_map.get(exercise.field_id, [])
+                
+                    answer_field_detail = []
+                    for opt in all_options:
+                        opt_id = int(opt['id'])  # تبدیل به int برای مطمئن شدن
+                        answer_field_detail.append({
+                            'id': opt_id,
+                            'title': opt['title'],
+                            'second_title': opt['second_title'],
+                            'image_path': opt['image_path'],
+                            'selected': opt_id in selected_detail_ids,
+                            'is_correct': opt['is_correct'] == 1
+                        })
+                
+                    correct_detail_ids = {int(d['id']) for d in correct_answers_choice.get(exercise.field_id, [])}
+                    is_correct = selected_detail_ids == correct_detail_ids
+                            
+                                        
+                elif field_type == 'radioButton':
+                    # سوال تک‌گزینه‌ای
+                    answer_od = answer_ods[0]
+                    answer_value = answer_od.value
+                    answer_field_detail_id = answer_od.field_detail_id
+                    
+                    if answer_od.field_detail:
+                        is_correct = answer_od.field_detail.is_correct == 1
+                        answer_field_detail = {
+                            'id': answer_od.field_detail.id,
+                            'title': answer_od.field_detail.title,
+                            'second_title': answer_od.field_detail.second_title,
+                            'image_path': answer_od.field_detail.image_path,
+                            'is_correct': answer_od.field_detail.is_correct == 1
+                        }
+                
+                elif field_type == 'input':
+                    # سوال متنی
+                    answer_od = answer_ods[0]
+                    answer_value = answer_od.value
+                    
+                    if correct_answer and answer_value:
+                        student_val = str(answer_value).strip().lower()
+                        correct_val = str(correct_answer).strip().lower()
+                        is_correct = student_val == correct_val
+                    else:
+                        is_correct = False
+            else:
+                # اگر پاسخی نداده و سوال checkbox هست
+                if field_type == 'checkbox':
+                    all_options = field_details_map.get(exercise.field_id, [])
+                    answer_field_detail = [
+                        {
+                            'id': opt['id'],
+                            'title': opt['title'],
+                            'second_title': opt['second_title'],
+                            'image_path': opt['image_path'],
+                            'selected': False,
+                            'is_correct': opt['is_correct'] == 1
+                        }
+                        for opt in all_options
+                    ]
             
             result.append({
                 'exercise_id': exercise.id,
@@ -10286,13 +10724,14 @@ class StudentExercisesListAPIView(APIView):
                 'field_title': exercise.field.title,
                 'step': exercise.step,
                 'sort': exercise.sort,
-                'type': exercise.type,
+                'type': field_type,
                 'is_conditional': exercise.is_conditional,
-                'answered': answer_data is not None,
-                'answer_value': answer_data['value'] if answer_data else None,
-                'answer_field_detail_id': answer_data['field_detail_id'] if answer_data else None,
-                'answer_field_detail': answer_data['field_detail'] if answer_data else None,
-                'is_correct': answer_data['is_correct'] if answer_data else None
+                'answered': len(answer_ods) > 0,
+                'answer_value': answer_value,
+                'answer_field_detail_id': answer_field_detail_id,
+                'answer_field_detail': answer_field_detail,
+                'correct_answer': correct_answer,
+                'is_correct': is_correct
             })
         
         serializer = StudentExerciseTemplateSerializer(result, many=True)
@@ -10302,6 +10741,10 @@ class StudentExercisesListAPIView(APIView):
             'message': _('Exercises retrieved successfully'),
             'data': serializer.data
         }, status=status.HTTP_200_OK)
+
+
+
+
 
 class StudentProfileDetailAPIView(APIView):
     """
@@ -11587,3 +12030,549 @@ class TeacherPackageInstallmentDetailAPIView(APIView):
                 'message': _('Error deleting installment'),
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+            
+            
+# دوره
+class TeacherCourseListCreateView(generics.ListCreateAPIView):
+    """
+    لیست و ایجاد دوره توسط معلم
+    """
+    serializer_class = CourseSerializer
+    permission_classes = [IsTeacher]
+
+    def get_queryset(self):
+        return (
+            Course.objects.filter(subject__teacher=self.request.user)
+            .select_related('subject')
+        )
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+
+class TeacherCourseDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """جزئیات، ویرایش و حذف دوره توسط معلم"""
+    serializer_class = CourseSerializer
+    permission_classes = [IsTeacher]
+
+    def get_queryset(self):
+        return Course.objects.filter(subject__teacher=self.request.user)
+    
+    def destroy(self, request, *args, **kwargs):
+        from classroom.models import CourseEnrollment
+        
+        instance = self.get_object()
+        
+        # بررسی وجود ثبت‌نام
+        enrollments = CourseEnrollment.objects.filter(course=instance)
+        if enrollments.exists():
+            student_names = ', '.join([e.student.get_full_name() or e.student.phone for e in enrollments[:3]])
+            return Response(
+                {
+                    'error': _('این دوره دارای دانش‌آموزان ثبت‌نام شده است و قابل حذف نیست'),
+                    'students': student_names,
+                    'count': enrollments.count()
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            self.perform_destroy(instance)
+            return Response(
+                {'message': _('دوره با موفقیت حذف شد')},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        except ProtectedError as e:
+            return Response(
+                {'error': _('این دوره دارای اطلاعات وابسته است و قابل حذف نیست')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+# ── دانش‌آموز: مشاهده و خرید دوره ───────────────────────────
+
+class CourseListView(generics.ListAPIView):
+    """لیست دوره‌های فعال برای دانش‌آموزان"""
+    serializer_class = CourseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # اضافه کردن شرط تایید معلم به کوئری پایه
+        qs = Course.objects.filter(
+            is_active=True, 
+            status='approved',
+            subject__teacher__is_teacher_verified=True  # اعمال شرط تایید معلم
+        ).select_related('subject__teacher')
+
+        # فیلتر اختیاری بر اساس subject
+        subject_id = self.request.query_params.get('subject')
+        if subject_id:
+            qs = qs.filter(subject_id=subject_id)
+
+        return qs
+
+
+class CourseDetailView(generics.RetrieveAPIView):
+    """جزئیات یک دوره"""
+    serializer_class = CourseSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = Course.objects.filter(is_active=True).select_related('subject__teacher')
+    
+    
+class TeacherEnrollmentListView(ListAPIView):
+    serializer_class = CourseEnrollmentWithBookingsListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return CourseEnrollment.objects.filter(
+            course__subject__teacher=self.request.user,
+            payment_status='paid'
+        ).select_related(
+            'course__subject__teacher',
+            'student'
+        ).prefetch_related('bookings__availability')
+
+
+class TeacherEnrollmentDetailView(RetrieveAPIView):
+    serializer_class = CourseEnrollmentWithBookingsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return CourseEnrollment.objects.filter(
+            course__subject__teacher=self.request.user,
+            payment_status='paid'
+        ).select_related(
+            'course__subject__teacher',
+            'student'
+        ).prefetch_related('bookings__availability')
+        
+class AssignTimeToEnrollmentView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        if request.user.role != 'teacher':
+            return Response(
+                {"error": "فقط معلمان می‌توانند تایم اختصاص دهند"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = AssignTimeToEnrollmentSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        enrollment = serializer.validated_data['enrollment']
+        availabilities = serializer.validated_data['availabilities']
+        assigned_count = serializer.validated_data['assigned_count']
+        total_count = serializer.validated_data['total_count']
+        
+        if enrollment.course.subject.teacher != request.user:
+            return Response(
+                {"error": "این دوره متعلق به شما نیست"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            with transaction.atomic():
+                price_per_session = enrollment.course.final_price / enrollment.course.session_count
+                
+                bookings = [
+                    ClassBooking(
+                        availability=a,
+                        teacher=request.user,
+                        student=enrollment.student,
+                        subject=enrollment.course.subject,
+                        status='reserved',
+                        price=price_per_session,
+                        final_price=price_per_session,
+                        payment_status='paid',
+                        enrollment=enrollment,
+                    )
+                    for a in availabilities
+                ]
+                
+                ClassBooking.objects.bulk_create(bookings)
+                
+                TeacherAvailability.objects.filter(
+                    id__in=[a.id for a in availabilities]
+                ).update(is_booked=True, is_available=False)
+                
+            remaining = enrollment.course.session_count - total_count
+            
+            return Response(
+                {
+                    "message": "تایم‌ها با موفقیت اختصاص داده شدند",
+                    "enrollment_id": enrollment.id,
+                    "newly_assigned": len(bookings),
+                    "total_assigned": total_count,
+                    "total_sessions": enrollment.course.session_count,
+                    "remaining_sessions": remaining,
+                    "is_complete": remaining == 0
+                },
+                status=status.HTTP_201_CREATED
+            )
+            
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class EnrollCourseView(APIView):
+    """خرید دوره توسط دانش‌آموز"""
+    permission_classes = [IsStudent]
+
+    def post(self, request, course_id):
+        import requests
+        from decimal import Decimal
+        from django.utils import timezone
+        from django.conf import settings
+
+        try:
+            course = get_object_or_404(Course, id=course_id, is_active=True)
+
+            # جلوگیری از خرید مجدد دوره‌ای که قبلاً پرداخت شده
+            if CourseEnrollment.objects.filter(course=course, student=request.user, payment_status='paid').exists():
+                return Response(
+                    {'detail': 'شما قبلاً این دوره را خریداری کرده‌اید.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # ایجاد یا گرفتن enrollment موجود با وضعیت not_paid
+            enrollment, created = CourseEnrollment.objects.get_or_create(
+                course=course,
+                student=request.user,
+                defaults={'paid_amount': course.final_price, 'payment_status': 'not_paid'}
+            )
+
+            final_amount = Decimal(str(course.final_price))
+
+            # اگر دوره رایگان است
+            if final_amount == 0:
+                enrollment.payment_status = 'paid'
+                enrollment.paid_at = timezone.now()
+                enrollment.save()
+                enrollment._create_bookings()
+                return Response({
+                    'success': True,
+                    'enrollment_id': enrollment.id,
+                    'amount': '0',
+                    'is_free': True,
+                    'payment_url': None,
+                    'message': 'دوره رایگان است - ثبت‌نام انجام شد'
+                }, status=status.HTTP_200_OK)
+
+            # درخواست پرداخت از Zibal
+            try:
+                zibal_merchant_id = settings.ZIBAL_MERCHANT_ID
+                zibal_api_url = settings.ZIBAL_REQUEST_URL
+                zibal_callback_url = settings.ZIBAL_CALLBACK_URL_COURSE
+
+                # تبدیل تومان به ریال
+                amount_rial = int(float(final_amount) * 10)
+
+                payload = {
+                    'merchant': zibal_merchant_id,
+                    'amount': amount_rial,
+                    'callbackUrl': zibal_callback_url,
+                    'description': f'خرید دوره {course.title}',
+                    'orderId': str(enrollment.id),
+                    'linkingRef': f'course_order_{enrollment.id}'
+                }
+
+                response = requests.post(zibal_api_url, json=payload, timeout=10)
+
+                if response.status_code != 200:
+                    if created:  # فقط رکورد تازه ایجاد شده را پاک کن
+                        enrollment.delete()
+                    return Response(
+                        {'error': 'خطا در اتصال به درگاه پرداخت'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+
+                response_data = response.json()
+
+                if response_data.get('result') != 100:
+                    if created:
+                        enrollment.delete()
+                    error_message = response_data.get('message', 'خطای نامشخص')
+                    return Response(
+                        {'error': f'درگاه پرداخت: {error_message}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                track_id = response_data.get('trackId')
+                if not track_id:
+                    if created:
+                        enrollment.delete()
+                    return Response(
+                        {'error': 'خطا در دریافت شناسه پرداخت'},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+
+                payment_url = f'https://gateway.zibal.ir/start/{track_id}'
+
+                return Response({
+                    'success': True,
+                    'enrollment_id': enrollment.id,
+                    'amount': str(final_amount),
+                    'currency': 'IRR',
+                    'is_free': False,
+                    'payment_url': payment_url,
+                    'message': 'پرداخت آغاز شد'
+                }, status=status.HTTP_201_CREATED)
+
+            except requests.exceptions.Timeout:
+                if created:
+                    enrollment.delete()
+                return Response(
+                    {'error': 'درخواست به درگاه پرداخت تایم‌اوت شد'},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+            except requests.exceptions.RequestException:
+                if created:
+                    enrollment.delete()
+                return Response(
+                    {'error': 'خطا در برقراری ارتباط با درگاه پرداخت'},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+
+        except Exception as e:
+            if 'enrollment' in locals() and created:
+                enrollment.delete()
+            return Response(
+                {'error': 'خطای داخلی سرور'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class CoursePaymentCallbackAPIView(APIView):
+    """بازخورد از درگاه پرداخت برای دوره‌ها"""
+    permission_classes = [AllowAny]
+
+    def _normalize_success(self, success):
+        """تبدیل success به boolean - Zibal ممکنه فرمت‌های مختلف بفرسته"""
+        if success is None:
+            return False
+        if isinstance(success, bool):
+            return success
+        if isinstance(success, int):
+            return success == 1
+        if isinstance(success, str):
+            success_lower = success.strip().lower()
+            return success_lower in ['1', 'true', 'success']
+        return False
+
+    def _get_callback_data(self, request):
+        if request.method == 'GET':
+            return {
+                'track_id': request.query_params.get('trackId'),
+                'success': request.query_params.get('success'),
+                'order_id': request.query_params.get('orderId'),
+            }
+        else:
+            return {
+                'track_id': request.data.get('trackId'),
+                'success': request.data.get('success'),
+                'order_id': request.data.get('orderId'),
+            }
+
+    def _process_callback(self, request):
+        from django.db import transaction
+        from decimal import Decimal
+        import requests
+        from django.conf import settings
+        from django.urls import reverse
+        from django.http import HttpResponseRedirect
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        try:
+            data = self._get_callback_data(request)
+            track_id = data['track_id']
+            success_raw = data['success']
+            success = self._normalize_success(success_raw)
+            order_id = data['order_id']
+
+            logger.info(f"=== Course Payment Callback ===")
+            logger.info(f"Method: {request.method}")
+            logger.info(f"trackId: {track_id}")
+            logger.info(f"success_raw: {success_raw} (type: {type(success_raw).__name__})")
+            logger.info(f"success_normalized: {success}")
+            logger.info(f"orderId: {order_id}")
+            logger.info(f"==============================")
+
+            if not all([track_id, success is not None, order_id]):
+                logger.error("Missing trackId, success, or orderId")
+                return Response(
+                    {'error': 'اطلاعات ناقص'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                enrollment = CourseEnrollment.objects.get(id=order_id)
+            except CourseEnrollment.DoesNotExist:
+                logger.error(f"Enrollment not found: {order_id}")
+                return Response(
+                    {'error': 'ثبت‌نام یافت نشد'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if enrollment.payment_status == 'paid':
+                logger.info(f"Enrollment {order_id} already paid")
+                redirect_url = request.build_absolute_uri(reverse('api:course_payment_redirect'))
+                return HttpResponseRedirect(redirect_url + f'?status=success&orderId={enrollment.id}')
+
+            if not success:
+                logger.warning(f"Payment unsuccessful - success_raw was: {success_raw}")
+                with transaction.atomic():
+                    enrollment.payment_status = 'failed'
+                    enrollment.payment_ref = track_id
+                    enrollment.save()
+
+                redirect_url = request.build_absolute_uri(reverse('api:course_payment_redirect'))
+                return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={enrollment.id}&message=Payment+unsuccessful')
+
+            zibal_verify_url = settings.ZIBAL_VERIFY_URL
+            zibal_merchant_id = settings.ZIBAL_MERCHANT_ID
+
+            verify_payload = {
+                'merchant': zibal_merchant_id,
+                'trackId': track_id
+            }
+
+            try:
+                logger.info(f"Verifying payment with Zibal: {verify_payload}")
+                verify_response = requests.post(zibal_verify_url, json=verify_payload, timeout=10)
+
+                if verify_response.status_code != 200:
+                    logger.error(f"Zibal verify failed with status {verify_response.status_code}")
+                    with transaction.atomic():
+                        enrollment.payment_status = 'failed'
+                        enrollment.payment_ref = track_id
+                        enrollment.save()
+
+                    redirect_url = request.build_absolute_uri(reverse('api:course_payment_redirect'))
+                    return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={enrollment.id}&message=Verification+error')
+
+                verify_data = verify_response.json()
+                logger.info(f"Zibal verify response: {verify_data}")
+
+                if verify_data.get('result') != 100:
+                    logger.error(f"Zibal verification failed: {verify_data}")
+                    with transaction.atomic():
+                        enrollment.payment_status = 'failed'
+                        enrollment.payment_ref = track_id
+                        enrollment.save()
+
+                    redirect_url = request.build_absolute_uri(reverse('api:course_payment_redirect'))
+                    return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={enrollment.id}&message=Payment+verification+failed')
+
+                amount_rial = verify_data.get('amount')
+
+                # ✅ فقط تایید پرداخت - بدون create_class_bookings
+                with transaction.atomic():
+                    try:
+                        if amount_rial:
+                            paid_amount = Decimal(str(amount_rial)) / Decimal('10')
+                        else:
+                            paid_amount = enrollment.paid_amount
+                    except (ValueError, TypeError, Decimal.InvalidOperation) as e:
+                        logger.error(f"Error converting amount: {e}")
+                        paid_amount = enrollment.paid_amount
+
+                    enrollment.payment_status = 'paid'
+                    enrollment.paid_at = timezone.now()
+                    enrollment.payment_ref = track_id
+                    enrollment.paid_amount = paid_amount
+                    enrollment.save()
+                    
+                    logger.info(f"Payment confirmed for enrollment {order_id}, amount: {paid_amount}")
+
+                redirect_url = request.build_absolute_uri(reverse('api:course_payment_redirect'))
+                return HttpResponseRedirect(redirect_url + f'?status=success&orderId={enrollment.id}')
+
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Request exception during verification: {e}")
+                redirect_url = request.build_absolute_uri(reverse('api:course_payment_redirect'))
+                return HttpResponseRedirect(redirect_url + f'?status=failed&orderId={order_id}&message=Gateway+connection+error')
+
+        except Exception as e:
+            logger.exception(f"Unexpected error in course payment callback: {e}")
+            return Response(
+                {'error': 'خطای داخلی سرور'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def get(self, request):
+        return self._process_callback(request)
+
+    def post(self, request):
+        return self._process_callback(request)
+        
+
+class ConfirmEnrollmentPaymentView(APIView):
+    """تایید پرداخت دوره (callback از درگاه)"""
+    permission_classes = [IsStudent]
+
+    def post(self, request, enrollment_id):
+        enrollment = get_object_or_404(
+            CourseEnrollment,
+            id=enrollment_id,
+            student=request.user,
+            payment_status='not_paid'
+        )
+    
+        payment_ref = request.data.get('payment_ref')
+        if not payment_ref:
+            return Response({'detail': 'شناسه تراکنش الزامی است.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+        try:
+            with transaction.atomic():
+                enrollment.confirm_payment(payment_ref)
+        except Exception as e:
+            return Response({'detail': 'خطا در تایید پرداخت.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+        serializer = CourseEnrollmentSerializer(enrollment)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class StudentEnrollmentListView(generics.ListAPIView):
+    """لیست دوره‌های خریداری‌شده توسط دانش‌آموز"""
+    serializer_class = CourseEnrollmentSerializer
+    permission_classes = [IsStudent]
+
+    def get_queryset(self):
+        return CourseEnrollment.objects.filter(
+            student=self.request.user,
+            payment_status='paid'
+        ).select_related('course__subject__teacher')
+        
+        
+class StudentEnrollmentDetailView(RetrieveAPIView):
+    serializer_class = CourseEnrollmentWithBookingsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return CourseEnrollment.objects.filter(
+            student=self.request.user,
+            payment_status='paid'
+        ).select_related('course', 'course__subject__teacher')
+
+            
+            
+
+class CoursePaymentRedirectView(TemplateView):
+    template_name = 'payment-redirect.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['status'] = self.request.GET.get('status', 'unknown')
+        context['order_id'] = self.request.GET.get('orderId', '')
+        context['message'] = self.request.GET.get('message', '')
+        return context
+        
+
+

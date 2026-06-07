@@ -196,47 +196,40 @@ def validate_otp(phone_or_email: str, raw_code: str, purpose='login'):
             is_used=False
         ).order_by('-created_at').first()
     else:
-        # Phone number lookup with normalization
-        is_phone = phone_or_email.startswith('09') or phone_or_email.startswith('+98')
-        normalized_phone = phone_or_email
-        phone_formats = [phone_or_email]
+        # Phone number - normalize and search
+        phone_formats = set()  # Use set to avoid duplicates
         
-        if is_phone:
-            try:
-                if phone_or_email.startswith('09'):
-                    # Convert 09xxxxxxxxx to +989xxxxxxxxx
-                    phone_obj = phonenumbers.parse(phone_or_email, "IR")
-                    normalized_phone = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
-                elif phone_or_email.startswith('+98'):
-                    # Already in +98 format
-                    normalized_phone = phone_or_email
-                
-                logger.info(f"Normalized phone from {phone_or_email} to {normalized_phone}")
-                phone_formats.insert(0, normalized_phone)
-            except Exception as e:
-                logger.error(f"Phone normalization error: {e}")
+        # Add original format
+        phone_formats.add(phone_or_email)
         
-        # Try alternative formats
-        if phone_or_email.startswith('09'):
-            try:
+        # Try to normalize
+        try:
+            if phone_or_email.startswith('09'):
+                # Convert 09xxxxxxxxx to +989xxxxxxxxx
                 phone_obj = phonenumbers.parse(phone_or_email, "IR")
-                e164_phone = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
-                if e164_phone not in phone_formats:
-                    phone_formats.append(e164_phone)
-            except Exception as e:
-                logger.error(f"Phone parsing error: {e}")
-        elif phone_or_email.startswith('+98'):
-            try:
+                normalized = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
+                phone_formats.add(normalized)
+            elif phone_or_email.startswith('+98') or phone_or_email.startswith('98'):
+                # Normalize +98 format
                 phone_obj = phonenumbers.parse(phone_or_email, None)
-                local_phone = '0' + str(phone_obj.national_number)
-                if local_phone not in phone_formats:
-                    phone_formats.append(local_phone)
-            except Exception as e:
-                logger.error(f"Phone parsing error: {e}")
+                # Add E164 format
+                normalized = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
+                phone_formats.add(normalized)
+                # Add local format
+                local = '0' + str(phone_obj.national_number)
+                phone_formats.add(local)
+        except Exception as e:
+            logger.error(f"Phone normalization error: {e}")
+        
+        # Convert to list and prioritize E164 format
+        phone_formats_list = list(phone_formats)
+        # Sort to put +98 format first
+        phone_formats_list.sort(key=lambda x: (not x.startswith('+'), x))
         
         # Search for OTP in all phone formats
-        logger.info(f"Searching for OTP with phone formats: {phone_formats}")
-        for phone_format in phone_formats:
+        logger.info(f"Searching for OTP with phone formats: {phone_formats_list}")
+        for phone_format in phone_formats_list:
+            logger.info(f"Trying phone format: {phone_format}")
             otp = OTP.objects.filter(
                 phone=phone_format,
                 purpose=purpose,
@@ -245,9 +238,16 @@ def validate_otp(phone_or_email: str, raw_code: str, purpose='login'):
             if otp:
                 logger.info(f"Found OTP for phone format: {phone_format}")
                 break
+        
+        # If still not found, try a raw database query to see what's actually stored
+        if not otp:
+            logger.error(f"No OTP found. Checking database for similar entries...")
+            all_otps = OTP.objects.filter(is_used=False).values('phone', 'purpose', 'created_at')
+            logger.error(f"Available OTPs in DB (all purposes): {list(all_otps)}")
     
     if not otp:
         identifier_type = "email" if is_email else "phone number"
+        logger.error(f"No OTP found for {identifier_type}: {phone_or_email}")
         return False, _(f"No verification code found for this {identifier_type}. Please request a new one.")
     
     if otp.expires_at < timezone.now():

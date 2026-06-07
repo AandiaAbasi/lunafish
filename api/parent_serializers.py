@@ -345,8 +345,8 @@ class UsageReportRequestSerializer(serializers.Serializer):
     """گزارش مصرف از طرف دانش‌آموز"""
     session_seconds = serializers.IntegerField(
         min_value=1,
-        max_value=600,
-        help_text=_("تعداد ثانیه‌های این جلسه (حداکثر 10 دقیقه)")
+        max_value=86400,
+        help_text=_("تعداد ثانیه‌های این جلسه (حداکثر 24 ساعت)")
     )
     device_id = serializers.CharField(
         required=False,

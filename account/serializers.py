@@ -475,10 +475,11 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
     gender = serializers.CharField(required=False, allow_blank=True, max_length=20, help_text=_("Gender (m/f/male/female/custom/prefer_not_to_say)"))
     bio = serializers.CharField(required=False, allow_blank=True, help_text=_("User bio/biography"))
     birth_date = serializers.CharField(required=False, allow_blank=True, max_length=10, help_text=_("Birth date in Jalali format (YYYY-MM-DD or YYYY/MM/DD)"))
-    
+    username = serializers.CharField(required=True)
     class Meta:
         model = User
         fields = [
+            'username',
             'name',
             'qualifications',
             'languages_taught',
@@ -572,6 +573,7 @@ class CompleteTeacherProfileSerializer(serializers.ModelSerializer):
             if value is not None:
                 setattr(instance, field, value)
         instance.save()
+        
         return instance
     
 

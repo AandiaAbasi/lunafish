@@ -1,5 +1,8 @@
 import os
 import uuid
+from django.utils import timezone
+from django.utils.translation import get_language
+import jdatetime
 
 
 def upload_to_dynamic(instance, filename):
@@ -24,3 +27,21 @@ def upload_to_dynamic(instance, filename):
         folder = "others"
     
     return os.path.join(folder, filename)
+    
+    
+def format_datetime_display(dt):
+    """Format datetime based on current language (Jalali for Persian, Gregorian for English)"""
+    if not dt:
+        return "-"
+    
+    try:
+        dt = timezone.localtime(dt)
+    except Exception:
+        pass
+    
+    lang = get_language()
+    
+    if lang and lang.startswith("fa"):
+        return jdatetime.datetime.fromgregorian(datetime=dt).strftime('%Y/%m/%d %H:%M')
+    else:
+        return dt.strftime('%Y-%m-%d %H:%M')    

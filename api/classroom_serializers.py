@@ -80,6 +80,7 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
         source='get_level_display',
         read_only=True
     )
+    teacher = serializers.SerializerMethodField()
 
     class Meta:
         model = TeachingSubject
@@ -96,6 +97,9 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
             'max_age',
             'is_active',
             'created_at',
+            'status',
+            'teacher',
+            'rejection_reason'
         ]
 
         read_only_fields = [
@@ -103,7 +107,14 @@ class TeachingSubjectSerializer(serializers.ModelSerializer):
             'teacher_name',
             'level_display',
             'created_at',
+            'teacher', 
         ]
+        
+    def get_teacher(self, obj):
+            return {
+                'id': obj.teacher.id,
+                'name': obj.teacher.name # یا هر فیلدی که نام معلم در مدل User در آن ذخیره شده
+            }
 
 
 class TeachingSubjectUpdateSerializer(serializers.ModelSerializer):
@@ -312,6 +323,7 @@ class WithdrawalRequestSerializer(serializers.ModelSerializer):
     teacher_name = serializers.CharField(source='teacher.name', read_only=True)
     payment_method_display = serializers.CharField(source='get_payment_method_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    receipt_image_url = serializers.SerializerMethodField(read_only=True)
     
     class Meta:
         model = WithdrawalRequest
@@ -319,9 +331,18 @@ class WithdrawalRequestSerializer(serializers.ModelSerializer):
             'id', 'teacher', 'teacher_name', 'amount', 'revenues',
             'payment_method', 'payment_method_display', 'account_info',
             'transaction_id', 'status', 'status_display', 'notes', 'admin_notes',
-            'completed_at', 'created_at', 'updated_at'
+            'completed_at', 'created_at', 'updated_at', 'receipt_image', 'receipt_image_url'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'receipt_image_url']
+    
+    def get_receipt_image_url(self, obj):
+        """دریافت URL کامل فیش واریزی"""
+        if obj.receipt_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.receipt_image.url)
+            return obj.receipt_image.url
+        return None
 
 
 class WalletTransactionSerializer(serializers.ModelSerializer):
@@ -464,7 +485,7 @@ class TeacherDetailSerializer(serializers.Serializer):
         """Get all teaching subjects for this teacher"""
         if not hasattr(obj, 'teaching_subjects'):
             # Query teaching subjects from database
-            subjects = TeachingSubject.objects.filter(teacher=obj, is_active=True)
+            subjects = TeachingSubject.objects.filter(teacher=obj, is_active=True, status='approved')
         else:
             subjects = obj.teaching_subjects.filter(is_active=True)
         
@@ -713,8 +734,9 @@ class StudentExerciseTemplateSerializer(serializers.Serializer):
     answered = serializers.BooleanField()
     answer_value = serializers.CharField(allow_null=True)
     answer_field_detail_id = serializers.IntegerField(allow_null=True)
-    answer_field_detail = serializers.DictField(allow_null=True)
+    answer_field_detail = serializers.JSONField(allow_null=True)  # تغییر به JSONField
     is_correct = serializers.BooleanField(allow_null=True)
+    correct_answer = serializers.JSONField(allow_null=True)
 
 
 class StudentProfileDetailSerializer(serializers.Serializer):

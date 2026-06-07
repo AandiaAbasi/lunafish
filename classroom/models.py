@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import get_language, gettext_lazy as _
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 from account.models import User
@@ -8,6 +8,7 @@ import jdatetime
 from datetime import datetime
 from decimal import Decimal
 from core.utils import upload_to_dynamic
+from account.utils import send_sms_general
 
 
 # ===== Classroom & Scheduling Models =====
@@ -90,6 +91,11 @@ class TeacherAvailability(BaseModel):
     
 
 class TeachingSubject(BaseModel):
+    STATUS_CHOICES = [
+        ('pending', _('در انتظار تایید')),
+        ('approved', _('تایید شده')),
+        ('rejected', _('رد شده')),
+    ]
     teacher = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': 'teacher'}, related_name='subjects', verbose_name=_("معلم"))
     title = models.CharField(max_length=200, verbose_name=_("عنوان"), help_text=_("مثال: انگلیسی مبتدی - الفبا"))
     description = models.TextField(verbose_name=_("توضیح"),help_text=_("توضیح در مورد آنچه در این درس تدریس خواهد شد"))
@@ -99,6 +105,8 @@ class TeachingSubject(BaseModel):
     max_age = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("حداکثر سن"))
     level = models.CharField(max_length=50, choices=[('beginner', _("مبتدی")), ('intermediate', _("متوسط")), ('advanced', _("پیشرفته"))], verbose_name=_("سطح"))
     is_active = models.BooleanField(default=True, verbose_name=_("فعال"))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name=_("وضعیت تایید"))
+    rejection_reason = models.TextField(null=True, blank=True, verbose_name=_("دلیل رد"), help_text=_("در صورت رد، دلیل را وارد کنید"))
 
     class Meta:
         verbose_name = _("موضوع تدریس")
@@ -106,6 +114,157 @@ class TeachingSubject(BaseModel):
 
     def __str__(self):
         return f"{self.title} - {self.teacher.name}"
+
+
+
+
+class Course(BaseModel):
+    subject = models.ForeignKey(TeachingSubject, on_delete=models.PROTECT, related_name='courses', verbose_name=_("موضوع"))
+    title = models.CharField(max_length=200, verbose_name=_("عنوان دوره"))
+    description = models.TextField(verbose_name=_("توضیحات"))
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("قیمت"))
+    discounted_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("قیمت با تخفیف"))
+    session_count = models.PositiveIntegerField(verbose_name=_("تعداد جلسات"))
+    is_active = models.BooleanField(default=True, verbose_name=_("فعال"))
+    cover_image = models.ImageField(upload_to=upload_to_dynamic, null=True, blank=True, verbose_name=_("عکس کاور"))
+    
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', _('در انتظار تایید')),
+            ('approved', _('تایید شده')),
+            ('rejected', _('رد شده'))
+        ],
+        default='pending',
+        verbose_name=_("وضعیت تایید")
+    )
+    rejection_reason = models.TextField(blank=True, null=True, verbose_name=_("علت رد"))
+
+    class Meta:
+        verbose_name = _("دوره آموزشی")
+        verbose_name_plural = _("دوره‌های آموزشی")
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def final_price(self):
+        return self.discounted_price if self.discounted_price else self.price
+    
+
+class CourseEnrollment(BaseModel):
+    course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='enrollments', verbose_name=_("دوره"))
+    student = models.ForeignKey(User, on_delete=models.PROTECT, related_name='enrollments', verbose_name=_("دانش‌آموز"))
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("مبلغ پرداختی"))
+    payment_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('not_paid', _("پرداخت نشده")),
+            ('paid', _("پرداخت شده")),
+            ('failed', _("ناموفق")),
+        ],
+        default='not_paid',
+        verbose_name=_("وضعیت پرداخت")
+    )
+    payment_ref = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("شناسه تراکنش"))
+    paid_at = models.DateTimeField(blank=True, null=True, verbose_name=_("تاریخ پرداخت"))
+
+    class Meta:
+        verbose_name = _("ثبت‌نام دوره")
+        verbose_name_plural = _("ثبت‌نام‌های دوره")
+        unique_together = ('course', 'student')
+
+    def __str__(self):
+        return f"{self.student.name} - {self.course.title}"
+
+    # def confirm_payment(self, payment_ref):
+    #     """تایید پرداخت و ثبت خودکار کلاس‌ها"""
+    #     from django.utils import timezone
+
+    #     self.payment_status = 'paid'
+    #     self.payment_ref = payment_ref
+    #     self.paid_at = timezone.now()
+    #     self.save()
+
+    #     self._create_bookings()
+    
+    def confirm_payment(self, payment_ref):
+        from django.utils import timezone
+        from django.db import transaction
+    
+        with transaction.atomic():
+            self.payment_status = 'paid'
+            self.payment_ref = payment_ref
+            self.paid_at = timezone.now()
+            self.save()
+    
+            self._create_bookings()
+        
+    def _create_bookings(self):
+        availabilities = list(
+            TeacherAvailability.objects.select_for_update()
+            .filter(
+                teacher=self.course.subject.teacher,
+                is_booked=False,
+                is_available=True,
+                is_expired=False,
+            ).order_by('date')[:self.course.session_count]
+        )
+    
+        if len(availabilities) < self.course.session_count:
+            raise ValueError('ظرفیت کافی برای ثبت تمام جلسات وجود ندارد.')
+    
+        price_per_session = self.course.final_price / self.course.session_count
+    
+        bookings = [
+            ClassBooking(
+                availability=a,
+                teacher=self.course.subject.teacher,
+                student=self.student,
+                subject=self.course.subject,
+                status='reserved',
+                price=price_per_session,
+                final_price=price_per_session,
+                payment_status='paid',
+                enrollment=self,
+            )
+            for a in availabilities
+        ]
+    
+        ClassBooking.objects.bulk_create(bookings)
+        TeacherAvailability.objects.filter(id__in=[a.id for a in availabilities]).update(
+            is_booked=True,
+            is_available=False
+        )
+
+    # def _create_bookings(self):
+    #     """ساخت رزرو برای هر جلسه دوره"""
+    #     # availabilityهای آزاد معلم رو بگیر به تعداد جلسات
+    #     availabilities = TeacherAvailability.objects.filter(
+    #         teacher=self.course.subject.teacher,
+    #         is_booked=False
+    #     ).order_by('date')[:self.course.session_count]
+
+    #     bookings = []
+    #     for availability in availabilities:
+    #         bookings.append(ClassBooking(
+    #             availability=availability,
+    #             teacher=self.course.subject.teacher,
+    #             student=self.student,
+    #             subject=self.course.subject,
+    #             status='reserved',
+    #             price=self.course.final_price / self.course.session_count,
+    #             final_price=self.course.final_price / self.course.session_count,
+    #             payment_status='paid',
+    #             enrollment=self,  # ← ربط به enrollment
+    #         ))
+
+    #     ClassBooking.objects.bulk_create(bookings)
+
+    #     # mark availabilities as booked
+    #     availabilities_ids = [a.id for a in availabilities]
+    #     TeacherAvailability.objects.filter(id__in=availabilities_ids).update(is_booked=True)    
+
 
 
 class ClassBooking(BaseModel):
@@ -136,7 +295,13 @@ class ClassBooking(BaseModel):
     )
     payment_ref = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("شناسه تراکنش"))
     paid_at = models.DateTimeField(blank=True, null=True, verbose_name=_("تاریخ پرداخت"))
-
+    enrollment = models.ForeignKey(
+        'CourseEnrollment',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='bookings',
+        verbose_name=_("دوره مرتبط")
+    )
     class Meta:
         verbose_name = _("رزرو کلاس")
         verbose_name_plural = _("رزروهای کلاس")
@@ -376,7 +541,15 @@ class WithdrawalRequest(BaseModel):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name=_("وضعیت"))
     notes = models.TextField(blank=True, verbose_name=_("یادداشت‌ها"))
     admin_notes = models.TextField(blank=True, verbose_name=_("یادداشت‌های ادمین"))
-    completed_at = models.DateTimeField(null=True, blank=True, verbose_name=_("تاریخ تکمیل")) 
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name=_("تاریخ تکمیل"))
+    
+    # ✅ فیلد جدید برای فیش واریزی
+    receipt_image = models.ImageField(
+        upload_to='withdrawal_receipts/%Y/%m/',
+        blank=True,
+        null=True,
+        verbose_name=_("فیش واریزی")
+    )
     
     class Meta:
         verbose_name = _("درخواست برداشت")
@@ -397,16 +570,12 @@ class WithdrawalRequest(BaseModel):
             try:
                 wallet = self.teacher.wallet
                 
-                # بررسی موجودی کافی
                 if wallet.available_balance >= self.amount:
-                    # کسر از کیف پول
                     if wallet.withdraw(self.amount):
-                        # تغییر وضعیت برداشت
                         self.status = 'completed'
                         self.completed_at = timezone.now()
                         self.save()
                         
-                        # ثبت تراکنش
                         WalletTransaction.objects.create(
                             wallet=wallet,
                             transaction_type='withdrawal',
@@ -414,11 +583,13 @@ class WithdrawalRequest(BaseModel):
                             balance_before=wallet.balance + self.amount,
                             balance_after=wallet.balance,
                             withdrawal=self,
-                            description=f"Withdrawal by {self.get_payment_method_display()}"
+                            description=f"برداشت از طریق {self.get_payment_method_display()}"
                         )
                         
-                        # علامت‌گذاری درآمدها به عنوان برداشت شده
                         self.revenues.update(is_settled=True, settled_at=timezone.now())
+                        
+                        # ✅ ارسال SMS بعد از save
+                        self._send_status_sms('تایید')
                         
                         return True, _("Withdrawal completed successfully")
                     else:
@@ -434,10 +605,51 @@ class WithdrawalRequest(BaseModel):
         """Cancel withdrawal"""
         if self.status in ['pending', 'processing']:
             self.status = 'cancelled'
-            self.save()
+            self.save()  # ✅ اول save کن
+            
+            # ✅ بعد SMS بفرست
+            self._send_status_sms('رد')
+            
             return True, _("Withdrawal cancelled")
         return False, _("Cannot cancel withdrawal in current status")
-
+    
+    def _send_status_sms(self, status_text):
+        """ارسال SMS به معلم درباره وضعیت درخواست"""
+        try:
+            sms_phone = self.teacher.phone
+            
+            # ✅ بررسی خالی نبودن شماره
+            if not sms_phone:
+                print(f"No phone number for teacher {self.teacher.username}")
+                return
+            
+            # تبدیل فرمت شماره
+            if sms_phone.startswith('+98'):
+                import phonenumbers
+                phone_obj = phonenumbers.parse(sms_phone, None)
+                sms_phone = '0' + str(phone_obj.national_number)
+            
+            # ✅ لاگ برای دیباگ
+            print(f"Sending SMS to {sms_phone} for withdrawal {self.id} with status {status_text}")
+            
+            result = send_sms_general(
+                sms_phone,
+                "704943",
+                [
+                    {"name": "NAME", "value": self.teacher.username or self.teacher.name},
+                    {"name": "ID", "value": str(self.id)},
+                    {"name": "STATUS", "value": status_text}
+                ]
+            )
+            
+            # ✅ لاگ نتیجه
+            print(f"SMS result: {result}")
+            
+        except Exception as e:
+            # ✅ لاگ دقیق‌تر خطا
+            import traceback
+            print(f"SMS sending failed for withdrawal {self.id}: {e}")
+            print(traceback.format_exc())
 
 # ===== Transaction Models =====
 class WalletTransaction(BaseModel):
@@ -538,6 +750,28 @@ class Attendance(BaseModel):
     
     def __str__(self):
         return f"{self.student.name} - {self.booking.subject.title} - {self.status}"
+        
+    def _format_datetime(self, dt):
+        if not dt:
+            return "-"
+
+        try:
+            dt = timezone.localtime(dt)
+        except Exception:
+            pass
+
+        lang = get_language()  
+
+        if lang and lang.startswith("fa"):
+            return jdatetime.datetime.fromgregorian(
+                datetime=dt
+            ).strftime('%H:%M:%S %Y-%m-%d')
+        else:
+            return dt.strftime('%H:%M:%S %Y-%m-%d')
+
+    def marked_at_display(self):
+        return self._format_datetime(self.marked_at)
+    marked_at_display.short_description =_("تاریخ ثبت")
 
 
 # ===== Platform Settings (Commission Configuration) =====
@@ -551,6 +785,28 @@ class PlatformSettings(models.Model):
     # سایر تنظیمات
     updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='platform_settings_updates', verbose_name=_("به‌روزرسانی‌شده توسط"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("تاریخ به‌روزرسانی"))
+    
+    def _format_datetime(self, dt):
+        if not dt:
+            return "-"
+
+        try:
+            dt = timezone.localtime(dt)
+        except Exception:
+            pass
+
+        lang = get_language()  
+
+        if lang and lang.startswith("fa"):
+            return jdatetime.datetime.fromgregorian(
+                datetime=dt
+            ).strftime('%H:%M:%S %Y-%m-%d')
+        else:
+            return dt.strftime('%H:%M:%S %Y-%m-%d')
+
+    def updated_at_display(self):
+        return self._format_datetime(self.updated_at)
+    updated_at_display.short_description = _("Updated at")
     
     class Meta:
         verbose_name = _("تنظیمات پلتفرم")

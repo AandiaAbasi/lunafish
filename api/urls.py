@@ -193,4 +193,19 @@ urlpatterns = [
     path('teacher/packages/<int:package_id>/', views.TeacherPackageDetailAPIView.as_view(), name='teacher_package_detail'),
     path('teacher/packages/<int:package_id>/installments/', views.TeacherPackageInstallmentListCreateAPIView.as_view(), name='teacher_installment_list_create'),
     path('teacher/packages/<int:package_id>/installments/<int:installment_id>/', views.TeacherPackageInstallmentDetailAPIView.as_view(), name='teacher_installment_detail'),
+    
+    path('teacher/courses/', views.TeacherCourseListCreateView.as_view()),
+    path('teacher/courses/<int:pk>/', views.TeacherCourseDetailView.as_view()),
+    
+    path('courses/', views.CourseListView.as_view()),
+    path('courses/<int:pk>/', views.CourseDetailView.as_view()),
+    path('courses/<int:course_id>/enroll/', views.EnrollCourseView.as_view()),
+    path('courses/payment/callback/', views.CoursePaymentCallbackAPIView.as_view(), name='course_payment_callback'),
+    path('courses/payment/redirect/', views.CoursePaymentRedirectView.as_view(), name='course_payment_redirect'),
+    path('enrollments/<int:enrollment_id>/confirm/', views.ConfirmEnrollmentPaymentView.as_view()),
+    path('enrollments/', views.StudentEnrollmentListView.as_view()),
+    path('enrollments/<int:pk>/', views.StudentEnrollmentDetailView.as_view(), name='student-enrollment-detail'),
+    path('courses/teacher/', views.TeacherEnrollmentListView.as_view(), name='teacher-course-list'),
+    path('courses/teacher/<int:pk>/', views.TeacherEnrollmentDetailView.as_view(), name='teacher-course-detail'),
+    path('teacher/assign-time/', views.AssignTimeToEnrollmentView.as_view(), name='assign-time-to-enrollment'),
 ]
