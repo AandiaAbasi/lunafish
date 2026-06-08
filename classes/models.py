@@ -30,6 +30,14 @@ class OnlineClass(BaseModel):
         related_name='classes_teaching',
         verbose_name=_('Teacher'),
     )
+    booking = models.OneToOneField(
+        "classroom.ClassBooking",
+        on_delete=models.PROTECT,
+        related_name='booked_class',
+        verbose_name="کلاس رزرو شده",
+        null=True,
+        blank=True,
+    )
     scheduled_start = models.DateTimeField(verbose_name=_('Scheduled start'))
     scheduled_end = models.DateTimeField(verbose_name=_('Scheduled end'))
     actual_start = models.DateTimeField(null=True, blank=True, verbose_name=_('Actual start'))

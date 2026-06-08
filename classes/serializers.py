@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from .models import ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass
 from .utils import get_student_queryset, get_teacher_queryset
-
+from classroom.models import ClassBooking
 
 User = get_user_model()
 
@@ -32,6 +32,13 @@ class OnlineClassSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
+    booking_id = serializers.PrimaryKeyRelatedField(
+        queryset=ClassBooking.objects.all(),
+        source='booking',
+        write_only=True,
+        required=True,
+    )
+
     enrolled_count = serializers.IntegerField(read_only=True)
     is_full = serializers.BooleanField(read_only=True)
     duration_minutes = serializers.IntegerField(read_only=True)
@@ -45,6 +52,7 @@ class OnlineClassSerializer(serializers.ModelSerializer):
             'description',
             'teacher',
             'teacher_id',
+            'booking_id',
             'scheduled_start',
             'scheduled_end',
             'actual_start',
@@ -63,14 +71,33 @@ class OnlineClassSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'room_id', 'status', 'actual_start', 'actual_end', 'created_at', 'updated_at']
+        read_only_fields = [
+            'id',
+            'room_id',
+            'status',
+            'actual_start',
+            'actual_end',
+            'created_at',
+            'updated_at',
+        ]
 
     def validate(self, attrs):
         teacher = attrs.get('teacher')
+        booking = attrs.get('booking')
         request = self.context.get('request')
+
         if not self.instance and teacher is None and request and getattr(request.user, 'role', None) == 'teacher':
             attrs['teacher'] = request.user
+            teacher = request.user
+
+        if booking and teacher and hasattr(booking, 'teacher'):
+            if booking.teacher != teacher:
+                raise serializers.ValidationError({
+                    'booking_id': 'این رزرو متعلق به این استاد نیست.'
+                })
+
         return attrs
+
 
 
 class ClassEnrollmentSerializer(serializers.ModelSerializer):
