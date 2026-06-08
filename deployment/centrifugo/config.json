@@ -1,14 +1,11 @@
 {
   "engine": "redis",
   "admin": true,
-
   "http_stream": true,
   "sse": true,
-
   "presence": true,
   "history_size": 300,
   "history_ttl": "1800s",
-
   "namespaces": [
     {
       "name": "class",
@@ -35,11 +32,6 @@
       "history_ttl": "300s"
     }
   ],
-
-  "allowed_origins": [
-    "https://fofofish.app",
-    "https://www.fofofish.app"
-  ],
-
+  "allowed_origins": ["*"],
   "log_level": "info"
 }

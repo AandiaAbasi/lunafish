@@ -9,10 +9,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libpq-dev \
     build-essential \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -i https://mirror.abrha.net/repository/pypi/simple --trusted-host mirror.abrha.net pysocks && \
+    pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 

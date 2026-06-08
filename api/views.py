@@ -25,7 +25,6 @@ from django.db import models, transaction
 from django.http import StreamingHttpResponse, HttpResponse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.views.generic import TemplateView
-import boto3
 import re
 import jdatetime
 import datetime as dt

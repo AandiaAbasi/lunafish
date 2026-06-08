@@ -1,0 +1,8 @@
+node_modules
+lunafish-rtc
+deployment
+.git
+__pycache__
+*.pyc
+media
+staticfiles

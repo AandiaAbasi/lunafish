@@ -75,6 +75,8 @@ services:
       context: ..
       dockerfile: deployment/django/Dockerfile
     container_name: lunafish-django
+    env_file:
+      - .env
     restart: unless-stopped
     environment:
       DJANGO_SETTINGS_MODULE: "fofofish.settings"
