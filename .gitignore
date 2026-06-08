@@ -113,3 +113,9 @@ site/
 /sedamix
 
 # /lunafish-control
+deployment/nginx/ssl/
+*.pem
+lunafish-rtc/node_modules/
+deployment/nginx/ssl/
+*.pem
+lunafish-rtc/node_modules/
