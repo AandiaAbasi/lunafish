@@ -99,6 +99,55 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Only active classes can be joined'}, status=status.HTTP_400_BAD_REQUEST)
         return None
 
+    def _class_payload(self, class_instance):
+        return {
+            'id': str(class_instance.id),
+            'title': class_instance.title,
+            'description': class_instance.description,
+            'teacher': UserBasicSerializer(class_instance.teacher).data,
+            'status': class_instance.status,
+            'settings': {
+                'allowStudentChat': class_instance.allow_student_chat,
+                'allowStudentReactions': class_instance.allow_student_reactions,
+                'allowStudentVideo': True,
+                'enableRecording': class_instance.enable_recording,
+                'requireApprovalToJoin': class_instance.require_approval_to_join,
+            },
+            'scheduledStart': class_instance.scheduled_start.isoformat() if class_instance.scheduled_start else None,
+            'scheduledEnd': class_instance.scheduled_end.isoformat() if class_instance.scheduled_end else None,
+            'actualStart': class_instance.actual_start.isoformat() if class_instance.actual_start else None,
+            'actualEnd': class_instance.actual_end.isoformat() if class_instance.actual_end else None,
+            'roomId': str(class_instance.room_id),
+            'enrolledCount': class_instance.enrolled_count,
+            'maxStudents': class_instance.max_students,
+        }
+
+    def _message_payload(self, message):
+        return {
+            'id': str(message.id),
+            'sender': UserBasicSerializer(message.sender).data,
+            'content': message.content,
+            'isPrivate': message.is_private,
+            'recipient': UserBasicSerializer(message.recipient).data if message.recipient else None,
+            'isDeleted': message.is_deleted,
+            'deletedBy': UserBasicSerializer(message.deleted_by).data if message.deleted_by else None,
+            'deletedAt': message.deleted_at.isoformat() if message.deleted_at else None,
+            'createdAt': message.created_at.isoformat() if message.created_at else None,
+        }
+
+    def _hand_payload(self, hand):
+        return {
+            'id': str(hand.id),
+            'student': UserBasicSerializer(hand.student).data,
+            'raisedAt': hand.raised_at.isoformat() if hand.raised_at else None,
+            'loweredAt': hand.lowered_at.isoformat() if hand.lowered_at else None,
+            'acknowledgedBy': UserBasicSerializer(hand.acknowledged_by).data if hand.acknowledged_by else None,
+            'acknowledgedAt': hand.acknowledged_at.isoformat() if hand.acknowledged_at else None,
+            'isActive': hand.lowered_at is None,
+            'isAcknowledged': hand.acknowledged_at is not None,
+            'durationSeconds': hand.duration_seconds,
+        }
+
     def _participant_payload(self, user, role, enrollment=None, class_instance=None):
         if class_instance is None and enrollment is not None:
             class_instance = enrollment.class_session
@@ -130,6 +179,12 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             participants.append(self._participant_payload(enrollment.student, 'student', enrollment, class_instance))
         return participants
 
+    @action(detail=False, methods=['post'], url_path='reset')
+    def reset_sessions(self, request):
+        ClassEnrollment.objects.update(joined_at=None, left_at=None)
+        HandRaise.objects.all().delete()
+        return Response({'ok': True, 'message': 'All sessions cleared'})
+
     @action(detail=True, methods=['post'])
     def start(self, request, pk=None):
         class_instance = self.get_object()
@@ -141,7 +196,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         except ValueError as exc:
             return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         data = OnlineClassSerializer(class_instance, context={'request': request}).data
-        publish_to_class(str(class_instance.id), 'class.started', data)
+        publish_to_class(str(class_instance.id), 'class.started', self._class_payload(class_instance))
         class_started.send(sender=OnlineClass, class_instance=class_instance)
         return Response(data)
 
@@ -156,7 +211,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         except ValueError as exc:
             return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         data = OnlineClassSerializer(class_instance, context={'request': request}).data
-        publish_to_class(str(class_instance.id), 'class.ended', data)
+        publish_to_class(str(class_instance.id), 'class.ended', self._class_payload(class_instance))
         class_ended.send(sender=OnlineClass, class_instance=class_instance, duration_minutes=class_instance.actual_duration_minutes)
         return Response(data)
 
@@ -171,7 +226,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         except ValueError as exc:
             return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         data = OnlineClassSerializer(class_instance, context={'request': request}).data
-        publish_to_class(str(class_instance.id), 'class.cancelled', data)
+        publish_to_class(str(class_instance.id), 'class.cancelled', self._class_payload(class_instance))
         class_cancelled.send(sender=OnlineClass, class_instance=class_instance, cancelled_by=request.user)
         return Response(data)
 
@@ -266,7 +321,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         student_joined.send(sender=ClassEnrollment, class_instance=class_instance, student=user)
 
         return Response({
-            'class': OnlineClassSerializer(class_instance, context={'request': request}).data,
+            'class': self._class_payload(class_instance),
             'rtc': {
                 'token': generate_rtc_token(user.id, class_instance.room_id, permissions),
                 'wsUrl': conf.RTC_WS_URL,
@@ -322,7 +377,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
                 | Q(recipient=request.user)
                 | Q(class_session__teacher=request.user)
             ).order_by('-created_at')[:limit]
-            return Response({'results': ClassMessageSerializer(reversed(list(messages)), many=True).data})
+            return Response({'results': [self._message_payload(message) for message in reversed(list(messages))]})
 
         if not is_teacher_user and not class_instance.allow_student_chat:
             return Response({'error': 'Student chat is disabled'}, status=status.HTTP_403_FORBIDDEN)
@@ -350,7 +405,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             is_private=is_private,
             recipient=recipient,
         )
-        message_data = ClassMessageSerializer(message).data
+        message_data = self._message_payload(message)
         publish_to_class(str(class_instance.id), 'chat.message', message_data)
         message_sent.send(sender=ClassMessage, class_instance=class_instance, message=message)
         return Response(message_data, status=status.HTTP_201_CREATED)
@@ -380,7 +435,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         hand = HandRaise.objects.filter(class_session=class_instance, student=request.user, lowered_at__isnull=True).first()
         if hand is None:
             hand = HandRaise.objects.create(class_session=class_instance, student=request.user)
-        hand_data = HandRaiseSerializer(hand).data
+        hand_data = self._hand_payload(hand)
         publish_to_class(str(class_instance.id), 'hand.raised', hand_data)
         hand_raised.send(sender=HandRaise, class_instance=class_instance, student=request.user, hand_raise=hand)
         return Response(hand_data)
@@ -411,7 +466,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             'acknowledged_by': UserBasicSerializer(request.user).data,
         })
         hand_acknowledged.send(sender=HandRaise, class_instance=class_instance, student=hand.student, hand_raise=hand, acknowledged_by=request.user)
-        return Response(HandRaiseSerializer(hand).data)
+        return Response(self._hand_payload(hand))
 
     @action(detail=True, methods=['get'], url_path='hands')
     def hand_queue(self, request, pk=None):
@@ -420,7 +475,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         if error:
             return error
         hands = HandRaise.objects.select_related('student', 'acknowledged_by').filter(class_session=class_instance, lowered_at__isnull=True)
-        return Response({'results': HandRaiseSerializer(hands, many=True).data})
+        return Response({'results': [self._hand_payload(hand) for hand in hands]})
 
     @action(detail=True, methods=['post'], url_path='reactions')
     def send_reaction(self, request, pk=None):
@@ -446,10 +501,14 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             emoji=serializer.validated_data['emoji'],
             message=serializer.validated_data.get('message'),
         )
-        reaction_data = ClassReactionSerializer(reaction).data
+        reaction_data = {
+            'user': UserBasicSerializer(request.user).data,
+            'emoji': reaction.emoji,
+            'timestamp': reaction.created_at.isoformat() if reaction.created_at else None,
+        }
         publish_to_class(str(class_instance.id), 'reaction.added', reaction_data)
         reaction_sent.send(sender=ClassReaction, class_instance=class_instance, reaction=reaction)
-        return Response(reaction_data, status=status.HTTP_201_CREATED)
+        return Response({'ok': True})
 
     @action(detail=True, methods=['post'], url_path='grant-mic/(?P<user_id>[^/.]+)')
     def grant_mic(self, request, pk=None, user_id=None):
