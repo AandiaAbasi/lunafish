@@ -73,6 +73,8 @@ from core.serializers import (
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from django.db import transaction
 from classroom.models import TeacherWallet
+# Import Internal RTC Events view from classes app
+from classes.views import InternalRTCEventAPIView
 
 User = get_user_model()
 
