@@ -59,6 +59,33 @@ function verifyRtcToken(token, secret) {
   const claims = JSON.parse(base64UrlDecode(encodedPayload));
   const now = Math.floor(Date.now() / 1000);
 
+  // Handle both old and new token formats
+  // Old format: sub, room, permissions, exp, iat
+  // New format: user_id, room_id, call_id, session_id, call_type, permissions, exp, iat
+  
+  // Map old fields to new fields for backward compatibility
+  if (claims.sub && !claims.user_id) {
+    claims.user_id = claims.sub;
+  }
+  
+  if (claims.room && !claims.room_id) {
+    claims.room_id = claims.room;
+  }
+  
+  // For backward compatibility, generate missing fields
+  if (!claims.call_id && claims.room_id) {
+    claims.call_id = claims.room_id; // Use room_id as call_id for old tokens
+  }
+  
+  if (!claims.session_id && claims.user_id && claims.room_id) {
+    claims.session_id = `${claims.room_id}:${claims.user_id}`;
+  }
+  
+  if (!claims.call_type) {
+    claims.call_type = 'classroom';
+  }
+
+  // Now validate required fields
   if (!claims.call_id) throw new Error('token call_id is missing');
   if (!claims.room_id) throw new Error('token room_id is missing');
   if (!claims.user_id) throw new Error('token user_id is missing');
