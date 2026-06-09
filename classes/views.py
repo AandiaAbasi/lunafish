@@ -323,7 +323,14 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         return Response({
             'class': self._class_payload(class_instance),
             'rtc': {
-                'token': generate_rtc_token(user.id, class_instance.room_id, permissions),
+                'token': generate_rtc_token(
+                    user.id,
+                    class_instance.room_id,
+                    permissions,
+                    call_id=class_instance.id,
+                    session_id=f'{class_instance.id}:{user.id}',
+                    call_type='classroom',
+                ),
                 'wsUrl': conf.RTC_WS_URL,
                 'roomId': str(class_instance.room_id),
                 'iceServers': conf.RTC_ICE_SERVERS,
