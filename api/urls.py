@@ -208,4 +208,7 @@ urlpatterns = [
     path('courses/teacher/', views.TeacherEnrollmentListView.as_view(), name='teacher-course-list'),
     path('courses/teacher/<int:pk>/', views.TeacherEnrollmentDetailView.as_view(), name='teacher-course-detail'),
     path('teacher/assign-time/', views.AssignTimeToEnrollmentView.as_view(), name='assign-time-to-enrollment'),
+    
+    # ========== Internal RTC Events Endpoint ==========
+    path('internal/rtc-events/', views.InternalRTCEventAPIView.as_view(), name='internal_rtc_events'),
 ]

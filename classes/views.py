@@ -595,3 +595,81 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             return teacher_error
         publish_to_class(str(pk), 'whiteboard.cleared', {})
         return Response({'ok': True})
+
+
+# ========== Internal RTC Events API View ==========
+import hashlib
+import hmac
+import time
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+from django.conf import settings
+
+class InternalRTCEventAPIView(APIView):
+    """
+    Internal endpoint for RTC server to notify about participant presence events.
+    This endpoint is called by the mediasoup RTC server when participants join/leave.
+    """
+    permission_classes = [AllowAny]  # Internal endpoint, secured by signature
+    
+    def verify_signature(self, timestamp, signature, raw_body):
+        """Verify HMAC-SHA256 signature from RTC server."""
+        secret = getattr(settings, 'INTERNAL_CALLBACK_SECRET', None)
+        if not secret:
+            logger.warning('INTERNAL_CALLBACK_SECRET not set, signature verification disabled')
+            return True  # Allow if no secret configured
+        
+        # Check timestamp (prevent replay attacks)
+        current_time = int(time.time())
+        if abs(current_time - int(timestamp)) > 300:  # 5 minutes tolerance
+            logger.warning(f'Timestamp expired: {timestamp}, current: {current_time}')
+            return False
+        
+        # Compute expected signature
+        message = f'{timestamp}.{raw_body}'
+        expected_signature = hmac.new(
+            secret.encode('utf-8'),
+            message.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+        
+        # Compare signatures
+        return hmac.compare_digest(expected_signature, signature)
+    
+    def post(self, request):
+        """Handle RTC presence events."""
+        # Get signature headers
+        timestamp = request.headers.get('x-internal-timestamp')
+        signature = request.headers.get('x-internal-signature')
+        
+        if not timestamp or not signature:
+            logger.warning('Missing signature headers in RTC event request')
+            return Response({'error': 'Missing signature headers'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Verify signature
+        raw_body = request.body.decode('utf-8')
+        if not self.verify_signature(timestamp, signature, raw_body):
+            logger.warning(f'Invalid signature for RTC event: {request.data}')
+            return Response({'error': 'Invalid signature'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Process the event
+        data = request.data
+        event_type = data.get('event')
+        call_id = data.get('call_id')
+        room_id = data.get('room_id')
+        user_id = data.get('user_id')
+        peer_id = data.get('peer_id')
+        
+        logger.info(f'RTC event received: {event_type} call_id={call_id} room_id={room_id} user_id={user_id} peer_id={peer_id}')
+        
+        # Handle different event types
+        if event_type == 'participant_joined':
+            # Participant joined the RTC room
+            # You could update database or trigger other actions here
+            pass
+        elif event_type == 'participant_left':
+            # Participant left the RTC room
+            pass
+        
+        # Always return success for now
+        return Response({'ok': True, 'received': True})
