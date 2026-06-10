@@ -632,47 +632,63 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='next')
     def next_class(self, request):
-        user = request.user
+            user = request.user
 
-        if getattr(user, 'role', None) != 'user':
-            return Response(
-                {'detail': 'Only students can use this endpoint.'},
-                status=status.HTTP_403_FORBIDDEN,
+            if getattr(user, 'role', None) != 'user':
+                return Response(
+                    {'detail': 'Only students can use this endpoint.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            now_tehran = timezone.now().astimezone(
+                ZoneInfo("Asia/Tehran")
             )
 
-        now_tehran = timezone.now().astimezone(
-            ZoneInfo("Asia/Tehran")
-        )
-
-        next_class = (
-            OnlineClass.objects
-            .filter(
-                booking__student=user,
-                status=OnlineClass.STATUS_SCHEDULED,
-                scheduled_start__gt=now_tehran,
-            )
-            .select_related(
-                'teacher',
-                'booking',
-                'booking__availability',
-            )
-            .order_by('scheduled_start')
-            .first()
-        )
-
-        if not next_class:
-            return Response(
-                {'detail': 'No upcoming class found.'},
-                status=status.HTTP_404_NOT_FOUND,
+            active_class = (
+                OnlineClass.objects
+                .filter(
+                    booking__student=user,
+                    status=OnlineClass.STATUS_ACTIVE,
+                )
+                .select_related(
+                    'teacher',
+                    'booking',
+                    'booking__availability',
+                )
+                .first()
             )
 
-        serializer = NextOnlineClassSerializer(
-            next_class,
-            context={'request': request},
-        )
+            if active_class:
+                next_class = active_class
+            else:
+                next_class = (
+                    OnlineClass.objects
+                    .filter(
+                        booking__student=user,
+                        status=OnlineClass.STATUS_SCHEDULED,
+                        scheduled_start__gt=now_tehran,
+                    )
+                    .select_related(
+                        'teacher',
+                        'booking',
+                        'booking__availability',
+                    )
+                    .order_by('scheduled_start')
+                    .first()
+                )
 
-        return Response(serializer.data)
+            if not next_class:
+                return Response(
+                    {'detail': 'No upcoming class found.'},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
+            serializer = NextOnlineClassSerializer(
+                next_class,
+                context={'request': request},
+            )
+
+            return Response(serializer.data)
 
 # ========== Internal RTC Events API View ==========
 import hashlib
