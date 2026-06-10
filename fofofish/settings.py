@@ -327,6 +327,7 @@ CENTRIFUGO_TOKEN_TTL_SECONDS = int(os.getenv('CENTRIFUGO_TOKEN_TTL_SECONDS', '72
 RTC_JWT_SECRET = os.getenv('RTC_JWT_SECRET', SECRET_KEY)
 RTC_WS_URL = os.getenv('RTC_WS_URL', '')
 RTC_TOKEN_TTL_SECONDS = int(os.getenv('RTC_TOKEN_TTL_SECONDS', '3600'))
+INTERNAL_CALLBACK_SECRET = os.getenv('INTERNAL_CALLBACK_SECRET', '')
 RTC_ICE_SERVERS = [
     {'urls': [url.strip() for url in os.getenv('RTC_ICE_SERVER_URLS', 'stun:stun.l.google.com:19302').split(',') if url.strip()]}
 ]
