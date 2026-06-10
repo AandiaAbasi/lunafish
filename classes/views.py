@@ -21,6 +21,7 @@ from .serializers import (
     UserBasicSerializer,
     NextOnlineClassSerializer
 )
+from django.db.models import F
 from .signals import (
     class_cancelled,
     class_created,
