@@ -35,7 +35,7 @@ def publish_to_class(class_id: str, event: str, data: dict) -> bool:
 
 
 def publish_to_user(user_id: str, event: str, data: dict) -> bool:
-    return _publish(f'$user:{user_id}', {'event': event, 'data': data})
+    return _publish(f'user:{user_id}', {'event': event, 'data': data})
 
 
 def publish_to_class_control(class_id: str, event: str, data: dict) -> bool:
