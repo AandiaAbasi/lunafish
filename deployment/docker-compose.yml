@@ -67,6 +67,7 @@ services:
       INTERNAL_CALLBACK_SECRET: ${INTERNAL_CALLBACK_SECRET}
     ports:
       - "40000-40100:40000-40100/udp"
+      - "40000-40100:40000-40100/tcp"
     networks:
       - lunafish
 
