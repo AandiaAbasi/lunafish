@@ -3298,60 +3298,43 @@ class StudentBookingsListAPIView(APIView):
 
 
 class TeacherBookingsListAPIView(APIView):
-    """
-    Get Students Who Booked My Classes API
-    
-    دریافت لیست دانش‌آموزانی که از کلاس‌های معلم خریداری کردند
-    """
     permission_classes = [IsAuthenticated]
-    
-    @extend_schema(
-        tags=['Class Booking'],
-        summary='Get My Bookings',
-        description='دریافت لیست دانش‌آموزانی که از کلاس‌های معلم خریداری کردند',
-        parameters=[
-            OpenApiParameter('status', OpenApiTypes.STR, required=False, location=OpenApiParameter.QUERY, description='Filter by status: reserved, completed, cancelled, no_show'),
-            OpenApiParameter('subject', OpenApiTypes.INT, required=False, location=OpenApiParameter.QUERY, description='Filter by subject ID'),
-        ],
-        responses={
-            200: OpenApiResponse(description="List of bookings for teacher classes"),
-            403: OpenApiResponse(description="Teachers can only view bookings for their classes"),
-        }
-    )
+
     def get(self, request, *args, **kwargs):
         from classroom.models import ClassBooking, TeachingSubject
         from .classroom_serializers import ClassBookingSerializer
         from rest_framework.pagination import PageNumberPagination
-        
-        # معلم تنها می‌تواند رزروهای کلاس‌های خود را ببیند
+
         if request.user.role != 'teacher':
             return Response(
                 {'error': _('معلمان می‌توانند تنها رزروهای خود را ببینند')},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
-        # دریافت کلاس‌های معلم
+
         subjects = TeachingSubject.objects.filter(teacher=request.user).values_list('id', flat=True)
-        bookings = ClassBooking.objects.filter(subject_id__in=subjects, payment_status='paid')
-        
-        # فیلتر بر اساس وضعیت
+
+        bookings = ClassBooking.objects.filter(
+            subject_id__in=subjects,
+            payment_status='paid'
+        )
+
         status_filter = request.query_params.get('status')
         if status_filter:
             bookings = bookings.filter(status=status_filter)
-        
-        # فیلتر بر اساس موضوع
+
         subject_id = request.query_params.get('subject')
         if subject_id:
             bookings = bookings.filter(subject_id=subject_id)
-        
-        # مرتب‌سازی
-        bookings = bookings.select_related('availability', 'subject', 'student').order_by('-created_at')
-        
-        # Pagination
+
+        # مهم: teacher و booked_class رو هم اضافه کردیم
+        bookings = bookings.select_related(
+            'availability', 'subject', 'student', 'teacher', 'booked_class'
+        ).order_by('-created_at')
+
         paginator = PageNumberPagination()
         paginator.page_size = int(request.query_params.get('page_size', 20))
         paginated_bookings = paginator.paginate_queryset(bookings, request)
-        
+
         serializer = ClassBookingSerializer(paginated_bookings, many=True)
         return paginator.get_paginated_response(serializer.data)
 

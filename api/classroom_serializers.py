@@ -180,17 +180,32 @@ class ClassBookingSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     availability_date = serializers.DateField(source='availability.date', read_only=True)
     availability_time = serializers.SerializerMethodField()
-    
+
+    # OnlineClass (reverse OneToOne from OnlineClass.booking)
+    online_class_id = serializers.UUIDField(source='booked_class.id', read_only=True)
+    online_class_title = serializers.CharField(source='booked_class.title', read_only=True)
+    online_class_status = serializers.CharField(source='booked_class.status', read_only=True)
+    online_class_start = serializers.DateTimeField(source='booked_class.scheduled_start', read_only=True)
+    online_class_end = serializers.DateTimeField(source='booked_class.scheduled_end', read_only=True)
+
     class Meta:
         model = ClassBooking
         fields = [
             'id', 'availability', 'availability_date', 'availability_time',
             'teacher', 'teacher_name', 'student', 'student_name',
-            'subject', 'subject_title', 'status', 'status_display', 'price',
-            'discount_amount', 'final_price', 'created_at', 'updated_at'
+            'subject', 'subject_title', 'status', 'status_display',
+            'price', 'discount_amount', 'final_price',
+            'online_class_id', 'online_class_title', 'online_class_status',
+            'online_class_start', 'online_class_end',
+            'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'student', 'teacher', 'created_at', 'updated_at', 'discount_amount', 'final_price']
-    
+        read_only_fields = [
+            'id', 'student', 'teacher', 'created_at', 'updated_at',
+            'discount_amount', 'final_price',
+            'online_class_id', 'online_class_title', 'online_class_status',
+            'online_class_start', 'online_class_end',
+        ]
+
     def get_availability_time(self, obj):
         """Get formatted time range"""
         return f"{obj.availability.start_time.strftime('%H:%M')} - {obj.availability.end_time.strftime('%H:%M')}"
