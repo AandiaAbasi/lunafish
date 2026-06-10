@@ -268,7 +268,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             student=student,
             defaults={
                 'can_unmute': serializer.validated_data.get('can_unmute', False),
-                'can_share_video': serializer.validated_data.get('can_share_video', True),
+                'can_share_video': serializer.validated_data.get('can_share_video', False),
                 'can_share_screen': serializer.validated_data.get('can_share_screen', False),
                 'is_moderator': serializer.validated_data.get('is_moderator', False),
                 'left_at': None,
