@@ -60,7 +60,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         queryset = OnlineClass.objects.select_related('teacher').prefetch_related('enrollments')
         if is_teacher(user):
             return queryset.filter(teacher=user)
-        return queryset.filter(enrollments__student=user, enrollments__left_at__isnull=True).distinct()
+        return queryset.filter(enrollments__student=user).distinct()
 
     def perform_create(self, serializer):
         teacher = serializer.validated_data.get('teacher') or self.request.user
