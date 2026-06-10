@@ -281,14 +281,31 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def join(self, request, pk=None):
         class_instance = self.get_object()
-        teacher_participant, enrollment, error = self._ensure_participant(class_instance)
-        if error:
-            return error
+        user = request.user
+        
+        # Check if teacher
+        teacher_participant = class_instance.teacher_id == user.id
+        enrollment = None
+        
+        if not teacher_participant:
+            # Look for any enrollment (including previously left ones) to allow rejoin
+            enrollment = ClassEnrollment.objects.filter(
+                class_session=class_instance,
+                student=user,
+            ).first()
+            
+            if enrollment and enrollment.left_at is not None:
+                # Re-activate the enrollment (allow rejoin)
+                enrollment.left_at = None
+                enrollment.save(update_fields=['left_at'])
+            
+            if not enrollment:
+                return Response({'error': 'Not enrolled'}, status=status.HTTP_403_FORBIDDEN)
+        
         joinable_error = self._ensure_joinable(class_instance)
         if joinable_error:
             return joinable_error
 
-        user = request.user
         role = 'teacher' if teacher_participant else 'student'
         if enrollment:
             enrollment.join()
