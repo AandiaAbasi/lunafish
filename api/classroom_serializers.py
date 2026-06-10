@@ -191,6 +191,7 @@ class ClassBookingSerializer(serializers.ModelSerializer):
     online_class_status = serializers.CharField(source='booked_class.status', read_only=True)
     online_class_start = serializers.DateTimeField(source='booked_class.scheduled_start', read_only=True)
     online_class_end = serializers.DateTimeField(source='booked_class.scheduled_end', read_only=True)
+    online_actual_end = serializers.DateTimeField(source='booked_class.actual_end', read_only=True)
 
     class Meta:
         model = ClassBooking
@@ -204,14 +205,14 @@ class ClassBookingSerializer(serializers.ModelSerializer):
             'booking_start_at', 'booking_end_at',
 
             'online_class_id', 'online_class_title', 'online_class_status',
-            'online_class_start', 'online_class_end',
+            'online_class_start', 'online_class_end','online_actual_end',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'student', 'teacher', 'created_at', 'updated_at',
             'discount_amount', 'final_price',
             'online_class_id', 'online_class_title', 'online_class_status',
-            'online_class_start', 'online_class_end',
+            'online_class_start', 'online_class_end','online_actual_end',
             'booking_start_at', 'booking_end_at',
         ]
 
