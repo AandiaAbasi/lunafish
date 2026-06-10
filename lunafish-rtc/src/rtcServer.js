@@ -100,16 +100,16 @@ function ensureCanSend(peer) {
 }
 
 function ensureCanProduce(peer, kind, source) {
-  if (source === 'screen') {
-    throw new Error('screen sharing is not enabled in this service');
-  }
-
   if (kind === 'audio' && !peer.permissions.produceAudio) {
     throw new Error('audio publishing is not allowed for this session');
   }
 
-  if (kind === 'video' && !peer.permissions.produceVideo) {
+  if (kind === 'video' && source !== 'screen' && !peer.permissions.produceVideo) {
     throw new Error('video publishing is not allowed for this session');
+  }
+
+  if (source === 'screen' && !peer.permissions.produceScreen) {
+    throw new Error('screen sharing is not allowed for this session');
   }
 }
 
