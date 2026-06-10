@@ -7,7 +7,7 @@ import os
 
 DEBUG = False
 SECRET_KEY = os.environ.get('SECRET_KEY', os.environ.get('DJANGO_SECRET_KEY', 'fallback-change-me'))
-ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app']
+ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app', 'django', 'localhost', '127.0.0.1']
 CSRF_TRUSTED_ORIGINS = ['https://fofofish.app', 'https://www.fofofish.app']
 
 # Database — PostgreSQL

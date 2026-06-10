@@ -536,20 +536,10 @@ async function createRtcServer(config) {
           const room = getOrCreateRoom(roomId);
           room.peerIds.add(currentPeer.id);
 
-          try {
-            await postPresenceEvent(config, 'participant_joined', currentPeer);
-          } catch (error) {
-            removePeerFromRoom(currentPeer);
-            currentPeer.roomId = null;
-            currentPeer.callId = null;
-            currentPeer.callType = null;
-            currentPeer.userId = null;
-            currentPeer.sessionId = null;
-            currentPeer.joinedAt = null;
-            currentPeer.tokenClaims = null;
-            currentPeer.permissions = normalizePermissions();
-            throw error;
-          }
+          // Fire-and-forget presence callback — don't block join on failure
+          postPresenceEvent(config, 'participant_joined', currentPeer).catch((error) => {
+            console.error('participant_joined callback failed (non-fatal):', error.message);
+          });
 
           counters.roomJoins += 1;
 
