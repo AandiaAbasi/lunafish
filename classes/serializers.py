@@ -211,7 +211,7 @@ class NextOnlineClassSerializer(serializers.ModelSerializer):
             'scheduled_start', 'scheduled_end',
             'teacher', 'teacher_name',
             'room_id',
-            'booking_id', 'booking_start_at', 'booking_end_at',
+            'booking_id', 'booking_start_at', 'booking_end_at','description'
         ]
 
     def _to_iso_naive(self, date_obj, time_obj):
