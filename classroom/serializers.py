@@ -156,6 +156,9 @@ class CourseEnrollmentWithBookingsSerializer(CourseEnrollmentSerializer):
     class Meta(CourseEnrollmentSerializer.Meta):
         fields = CourseEnrollmentSerializer.Meta.fields + ['bookings']
 
+    def _to_iso_naive(self, date_obj, time_obj):
+        return datetime.combine(date_obj, time_obj).strftime('%Y-%m-%dT%H:%M:%S')
+
     def get_bookings(self, obj):
         bookings = obj.bookings.all().select_related(
             'availability', 'subject', 'teacher', 'student', 'booked_class'
@@ -166,6 +169,11 @@ class CourseEnrollmentWithBookingsSerializer(CourseEnrollmentSerializer):
             'availability': booking.availability.id,
             'availability_date': booking.availability.date,
             'availability_time': f"{booking.availability.start_time.strftime('%H:%M')} - {booking.availability.end_time.strftime('%H:%M')}",
+
+            # ✅ جدید (زمان رزرو از availability)
+            'booking_start_at': self._to_iso_naive(booking.availability.date, booking.availability.start_time),
+            'booking_end_at': self._to_iso_naive(booking.availability.date, booking.availability.end_time),
+
             'teacher': booking.teacher.id,
             'teacher_name': booking.teacher.name,
             'student': booking.student.id,
@@ -180,12 +188,10 @@ class CourseEnrollmentWithBookingsSerializer(CourseEnrollmentSerializer):
             'created_at': booking.created_at,
             'updated_at': booking.updated_at,
 
-            # ✅ فیلدهای جدید
             'online_class_id': booking.booked_class.id if hasattr(booking, 'booked_class') and booking.booked_class else None,
             'online_class_start': booking.booked_class.scheduled_start if hasattr(booking, 'booked_class') and booking.booked_class else None,
             'online_class_end': booking.booked_class.scheduled_end if hasattr(booking, 'booked_class') and booking.booked_class else None,
         } for booking in bookings]
-        
         
 class CourseEnrollmentWithBookingsListSerializer(CourseEnrollmentSerializer):
     session_count = serializers.IntegerField(source='course.session_count', read_only=True)

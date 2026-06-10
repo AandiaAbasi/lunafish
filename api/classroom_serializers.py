@@ -181,6 +181,10 @@ class ClassBookingSerializer(serializers.ModelSerializer):
     availability_date = serializers.DateField(source='availability.date', read_only=True)
     availability_time = serializers.SerializerMethodField()
 
+    # ✅ جدید
+    booking_start_at = serializers.SerializerMethodField()
+    booking_end_at = serializers.SerializerMethodField()
+
     # OnlineClass (reverse OneToOne from OnlineClass.booking)
     online_class_id = serializers.UUIDField(source='booked_class.id', read_only=True)
     online_class_title = serializers.CharField(source='booked_class.title', read_only=True)
@@ -195,6 +199,10 @@ class ClassBookingSerializer(serializers.ModelSerializer):
             'teacher', 'teacher_name', 'student', 'student_name',
             'subject', 'subject_title', 'status', 'status_display',
             'price', 'discount_amount', 'final_price',
+
+            # ✅ جدید
+            'booking_start_at', 'booking_end_at',
+
             'online_class_id', 'online_class_title', 'online_class_status',
             'online_class_start', 'online_class_end',
             'created_at', 'updated_at'
@@ -204,12 +212,23 @@ class ClassBookingSerializer(serializers.ModelSerializer):
             'discount_amount', 'final_price',
             'online_class_id', 'online_class_title', 'online_class_status',
             'online_class_start', 'online_class_end',
+            'booking_start_at', 'booking_end_at',
         ]
 
     def get_availability_time(self, obj):
-        """Get formatted time range"""
         return f"{obj.availability.start_time.strftime('%H:%M')} - {obj.availability.end_time.strftime('%H:%M')}"
 
+    def _to_iso_naive(self, date_obj, time_obj):
+        dt = datetime.combine(date_obj, time_obj)
+        return dt.strftime('%Y-%m-%dT%H:%M:%S')
+
+    def get_booking_start_at(self, obj):
+        return self._to_iso_naive(obj.availability.date, obj.availability.start_time)
+
+    def get_booking_end_at(self, obj):
+        return self._to_iso_naive(obj.availability.date, obj.availability.end_time)
+        
+    
 
 class CreateClassBookingSerializer(serializers.Serializer):
     """Serializer for Creating/Purchasing a Class"""
