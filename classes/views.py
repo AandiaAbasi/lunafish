@@ -358,7 +358,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
                 'wsUrl': conf.CENTRIFUGO_WS_URL,
                 'channels': [
                     f'class:{class_instance.id}',
-                    f'$user:{user.id}',
+                    f'user:{user.id}',
                     *([f'class:{class_instance.id}:control'] if teacher_participant else []),
                 ],
             },

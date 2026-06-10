@@ -30,7 +30,8 @@
       "name": "user",
       "presence": false,
       "history_size": 50,
-      "history_ttl": "300s"
+      "history_ttl": "300s",
+      "allow_subscribe_for_client": true
     }
   ],
   "allowed_origins": ["*"],
