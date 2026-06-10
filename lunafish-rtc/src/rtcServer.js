@@ -576,9 +576,8 @@ async function createRtcServer(config) {
 
           if (data.direction === 'recv') {
             ensureCanConsume(currentPeer);
-          } else if (data.direction === 'send') {
-            ensureCanSend(currentPeer);
           }
+          // Send transport is always allowed — permissions are checked at produce time
 
           const transport = await createWebRtcTransport();
           currentPeer.transportState[data.direction] = {
