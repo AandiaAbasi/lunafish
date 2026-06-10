@@ -6,7 +6,7 @@ from .settings import *  # noqa
 import os
 
 DEBUG = False
-SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+SECRET_KEY = os.environ.get('SECRET_KEY', os.environ.get('DJANGO_SECRET_KEY', 'fallback-change-me'))
 ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app']
 CSRF_TRUSTED_ORIGINS = ['https://fofofish.app', 'https://www.fofofish.app']
 
