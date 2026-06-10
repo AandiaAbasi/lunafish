@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-
+from datetime import datetime
 from .models import ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass
 from .utils import get_student_queryset, get_teacher_queryset
 from classroom.models import ClassBooking
@@ -196,3 +196,33 @@ class ClassReactionSerializer(serializers.ModelSerializer):
         model = ClassReaction
         fields = ['id', 'class_session', 'student', 'emoji', 'message', 'created_at']
         read_only_fields = ['id', 'class_session', 'student', 'created_at']
+
+
+class NextOnlineClassSerializer(serializers.ModelSerializer):
+    teacher_name = serializers.CharField(source='teacher.name', read_only=True)
+    booking_id = serializers.UUIDField(source='booking.id', read_only=True)
+    booking_start_at = serializers.SerializerMethodField()
+    booking_end_at = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OnlineClass
+        fields = [
+            'id', 'title', 'status',
+            'scheduled_start', 'scheduled_end',
+            'teacher', 'teacher_name',
+            'room_id',
+            'booking_id', 'booking_start_at', 'booking_end_at',
+        ]
+
+    def _to_iso_naive(self, date_obj, time_obj):
+        return datetime.combine(date_obj, time_obj).strftime('%Y-%m-%dT%H:%M:%S')
+
+    def get_booking_start_at(self, obj):
+        bk = getattr(obj, 'booking', None)
+        av = getattr(bk, 'availability', None) if bk else None
+        return self._to_iso_naive(av.date, av.start_time) if av else None
+
+    def get_booking_end_at(self, obj):
+        bk = getattr(obj, 'booking', None)
+        av = getattr(bk, 'availability', None) if bk else None
+        return self._to_iso_naive(av.date, av.end_time) if av else None

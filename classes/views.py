@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from zoneinfo import ZoneInfo
 from . import conf
 from .broadcast import publish_to_class, publish_to_user
 from .models import ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass
@@ -19,6 +19,7 @@ from .serializers import (
     HandRaiseSerializer,
     OnlineClassSerializer,
     UserBasicSerializer,
+    NextOnlineClassSerializer
 )
 from .signals import (
     class_cancelled,
@@ -628,6 +629,49 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             return teacher_error
         publish_to_class(str(pk), 'whiteboard.cleared', {})
         return Response({'ok': True})
+    
+    @action(detail=False, methods=['get'], url_path='next')
+    def next_class(self, request):
+        user = request.user
+
+        if getattr(user, 'role', None) != 'user':
+            return Response(
+                {'detail': 'Only students can use this endpoint.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        now_tehran = timezone.now().astimezone(
+            ZoneInfo("Asia/Tehran")
+        )
+
+        next_class = (
+            OnlineClass.objects
+            .filter(
+                booking__student=user,
+                status=OnlineClass.STATUS_SCHEDULED,
+                scheduled_start__gt=now_tehran,
+            )
+            .select_related(
+                'teacher',
+                'booking',
+                'booking__availability',
+            )
+            .order_by('scheduled_start')
+            .first()
+        )
+
+        if not next_class:
+            return Response(
+                {'detail': 'No upcoming class found.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = NextOnlineClassSerializer(
+            next_class,
+            context={'request': request},
+        )
+
+        return Response(serializer.data)
 
 
 # ========== Internal RTC Events API View ==========

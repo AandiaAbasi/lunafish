@@ -189,7 +189,10 @@ class User(AbstractUser, BaseModel):
         verbose_name=_("Resume summary"),
         help_text=_("Brief summary of professional experience and background")
     )
-    
+    student_score = models.IntegerField( 
+        default=0,
+        verbose_name=_("Score"), 
+    )
     # Introduction & Media
     introduction_video = models.FileField(
         upload_to=upload_to_dynamic,
