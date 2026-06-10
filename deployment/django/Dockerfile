@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     build-essential \
     pkg-config \
+    gettext \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -19,6 +20,7 @@ RUN pip install --no-cache-dir -i https://mirror.abrha.net/repository/pypi/simpl
 COPY . .
 
 RUN mkdir -p /app/staticfiles /app/mediafiles && \
+    python manage.py compilemessages 2>/dev/null || true && \
     python manage.py collectstatic --noinput 2>/dev/null || true
 
 EXPOSE 8000

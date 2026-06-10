@@ -15,36 +15,45 @@ from django.utils.translation import gettext as _
 
 
 def custom_set_language(request):
-    """Custom set_language view that handles language switching with i18n_patterns"""
-    next_url = request.GET.get('next', '/')
-    language = request.GET.get('language', settings.LANGUAGE_CODE)
+    """
+    Custom set_language view that handles language switching.
     
-    # Call Django's set_language to set the cookie
-    response = django_set_language(request)
-    
-    # If next_url doesn't start with language prefix, add the new language prefix
-    if next_url:
-        # Remove any existing language prefix
-        for lang_code, _ in settings.LANGUAGES:
+    Supports both GET (for simple links) and POST (Django's standard mechanism).
+    Does NOT add language prefix to URLs since this project doesn't use i18n_patterns.
+    The LocaleMiddleware reads the language cookie to determine the active language.
+    """
+    if request.method == 'GET':
+        next_url = request.GET.get('next', '/')
+        language = request.GET.get('language', settings.LANGUAGE_CODE)
+        
+        # Validate the language code
+        valid_languages = [code for code, _ in settings.LANGUAGES]
+        if language not in valid_languages:
+            language = settings.LANGUAGE_CODE
+        
+        # Strip any accidental language prefix from next_url
+        # (in case old bookmarks or cached links have them)
+        for lang_code in valid_languages:
             if next_url.startswith(f'/{lang_code}/'):
                 next_url = next_url[len(f'/{lang_code}'):]
+                if not next_url.startswith('/'):
+                    next_url = '/' + next_url
                 break
-        
-        # Add the new language prefix
-        next_url = f'/{language}{next_url}'
         
         response = HttpResponseRedirect(next_url)
         response.set_cookie(
             settings.LANGUAGE_COOKIE_NAME,
             language,
-            max_age=settings.LANGUAGE_COOKIE_AGE,
-            path='/',
-            secure=settings.LANGUAGE_COOKIE_SECURE,
-            httponly=settings.LANGUAGE_COOKIE_HTTPONLY,
-            samesite=settings.LANGUAGE_COOKIE_SAMESITE,
+            max_age=getattr(settings, 'LANGUAGE_COOKIE_AGE', None),
+            path=getattr(settings, 'LANGUAGE_COOKIE_PATH', '/'),
+            secure=getattr(settings, 'LANGUAGE_COOKIE_SECURE', False),
+            httponly=getattr(settings, 'LANGUAGE_COOKIE_HTTPONLY', False),
+            samesite=getattr(settings, 'LANGUAGE_COOKIE_SAMESITE', 'Lax'),
         )
-    
-    return response
+        return response
+    else:
+        # For POST requests, delegate to Django's built-in set_language view
+        return django_set_language(request)
 
 
 
