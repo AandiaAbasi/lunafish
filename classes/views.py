@@ -525,6 +525,22 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
     def revoke_mic(self, request, pk=None, user_id=None):
         return self._update_student_permission(pk, user_id, 'can_unmute', False, 'mic.revoked', 'canUnmute')
 
+    @action(detail=True, methods=['post'], url_path='grant-camera/(?P<user_id>[^/.]+)')
+    def grant_camera(self, request, pk=None, user_id=None):
+        return self._update_student_permission(pk, user_id, 'can_share_video', True, 'camera.granted', 'canShareVideo')
+
+    @action(detail=True, methods=['post'], url_path='revoke-camera/(?P<user_id>[^/.]+)')
+    def revoke_camera(self, request, pk=None, user_id=None):
+        return self._update_student_permission(pk, user_id, 'can_share_video', False, 'camera.revoked', 'canShareVideo')
+
+    @action(detail=True, methods=['post'], url_path='grant-screen/(?P<user_id>[^/.]+)')
+    def grant_screen(self, request, pk=None, user_id=None):
+        return self._update_student_permission(pk, user_id, 'can_share_screen', True, 'screen.granted', 'canShareScreen')
+
+    @action(detail=True, methods=['post'], url_path='revoke-screen/(?P<user_id>[^/.]+)')
+    def revoke_screen(self, request, pk=None, user_id=None):
+        return self._update_student_permission(pk, user_id, 'can_share_screen', False, 'screen.revoked', 'canShareScreen')
+
     def _update_student_permission(self, pk, user_id, field, value, private_event, public_field):
         class_instance = self.get_object()
         teacher_error = self._ensure_teacher(class_instance)
