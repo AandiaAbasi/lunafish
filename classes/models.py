@@ -38,6 +38,7 @@ class OnlineClass(BaseModel):
         null=True,
         blank=True,
     )
+    reward_granted = models.BooleanField(default=False)
     scheduled_start = models.DateTimeField(verbose_name=_('Scheduled start'))
     scheduled_end = models.DateTimeField(verbose_name=_('Scheduled end'))
     actual_start = models.DateTimeField(null=True, blank=True, verbose_name=_('Actual start'))

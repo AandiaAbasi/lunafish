@@ -204,17 +204,53 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def end(self, request, pk=None):
         class_instance = self.get_object()
+
         teacher_error = self._ensure_teacher(class_instance)
         if teacher_error:
             return teacher_error
+
         try:
             class_instance.end()
         except ValueError as exc:
-            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
-        data = OnlineClassSerializer(class_instance, context={'request': request}).data
-        publish_to_class(str(class_instance.id), 'class.ended', self._class_payload(class_instance))
-        class_ended.send(sender=OnlineClass, class_instance=class_instance, duration_minutes=class_instance.actual_duration_minutes)
+            return Response(
+                {'error': str(exc)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Grant student score once per class
+        if not class_instance.reward_granted:
+            student_ids = ClassEnrollment.objects.filter(
+                class_session=class_instance
+            ).values_list('student_id', flat=True)
+
+            User.objects.filter(
+                id__in=student_ids
+            ).update(
+                student_score=F('student_score') + 20
+            )
+
+            class_instance.reward_granted = True
+            class_instance.save(update_fields=['reward_granted'])
+
+        data = OnlineClassSerializer(
+            class_instance,
+            context={'request': request}
+        ).data
+
+        publish_to_class(
+            str(class_instance.id),
+            'class.ended',
+            self._class_payload(class_instance)
+        )
+
+        class_ended.send(
+            sender=OnlineClass,
+            class_instance=class_instance,
+            duration_minutes=class_instance.actual_duration_minutes
+        )
+
         return Response(data)
+    
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
