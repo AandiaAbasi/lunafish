@@ -25,6 +25,9 @@ DATABASES = {
 # Static files
 STATIC_ROOT = '/app/staticfiles'
 
+# Media files
+MEDIA_ROOT = '/app/mediafiles'
+
 # Centrifugo
 CENTRIFUGO_API_URL = os.environ.get('CENTRIFUGO_API_URL', 'http://centrifugo:8000/api')
 CENTRIFUGO_API_KEY = os.environ.get('CENTRIFUGO_API_KEY', '')
