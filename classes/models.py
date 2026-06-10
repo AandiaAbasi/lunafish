@@ -133,7 +133,7 @@ class ClassEnrollment(BaseModel):
         verbose_name=_('Student'),
     )
     can_unmute = models.BooleanField(default=False, verbose_name=_('Can unmute'))
-    can_share_video = models.BooleanField(default=True, verbose_name=_('Can share video'))
+    can_share_video = models.BooleanField(default=False, verbose_name=_('Can share video'))
     can_share_screen = models.BooleanField(default=False, verbose_name=_('Can share screen'))
     is_moderator = models.BooleanField(default=False, verbose_name=_('Is moderator'))
     enrolled_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Enrolled at'))
