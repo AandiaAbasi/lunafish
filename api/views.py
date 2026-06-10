@@ -75,6 +75,8 @@ from django.db import transaction
 from classroom.models import TeacherWallet
 # Import Internal RTC Events view from classes app
 from classes.views import InternalRTCEventAPIView
+from django.db.models import Prefetch
+
 
 User = get_user_model()
 
@@ -12124,13 +12126,23 @@ class TeacherEnrollmentDetailView(RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        booking_qs = ClassBooking.objects.select_related(
+            'availability',
+            'subject',
+            'teacher',
+            'student',
+            'booked_class',   # reverse OneToOne from OnlineClass.booking
+        )
+
         return CourseEnrollment.objects.filter(
             course__subject__teacher=self.request.user,
             payment_status='paid'
         ).select_related(
             'course__subject__teacher',
             'student'
-        ).prefetch_related('bookings__availability')
+        ).prefetch_related(
+            Prefetch('bookings', queryset=booking_qs)
+        )
         
 class AssignTimeToEnrollmentView(APIView):
     permission_classes = [IsAuthenticated]
