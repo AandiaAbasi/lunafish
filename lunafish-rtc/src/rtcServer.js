@@ -638,6 +638,13 @@ async function createRtcServer(config) {
             dtlsParameters: data.dtlsParameters
           });
 
+          console.log('[CONNECT TRANSPORT]', {
+            direction: data.direction,
+            dtlsRole: data.dtlsParameters?.role,
+            transportDtls: transport.dtlsState,
+            transportIce: transport.iceState,
+          });
+
           return send(ws, {
             requestId,
             ok: true,
@@ -661,6 +668,18 @@ async function createRtcServer(config) {
             rtpParameters: data.rtpParameters
           });
           counters.produces += 1;
+
+          console.log('[PRODUCE]', {
+            producerId: producer.id,
+            kind: producer.kind,
+            ssrc: data.rtpParameters?.encodings?.[0]?.ssrc,
+            transportDtls: currentPeer.sendTransport?.dtlsState,
+            transportIce: currentPeer.sendTransport?.iceState,
+          });
+
+          producer.on('score', (score) => {
+            console.log('[PRODUCER SCORE]', producer.id, JSON.stringify(score));
+          });
 
           currentPeer.producers.set(producer.id, producer);
           producers.set(producer.id, {
