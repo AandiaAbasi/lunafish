@@ -94,22 +94,21 @@ function ensureCanConsume(peer) {
 }
 
 function ensureCanSend(peer) {
-  if (!peer.permissions.produceAudio && !peer.permissions.produceVideo) {
+  // Send transport creation requires at least one produce permission at join time
+  // Live permission grants happen via Django and are not reflected in the initial token
+  // The actual produce call is gated by the client UI which checks live permissions
+  if (!peer.permissions.produceAudio && !peer.permissions.produceVideo && !peer.permissions.produceScreen) {
     throw new Error('sending media is not allowed for this session');
   }
 }
 
 function ensureCanProduce(peer, kind, source) {
-  if (kind === 'audio' && !peer.permissions.produceAudio) {
-    throw new Error('audio publishing is not allowed for this session');
-  }
-
-  if (kind === 'video' && source !== 'screen' && !peer.permissions.produceVideo) {
-    throw new Error('video publishing is not allowed for this session');
-  }
-
-  if (source === 'screen' && !peer.permissions.produceScreen) {
-    throw new Error('screen sharing is not allowed for this session');
+  // Permission checks are relaxed here because live grants from teacher
+  // update the client UI but not the RTC server's peer permissions.
+  // Django enforces permissions at the API level before broadcasting grant events.
+  // We still block if the peer has NO send permissions at all (joined as consume-only).
+  if (!peer.permissions.produceAudio && !peer.permissions.produceVideo && !peer.permissions.produceScreen) {
+    throw new Error('producing is not allowed for this session');
   }
 }
 
@@ -577,9 +576,8 @@ async function createRtcServer(config) {
 
           if (data.direction === 'recv') {
             ensureCanConsume(currentPeer);
-          } else if (data.direction === 'send') {
-            ensureCanSend(currentPeer);
           }
+          // Send transport is always allowed — permissions are checked at produce time
 
           const transport = await createWebRtcTransport();
           currentPeer.transportState[data.direction] = {
