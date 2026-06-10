@@ -12132,9 +12132,8 @@ class TeacherEnrollmentDetailView(RetrieveAPIView):
             'student'
         ).prefetch_related(
             'bookings__availability',
-            'bookings__booked_class',  # اضافه شود
+            'bookings__booked_class',   # 👈 اینو اضافه کن
         )
-    
 class AssignTimeToEnrollmentView(APIView):
     permission_classes = [IsAuthenticated]
     

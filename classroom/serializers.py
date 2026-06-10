@@ -152,15 +152,15 @@ class AssignTimeToEnrollmentSerializer(serializers.Serializer):
         
 class CourseEnrollmentWithBookingsSerializer(CourseEnrollmentSerializer):
     bookings = serializers.SerializerMethodField()
-    
+
     class Meta(CourseEnrollmentSerializer.Meta):
         fields = CourseEnrollmentSerializer.Meta.fields + ['bookings']
-    
+
     def get_bookings(self, obj):
-        bookings = ClassBooking.objects.filter(
-            enrollment=obj
-        ).select_related('availability', 'subject', 'teacher', 'student').order_by('availability__start_time')
-        
+        bookings = obj.bookings.all().select_related(
+            'availability', 'subject', 'teacher', 'student', 'booked_class'
+        ).order_by('availability__start_time')
+
         return [{
             'id': booking.id,
             'availability': booking.availability.id,
@@ -179,6 +179,10 @@ class CourseEnrollmentWithBookingsSerializer(CourseEnrollmentSerializer):
             'final_price': str(booking.final_price),
             'created_at': booking.created_at,
             'updated_at': booking.updated_at,
+
+            # ✅ فیلدهای جدید
+            'online_class_id': booking.booked_class.id if hasattr(booking, 'booked_class') and booking.booked_class else None,
+            'online_class_start': booking.booked_class.scheduled_start if hasattr(booking, 'booked_class') and booking.booked_class else None,
         } for booking in bookings]
         
         
