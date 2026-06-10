@@ -63,7 +63,7 @@ services:
       RTC_TURN_USERNAME: ${RTC_TURN_USERNAME:-}
       RTC_TURN_CREDENTIAL: ${RTC_TURN_CREDENTIAL:-}
       MEDIASOUP_LOG_LEVEL: "warn"
-      DJANGO_INTERNAL_CALLBACK_URL: "http://django:8000/api/v1/internal/rtc-events/"
+      DJANGO_INTERNAL_CALLBACK_URL: "http://django:8000/api/internal/rtc-events/"
       INTERNAL_CALLBACK_SECRET: ${INTERNAL_CALLBACK_SECRET}
     ports:
       - "40000-40100:40000-40100/udp"

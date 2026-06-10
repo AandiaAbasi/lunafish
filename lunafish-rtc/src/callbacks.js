@@ -8,11 +8,6 @@ function buildSignature({ timestamp, rawBody, secret }) {
 }
 
 async function postPresenceEvent(config, event, peer) {
-  // Temporarily disable presence callbacks to fix video/audio
-  // TODO: Re-enable when Django endpoint is fixed
-  return { skipped: true, reason: 'temporarily-disabled' };
-  
-  /* Original code (commented out for now):
   if (!config.djangoInternalCallbackUrl) {
     return { skipped: true, reason: 'missing-url' };
   }
@@ -62,7 +57,6 @@ async function postPresenceEvent(config, event, peer) {
   } finally {
     clearTimeout(timeout);
   }
-  */
 }
 
 module.exports = {

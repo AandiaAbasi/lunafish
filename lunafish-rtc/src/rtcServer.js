@@ -638,24 +638,6 @@ async function createRtcServer(config) {
             dtlsParameters: data.dtlsParameters
           });
 
-          console.log('[CONNECT TRANSPORT]', {
-            direction: data.direction,
-            dtlsRole: data.dtlsParameters?.role,
-            transportDtls: transport.dtlsState,
-            transportIce: transport.iceState,
-          });
-
-          // Log when transport actually reaches connected state
-          transport.on('dtlsstatechange', (dtlsState) => {
-            console.log(`[TRANSPORT DTLS ${data.direction}]`, dtlsState, {
-              iceState: transport.iceState,
-              tuple: transport.tuple,
-            });
-          });
-          transport.on('icestatechange', (iceState) => {
-            console.log(`[TRANSPORT ICE ${data.direction}]`, iceState);
-          });
-
           return send(ws, {
             requestId,
             ok: true,
@@ -679,35 +661,6 @@ async function createRtcServer(config) {
             rtpParameters: data.rtpParameters
           });
           counters.produces += 1;
-
-          console.log('[PRODUCE]', {
-            producerId: producer.id,
-            kind: producer.kind,
-            ssrc: data.rtpParameters?.encodings?.[0]?.ssrc,
-            transportDtls: currentPeer.sendTransport?.dtlsState,
-            transportIce: currentPeer.sendTransport?.iceState,
-          });
-
-          producer.on('score', (score) => {
-            console.log('[PRODUCER SCORE]', producer.id, JSON.stringify(score));
-          });
-
-          // Check producer score after 3s and 6s to see if RTP arrives later
-          setTimeout(() => {
-            console.log('[PRODUCER SCORE 3s]', producer.id, {
-              score: producer.score,
-              transportDtls: currentPeer.sendTransport?.dtlsState,
-              transportIce: currentPeer.sendTransport?.iceState,
-              closed: producer.closed,
-            });
-          }, 3000);
-          setTimeout(() => {
-            console.log('[PRODUCER SCORE 6s]', producer.id, {
-              score: producer.score,
-              transportDtls: currentPeer.sendTransport?.dtlsState,
-              transportIce: currentPeer.sendTransport?.iceState,
-            });
-          }, 6000);
 
           currentPeer.producers.set(producer.id, producer);
           producers.set(producer.id, {
@@ -857,20 +810,6 @@ async function createRtcServer(config) {
           }
 
           await consumer.resume();
-
-          // Diagnostic: log consumer state after resume
-          const producerInfo = producers.get(consumer.producerId);
-          console.log('[RESUME]', {
-            consumerId: consumer.id,
-            producerId: consumer.producerId,
-            kind: consumer.kind,
-            paused: consumer.paused,
-            producerPaused: consumer.producerPaused,
-            score: consumer.score,
-            producerFound: !!producerInfo,
-            transportDtls: currentPeer.recvTransport?.dtlsState,
-            transportIce: currentPeer.recvTransport?.iceState,
-          });
 
           return send(ws, {
             requestId,
