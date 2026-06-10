@@ -811,6 +811,20 @@ async function createRtcServer(config) {
 
           await consumer.resume();
 
+          // Diagnostic: log consumer state after resume
+          const producerInfo = producers.get(consumer.producerId);
+          console.log('[RESUME]', {
+            consumerId: consumer.id,
+            producerId: consumer.producerId,
+            kind: consumer.kind,
+            paused: consumer.paused,
+            producerPaused: consumer.producerPaused,
+            score: consumer.score,
+            producerFound: !!producerInfo,
+            transportDtls: currentPeer.recvTransport?.dtlsState,
+            transportIce: currentPeer.recvTransport?.iceState,
+          });
+
           return send(ws, {
             requestId,
             ok: true,
