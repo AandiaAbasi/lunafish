@@ -645,6 +645,17 @@ async function createRtcServer(config) {
             transportIce: transport.iceState,
           });
 
+          // Log when transport actually reaches connected state
+          transport.on('dtlsstatechange', (dtlsState) => {
+            console.log(`[TRANSPORT DTLS ${data.direction}]`, dtlsState, {
+              iceState: transport.iceState,
+              tuple: transport.tuple,
+            });
+          });
+          transport.on('icestatechange', (iceState) => {
+            console.log(`[TRANSPORT ICE ${data.direction}]`, iceState);
+          });
+
           return send(ws, {
             requestId,
             ok: true,
@@ -680,6 +691,23 @@ async function createRtcServer(config) {
           producer.on('score', (score) => {
             console.log('[PRODUCER SCORE]', producer.id, JSON.stringify(score));
           });
+
+          // Check producer score after 3s and 6s to see if RTP arrives later
+          setTimeout(() => {
+            console.log('[PRODUCER SCORE 3s]', producer.id, {
+              score: producer.score,
+              transportDtls: currentPeer.sendTransport?.dtlsState,
+              transportIce: currentPeer.sendTransport?.iceState,
+              closed: producer.closed,
+            });
+          }, 3000);
+          setTimeout(() => {
+            console.log('[PRODUCER SCORE 6s]', producer.id, {
+              score: producer.score,
+              transportDtls: currentPeer.sendTransport?.dtlsState,
+              transportIce: currentPeer.sendTransport?.iceState,
+            });
+          }, 6000);
 
           currentPeer.producers.set(producer.id, producer);
           producers.set(producer.id, {
