@@ -60,7 +60,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         queryset = OnlineClass.objects.select_related('teacher').prefetch_related('enrollments')
         if is_teacher(user):
             return queryset.filter(teacher=user)
-        return queryset.filter(enrollments__student=user, enrollments__left_at__isnull=True).distinct()
+        return queryset.filter(enrollments__student=user).distinct()
 
     def perform_create(self, serializer):
         teacher = serializer.validated_data.get('teacher') or self.request.user
@@ -281,14 +281,31 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def join(self, request, pk=None):
         class_instance = self.get_object()
-        teacher_participant, enrollment, error = self._ensure_participant(class_instance)
-        if error:
-            return error
+        user = request.user
+        
+        # Check if teacher
+        teacher_participant = class_instance.teacher_id == user.id
+        enrollment = None
+        
+        if not teacher_participant:
+            # Look for any enrollment (including previously left ones) to allow rejoin
+            enrollment = ClassEnrollment.objects.filter(
+                class_session=class_instance,
+                student=user,
+            ).first()
+            
+            if enrollment and enrollment.left_at is not None:
+                # Re-activate the enrollment (allow rejoin)
+                enrollment.left_at = None
+                enrollment.save(update_fields=['left_at'])
+            
+            if not enrollment:
+                return Response({'error': 'Not enrolled'}, status=status.HTTP_403_FORBIDDEN)
+        
         joinable_error = self._ensure_joinable(class_instance)
         if joinable_error:
             return joinable_error
 
-        user = request.user
         role = 'teacher' if teacher_participant else 'student'
         if enrollment:
             enrollment.join()
@@ -524,6 +541,22 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='revoke-mic/(?P<user_id>[^/.]+)')
     def revoke_mic(self, request, pk=None, user_id=None):
         return self._update_student_permission(pk, user_id, 'can_unmute', False, 'mic.revoked', 'canUnmute')
+
+    @action(detail=True, methods=['post'], url_path='grant-camera/(?P<user_id>[^/.]+)')
+    def grant_camera(self, request, pk=None, user_id=None):
+        return self._update_student_permission(pk, user_id, 'can_share_video', True, 'camera.granted', 'canShareVideo')
+
+    @action(detail=True, methods=['post'], url_path='revoke-camera/(?P<user_id>[^/.]+)')
+    def revoke_camera(self, request, pk=None, user_id=None):
+        return self._update_student_permission(pk, user_id, 'can_share_video', False, 'camera.revoked', 'canShareVideo')
+
+    @action(detail=True, methods=['post'], url_path='grant-screen/(?P<user_id>[^/.]+)')
+    def grant_screen(self, request, pk=None, user_id=None):
+        return self._update_student_permission(pk, user_id, 'can_share_screen', True, 'screen.granted', 'canShareScreen')
+
+    @action(detail=True, methods=['post'], url_path='revoke-screen/(?P<user_id>[^/.]+)')
+    def revoke_screen(self, request, pk=None, user_id=None):
+        return self._update_student_permission(pk, user_id, 'can_share_screen', False, 'screen.revoked', 'canShareScreen')
 
     def _update_student_permission(self, pk, user_id, field, value, private_event, public_field):
         class_instance = self.get_object()

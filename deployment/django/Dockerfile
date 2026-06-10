@@ -18,7 +18,8 @@ RUN pip install --no-cache-dir -i https://mirror.abrha.net/repository/pypi/simpl
 
 COPY . .
 
-RUN python manage.py collectstatic --noinput 2>/dev/null || true
+RUN mkdir -p /app/staticfiles /app/mediafiles && \
+    python manage.py collectstatic --noinput 2>/dev/null || true
 
 EXPOSE 8000
 CMD ["gunicorn", "fofofish.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "30", "--access-logfile", "-"]

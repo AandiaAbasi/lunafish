@@ -210,7 +210,7 @@ AUTH_USER_MODEL = 'account.User'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'staticfiles/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
@@ -219,7 +219,7 @@ STATICFILES_IGNORE_PATTERNS = ['.gitignore', '.git', '.svn']
 
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join('/home/fofofish/public_html/media')
+MEDIA_ROOT = os.path.join(BASE_DIR, "mediafiles")
 # CKEditor settings
 CKEDITOR_RESTRICT_BY_DATE = True
 
@@ -327,6 +327,7 @@ CENTRIFUGO_TOKEN_TTL_SECONDS = int(os.getenv('CENTRIFUGO_TOKEN_TTL_SECONDS', '72
 RTC_JWT_SECRET = os.getenv('RTC_JWT_SECRET', SECRET_KEY)
 RTC_WS_URL = os.getenv('RTC_WS_URL', '')
 RTC_TOKEN_TTL_SECONDS = int(os.getenv('RTC_TOKEN_TTL_SECONDS', '3600'))
+INTERNAL_CALLBACK_SECRET = os.getenv('INTERNAL_CALLBACK_SECRET', '')
 RTC_ICE_SERVERS = [
     {'urls': [url.strip() for url in os.getenv('RTC_ICE_SERVER_URLS', 'stun:stun.l.google.com:19302').split(',') if url.strip()]}
 ]

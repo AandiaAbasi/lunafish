@@ -21,8 +21,8 @@ function normalizePermissions(input = {}) {
     consume: Boolean(input.consume),
     produceAudio: Boolean(input.produceAudio),
     produceVideo: Boolean(input.produceVideo),
-    produceScreen: false,
-    manageRecording: false
+    produceScreen: Boolean(input.produceScreen),
+    manageRecording: Boolean(input.manageRecording)
   };
 }
 
