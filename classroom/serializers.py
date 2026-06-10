@@ -183,6 +183,7 @@ class CourseEnrollmentWithBookingsSerializer(CourseEnrollmentSerializer):
             # ✅ فیلدهای جدید
             'online_class_id': booking.booked_class.id if hasattr(booking, 'booked_class') and booking.booked_class else None,
             'online_class_start': booking.booked_class.scheduled_start if hasattr(booking, 'booked_class') and booking.booked_class else None,
+            'online_class_end': booking.booked_class.scheduled_end if hasattr(booking, 'booked_class') and booking.booked_class else None,
         } for booking in bookings]
         
         
