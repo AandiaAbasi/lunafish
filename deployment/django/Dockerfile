@@ -5,6 +5,13 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# Use Abrha mirror for Debian packages (avoids connectivity issues in Iran)
+RUN echo "deb https://repo.abrha.net/debian trixie main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/abrha.list && \
+    echo "deb https://repo.abrha.net/debian trixie-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list.d/abrha.list && \
+    echo "deb https://repo.abrha.net/debian trixie-backports main contrib non-free non-free-firmware" >> /etc/apt/sources.list.d/abrha.list && \
+    echo "deb https://repo.abrha.net/debian-security trixie-security main non-free-firmware" >> /etc/apt/sources.list.d/abrha.list && \
+    rm -f /etc/apt/sources.list.d/debian.sources
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libpq-dev \
