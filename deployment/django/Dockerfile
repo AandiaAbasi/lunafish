@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -i https://mirror.abrha.net/repository/pypi/simple --trusted-host mirror.abrha.net pysocks && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -i https://mirror.abrha.net/repository/pypi/simple --trusted-host mirror.abrha.net -r requirements.txt
 
 COPY . .
 
