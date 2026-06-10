@@ -10078,6 +10078,8 @@ class ParentalUsageReportAPIView(APIView):
         from .parent_serializers import UsageReportRequestSerializer, ParentalLimitsSerializer
         from django.db.models import F, ExpressionWrapper, IntegerField
         import logging
+        from zoneinfo import ZoneInfo
+
         
         logger = logging.getLogger(__name__)
         
@@ -10127,7 +10129,7 @@ class ParentalUsageReportAPIView(APIView):
             )
         
         # Use server time as source of truth
-        iran_tz = pytz.timezone("Asia/Tehran")
+        iran_tz = ZoneInfo("Asia/Tehran")
         server_now = timezone.now().astimezone(iran_tz)
         today = server_now.date()
         

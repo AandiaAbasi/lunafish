@@ -192,6 +192,7 @@ class CourseEnrollmentWithBookingsSerializer(CourseEnrollmentSerializer):
             'online_class_start': booking.booked_class.scheduled_start if hasattr(booking, 'booked_class') and booking.booked_class else None,
             'online_class_end': booking.booked_class.scheduled_end if hasattr(booking, 'booked_class') and booking.booked_class else None,
             'online_actual_end': booking.booked_class.actual_end if hasattr(booking, 'booked_class') and booking.booked_class else None,
+            'online_actual_start': booking.booked_class.actual_start if hasattr(booking, 'booked_class') and booking.booked_class else None,
         } for booking in bookings]
         
 class CourseEnrollmentWithBookingsListSerializer(CourseEnrollmentSerializer):
