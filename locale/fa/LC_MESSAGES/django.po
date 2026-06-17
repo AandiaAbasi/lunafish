@@ -2269,7 +2269,7 @@ msgstr "کلاس رزرو شده"
 
 #: classes/models.py:41
 msgid "Reward granted"
-msgstr ""
+msgstr "پاداش اعطا شده"
 
 #: classes/models.py:42
 msgid "Scheduled start"
@@ -2389,26 +2389,20 @@ msgid "Inactive enrollment cannot join."
 msgstr "ثبت‌نام غیرفعال امکان پیوستن ندارد."
 
 #: classes/models.py:186
-#, fuzzy
-#| msgid "Read at"
 msgid "Raised at"
-msgstr "خوانده‌شده در"
+msgstr "زمان بالا بردن دست"
 
 #: classes/models.py:187
-#, fuzzy
-#| msgid "Joined at"
 msgid "Lowered at"
-msgstr "پیوسته در"
+msgstr "زمان پایین آوردن دست"
 
 #: classes/models.py:194
 msgid "Acknowledged by"
-msgstr ""
+msgstr "تأییدشده توسط"
 
 #: classes/models.py:196
-#, fuzzy
-#| msgid "Enrolled at"
 msgid "Acknowledged at"
-msgstr "ثبت‌نام‌شده در"
+msgstr "زمان تأیید"
 
 #: classes/models.py:200
 msgid "Hand Raise"
@@ -2429,31 +2423,23 @@ msgstr "محتوا"
 
 #: classes/models.py:233
 msgid "Is private"
-msgstr ""
+msgstr "خصوصی است"
 
 #: classes/models.py:240
-#, fuzzy
-#| msgid "Recipient not found"
 msgid "Recipient"
-msgstr "گیرنده یافت نشد"
+msgstr "گیرنده"
 
 #: classes/models.py:242
-#, fuzzy
-#| msgid "Delete"
 msgid "Is deleted"
-msgstr "حذف"
+msgstr "حذف شده است"
 
 #: classes/models.py:249
-#, fuzzy
-#| msgid "Delete"
 msgid "Deleted by"
-msgstr "حذف"
+msgstr "حذف‌شده توسط"
 
 #: classes/models.py:251
-#, fuzzy
-#| msgid "Delete"
 msgid "Deleted at"
-msgstr "حذف"
+msgstr "حذف‌شده در"
 
 #: classes/models.py:255
 msgid "Class Message"
@@ -2465,7 +2451,7 @@ msgstr "پیام‌های کلاس"
 
 #: classes/models.py:272
 msgid "Thumbs Up"
-msgstr ""
+msgstr "پسندیدن"
 
 #: classes/models.py:273 exercise/models.py:458
 msgid "Heart"
@@ -2473,23 +2459,23 @@ msgstr "قلب"
 
 #: classes/models.py:274
 msgid "Clap"
-msgstr ""
+msgstr "تشویق"
 
 #: classes/models.py:275
 msgid "Party"
-msgstr ""
+msgstr "جشن"
 
 #: classes/models.py:276
 msgid "Thinking"
-msgstr ""
+msgstr "در حال فکر کردن"
 
 #: classes/models.py:277
 msgid "Surprised"
-msgstr ""
+msgstr "متعجب"
 
 #: classes/models.py:282
 msgid "Emoji"
-msgstr ""
+msgstr "ایموجی"
 
 #: classes/models.py:283 core/forms.py:36 core/models.py:76
 msgid "Message"

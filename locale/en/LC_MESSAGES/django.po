@@ -2261,7 +2261,7 @@ msgstr "Booked class"
 
 #: classes/models.py:41
 msgid "Reward granted"
-msgstr ""
+msgstr "Reward granted"
 
 #: classes/models.py:42
 msgid "Scheduled start"
@@ -2381,24 +2381,20 @@ msgid "Inactive enrollment cannot join."
 msgstr ""
 
 #: classes/models.py:186
-#, fuzzy
-#| msgid "Read at"
 msgid "Raised at"
-msgstr "Read at"
+msgstr "Raised at"
 
 #: classes/models.py:187
-#, fuzzy
-#| msgid "Joined at"
 msgid "Lowered at"
-msgstr "Joined at"
+msgstr "Lowered at"
 
 #: classes/models.py:194
 msgid "Acknowledged by"
-msgstr ""
+msgstr "Acknowledged by"
 
 #: classes/models.py:196
 msgid "Acknowledged at"
-msgstr ""
+msgstr "Acknowledged at"
 
 #: classes/models.py:200
 msgid "Hand Raise"
@@ -2419,23 +2415,23 @@ msgstr ""
 
 #: classes/models.py:233
 msgid "Is private"
-msgstr ""
+msgstr "Is private"
 
 #: classes/models.py:240
 msgid "Recipient"
-msgstr ""
+msgstr "Recipient"
 
 #: classes/models.py:242
 msgid "Is deleted"
-msgstr ""
+msgstr "Is deleted"
 
 #: classes/models.py:249
 msgid "Deleted by"
-msgstr ""
+msgstr "Deleted by"
 
 #: classes/models.py:251
 msgid "Deleted at"
-msgstr ""
+msgstr "Deleted at"
 
 #: classes/models.py:255
 msgid "Class Message"
@@ -2447,7 +2443,7 @@ msgstr "Class Messages"
 
 #: classes/models.py:272
 msgid "Thumbs Up"
-msgstr ""
+msgstr "Thumbs Up"
 
 #: classes/models.py:273 exercise/models.py:458
 msgid "Heart"
@@ -2455,23 +2451,23 @@ msgstr ""
 
 #: classes/models.py:274
 msgid "Clap"
-msgstr ""
+msgstr "Clap"
 
 #: classes/models.py:275
 msgid "Party"
-msgstr ""
+msgstr "Party"
 
 #: classes/models.py:276
 msgid "Thinking"
-msgstr ""
+msgstr "Thinking"
 
 #: classes/models.py:277
 msgid "Surprised"
-msgstr ""
+msgstr "Surprised"
 
 #: classes/models.py:282
 msgid "Emoji"
-msgstr ""
+msgstr "Emoji"
 
 #: classes/models.py:283 core/forms.py:36 core/models.py:76
 msgid "Message"
