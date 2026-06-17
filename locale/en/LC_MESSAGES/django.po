@@ -3,16 +3,15 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-17 10:53+0330\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2026-06-17 11:00+0330\n"
+"Last-Translator: Auto Fixed <translations@example.com>\n"
+"Language-Team: en <en@example.com>\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1364,10 +1363,8 @@ msgid "Only teachers can use this endpoint"
 msgstr ""
 
 #: api/views.py:1633
-#, fuzzy
-#| msgid "Revenue confirmed successfully"
 msgid "Teacher profile saved successfully"
-msgstr "Revenue confirmed successfully"
+msgstr "Teacher profile saved successfully"
 
 #: api/views.py:1724
 msgid "Avatar selected successfully"
@@ -2254,10 +2251,8 @@ msgid "Description"
 msgstr ""
 
 #: classes/models.py:37
-#, fuzzy
-#| msgid "رزرو شده"
 msgid "کلاس رزرو شده"
-msgstr "Booked"
+msgstr "Booked class"
 
 #: classes/models.py:42
 msgid "Scheduled start"
@@ -2284,10 +2279,8 @@ msgid "Max students"
 msgstr ""
 
 #: classes/models.py:48
-#, fuzzy
-#| msgid "Allowed start time"
 msgid "Allow student chat"
-msgstr "Allowed start time"
+msgstr "Allow student chat"
 
 #: classes/models.py:49
 msgid "Allow student reactions"
@@ -2354,10 +2347,8 @@ msgid "Enrolled at"
 msgstr ""
 
 #: classes/models.py:141
-#, fuzzy
-#| msgid "Read at"
 msgid "Joined at"
-msgstr "Read at"
+msgstr "Joined at"
 
 #: classes/models.py:142
 msgid "Left at"
@@ -2396,10 +2387,8 @@ msgid "Class Message"
 msgstr ""
 
 #: classes/models.py:253
-#, fuzzy
-#| msgid "Support Messages"
 msgid "Class Messages"
-msgstr "Support Messages"
+msgstr "Class Messages"
 
 #: classes/models.py:285
 msgid "Class Reaction"
