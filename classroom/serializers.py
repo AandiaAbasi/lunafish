@@ -47,15 +47,16 @@ class CourseSerializer(serializers.ModelSerializer):
     
     # برای خواندن: URL کامل
     cover_image_url = serializers.SerializerMethodField(read_only=True)
+    has_purchased = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Course
         fields = [
             'id', 'subject', 'subject_title', 'title', 'description',
             'price', 'discounted_price', 'final_price', 'session_count',
-            'is_active', 'teacher_name', 'cover_image', 'cover_image_url','status', 'rejection_reason'
+            'is_active', 'teacher_name', 'cover_image', 'cover_image_url','status', 'rejection_reason', 'has_purchased',
         ]
-        read_only_fields = ['id', 'final_price', 'teacher_name', 'subject_title']
+        read_only_fields = ['id', 'final_price', 'teacher_name', 'subject_title', 'has_purchased',]
         extra_kwargs = {
             'cover_image': {'write_only': False, 'required': False}
         }
@@ -68,7 +69,18 @@ class CourseSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.cover_image.url)
             return obj.cover_image.url
         return None
+    
+    def get_has_purchased(self, obj):
+        request = self.context.get('request')
 
+        if not request or not request.user or not request.user.is_authenticated:
+            return False
+
+        return obj.enrollments.filter(
+            student=request.user,
+            payment_status='paid'
+        ).exists()
+    
     def validate_subject(self, value):
         request = self.context['request']
         if value.teacher != request.user:
