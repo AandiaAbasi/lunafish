@@ -2334,7 +2334,7 @@ msgstr "اطلاعات سیستم"
 
 #: classroom/admin.py:346
 msgid "تصویری وجود ندارد"
-msgstr ""
+msgstr "تصویری وجود ندارد"
 
 #: classroom/admin.py:347
 msgid "پیش‌نمایش عکس کاور"
@@ -2487,11 +2487,11 @@ msgstr "تایید و پرداخت درخواست‌های انتخاب‌شده
 #: classroom/admin.py:782
 #, python-format
 msgid "%(count)d درخواست با موفقیت تایید و پرداخت شد و SMS ارسال شد"
-msgstr ""
+msgstr "%(count)d درخواست با موفقیت تأیید و پرداخت شد و پیامک ارسال شد"
 
 #: classroom/admin.py:789 classroom/admin.py:816
 msgid "خطاها: "
-msgstr ""
+msgstr "خطاها: "
 
 #: classroom/admin.py:793
 msgid "رد کردن درخواست‌های انتخاب‌شده"
@@ -2500,7 +2500,7 @@ msgstr "رد کردن درخواست‌های انتخاب‌شده"
 #: classroom/admin.py:809
 #, python-format
 msgid "%(count)d درخواست رد شد و SMS ارسال شد"
-msgstr ""
+msgstr "%(count)d درخواست رد شد و پیامک ارسال شد"
 
 #: classroom/admin.py:821
 msgid "درخواست کننده"
@@ -2520,7 +2520,7 @@ msgstr "تراکنش"
 
 #: classroom/admin.py:837 classroom/models.py:551
 msgid "فیش واریزی"
-msgstr ""
+msgstr "فیش واریزی"
 
 #: classroom/admin.py:840 classroom/models.py:29 classroom/models.py:440
 #: classroom/models.py:542 classroom/models.py:1121 classroom/models.py:1251
@@ -2529,7 +2529,7 @@ msgstr "یادداشت‌ها"
 
 #: classroom/admin.py:858
 msgid "پیش‌نمایش فیش"
-msgstr ""
+msgstr "پیش‌نمایش فیش"
 
 #: classroom/admin.py:887 classroom/models.py:539
 msgid "اطلاعات حساب"
@@ -3741,11 +3741,11 @@ msgstr "لطفاً خطاهای فرم را برطرف کنید."
 
 #: exercise/admin.py:68
 msgid "✓"
-msgstr ""
+msgstr "✓"
 
 #: exercise/admin.py:68
 msgid "✗"
-msgstr ""
+msgstr "✗"
 
 #: exercise/admin.py:70 exercise/admin.py:263 exercise/admin.py:296
 msgid "درستی"
@@ -3824,7 +3824,7 @@ msgstr "تاریخ ایجاد"
 #: exercise/admin.py:507 exercise/admin.py:578 exercise/admin.py:648
 #: exercise/admin.py:737
 msgid "عملیات"
-msgstr ""
+msgstr "عملیات"
 
 #: exercise/admin.py:257 exercise/admin.py:522 exercise/admin.py:552
 msgid "سؤال"
@@ -3888,7 +3888,7 @@ msgstr "امتیاز معلم"
 
 #: exercise/admin.py:467
 msgid "مدال‌ها"
-msgstr ""
+msgstr "مدال‌ها"
 
 #: exercise/admin.py:484
 msgid "جزئیات امتیاز"
@@ -3916,7 +3916,7 @@ msgstr "کلاس و تمرین"
 
 #: exercise/admin.py:599
 msgid "نظر"
-msgstr ""
+msgstr "نظر"
 
 #: exercise/admin.py:667
 msgid "مدال"
