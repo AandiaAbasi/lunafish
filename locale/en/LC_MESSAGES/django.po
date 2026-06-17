@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-10 14:06+0330\n"
+"POT-Creation-Date: 2026-06-17 10:53+0330\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,7 +50,7 @@ msgid "Edit"
 msgstr ""
 
 #: account/admin.py:96 account/admin.py:163 account/admin.py:314
-#: account/admin.py:389 account/admin.py:535 classroom/admin.py:1084
+#: account/admin.py:389 account/admin.py:531 classroom/admin.py:1084
 #: core/admin.py:64 core/admin.py:95 core/admin.py:122 core/admin.py:144
 #: core/admin.py:207 core/admin.py:230 core/admin.py:309
 msgid "Actions"
@@ -108,8 +108,8 @@ msgstr ""
 msgid "Teacher created but SMS failed. Password: {password}"
 msgstr ""
 
-#: account/admin.py:238 account/models.py:53 account/models.py:255
-#: account/models.py:417 exercise/models.py:227
+#: account/admin.py:238 account/models.py:53 account/models.py:258
+#: account/models.py:420 exercise/models.py:227
 msgid "User"
 msgstr ""
 
@@ -117,9 +117,9 @@ msgstr ""
 msgid "User Management"
 msgstr ""
 
-#: account/admin.py:245 account/admin.py:514 account/models.py:54
-#: account/models.py:717 classroom/models.py:859 exercise/models.py:23
-#: exercise/models.py:362 exercise/models.py:471
+#: account/admin.py:245 account/admin.py:510 account/models.py:54
+#: account/models.py:720 classes/models.py:31 classroom/models.py:859
+#: exercise/models.py:23 exercise/models.py:362 exercise/models.py:471
 msgid "Teacher"
 msgstr ""
 
@@ -136,13 +136,13 @@ msgid "Metadata"
 msgstr ""
 
 #: account/admin.py:289 account/admin.py:359 account/admin.py:438
-#: account/admin.py:500 core/abstract_models.py:8 core/abstract_models.py:35
+#: account/admin.py:496 core/abstract_models.py:8 core/abstract_models.py:35
 #: core/models.py:95
 msgid "Created at"
 msgstr ""
 
 #: account/admin.py:293 account/admin.py:363 account/admin.py:442
-#: account/admin.py:504 classroom/models.py:809 core/abstract_models.py:9
+#: account/admin.py:500 classroom/models.py:809 core/abstract_models.py:9
 #: core/abstract_models.py:39
 msgid "Updated at"
 msgstr ""
@@ -151,7 +151,7 @@ msgstr ""
 msgid "Preview"
 msgstr ""
 
-#: account/admin.py:312 account/admin.py:533 core/admin.py:142
+#: account/admin.py:312 account/admin.py:529 core/admin.py:142
 #: core/admin.py:205 core/admin.py:228 core/admin.py:307
 msgid "Delete"
 msgstr ""
@@ -168,8 +168,8 @@ msgstr ""
 msgid "Usage Time Control"
 msgstr ""
 
-#: account/admin.py:344 classroom/models.py:884 core/admin.py:160
-#: core/admin.py:299
+#: account/admin.py:344 classes/models.py:57 classroom/models.py:884
+#: core/admin.py:160 core/admin.py:299
 msgid "Status"
 msgstr ""
 
@@ -177,8 +177,8 @@ msgstr ""
 msgid "Timestamps"
 msgstr ""
 
-#: account/admin.py:380 account/models.py:517 account/models.py:708
-#: exercise/models.py:371 exercise/models.py:480
+#: account/admin.py:380 account/models.py:520 account/models.py:711
+#: classes/models.py:134 exercise/models.py:371 exercise/models.py:480
 msgid "Student"
 msgstr ""
 
@@ -198,8 +198,8 @@ msgstr ""
 msgid "Deactivate selected parents"
 msgstr ""
 
-#: account/admin.py:419 account/admin.py:448 account/models.py:650
-#: account/models.py:709
+#: account/admin.py:419 account/admin.py:448 account/models.py:653
+#: account/models.py:712
 msgid "Parent"
 msgstr ""
 
@@ -207,7 +207,7 @@ msgstr ""
 msgid "Usage"
 msgstr ""
 
-#: account/admin.py:434 account/models.py:653
+#: account/admin.py:434 account/models.py:656
 msgid "Date"
 msgstr "Date"
 
@@ -215,7 +215,7 @@ msgstr "Date"
 msgid "Rating Info"
 msgstr "Rating Info"
 
-#: account/admin.py:478 account/models.py:750 exercise/models.py:424
+#: account/admin.py:478 account/models.py:753 exercise/models.py:424
 msgid "Comment"
 msgstr "Comment"
 
@@ -223,27 +223,27 @@ msgstr "Comment"
 msgid "Settings"
 msgstr ""
 
-#: account/admin.py:519
+#: account/admin.py:515
 msgid "Anonymous"
 msgstr "Anonymous"
 
-#: account/admin.py:526 account/models.py:725
+#: account/admin.py:522 account/models.py:728
 msgid "Rater"
 msgstr "Rater"
 
-#: account/admin.py:542
+#: account/admin.py:538
 msgid "{} ratings verified"
 msgstr "{} rating(s) verified"
 
-#: account/admin.py:543
+#: account/admin.py:539
 msgid "Verify selected ratings"
 msgstr ""
 
-#: account/admin.py:548
+#: account/admin.py:544
 msgid "{} ratings unverified"
 msgstr ""
 
-#: account/admin.py:549
+#: account/admin.py:545
 msgid "Unverify selected ratings"
 msgstr ""
 
@@ -295,8 +295,8 @@ msgstr ""
 msgid "email address"
 msgstr ""
 
-#: account/models.py:88 account/models.py:428 account/models.py:472
-#: account/models.py:528 core/forms.py:34 core/models.py:74
+#: account/models.py:88 account/models.py:431 account/models.py:475
+#: account/models.py:531 core/forms.py:34 core/models.py:74
 msgid "Phone number"
 msgstr ""
 
@@ -394,330 +394,335 @@ msgstr ""
 msgid "Brief summary of professional experience and background"
 msgstr ""
 
-#: account/models.py:199
+#: account/models.py:194 exercise/models.py:239 exercise/models.py:327
+#: exercise/models.py:407
+msgid "Score"
+msgstr ""
+
+#: account/models.py:202
 msgid "Introduction video"
 msgstr ""
 
-#: account/models.py:200
+#: account/models.py:203
 msgid ""
 "Video file for teacher introduction (MP4, AVI, MOV, WebM, FLV, MKV, 3GP, "
 "M4V, OGV)"
 msgstr ""
 
-#: account/models.py:209
+#: account/models.py:212
 msgid "Hourly rate"
 msgstr ""
 
-#: account/models.py:210
+#: account/models.py:213
 msgid "Suggested hourly teaching rate in default currency"
 msgstr ""
 
-#: account/models.py:217
+#: account/models.py:220
 msgid "Available times"
 msgstr ""
 
-#: account/models.py:218
+#: account/models.py:221
 msgid "JSON object with available teaching times"
 msgstr ""
 
-#: account/models.py:224
+#: account/models.py:227
 msgid "Years of experience"
 msgstr ""
 
-#: account/models.py:225
+#: account/models.py:228
 msgid "Number of years of teaching experience"
 msgstr ""
 
-#: account/models.py:232
+#: account/models.py:235
 msgid "Push notification token"
 msgstr ""
 
-#: account/models.py:239
+#: account/models.py:242
 msgid "Last seen"
 msgstr ""
 
-#: account/models.py:240
+#: account/models.py:243
 msgid "Last online time"
 msgstr ""
 
-#: account/models.py:244
+#: account/models.py:247
 msgid "Is online"
 msgstr ""
 
-#: account/models.py:245
+#: account/models.py:248
 msgid "Online status"
 msgstr ""
 
-#: account/models.py:256
+#: account/models.py:259
 msgid "Users"
 msgstr ""
 
-#: account/models.py:404
+#: account/models.py:407
 msgid "Registration"
 msgstr ""
 
-#: account/models.py:405
+#: account/models.py:408
 msgid "Phone Verification"
 msgstr ""
 
-#: account/models.py:406
+#: account/models.py:409
 msgid "Email Verification"
 msgstr ""
 
-#: account/models.py:407
+#: account/models.py:410
 msgid "Password Reset"
 msgstr ""
 
-#: account/models.py:408
+#: account/models.py:411
 msgid "Login"
 msgstr ""
 
-#: account/models.py:421
+#: account/models.py:424
 msgid "Hashed code"
 msgstr ""
 
-#: account/models.py:422
+#: account/models.py:425
 msgid "Hashed OTP code"
 msgstr ""
 
-#: account/models.py:433 account/models.py:473 account/models.py:533
+#: account/models.py:436 account/models.py:476 account/models.py:536
 #: core/models.py:49
 msgid "Email"
 msgstr ""
 
-#: account/models.py:437 account/models.py:474
+#: account/models.py:440 account/models.py:477
 msgid "Expires at"
 msgstr ""
 
-#: account/models.py:441 account/models.py:475
+#: account/models.py:444 account/models.py:478
 msgid "Is used"
 msgstr ""
 
-#: account/models.py:447
+#: account/models.py:450
 msgid "Purpose"
 msgstr ""
 
-#: account/models.py:452
+#: account/models.py:455
 msgid "OTP Code"
 msgstr ""
 
-#: account/models.py:453
+#: account/models.py:456
 msgid "OTP Codes"
 msgstr ""
 
-#: account/models.py:471
+#: account/models.py:474
 msgid "Token"
 msgstr ""
 
-#: account/models.py:479
+#: account/models.py:482
 msgid "Verification Token"
 msgstr ""
 
-#: account/models.py:480
+#: account/models.py:483
 msgid "Verification Tokens"
 msgstr ""
 
-#: account/models.py:494
+#: account/models.py:497
 msgid "Avatar image"
 msgstr ""
 
-#: account/models.py:499
+#: account/models.py:502
 msgid "Avatar Template"
 msgstr ""
 
-#: account/models.py:500
+#: account/models.py:503
 msgid "Avatar Templates"
 msgstr ""
 
-#: account/models.py:521
+#: account/models.py:524
 msgid "Parent full name"
 msgstr ""
 
-#: account/models.py:522
+#: account/models.py:525
 msgid "نام کامل والد"
 msgstr "Parent Full Name"
 
-#: account/models.py:538
+#: account/models.py:541
 msgid "Parent password (hashed)"
 msgstr ""
 
-#: account/models.py:539
+#: account/models.py:542
 msgid "Hashed password for parent portal login"
 msgstr ""
 
-#: account/models.py:545
+#: account/models.py:548
 msgid "Can view class history"
 msgstr ""
 
-#: account/models.py:546
+#: account/models.py:549
 msgid "آیا والد می‌تواند تاریخچه کلاس‌ها را مشاهده کند؟"
 msgstr "Can parent view class history?"
 
-#: account/models.py:550
+#: account/models.py:553
 msgid "Can view payments"
 msgstr "Can view payments"
 
-#: account/models.py:551
+#: account/models.py:554
 msgid "آیا والد می‌تواند پرداخت‌ها را مشاهده کند؟"
 msgstr "Can parent view payments?"
 
-#: account/models.py:555
+#: account/models.py:558
 msgid "Can select teacher"
 msgstr "Can select teacher"
 
-#: account/models.py:556
+#: account/models.py:559
 msgid "آیا والد می‌تواند معلم برای کودک انتخاب کند؟"
 msgstr "Can parent select a teacher for the child?"
 
-#: account/models.py:560
+#: account/models.py:563
 msgid "Can set app usage time"
 msgstr "Can set app usage time"
 
-#: account/models.py:561
+#: account/models.py:564
 msgid "آیا والد می‌تواند محدودیت زمان استفاده اپلیکیشن را تنظیم کند؟"
 msgstr "Can parent set the app usage time limit?"
 
-#: account/models.py:568
+#: account/models.py:571
 msgid "Daily usage limit (minutes)"
 msgstr "Daily usage limit (minutes)"
 
-#: account/models.py:569
+#: account/models.py:572
 msgid "حداکثر دقایق استفاده روزانه از اپلیکیشن"
 msgstr "Maximum daily app usage in minutes"
 
-#: account/models.py:574
+#: account/models.py:577
 msgid "Allowed start time"
 msgstr "Allowed start time"
 
-#: account/models.py:575
+#: account/models.py:578
 msgid "ساعت شروع مجاز استفاده (مثال: 08:00)"
 msgstr "Allowed usage start time (e.g., 08:00)"
 
-#: account/models.py:580
+#: account/models.py:583
 msgid "Allowed end time"
 msgstr "Allowed end time"
 
-#: account/models.py:581
+#: account/models.py:584
 msgid "ساعت پایان مجاز استفاده (مثال: 22:00)"
 msgstr "Allowed usage end time (e.g., 22:00)"
 
-#: account/models.py:587
+#: account/models.py:590
 msgid "Is active"
 msgstr "Is active"
 
-#: account/models.py:588
+#: account/models.py:591
 msgid "آیا دسترسی والد فعال است؟"
 msgstr "Is parent access active?"
 
-#: account/models.py:594
+#: account/models.py:597
 msgid "Last login at"
 msgstr "Last login at"
 
-#: account/models.py:595
+#: account/models.py:598
 msgid "آخرین بار ورود والد"
 msgstr "Parent last login"
 
-#: account/models.py:600
+#: account/models.py:603
 msgid "Parent Profile"
 msgstr "Parent Profile"
 
-#: account/models.py:601
+#: account/models.py:604
 msgid "Parent Profiles"
 msgstr "Parent Profiles"
 
-#: account/models.py:654
+#: account/models.py:657
 msgid "تاریخ استفاده"
 msgstr "Usage date"
 
-#: account/models.py:658
+#: account/models.py:661
 msgid "Total minutes used"
 msgstr "Total minutes used"
 
-#: account/models.py:659
+#: account/models.py:662
 msgid "کل دقایق استفاده در این روز"
 msgstr "Total minutes used on this day"
 
-#: account/models.py:663
+#: account/models.py:666
 msgid "Number of sessions"
 msgstr "Number of sessions"
 
-#: account/models.py:664
+#: account/models.py:667
 msgid "تعداد جلسات استفاده در این روز"
 msgstr "Number of usage sessions on this day"
 
-#: account/models.py:668
+#: account/models.py:671
 msgid "Total seconds used"
 msgstr "Total seconds used"
 
-#: account/models.py:669
+#: account/models.py:672
 msgid "کل ثانیه‌های استفاده در این روز"
 msgstr "Total seconds used on this day"
 
-#: account/models.py:674
+#: account/models.py:677
 msgid "Last report at"
 msgstr "Last report at"
 
-#: account/models.py:675
+#: account/models.py:678
 msgid "آخرین زمان گزارش مصرف از اپ"
 msgstr "Last app usage report time"
 
-#: account/models.py:680
+#: account/models.py:683
 msgid "Parent App Usage Log"
 msgstr "Parent App Usage Log"
 
-#: account/models.py:681
+#: account/models.py:684
 msgid "Parent App Usage Logs"
 msgstr "Parent App Usage Logs"
 
-#: account/models.py:718
+#: account/models.py:721
 msgid "معلمی که این امتیاز را دریافت کرده است"
 msgstr "Teacher who received this rating"
 
-#: account/models.py:726
+#: account/models.py:729
 msgid "فردی که این امتیاز را داده است (دانش‌آموز یا والدین)"
 msgstr "Person who gave the rating (student or parent)"
 
-#: account/models.py:733
+#: account/models.py:736
 msgid "Rater Type"
 msgstr "Rater Type"
 
-#: account/models.py:734
+#: account/models.py:737
 msgid "نوع فردی که امتیاز می‌دهد"
 msgstr "Type of the person giving the rating"
 
-#: account/models.py:743 exercise/models.py:417
+#: account/models.py:746 exercise/models.py:417
 msgid "Stars"
 msgstr "Stars"
 
-#: account/models.py:744
+#: account/models.py:747
 msgid "ستاره (1-5)"
 msgstr "Stars (1–5)"
 
-#: account/models.py:751
+#: account/models.py:754
 msgid "نظر و بازخورد در مورد معلم"
 msgstr "Comment and feedback about the teacher"
 
-#: account/models.py:756
+#: account/models.py:759
 msgid "Is Anonymous"
 msgstr "Is Anonymous"
 
-#: account/models.py:757
+#: account/models.py:760
 msgid "آیا نام ارائه‌دهنده نمایش داده شود؟"
 msgstr "Should the rater's name be displayed?"
 
-#: account/models.py:762
+#: account/models.py:765
 msgid "Is Verified"
 msgstr "Is Verified"
 
-#: account/models.py:763
+#: account/models.py:766
 msgid "آیا این امتیاز تایید شده است؟"
 msgstr "Is this rating verified?"
 
-#: account/models.py:767
+#: account/models.py:770
 msgid "Teacher Rating"
 msgstr ""
 
-#: account/models.py:768
+#: account/models.py:771
 msgid "Teacher Ratings"
 msgstr ""
 
@@ -784,7 +789,7 @@ msgstr ""
 msgid "ID of the avatar template to select"
 msgstr ""
 
-#: account/serializers.py:288 account/serializers.py:611 api/views.py:1727
+#: account/serializers.py:288 account/serializers.py:611 api/views.py:1731
 msgid "Selected avatar does not exist"
 msgstr ""
 
@@ -877,13 +882,6 @@ msgstr ""
 msgid "Phone number or email cannot be empty"
 msgstr ""
 
-#: account/services.py:251
-#, python-brace-format
-msgid ""
-"No verification code found for this {identifier_type}. Please request a new "
-"one."
-msgstr ""
-
 #: account/services.py:255
 msgid "OTP has expired. Please request a new one."
 msgstr ""
@@ -945,84 +943,79 @@ msgstr ""
 msgid "An error occurred"
 msgstr ""
 
-#: api/classroom_serializers.py:200
+#: api/classroom_serializers.py:246
 msgid "زمان‌بندی یافت نشد"
 msgstr "Schedule not found"
 
-#: api/classroom_serializers.py:203 api/views.py:3184
+#: api/classroom_serializers.py:249 api/views.py:3195
 msgid "این زمان‌بندی دیگر در دسترس نیست"
 msgstr "This schedule is no longer available"
 
-#: api/classroom_serializers.py:206
+#: api/classroom_serializers.py:252
 msgid "این زمان‌بندی قبلاً رزرو شده است"
 msgstr "This schedule has already been booked"
 
-#: api/classroom_serializers.py:209
+#: api/classroom_serializers.py:255
 msgid "این زمان‌بندی منقضی شده است"
 msgstr "This schedule has expired"
 
-#: api/classroom_serializers.py:218 api/views.py:3221
+#: api/classroom_serializers.py:264 api/views.py:3232
 msgid "درس یافت نشد"
 msgstr "Lesson not found"
 
-#: api/classroom_serializers.py:221
+#: api/classroom_serializers.py:267
 msgid "این درس فعال نیست"
 msgstr "This lesson is not active"
 
-#: api/classroom_serializers.py:235
+#: api/classroom_serializers.py:281
 msgid "درس باید متعلق به همان معلم باشد"
 msgstr "The lesson must belong to the same teacher"
 
-#: api/classroom_serializers.py:269
+#: api/classroom_serializers.py:315
 msgid "شماره شبا باید با IR شروع شود"
 msgstr "IBAN must start with IR"
 
-#: api/classroom_serializers.py:271
+#: api/classroom_serializers.py:317
 msgid "شماره شبا باید 26 کاراکتر باشد (IR + 24 رقم)"
 msgstr "IBAN must be 26 characters long (IR + 24 digits)"
 
-#: api/classroom_serializers.py:273
+#: api/classroom_serializers.py:319
 msgid "شماره شبا باید فقط شامل اعداد باشد (بعد از IR)"
 msgstr "IBAN must contain only digits after IR"
 
-#: api/classroom_serializers.py:281
+#: api/classroom_serializers.py:327
 msgid "شماره کارت باید فقط شامل اعداد باشد"
 msgstr "Card number must contain only digits"
 
-#: api/classroom_serializers.py:283
+#: api/classroom_serializers.py:329
 msgid "شماره کارت باید 16 رقم باشد"
 msgstr "Card number must be 16 digits"
 
-#: api/classroom_serializers.py:576 api/views.py:7414
+#: api/classroom_serializers.py:622 api/views.py:7408
 msgid "Message text or attachment is required"
 msgstr "Message text or attachment is required"
 
-#: api/classroom_serializers.py:893
+#: api/classroom_serializers.py:939
 msgid "شماره موبایل معتبر نیست"
 msgstr "Invalid mobile number"
 
-#: api/classroom_serializers.py:938
+#: api/classroom_serializers.py:984
 msgid "تعداد جلسات باید حداقل 1 باشد"
 msgstr "Number of sessions must be at least 1"
 
-#: api/classroom_serializers.py:948
+#: api/classroom_serializers.py:994
 msgid "قیمت باید بزرگتر از 0 باشد"
 msgstr "Price must be greater than 0"
 
-#: api/classroom_serializers.py:1029
-#, python-brace-format
-msgid "شماره جلسه باید بین 1 و {package.total_sessions} باشد"
-msgstr "Session number must be between 1 and {package.total_sessions}"
-
-#: api/classroom_serializers.py:1046
+#: api/classroom_serializers.py:1092
 msgid "این شماره جلسه قبلاً برای این بسه تعریف شده است"
 msgstr "This session number has already been defined for this package"
 
-#: api/classroom_serializers.py:1057
+#: api/classroom_serializers.py:1103
 msgid "مبلغ قسط باید بزرگتر از 0 باشد"
 msgstr "Installment amount must be greater than 0"
 
-#: api/classroom_serializers.py:1068
+#: api/classroom_serializers.py:1114
 msgid "بسه مشخص نشده است"
 msgstr "Package is not specified"
 
@@ -1088,10 +1081,6 @@ msgstr ""
 "Either field_detail_id (for choice questions) or value (for typing) must be "
 "provided"
 
-#: api/package_service.py:39
-msgid "وضعیت ثبت‌نام: {enrollment.get_status_display()}"
-msgstr "Enrollment status: {enrollment.get_status_display()}"
-
 #: api/package_service.py:43
 msgid "شماره جلسه معتبر نیست"
 msgstr "Invalid session number"
@@ -1099,11 +1088,6 @@ msgstr "Invalid session number"
 #: api/package_service.py:52 api/package_service.py:61
 msgid "دسترسی مجاز است"
 msgstr "Access is allowed"
-
-#: api/package_service.py:57
-#, python-brace-format
-msgid "قسط {required_payment.installment.installment_number} "
-msgstr "Installment {required_payment.installment.installment_number}"
 
 #: api/parent_serializers.py:45
 msgid "نام کاربری دانش‌آموز"
@@ -1241,1023 +1225,1189 @@ msgstr ""
 msgid "Stars must be between 1 and 5"
 msgstr ""
 
-#: api/views.py:161
+#: api/views.py:164
 msgid "This phone number is already registered. Please log in."
 msgstr ""
 
-#: api/views.py:169
+#: api/views.py:172
 msgid "This email is already registered. Please log in."
 msgstr ""
 
-#: api/views.py:201
+#: api/views.py:204
 msgid "Please wait 2 minutes."
 msgstr ""
 
-#: api/views.py:211 api/views.py:962 api/views.py:1095
+#: api/views.py:214 api/views.py:966 api/views.py:1099
 msgid "Email authentication is not configured on this server"
 msgstr ""
 
-#: api/views.py:221
+#: api/views.py:224
 msgid "Verification code sent."
 msgstr ""
 
-#: api/views.py:226
-msgid "Error sending code: {str(e)}"
-msgstr ""
-
-#: api/views.py:240 api/views.py:724 api/views.py:810 api/views.py:1462
-#: api/views.py:1531 api/views.py:1635 api/views.py:1732 api/views.py:1811
-#: api/views.py:1879 api/views.py:4052
+#: api/views.py:243 api/views.py:727 api/views.py:813 api/views.py:1466
+#: api/views.py:1535 api/views.py:1639 api/views.py:1736 api/views.py:1815
+#: api/views.py:1883 api/views.py:4046
 msgid "Invalid data provided"
 msgstr ""
 
-#: api/views.py:290
+#: api/views.py:293
 msgid "Verification code is correct. Please complete registration"
 msgstr ""
 
-#: api/views.py:305 api/views.py:541 api/views.py:616 api/views.py:798
-#: api/views.py:1035 api/views.py:1172
+#: api/views.py:308 api/views.py:544 api/views.py:619 api/views.py:801
+#: api/views.py:1039 api/views.py:1176
 msgid "Login successful"
 msgstr ""
 
-#: api/views.py:326 api/views.py:464 api/views.py:889
+#: api/views.py:329 api/views.py:467 api/views.py:893
 msgid "Invalid data"
 msgstr ""
 
-#: api/views.py:452
+#: api/views.py:455
 msgid "Registration completed successfully"
 msgstr ""
 
-#: api/views.py:528 api/views.py:598
+#: api/views.py:531 api/views.py:601
 msgid "Username and password are required"
 msgstr ""
 
-#: api/views.py:548 api/views.py:623
+#: api/views.py:551 api/views.py:626
 msgid "Username or password is incorrect"
 msgstr ""
 
-#: api/views.py:608
+#: api/views.py:611
 msgid "This account is not for a teacher"
 msgstr ""
 
-#: api/views.py:704
+#: api/views.py:707
 msgid "Please wait 2 minutes before requesting a new code."
 msgstr ""
 
-#: api/views.py:714
+#: api/views.py:717
 msgid "Verification code sent successfully."
 msgstr ""
 
-#: api/views.py:719
-msgid "Error sending verification code: {str(e)}"
-msgstr ""
-
-#: api/views.py:790
+#: api/views.py:793
 msgid "This account is not for teachers"
 msgstr ""
 
-#: api/views.py:877
+#: api/views.py:881
 msgid "Teacher registration completed successfully"
 msgstr ""
 
-#: api/views.py:940 api/views.py:1073
+#: api/views.py:944 api/views.py:1077
 msgid "Please provide a valid email address"
 msgstr ""
 
-#: api/views.py:956 api/views.py:1022
+#: api/views.py:960 api/views.py:1026
 msgid ""
 "This email is registered as a teacher account. Please use teacher login."
 msgstr ""
 
-#: api/views.py:969 api/views.py:1102
+#: api/views.py:973 api/views.py:1106
 msgid "Verification code has been sent to your email"
 msgstr ""
 
-#: api/views.py:975 api/views.py:1108
-msgid "Error sending OTP: {str(e)}"
-msgstr ""
-
-#: api/views.py:1004 api/views.py:1141
+#: api/views.py:1008 api/views.py:1145
 msgid "Email and verification code are required"
 msgstr ""
 
-#: api/views.py:1010 api/views.py:1147
+#: api/views.py:1014 api/views.py:1151
 msgid "Invalid verification code format"
 msgstr ""
 
-#: api/views.py:1089 api/views.py:1159
+#: api/views.py:1093 api/views.py:1163
 msgid ""
 "This email is registered as a regular user account. Please use regular user "
 "login."
 msgstr ""
 
-#: api/views.py:1249
+#: api/views.py:1253
 msgid "Username is required"
 msgstr ""
 
-#: api/views.py:1255 api/views.py:1310
+#: api/views.py:1259 api/views.py:1314
 msgid "Username must be at least 3 characters"
 msgstr ""
 
-#: api/views.py:1265 api/views.py:1320
+#: api/views.py:1269 api/views.py:1324
 msgid "This username has already been taken."
 msgstr ""
 
-#: api/views.py:1271 api/views.py:1326
+#: api/views.py:1275 api/views.py:1330
 msgid "This username is available."
 msgstr ""
 
-#: api/views.py:1302
+#: api/views.py:1306
 msgid "Username is invalid"
 msgstr ""
 
-#: api/views.py:1442
+#: api/views.py:1446
 msgid "Teacher profile updated successfully"
 msgstr ""
 
-#: api/views.py:1447
+#: api/views.py:1451
 msgid "Profile updated successfully"
 msgstr ""
 
-#: api/views.py:1517
+#: api/views.py:1521
 msgid "Only students can use this endpoint"
 msgstr ""
 
-#: api/views.py:1525
+#: api/views.py:1529
 msgid "Profile completed successfully"
 msgstr ""
 
-#: api/views.py:1621
+#: api/views.py:1625
 msgid "Only teachers can use this endpoint"
 msgstr ""
 
-#: api/views.py:1629
-msgid "Teacher profile completed successfully"
-msgstr ""
+#: api/views.py:1633
+#, fuzzy
+#| msgid "Revenue confirmed successfully"
+msgid "Teacher profile saved successfully"
+msgstr "Revenue confirmed successfully"
 
-#: api/views.py:1720
+#: api/views.py:1724
 msgid "Avatar selected successfully"
 msgstr ""
 
-#: api/views.py:1785
+#: api/views.py:1789
 msgid "You are already a teacher"
 msgstr ""
 
-#: api/views.py:1869
+#: api/views.py:1873
 msgid "Password changed successfully"
 msgstr ""
 
-#: api/views.py:1945
+#: api/views.py:1949
 msgid "Refresh token not provided"
 msgstr ""
 
-#: api/views.py:1953
+#: api/views.py:1957
 msgid "Logout successful"
 msgstr ""
 
-#: api/views.py:1959
+#: api/views.py:1963
 msgid "Logout successful (token not expired)"
 msgstr ""
 
-#: api/views.py:1964
-msgid "Token is invalid: {str(e)}"
-msgstr ""
-
-#: api/views.py:1969
-msgid "Error logging out: {str(e)}"
-msgstr ""
-
-#: api/views.py:2097
+#: api/views.py:2101
 msgid "About us content not found"
 msgstr ""
 
-#: api/views.py:2209
+#: api/views.py:2213
 msgid "No phone contact found"
 msgstr ""
 
-#: api/views.py:2216
+#: api/views.py:2220
 msgid "Phone contact retrieved successfully"
 msgstr ""
 
-#: api/views.py:2333 core/models.py:143
+#: api/views.py:2344 core/models.py:143
 msgid "Banners"
 msgstr ""
 
-#: api/views.py:2339
+#: api/views.py:2350
 msgid "Recent Courses"
 msgstr ""
 
-#: api/views.py:2345
+#: api/views.py:2356
 msgid "Best Selling Subjects"
 msgstr ""
 
-#: api/views.py:2351
+#: api/views.py:2362
 msgid "Top Rated Teachers"
 msgstr ""
 
-#: api/views.py:2355
+#: api/views.py:2366
 msgid "Home page data retrieved successfully"
 msgstr ""
 
-#: api/views.py:2471 api/views.py:2591
+#: api/views.py:2482 api/views.py:2602
 msgid "شما معلم نیستید"
 msgstr "You are not a teacher"
 
-#: api/views.py:2489
+#: api/views.py:2500
 msgid "لطفاً تمام فیلدهای الزامی را پر کنید"
 msgstr "Please fill in all required fields"
 
-#: api/views.py:2499
+#: api/views.py:2510
 msgid "فرمت تاریخ نادرست است. لطفاً از فرمت YYYY/MM/DD استفاده کنید"
 msgstr "Invalid date format. Please use YYYY/MM/DD format"
 
-#: api/views.py:2513
+#: api/views.py:2524
 msgid "مقادیر باید مثبت باشند"
 msgstr "Values must be positive"
 
-#: api/views.py:2516
+#: api/views.py:2527
 msgid "خطا در پردازش داده‌های زمان یا قیمت"
 msgstr "Error processing time or price data"
 
-#: api/views.py:2556 api/views.py:2686
+#: api/views.py:2567 api/views.py:2697
 msgid "بازه‌های زمانی با موفقیت ایجاد شدند"
 msgstr "Time slots created successfully"
 
-#: api/views.py:2558 api/views.py:2690
+#: api/views.py:2569 api/views.py:2701
 msgid ""
 "هیچ بازه زمانی جدیدی اضافه نشد. احتمالاً تمام این بازه‌ها قبلاً ثبت شده بودند."
 msgstr ""
 "No new time slots were added. These slots may have already been registered"
 
-#: api/views.py:2618
+#: api/views.py:2629
 msgid "قیمت الزامی است"
 msgstr "Price is required"
 
-#: api/views.py:2635
+#: api/views.py:2646
 msgid "داده‌های ورودی نامعتبر است"
 msgstr "Invalid input data"
 
-#: api/views.py:2643
+#: api/views.py:2654
 msgid "فیلدهای الزامی گم شده است"
 msgstr "Required fields are missing"
 
-#: api/views.py:2915 api/views.py:3020 api/views.py:3093 api/views.py:3216
+#: api/views.py:2926 api/views.py:3031 api/views.py:3104 api/views.py:3227
 msgid "بازه زمانی یافت نشد"
 msgstr "Time slot not found"
 
-#: api/views.py:2922 api/views.py:3027 api/views.py:3100
+#: api/views.py:2933 api/views.py:3038 api/views.py:3111
 msgid "شما دسترسی به این بازه زمانی ندارید"
 msgstr "You do not have access to this time slot"
 
-#: api/views.py:2928
+#: api/views.py:2939
 msgid "جزئیات بازه زمانی با موفقیت دریافت شد"
 msgstr "Time slot details retrieved successfully"
 
-#: api/views.py:3034
+#: api/views.py:3045
 msgid "این بازه زمانی رزرو شده است و نمی‌تواند تغییر کند"
 msgstr "This time slot is booked and cannot be modified"
 
-#: api/views.py:3042
+#: api/views.py:3053
 msgid "بازه زمانی با موفقیت ویرایش شد"
 msgstr "Time slot updated successfully"
 
-#: api/views.py:3107
+#: api/views.py:3118
 msgid "این بازه زمانی رزرو شده است و نمی‌تواند حذف شود"
 msgstr "This time slot is booked and cannot be deleted"
 
-#: api/views.py:3113
+#: api/views.py:3124
 msgid "بازه زمانی با موفقیت حذف شد"
 msgstr "Time slot deleted successfully"
 
-#: api/views.py:3148
+#: api/views.py:3159
 msgid "تنها دانش‌آموزان می‌توانند کلاس خریداری کنند"
 msgstr "Only students can purchase classes"
 
-#: api/views.py:3157 api/views.py:4218 api/views.py:4401 api/views.py:4518
-#: api/views.py:4702 api/views.py:4791 api/views.py:6246
+#: api/views.py:3168 api/views.py:4212 api/views.py:4395 api/views.py:4512
+#: api/views.py:4696 api/views.py:4785 api/views.py:6240
 msgid "داده‌های نامعتبر"
 msgstr "Invalid data"
 
-#: api/views.py:3211
+#: api/views.py:3222
 msgid "کلاس با موفقیت خریداری شد"
 msgstr "Class purchased successfully"
 
-#: api/views.py:3226
+#: api/views.py:3237
 msgid "خطای داخلی سرور: "
 msgstr "Internal server error: "
 
-#: api/views.py:3261
+#: api/views.py:3272
 msgid "فقط دانش‌آموزان می‌توانند این endpoint رو استفاده کنند"
 msgstr "Only students can use this endpoint"
 
-#: api/views.py:3318
+#: api/views.py:3310
 msgid "معلمان می‌توانند تنها رزروهای خود را ببینند"
 msgstr "Teachers can only view their own reservations"
 
-#: api/views.py:3379 api/views.py:3438 api/views.py:3503 api/views.py:3710
-#: api/views.py:3851 api/views.py:3894
+#: api/views.py:3373 api/views.py:3432 api/views.py:3497 api/views.py:3704
+#: api/views.py:3845 api/views.py:3888
 msgid "رزرو یافت نشد"
 msgstr "Reservation not found"
 
-#: api/views.py:3386 api/views.py:3445 api/views.py:3510 api/views.py:3901
+#: api/views.py:3380 api/views.py:3439 api/views.py:3504 api/views.py:3895
 msgid "شما دسترسی ندارید"
 msgstr "You do not have access"
 
-#: api/views.py:3395
+#: api/views.py:3389
 msgid "وضعیت نامعتبر است"
 msgstr "Invalid status"
 
-#: api/views.py:3405
+#: api/views.py:3399
 msgid "وضعیت رزرو با موفقیت به‌روزرسانی شد"
 msgstr "Reservation status updated successfully"
 
-#: api/views.py:3452
+#: api/views.py:3446
 msgid "این رزرو نمی‌تواند لغو شود"
 msgstr "This reservation cannot be canceled"
 
-#: api/views.py:3468
+#: api/views.py:3462
 msgid "رزرو با موفقیت لغو شد"
 msgstr "Reservation canceled successfully"
 
-#: api/views.py:3517
+#: api/views.py:3511
 msgid "این رزرو قبلاً پرداخت شده است"
 msgstr "This reservation has already been paid"
 
-#: api/views.py:3553
+#: api/views.py:3547
 msgid "کلاس رایگان است - پرداخت ثبت شد"
 msgstr "Class is free - payment recorded"
 
-#: api/views.py:3586
+#: api/views.py:3580
 msgid "خطا در اتصال به درگاه پرداخت"
 msgstr "Error connecting to payment gateway"
 
-#: api/views.py:3594
+#: api/views.py:3588
 msgid "خطای نامشخص"
 msgstr "Unknown error"
 
-#: api/views.py:3604
+#: api/views.py:3598
 msgid "خطا در دریافت شناسه پرداخت"
 msgstr "Error getting payment ID"
 
-#: api/views.py:3619
+#: api/views.py:3613
 msgid "پرداخت آغاز شد"
 msgstr "Payment started"
 
-#: api/views.py:3625
+#: api/views.py:3619
 msgid "درخواست به درگاه پرداخت تایم‌اوت شد"
 msgstr "Request to payment gateway timed out"
 
-#: api/views.py:3630
+#: api/views.py:3624
 msgid "خطا در برقراری ارتباط با درگاه پرداخت"
 msgstr "Error communicating with payment gateway"
 
-#: api/views.py:3635 api/views.py:3856
+#: api/views.py:3629 api/views.py:3850
 msgid "خطای داخلی سرور"
 msgstr "Internal server error"
 
-#: api/views.py:3701
+#: api/views.py:3695
 msgid "اطلاعات ناقص"
 msgstr "Incomplete information"
 
-#: api/views.py:3998 api/views.py:4037
+#: api/views.py:3992 api/views.py:4031
 msgid "تنها معلمان می‌توانند موضوع تدریس ایجاد کنند"
 msgstr "Only teachers can create teaching subjects"
 
-#: api/views.py:4086 api/views.py:4145 api/views.py:4256 api/views.py:5034
-#: api/views.py:5184 api/views.py:5310 api/views.py:5534 api/views.py:5792
-#: api/views.py:5987 api/views.py:6223
+#: api/views.py:4080 api/views.py:4139 api/views.py:4250 api/views.py:5028
+#: api/views.py:5178 api/views.py:5304 api/views.py:5528 api/views.py:5786
+#: api/views.py:5981 api/views.py:6217
 msgid "موضوع تدریسی یافت نشد"
 msgstr "Teaching subject not found"
 
-#: api/views.py:4094
+#: api/views.py:4088
 msgid "دسترسی محدود است"
 msgstr "Access is restricted"
 
-#: api/views.py:4153
+#: api/views.py:4147
 msgid "شما دسترسی به ویرایش این موضوع ندارید"
 msgstr "You do not have permission to edit this subject"
 
-#: api/views.py:4158
+#: api/views.py:4152
 msgid "تنها معلمان یا ادمین می‌توانند موضوع را ویرایش کنند"
 msgstr "Only teachers or admins can edit the subject"
 
-#: api/views.py:4211
+#: api/views.py:4205
 msgid "موضوع تدریسی با موفقیت ویرایش شد"
 msgstr "Teaching subject updated successfully"
 
-#: api/views.py:4263
+#: api/views.py:4257
 msgid "شما دسترسی به حذف این موضوع ندارید"
 msgstr "You do not have permission to delete this subject"
 
-#: api/views.py:4268
+#: api/views.py:4262
 msgid "تنها معلمان و ادمین می‌توانند موضوع را حذف کنند"
 msgstr "Only teachers and admins can delete the subject"
 
-#: api/views.py:4278
+#: api/views.py:4272
 msgid "این موضوع تدریسی دارای دوره‌های وابسته است و قابل حذف نیست"
 msgstr "This teaching subject has dependent courses and cannot be deleted"
 
-#: api/views.py:4287
+#: api/views.py:4281
 msgid "موضوع تدریسی با موفقیت حذف شد"
 msgstr "Teaching subject deleted successfully"
 
-#: api/views.py:4364
+#: api/views.py:4358
 msgid "تنها معلمان می‌توانند سؤال ایجاد کنند"
 msgstr "Only teachers can create questions"
 
-#: api/views.py:4476 api/views.py:4560 api/views.py:4609 api/views.py:4663
-#: api/views.py:5433 api/views.py:6002
+#: api/views.py:4470 api/views.py:4554 api/views.py:4603 api/views.py:4657
+#: api/views.py:5427 api/views.py:5996
 msgid "سؤال یافت نشد"
 msgstr "Question not found"
 
-#: api/views.py:4483
+#: api/views.py:4477
 msgid "تنها معلمان می‌توانند details ایجاد کنند"
 msgstr "Only teachers can create details"
 
-#: api/views.py:4491 api/views.py:4670
+#: api/views.py:4485 api/views.py:4664
 msgid "شما مجاز به ویرایش این سؤال نیستید"
 msgstr "You are not allowed to edit this question"
 
-#: api/views.py:4551 api/views.py:5425
+#: api/views.py:4545 api/views.py:5419
 msgid "تنها معلمان می‌توانند سؤال حذف کنند"
 msgstr "Only teachers can delete questions"
 
-#: api/views.py:4567
+#: api/views.py:4561
 msgid "شما مجاز به حذف این سؤال نیستید"
 msgstr "You are not allowed to delete this question"
 
-#: api/views.py:4575 api/views.py:5471
+#: api/views.py:4569 api/views.py:5465
 msgid "سؤال با موفقیت حذف شد"
 msgstr "Question deleted successfully"
 
-#: api/views.py:4654
+#: api/views.py:4648
 msgid "تنها معلمان می‌توانند سؤال ویرایش کنند"
 msgstr "Only teachers can edit questions"
 
-#: api/views.py:4697
+#: api/views.py:4691
 msgid "سؤال با موفقیت ویرایش شد"
 msgstr "Question updated successfully"
 
-#: api/views.py:4741
+#: api/views.py:4735
 msgid "تنها معلمان می‌توانند جزئیات سؤال ویرایش کنند"
 msgstr "Only teachers can edit question details"
 
-#: api/views.py:4750
+#: api/views.py:4744
 msgid "جزئیات سؤال یافت نشد"
 msgstr "Question detail not found"
 
-#: api/views.py:4757
+#: api/views.py:4751
 msgid "شما مجاز به ویرایش این جزئیات نیستید"
 msgstr "You are not allowed to edit these details"
 
-#: api/views.py:4786
+#: api/views.py:4780
 msgid "جزئیات سؤال با موفقیت ویرایش شد"
 msgstr "Question details updated successfully"
 
-#: api/views.py:4892
+#: api/views.py:4886
 msgid "تنها معلمان می‌توانند لیست سوالات خود را مشاهده کنند"
 msgstr "Only teachers can view their question list"
 
-#: api/views.py:5011
+#: api/views.py:5005
 msgid "تنها معلمان می‌توانند آزمون ایجاد کنند"
 msgstr "Only teachers can create exams"
 
-#: api/views.py:5020
+#: api/views.py:5014
 msgid "شناسه موضوع الزامی است"
 msgstr "Subject ID is required"
 
-#: api/views.py:5026
+#: api/views.py:5020
 msgid "حداقل یک سؤال الزامی است"
 msgstr "At least one question is required"
 
-#: api/views.py:5041
+#: api/views.py:5035
 msgid "شما می‌توانید تنها برای موضوعات خود آزمون ایجاد کنید"
 msgstr "You can create exams only for your own subjects"
 
-#: api/views.py:5117
+#: api/views.py:5111
 msgid "آزمون با موفقیت ایجاد شد"
 msgstr "Exam created successfully"
 
-#: api/views.py:5193 api/views.py:5317
+#: api/views.py:5187 api/views.py:5311
 msgid "شما دسترسی به این موضوع ندارید"
 msgstr "You do not have access to this subject"
 
-#: api/views.py:5198 api/views.py:5322
+#: api/views.py:5192 api/views.py:5316
 msgid "این موضوع دسترس پذیر نیست"
 msgstr "This subject is not accessible"
 
-#: api/views.py:5440
+#: api/views.py:5434
 msgid "شما دسترسی به حذف این سؤال ندارید"
 msgstr "You do not have permission to delete this question"
 
-#: api/views.py:5526
+#: api/views.py:5520
 msgid "تنها معلمان می‌توانند مرحله حذف کنند"
 msgstr "Only teachers can delete stages"
 
-#: api/views.py:5541
+#: api/views.py:5535
 msgid "شما دسترسی به حذف این مرحله ندارید"
 msgstr "You do not have permission to delete this stage"
 
-#: api/views.py:5553
+#: api/views.py:5547
 msgid "مرحله مورد نظر یافت نشد"
 msgstr "Stage not found"
 
-#: api/views.py:5576
+#: api/views.py:5570
 msgid "مرحله با موفقیت حذف شد"
 msgstr "Stage deleted successfully"
 
-#: api/views.py:5799 api/views.py:5994
+#: api/views.py:5793 api/views.py:5988
 msgid "این موضوع فعال نیست"
 msgstr "This subject is not active"
 
-#: api/views.py:5979
+#: api/views.py:5973
 msgid "شناسه سؤال الزامی است"
 msgstr "Question ID is required"
 
-#: api/views.py:6010
+#: api/views.py:6004
 msgid "این سؤال به این موضوع تعلق ندارد"
 msgstr "This question does not belong to this subject"
 
-#: api/views.py:6023
+#: api/views.py:6017
 msgid "گزینه یافت نشد"
 msgstr "Option not found"
 
-#: api/views.py:6131
+#: api/views.py:6125
 msgid "پاسخ حذف شد"
 msgstr "Answer deleted"
 
-#: api/views.py:6131
+#: api/views.py:6125
 msgid "پاسخ با موفقیت ذخیره شد"
 msgstr "Answer saved successfully"
 
-#: api/views.py:6215
+#: api/views.py:6209
 msgid "شناسه موضوع و جوابات الزامی هستند"
 msgstr "Subject ID and answers are required"
 
-#: api/views.py:6242
+#: api/views.py:6236
 msgid "پاسخ‌ها با موفقیت ثبت شدند"
 msgstr "Answers submitted successfully"
 
-#: api/views.py:6397
+#: api/views.py:6391
 msgid "تلاش برای امتحان یافت نشد"
 msgstr "Exam attempt not found"
 
-#: api/views.py:6404 api/views.py:6410
+#: api/views.py:6398 api/views.py:6404
 msgid "شما دسترسی به این نتایج ندارید"
 msgstr "You do not have access to these results"
 
-#: api/views.py:6571 api/views.py:9106 api/views.py:9763 api/views.py:9810
-#: api/views.py:9849
+#: api/views.py:6565 api/views.py:9100 api/views.py:9757 api/views.py:9804
+#: api/views.py:9843
 msgid "معلم یافت نشد"
 msgstr "Teacher not found"
 
-#: api/views.py:6714
+#: api/views.py:6708
 msgid "Invalid credentials"
 msgstr ""
 
-#: api/views.py:6730
+#: api/views.py:6724
 msgid "Parent login successful"
 msgstr ""
 
-#: api/views.py:6797 api/views.py:7011 api/views.py:7325
+#: api/views.py:6791 api/views.py:7005 api/views.py:7319
 msgid "Student not found"
 msgstr ""
 
-#: api/views.py:6803 api/views.py:6808
+#: api/views.py:6797 api/views.py:6802
 msgid "Parent profile not found"
 msgstr ""
 
-#: api/views.py:7003 api/views.py:7067 api/views.py:7125
+#: api/views.py:6997 api/views.py:7061 api/views.py:7119
 msgid "Child ID is required"
 msgstr ""
 
-#: api/views.py:7076 api/views.py:7134
+#: api/views.py:7070 api/views.py:7128
 msgid "Student or parent not found"
 msgstr ""
 
-#: api/views.py:7083
+#: api/views.py:7077
 msgid "You do not have permission to set usage time"
 msgstr ""
 
-#: api/views.py:7193
+#: api/views.py:7187
 msgid "Student ID is required"
 msgstr ""
 
-#: api/views.py:7203
+#: api/views.py:7197
 msgid "Student or parent profile not found"
 msgstr ""
 
-#: api/views.py:7221
+#: api/views.py:7215
 msgid "Current password is incorrect"
 msgstr ""
 
-#: api/views.py:7230
+#: api/views.py:7224
 msgid "Password updated successfully"
 msgstr ""
 
-#: api/views.py:7301
+#: api/views.py:7295
 msgid "student_id and status are required"
 msgstr ""
 
-#: api/views.py:7307
+#: api/views.py:7301
 msgid "status must be \"present\" or \"absent\""
 msgstr ""
 
-#: api/views.py:7316 api/views.py:7784
+#: api/views.py:7310 api/views.py:7778
 msgid "Booking not found"
 msgstr ""
 
-#: api/views.py:7351
+#: api/views.py:7345
 msgid "Send Support Message"
 msgstr ""
 
-#: api/views.py:7352
+#: api/views.py:7346
 msgid "Send a message to support team with optional file attachments"
 msgstr ""
 
-#: api/views.py:7397
+#: api/views.py:7391
 msgid "Recipient not found"
 msgstr ""
 
-#: api/views.py:7406
+#: api/views.py:7400
 msgid "Sender not found"
 msgstr ""
 
-#: api/views.py:7460
+#: api/views.py:7454
 msgid "List Support Messages"
 msgstr ""
 
-#: api/views.py:7461
+#: api/views.py:7455
 msgid "Get list of support messages for a teacher"
 msgstr ""
 
-#: api/views.py:7467
+#: api/views.py:7461
 msgid "Teacher ID to filter messages"
 msgstr ""
 
-#: api/views.py:7473
+#: api/views.py:7467
 msgid "Message status: sent or read"
 msgstr ""
 
-#: api/views.py:7479
+#: api/views.py:7473
 msgid "Page number"
 msgstr ""
 
-#: api/views.py:7560
+#: api/views.py:7554
 msgid "Mark Message as Read"
 msgstr ""
 
-#: api/views.py:7561
+#: api/views.py:7555
 msgid "Mark a support message as read"
 msgstr ""
 
-#: api/views.py:7589 api/views.py:7613
+#: api/views.py:7583 api/views.py:7607
 msgid "Message not found"
 msgstr ""
 
-#: api/views.py:7607
+#: api/views.py:7601
 msgid "Message deleted successfully"
 msgstr ""
 
-#: api/views.py:7683
+#: api/views.py:7677
 msgid "Teacher not found"
 msgstr ""
 
-#: api/views.py:8142
+#: api/views.py:8136
 msgid "فقط معلمان می‌توانند کیف پول خود را ببینند"
 msgstr "Teachers can only view their wallets"
 
-#: api/views.py:8154 api/views.py:9099
+#: api/views.py:8148 api/views.py:9093
 msgid "teacher_id الزامی است"
 msgstr "teacher_id is required"
 
-#: api/views.py:8161 api/views.py:8308 api/views.py:8574 api/views.py:9114
+#: api/views.py:8155 api/views.py:8302 api/views.py:8568 api/views.py:9108
 msgid "کیف پول یافت نشد"
 msgstr "Wallet not found"
 
-#: api/views.py:8301
+#: api/views.py:8295
 msgid "فقط معلمان می‌توانند اطلاعات بانکی خود را ویرایش کنند"
 msgstr "Teachers can only edit their bank information"
 
-#: api/views.py:8329
+#: api/views.py:8323
 msgid "اطلاعات بانکی با موفقیت به‌روزرسانی شد"
 msgstr "Bank information updated successfully"
 
-#: api/views.py:8452 api/views.py:8953 api/views.py:9088
+#: api/views.py:8446 api/views.py:8947 api/views.py:9082
 msgid "فقط معلمان و مدیران می‌توانند این endpoint را استفاده کنند"
 msgstr "Only teachers and administrators can use this endpoint"
 
-#: api/views.py:8544
+#: api/views.py:8538
 msgid "فقط معلمان می‌توانند درخواست تسویه حساب کنند"
 msgstr "Teachers can only request payouts"
 
-#: api/views.py:8556
+#: api/views.py:8550
 msgid "مبلغ و روش پرداخت الزامی هستند"
 msgstr "Amount and payment method are required"
 
-#: api/views.py:8566
+#: api/views.py:8560
 msgid "مبلغ نامعتبر است"
 msgstr "Invalid amount"
 
-#: api/views.py:8580 api/views.py:8623
+#: api/views.py:8574 api/views.py:8617
 msgid "موجودی کافی نیست"
 msgstr "Insufficient balance"
 
-#: api/views.py:8587
+#: api/views.py:8581
 #, python-format
 msgid "مبلغ از حداقل درخواست (%(min)s) کمتر است"
 msgstr "Amount is less than the minimum request (%(min)s)"
 
-#: api/views.py:8595
+#: api/views.py:8589
 msgid "روش پرداخت نامعتبر است"
 msgstr "Invalid payment method"
 
-#: api/views.py:8612
+#: api/views.py:8606
 msgid "اطلاعات حساب بانکی مورد نیاز است"
 msgstr "Bank account information is required"
 
-#: api/views.py:8654
+#: api/views.py:8648
 msgid "درخواست تسویه حساب ایجاد شد و در انتظار تایید ادمین است"
 msgstr "Payout request created and is awaiting admin approval"
 
-#: api/views.py:9287
+#: api/views.py:9281
 msgid "فقط مدیران می‌توانند درخواست‌ها را تأیید کنند"
 msgstr "Only administrators can approve requests"
 
-#: api/views.py:9294
+#: api/views.py:9288
 msgid "درخواست تسویه حساب یافت نشد"
 msgstr "Payout request not found"
 
-#: api/views.py:9300
+#: api/views.py:9294
 msgid "تنها درخواست‌های در انتظار تأیید را می‌توان تأیید کرد"
 msgstr "Only pending requests can be approved"
 
-#: api/views.py:9325
+#: api/views.py:9319
 msgid "درخواست تسویه حساب تأیید شد"
 msgstr "Payout request approved"
 
-#: api/views.py:9406
+#: api/views.py:9400
 msgid "فقط دانش‌آموزان و مدیران می‌توانند این endpoint را استفاده کنند"
 msgstr "Only students and administrators can use this endpoint"
 
-#: api/views.py:9493
+#: api/views.py:9487
 msgid "فقط معلمان می‌توانند امتیاز بدهند"
 msgstr "Teachers can only rate"
 
-#: api/views.py:9503
+#: api/views.py:9497
 msgid "امتیاز ثبت شد"
 msgstr "Rating submitted"
 
-#: api/views.py:9531 api/views.py:9615 api/views.py:9684
+#: api/views.py:9525 api/views.py:9609 api/views.py:9678
 msgid "شما مجاز نیستید"
 msgstr "You are not authorized"
 
-#: api/views.py:9541
+#: api/views.py:9535
 msgid "امتیاز بروزرسانی شد"
 msgstr "Rating updated"
 
-#: api/views.py:9578
+#: api/views.py:9572
 msgid "فقط معلمان می‌توانند مدال بدهند"
 msgstr "Teachers can only award medals"
 
-#: api/views.py:9588
+#: api/views.py:9582
 msgid "مدال اعطا شد"
 msgstr "Medal awarded"
 
-#: api/views.py:9621
+#: api/views.py:9615
 msgid "مدال حذف شد"
 msgstr "Medal removed"
 
-#: api/views.py:9735
+#: api/views.py:9729
 msgid "امتیاز داده شد"
 msgstr "Rating given"
 
-#: api/views.py:9862
+#: api/views.py:9856
 msgid "شما هنوز برای این معلم نظری ثبت نکرده‌اید"
 msgstr "You have not yet registered a review for this teacher"
 
-#: api/views.py:9871
+#: api/views.py:9865
 msgid "نظر شما برای این معلم"
 msgstr "Your review for this teacher"
 
-#: api/views.py:9974 api/views.py:10107
+#: api/views.py:9968 api/views.py:10103
 msgid "This endpoint is only for students"
 msgstr ""
 
-#: api/views.py:9986 api/views.py:10119
+#: api/views.py:9980 api/views.py:10115
 msgid "No active parent profile found for this student"
 msgstr ""
 
-#: api/views.py:10207
+#: api/views.py:10203
 msgid "Usage recorded successfully"
 msgstr ""
 
-#: api/views.py:10279 api/views.py:10441 api/views.py:10507 api/views.py:10811
-#: api/views.py:10967
+#: api/views.py:10275 api/views.py:10437 api/views.py:10503 api/views.py:10807
+#: api/views.py:10963
 msgid "Only teachers can access this endpoint"
 msgstr ""
 
-#: api/views.py:10361
+#: api/views.py:10357
 msgid "Students list retrieved successfully"
 msgstr ""
 
-#: api/views.py:10460
+#: api/views.py:10456
 msgid "Classes retrieved successfully"
 msgstr ""
 
-#: api/views.py:10523
+#: api/views.py:10519
 msgid "No paid classes found"
 msgstr ""
 
-#: api/views.py:10535
+#: api/views.py:10531
 msgid "No exercises found"
 msgstr ""
 
-#: api/views.py:10731
+#: api/views.py:10727
 msgid "Exercises retrieved successfully"
 msgstr ""
 
-#: api/views.py:10827
+#: api/views.py:10823
 msgid "Student not found or has no paid classes with this teacher"
 msgstr ""
 
-#: api/views.py:10897
+#: api/views.py:10893
 msgid "Student profile retrieved successfully"
 msgstr ""
 
-#: api/views.py:11137
+#: api/views.py:11133
 msgid "Dashboard data retrieved successfully"
 msgstr ""
 
-#: api/views.py:11174 api/views.py:11621
+#: api/views.py:11170 api/views.py:11617
 msgid "Error retrieving packages"
 msgstr ""
 
-#: api/views.py:11207
+#: api/views.py:11203
 msgid "Error retrieving enrollments"
 msgstr ""
 
-#: api/views.py:11245
+#: api/views.py:11241
 msgid "enrollment_id and session_number are required"
 msgstr ""
 
-#: api/views.py:11257
+#: api/views.py:11253
 msgid "Enrollment not found"
 msgstr ""
 
-#: api/views.py:11289
+#: api/views.py:11285
 msgid "Error checking session access"
 msgstr ""
 
-#: api/views.py:11325 api/views.py:11649 api/views.py:11752 api/views.py:11883
-#: api/views.py:11965
+#: api/views.py:11321 api/views.py:11645 api/views.py:11748 api/views.py:11879
+#: api/views.py:11961
 msgid "Invalid input"
 msgstr ""
 
-#: api/views.py:11343
+#: api/views.py:11339
 msgid "Enrollment not found or inactive"
 msgstr ""
 
-#: api/views.py:11353
+#: api/views.py:11349
 msgid "No pending installment"
 msgstr ""
 
-#: api/views.py:11363
+#: api/views.py:11359
 msgid "This installment is already paid"
 msgstr ""
 
-#: api/views.py:11394 api/views.py:11401 api/views.py:11411
+#: api/views.py:11390 api/views.py:11397 api/views.py:11407
 msgid "Payment gateway error"
 msgstr ""
 
-#: api/views.py:11419
+#: api/views.py:11415
 msgid "No track ID received from payment gateway"
 msgstr ""
 
-#: api/views.py:11432
+#: api/views.py:11428
 msgid "Payment initiated successfully"
 msgstr ""
 
-#: api/views.py:11446
+#: api/views.py:11442
 msgid "Error processing payment"
 msgstr ""
 
-#: api/views.py:11490
+#: api/views.py:11486
 msgid "Missing required parameters"
 msgstr ""
 
-#: api/views.py:11502
+#: api/views.py:11498
 msgid "Payment failed"
 msgstr ""
 
-#: api/views.py:11519
+#: api/views.py:11515
 msgid "Error verifying payment"
 msgstr ""
 
-#: api/views.py:11526
+#: api/views.py:11522
 msgid "Error verifying payment with gateway"
 msgstr ""
 
-#: api/views.py:11535
+#: api/views.py:11531
 msgid "Payment verification failed"
 msgstr ""
 
-#: api/views.py:11547
+#: api/views.py:11543
 msgid "Payment record not found"
 msgstr ""
 
-#: api/views.py:11570
+#: api/views.py:11566
 msgid "Payment verified successfully"
 msgstr ""
 
-#: api/views.py:11583
+#: api/views.py:11579
 msgid "Error processing payment verification"
 msgstr ""
 
-#: api/views.py:11666
+#: api/views.py:11662
 msgid "Package created successfully"
 msgstr ""
 
-#: api/views.py:11675
+#: api/views.py:11671
 msgid "Error creating package"
 msgstr ""
 
-#: api/views.py:11712 api/views.py:11739 api/views.py:11781 api/views.py:11837
-#: api/views.py:11872
+#: api/views.py:11708 api/views.py:11735 api/views.py:11777 api/views.py:11833
+#: api/views.py:11868
 msgid "Package not found"
 msgstr ""
 
-#: api/views.py:11725
+#: api/views.py:11721
 msgid "Error retrieving package"
 msgstr ""
 
-#: api/views.py:11760
+#: api/views.py:11756
 msgid "Package updated successfully"
 msgstr ""
 
-#: api/views.py:11767
+#: api/views.py:11763
 msgid "Error updating package"
 msgstr ""
 
-#: api/views.py:11788
+#: api/views.py:11784
 msgid "Cannot delete package with active enrollments"
 msgstr ""
 
-#: api/views.py:11795
+#: api/views.py:11791
 msgid "Package deleted successfully"
 msgstr ""
 
-#: api/views.py:11801
+#: api/views.py:11797
 msgid "Error deleting package"
 msgstr ""
 
-#: api/views.py:11852
+#: api/views.py:11848
 msgid "Error retrieving installments"
 msgstr ""
 
-#: api/views.py:11900
+#: api/views.py:11896
 msgid "Installment created successfully"
 msgstr ""
 
-#: api/views.py:11909
+#: api/views.py:11905
 msgid "Error creating installment"
 msgstr ""
 
-#: api/views.py:11952 api/views.py:11996
+#: api/views.py:11948 api/views.py:11992
 msgid "Installment not found"
 msgstr ""
 
-#: api/views.py:11973
+#: api/views.py:11969
 msgid "Installment updated successfully"
 msgstr ""
 
-#: api/views.py:11980
+#: api/views.py:11976
 msgid "Error updating installment"
 msgstr ""
 
-#: api/views.py:12003
+#: api/views.py:11999
 msgid "Cannot delete installment with paid payments"
 msgstr ""
 
-#: api/views.py:12014
+#: api/views.py:12010
 msgid "Installment deleted successfully"
 msgstr ""
 
-#: api/views.py:12020
+#: api/views.py:12016
 msgid "Error deleting installment"
 msgstr ""
 
-#: api/views.py:12064
+#: api/views.py:12060
 msgid "این دوره دارای دانش‌آموزان ثبت‌نام شده است و قابل حذف نیست"
 msgstr "This course has enrolled students and cannot be deleted"
 
-#: api/views.py:12074
+#: api/views.py:12070
 msgid "دوره با موفقیت حذف شد"
 msgstr "Course deleted successfully"
 
-#: api/views.py:12079
+#: api/views.py:12075
 msgid "این دوره دارای اطلاعات وابسته است و قابل حذف نیست"
 msgstr "This course has dependent data and cannot be deleted"
+
+#: classes/models.py:18
+msgid "Scheduled"
+msgstr ""
+
+#: classes/models.py:19 core/admin.py:292 core/models.py:130
+msgid "Active"
+msgstr ""
+
+#: classes/models.py:20
+msgid "Ended"
+msgstr ""
+
+#: classes/models.py:21
+msgid "Cancelled"
+msgstr ""
+
+#: classes/models.py:25 core/admin.py:38 core/admin.py:78 core/admin.py:105
+#: core/models.py:11 core/models.py:24 core/models.py:36 core/models.py:59
+#: core/models.py:88 core/models.py:124 exercise/models.py:29
+#: exercise/models.py:111
+msgid "Title"
+msgstr ""
+
+#: classes/models.py:26 exercise/models.py:88 exercise/models.py:155
+#: exercise/models.py:519
+msgid "Description"
+msgstr ""
+
+#: classes/models.py:37
+#, fuzzy
+#| msgid "رزرو شده"
+msgid "کلاس رزرو شده"
+msgstr "Booked"
+
+#: classes/models.py:42
+msgid "Scheduled start"
+msgstr ""
+
+#: classes/models.py:43
+msgid "Scheduled end"
+msgstr ""
+
+#: classes/models.py:44
+msgid "Actual start"
+msgstr ""
+
+#: classes/models.py:45
+msgid "Actual end"
+msgstr ""
+
+#: classes/models.py:46
+msgid "RTC room ID"
+msgstr ""
+
+#: classes/models.py:47
+msgid "Max students"
+msgstr ""
+
+#: classes/models.py:48
+#, fuzzy
+#| msgid "Allowed start time"
+msgid "Allow student chat"
+msgstr "Allowed start time"
+
+#: classes/models.py:49
+msgid "Allow student reactions"
+msgstr ""
+
+#: classes/models.py:50
+msgid "Require approval to join"
+msgstr ""
+
+#: classes/models.py:51
+msgid "Enable recording"
+msgstr ""
+
+#: classes/models.py:62
+msgid "Online Class"
+msgstr ""
+
+#: classes/models.py:63
+msgid "Online Classes"
+msgstr ""
+
+#: classes/models.py:71
+msgid "Selected user must have teacher role."
+msgstr ""
+
+#: classes/models.py:73
+msgid "Scheduled end must be after scheduled start."
+msgstr ""
+
+#: classes/models.py:104
+msgid "Only scheduled classes can be started."
+msgstr ""
+
+#: classes/models.py:111
+msgid "Only active classes can be ended."
+msgstr ""
+
+#: classes/models.py:118
+msgid "Only scheduled or active classes can be cancelled."
+msgstr ""
+
+#: classes/models.py:128
+msgid "Class session"
+msgstr ""
+
+#: classes/models.py:136
+msgid "Can unmute"
+msgstr ""
+
+#: classes/models.py:137
+msgid "Can share video"
+msgstr ""
+
+#: classes/models.py:138
+msgid "Can share screen"
+msgstr ""
+
+#: classes/models.py:139
+msgid "Is moderator"
+msgstr ""
+
+#: classes/models.py:140
+msgid "Enrolled at"
+msgstr ""
+
+#: classes/models.py:141
+#, fuzzy
+#| msgid "Read at"
+msgid "Joined at"
+msgstr "Read at"
+
+#: classes/models.py:142
+msgid "Left at"
+msgstr ""
+
+#: classes/models.py:147
+msgid "Class Enrollment"
+msgstr ""
+
+#: classes/models.py:148
+msgid "Class Enrollments"
+msgstr ""
+
+#: classes/models.py:156
+msgid "Teacher users cannot be enrolled as students."
+msgstr ""
+
+#: classes/models.py:158
+msgid "Class teacher cannot be enrolled as student."
+msgstr ""
+
+#: classes/models.py:173
+msgid "Inactive enrollment cannot join."
+msgstr ""
+
+#: classes/models.py:199
+msgid "Hand Raise"
+msgstr ""
+
+#: classes/models.py:200
+msgid "Hand Raises"
+msgstr ""
+
+#: classes/models.py:252
+msgid "Class Message"
+msgstr ""
+
+#: classes/models.py:253
+#, fuzzy
+#| msgid "Support Messages"
+msgid "Class Messages"
+msgstr "Support Messages"
+
+#: classes/models.py:285
+msgid "Class Reaction"
+msgstr ""
+
+#: classes/models.py:286
+msgid "Class Reactions"
+msgstr ""
 
 #: classroom/admin.py:93
 msgid "تاریخ میلادی"
@@ -2477,7 +2627,8 @@ msgstr "Approve and pay selected requests"
 #: classroom/admin.py:782
 #, python-format
 msgid "%(count)d درخواست با موفقیت تایید و پرداخت شد و SMS ارسال شد"
-msgstr "%(count)d requests were successfully approved and paid, and an SMS was sent"
+msgstr ""
+"%(count)d requests were successfully approved and paid, and an SMS was sent"
 
 #: classroom/admin.py:789 classroom/admin.py:816
 msgid "خطاها: "
@@ -3497,12 +3648,6 @@ msgstr "Package installment payment"
 msgid "پرداخت‌های قسط‌های پکیج"
 msgstr "Package installment payments"
 
-#: core/admin.py:38 core/admin.py:78 core/admin.py:105 core/models.py:11
-#: core/models.py:24 core/models.py:36 core/models.py:59 core/models.py:88
-#: core/models.py:124 exercise/models.py:29 exercise/models.py:111
-msgid "Title"
-msgstr ""
-
 #: core/admin.py:39 core/admin.py:189 core/admin.py:254
 msgid "Media"
 msgstr ""
@@ -3560,10 +3705,6 @@ msgstr ""
 
 #: core/admin.py:286 core/models.py:128
 msgid "Placement"
-msgstr ""
-
-#: core/admin.py:292 core/models.py:130
-msgid "Active"
 msgstr ""
 
 #: core/admin.py:297
@@ -3723,11 +3864,11 @@ msgstr ""
 msgid "Banner"
 msgstr ""
 
-#: core/views.py:150
+#: core/views.py:159
 msgid "Your message has been sent successfully."
 msgstr ""
 
-#: core/views.py:164
+#: core/views.py:173
 msgid "Please correct the errors in the form."
 msgstr ""
 
@@ -3950,10 +4091,6 @@ msgstr ""
 msgid "Guide"
 msgstr ""
 
-#: exercise/models.py:88 exercise/models.py:155 exercise/models.py:519
-msgid "Description"
-msgstr ""
-
 #: exercise/models.py:93
 msgid "Questions"
 msgstr ""
@@ -4004,10 +4141,6 @@ msgstr ""
 
 #: exercise/models.py:234 exercise/models.py:379 exercise/models.py:488
 msgid "Teaching Subject"
-msgstr ""
-
-#: exercise/models.py:239 exercise/models.py:327 exercise/models.py:407
-msgid "Score"
 msgstr ""
 
 #: exercise/models.py:244
@@ -4194,11 +4327,11 @@ msgstr ""
 msgid "Nozima"
 msgstr ""
 
-#: fofofish/settings.py:192
+#: fofofish/settings.py:197
 msgid "Persian"
 msgstr ""
 
-#: fofofish/settings.py:193
+#: fofofish/settings.py:198
 msgid "English"
 msgstr ""
 
@@ -4287,6 +4420,17 @@ msgstr ""
 #: templates/admin/support_message_chat.html:531
 msgid "messages"
 msgstr ""
+
+#, python-brace-format
+#~ msgid "شماره جلسه باید بین 1 و {package.total_sessions} باشد"
+#~ msgstr "Session number must be between 1 and {package.total_sessions}"
+
+#~ msgid "وضعیت ثبت‌نام: {enrollment.get_status_display()}"
+#~ msgstr "Enrollment status: {enrollment.get_status_display()}"
+
+#, python-brace-format
+#~ msgid "قسط {required_payment.installment.installment_number} "
+#~ msgstr "Installment {required_payment.installment.installment_number}"
 
 #~ msgid "معلم و تاریخ"
 #~ msgstr "Teacher and date"
