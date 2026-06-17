@@ -38,7 +38,7 @@ class OnlineClass(BaseModel):
         null=True,
         blank=True,
     )
-    reward_granted = models.BooleanField(default=False)
+    reward_granted = models.BooleanField(default=False, verbose_name=_('Reward granted'))
     scheduled_start = models.DateTimeField(verbose_name=_('Scheduled start'))
     scheduled_end = models.DateTimeField(verbose_name=_('Scheduled end'))
     actual_start = models.DateTimeField(null=True, blank=True, verbose_name=_('Actual start'))
@@ -181,18 +181,19 @@ class ClassEnrollment(BaseModel):
 
 
 class HandRaise(models.Model):
-    class_session = models.ForeignKey(OnlineClass, on_delete=models.CASCADE, related_name='raised_hands')
-    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='hand_raises')
-    raised_at = models.DateTimeField(auto_now_add=True)
-    lowered_at = models.DateTimeField(null=True, blank=True)
+    class_session = models.ForeignKey(OnlineClass, on_delete=models.CASCADE, related_name='raised_hands', verbose_name=_('Class session'))
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='hand_raises', verbose_name=_('Student'))
+    raised_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Raised at'))
+    lowered_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Lowered at'))
     acknowledged_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         related_name='acknowledged_hands',
         null=True,
         blank=True,
+        verbose_name=_('Acknowledged by'),
     )
-    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    acknowledged_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Acknowledged at'))
 
     class Meta:
         ordering = ['raised_at']
@@ -226,26 +227,28 @@ class HandRaise(models.Model):
 
 
 class ClassMessage(BaseModel):
-    class_session = models.ForeignKey(OnlineClass, on_delete=models.CASCADE, related_name='messages')
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='class_messages_sent')
-    content = models.TextField()
-    is_private = models.BooleanField(default=False)
+    class_session = models.ForeignKey(OnlineClass, on_delete=models.CASCADE, related_name='messages', verbose_name=_('Class session'))
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='class_messages_sent', verbose_name=_('Sender'))
+    content = models.TextField(verbose_name=_('Content'))
+    is_private = models.BooleanField(default=False, verbose_name=_('Is private'))
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='class_messages_received',
         null=True,
         blank=True,
+        verbose_name=_('Recipient'),
     )
-    is_deleted = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False, verbose_name=_('Is deleted'))
     deleted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         related_name='deleted_class_messages',
         null=True,
         blank=True,
+        verbose_name=_('Deleted by'),
     )
-    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Deleted at'))
 
     class Meta:
         ordering = ['created_at']
@@ -266,19 +269,19 @@ class ClassMessage(BaseModel):
 
 class ClassReaction(models.Model):
     EMOJI_CHOICES = [
-        ('👍', 'Thumbs Up'),
-        ('❤️', 'Heart'),
-        ('👏', 'Clap'),
-        ('🎉', 'Party'),
-        ('🤔', 'Thinking'),
-        ('😮', 'Surprised'),
+        ('👍', _('Thumbs Up')),
+        ('❤️', _('Heart')),
+        ('👏', _('Clap')),
+        ('🎉', _('Party')),
+        ('🤔', _('Thinking')),
+        ('😮', _('Surprised')),
     ]
 
-    class_session = models.ForeignKey(OnlineClass, on_delete=models.CASCADE, related_name='reactions')
-    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='class_reactions')
-    emoji = models.CharField(max_length=10, choices=EMOJI_CHOICES)
-    message = models.ForeignKey(ClassMessage, on_delete=models.CASCADE, related_name='reactions', null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    class_session = models.ForeignKey(OnlineClass, on_delete=models.CASCADE, related_name='reactions', verbose_name=_('Class session'))
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='class_reactions', verbose_name=_('Student'))
+    emoji = models.CharField(max_length=10, choices=EMOJI_CHOICES, verbose_name=_('Emoji'))
+    message = models.ForeignKey(ClassMessage, on_delete=models.CASCADE, related_name='reactions', null=True, blank=True, verbose_name=_('Message'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
 
     class Meta:
         ordering = ['-created_at']
