@@ -34,7 +34,7 @@ class OnlineClass(BaseModel):
         "classroom.ClassBooking",
         on_delete=models.PROTECT,
         related_name='booked_class',
-        verbose_name="کلاس رزرو شده",
+        verbose_name=_("کلاس رزرو شده"),
         null=True,
         blank=True,
     )
