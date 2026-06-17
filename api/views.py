@@ -2669,14 +2669,14 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
                 slot_end = (cursor + dt.timedelta(minutes=session_minutes)).time()
 
                 # بررسی تکراری نبودن - اگر موجود باشد skip می‌کنیم
-                exists = TeacherAvailability.objects.filter(
+                conflict = TeacherAvailability.objects.filter(
                     teacher=request.user,
                     date=cur_date,
-                    start_time=slot_start,
-                    end_time=slot_end
+                    start_time__lt=slot_end,
+                    end_time__gt=slot_start
                 ).exists()
 
-                if not exists:
+                if not conflict:
                     TeacherAvailability.objects.create(
                         teacher=request.user,
                         date=cur_date,
