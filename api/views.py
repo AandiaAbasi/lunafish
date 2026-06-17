@@ -4874,29 +4874,32 @@ class TeacherFieldListAPIView(APIView):
         }
     )
     def get(self, request):
-        from exercise.models import Field, CategoryField
+        from exercise.models import Field
         from classroom.models import TeachingSubject
         from .exercise_serializers import FieldListSerializer
         from django.db.models import Q
         from rest_framework.pagination import PageNumberPagination
-        
-        # فقط معلمان می‌توانند لیست سوالات خود را ببینند
+
         if request.user.role != 'teacher':
             return Response(
                 {'error': _('تنها معلمان می‌توانند لیست سوالات خود را مشاهده کنند')},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
-        # TEMPORARY: Show all fields until migration is applied
-        # Without teacher field in DB, we cannot filter by ownership
-        # After migration, change to: Field.objects.filter(teacher=request.user)
-        queryset = Field.objects.all().prefetch_related('details').order_by('-created_at')
-        
-        # Apply filters
+
+        # گرفتن دروسی که این معلم تدریس می‌کند
+        teaching_subjects = TeachingSubject.objects.filter(teacher=request.user)
+
+        # سوال‌هایی که در امتحان‌های این دروس استفاده شده
+        queryset = Field.objects.filter(
+            categoryfield__exam__teaching_subject__in=teaching_subjects
+        ).distinct().prefetch_related('details').order_by('-created_at')
+
+        # filter by type
         question_type = request.query_params.get('type')
         if question_type:
             queryset = queryset.filter(type=question_type)
-        
+
+        # search
         search = request.query_params.get('search')
         if search:
             queryset = queryset.filter(
@@ -4904,22 +4907,23 @@ class TeacherFieldListAPIView(APIView):
                 Q(guide__icontains=search) |
                 Q(des__icontains=search)
             )
-        
-        # Pagination
+
         paginator = PageNumberPagination()
+
         page_size = request.query_params.get('page_size', 20)
         try:
-            page_size = int(page_size)
-            page_size = min(page_size, 100)  # Max 100 items per page
-        except (ValueError, TypeError):
+            page_size = min(int(page_size), 100)
+        except:
             page_size = 20
-        
+
         paginator.page_size = page_size
+
         paginated_queryset = paginator.paginate_queryset(queryset, request)
-        
+
         serializer = FieldListSerializer(paginated_queryset, many=True)
-        
+
         return paginator.get_paginated_response(serializer.data)
+
 
 
 class CreateExamAPIView(APIView):
