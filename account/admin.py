@@ -465,10 +465,10 @@ class ParentAppUsageLogAdmin(admin.ModelAdmin):
 @admin.register(TeacherRating)
 class TeacherRatingAdmin(admin.ModelAdmin):
     """Admin for teacher ratings"""
-    list_display = ('teacher_link', 'rater_link', 'rater_type', 'stars', 'is_verified', 'is_anonymous', 'created_at_display', 'admin_actions')
-    list_filter = ('rater_type', 'stars', 'is_verified', 'is_anonymous', 'created_at')
+    list_display = ('teacher_link', 'rater_link', 'rater_type', 'stars', 'is_verified', 'created_at_display', 'admin_actions')
+    list_filter = ('rater_type', 'stars', 'is_verified', 'created_at')
     search_fields = ('teacher__username', 'teacher__name', 'rater__username', 'rater__name', 'comment')
-    readonly_fields = ('teacher', 'rater', 'rater_type', 'stars', 'comment', 'is_anonymous', 'created_at_display', 'updated_at_display')
+    readonly_fields = ('teacher', 'rater', 'rater_type', 'stars', 'comment', 'created_at_display', 'updated_at_display')
     ordering = ['-created_at']
     
     fieldsets = (
@@ -479,7 +479,7 @@ class TeacherRatingAdmin(admin.ModelAdmin):
             'fields': ('comment',)
         }),
         (_('Settings'), {
-            'fields': ('is_anonymous', 'is_verified')
+            'fields': ('is_verified',)
         }),
         (_('Timestamps'), {
             'fields': ('created_at_display', 'updated_at_display'),
