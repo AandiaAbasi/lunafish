@@ -91,7 +91,7 @@ build/
 *~
 
 # Local development
-.local/
+# .local/
 .vagrant/
 Vagrantfile
 
