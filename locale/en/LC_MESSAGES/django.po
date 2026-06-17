@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-17 11:36+0330\n"
+"POT-Creation-Date: 2026-06-17 12:12+0330\n"
 "PO-Revision-Date: 2026-06-17 11:00+0330\n"
 "Last-Translator: Auto Fixed <translations@example.com>\n"
 "Language-Team: en <en@example.com>\n"
@@ -117,7 +117,7 @@ msgid "User Management"
 msgstr ""
 
 #: account/admin.py:245 account/admin.py:510 account/models.py:54
-#: account/models.py:720 classes/models.py:31 classroom/models.py:859
+#: account/models.py:720 classes/models.py:56 classroom/models.py:859
 #: exercise/models.py:23 exercise/models.py:362 exercise/models.py:471
 msgid "Teacher"
 msgstr ""
@@ -135,7 +135,7 @@ msgid "Metadata"
 msgstr ""
 
 #: account/admin.py:289 account/admin.py:359 account/admin.py:438
-#: account/admin.py:496 classes/models.py:284 core/abstract_models.py:8
+#: account/admin.py:496 classes/models.py:374 core/abstract_models.py:8
 #: core/abstract_models.py:35 core/models.py:95
 msgid "Created at"
 msgstr ""
@@ -167,7 +167,7 @@ msgstr ""
 msgid "Usage Time Control"
 msgstr ""
 
-#: account/admin.py:344 classes/models.py:57 classroom/models.py:884
+#: account/admin.py:344 classes/models.py:82 classroom/models.py:884
 #: core/admin.py:160 core/admin.py:299
 msgid "Status"
 msgstr ""
@@ -177,7 +177,7 @@ msgid "Timestamps"
 msgstr ""
 
 #: account/admin.py:380 account/models.py:520 account/models.py:711
-#: classes/models.py:134 classes/models.py:185 classes/models.py:281
+#: classes/models.py:184 classes/models.py:252 classes/models.py:371
 #: exercise/models.py:371 exercise/models.py:480
 msgid "Student"
 msgstr ""
@@ -606,7 +606,8 @@ msgstr "Allowed end time"
 msgid "ساعت پایان مجاز استفاده (مثال: 22:00)"
 msgstr "Allowed usage end time (e.g., 22:00)"
 
-#: account/models.py:590
+#: account/models.py:590 classes/models.py:124 classes/models.py:229
+#: classes/models.py:290
 msgid "Is active"
 msgstr "Is active"
 
@@ -2223,261 +2224,295 @@ msgstr "Course deleted successfully"
 msgid "این دوره دارای اطلاعات وابسته است و قابل حذف نیست"
 msgstr "This course has dependent data and cannot be deleted"
 
-#: classes/apps.py:8 classes/models.py:63
+#: classes/apps.py:8 classes/models.py:88
 msgid "Online Classes"
 msgstr ""
 
-#: classes/models.py:18
+#: classes/models.py:43
 msgid "Scheduled"
 msgstr ""
 
-#: classes/models.py:19 core/admin.py:292 core/models.py:130
+#: classes/models.py:44 core/admin.py:292 core/models.py:130
 msgid "Active"
 msgstr ""
 
-#: classes/models.py:20
+#: classes/models.py:45
 msgid "Ended"
 msgstr ""
 
-#: classes/models.py:21
+#: classes/models.py:46
 msgid "Cancelled"
 msgstr ""
 
-#: classes/models.py:25 core/admin.py:38 core/admin.py:78 core/admin.py:105
+#: classes/models.py:50 core/admin.py:38 core/admin.py:78 core/admin.py:105
 #: core/models.py:11 core/models.py:24 core/models.py:36 core/models.py:59
 #: core/models.py:88 core/models.py:124 exercise/models.py:29
 #: exercise/models.py:111
 msgid "Title"
 msgstr ""
 
-#: classes/models.py:26 exercise/models.py:88 exercise/models.py:155
+#: classes/models.py:51 exercise/models.py:88 exercise/models.py:155
 #: exercise/models.py:519
 msgid "Description"
 msgstr ""
 
-#: classes/models.py:37
+#: classes/models.py:62
 msgid "کلاس رزرو شده"
 msgstr "Booked class"
 
-#: classes/models.py:41
+#: classes/models.py:66
 msgid "Reward granted"
 msgstr "Reward granted"
 
-#: classes/models.py:42
+#: classes/models.py:67 classes/models.py:105
 msgid "Scheduled start"
 msgstr ""
 
-#: classes/models.py:43
+#: classes/models.py:68 classes/models.py:110
 msgid "Scheduled end"
 msgstr ""
 
-#: classes/models.py:44
+#: classes/models.py:69 classes/models.py:115
 msgid "Actual start"
 msgstr ""
 
-#: classes/models.py:45
+#: classes/models.py:70 classes/models.py:120
 msgid "Actual end"
 msgstr ""
 
-#: classes/models.py:46
+#: classes/models.py:71
 msgid "RTC room ID"
 msgstr ""
 
-#: classes/models.py:47
+#: classes/models.py:72
 msgid "Max students"
 msgstr ""
 
-#: classes/models.py:48
+#: classes/models.py:73
 msgid "Allow student chat"
 msgstr "Allow student chat"
 
-#: classes/models.py:49
+#: classes/models.py:74
 msgid "Allow student reactions"
 msgstr ""
 
-#: classes/models.py:50
+#: classes/models.py:75
 msgid "Require approval to join"
 msgstr ""
 
-#: classes/models.py:51
+#: classes/models.py:76
 msgid "Enable recording"
 msgstr ""
 
-#: classes/models.py:62
+#: classes/models.py:87
 msgid "Online Class"
 msgstr ""
 
-#: classes/models.py:71
+#: classes/models.py:96
 msgid "Selected user must have teacher role."
 msgstr ""
 
-#: classes/models.py:73
+#: classes/models.py:98
 msgid "Scheduled end must be after scheduled start."
 msgstr ""
 
-#: classes/models.py:104
-msgid "Only scheduled classes can be started."
-msgstr ""
-
-#: classes/models.py:111
-msgid "Only active classes can be ended."
-msgstr ""
-
-#: classes/models.py:118
-msgid "Only scheduled or active classes can be cancelled."
-msgstr ""
-
-#: classes/models.py:128 classes/models.py:184 classes/models.py:230
-#: classes/models.py:280
-msgid "Class session"
-msgstr ""
+#: classes/models.py:129
+#, fuzzy
+#| msgid "Daily usage limit (minutes)"
+msgid "Duration (minutes)"
+msgstr "Daily usage limit (minutes)"
 
 #: classes/models.py:136
-msgid "Can unmute"
-msgstr ""
+#, fuzzy
+#| msgid "Daily usage limit (minutes)"
+msgid "Actual duration (minutes)"
+msgstr "Daily usage limit (minutes)"
 
-#: classes/models.py:137
-msgid "Can share video"
-msgstr ""
-
-#: classes/models.py:138
-msgid "Can share screen"
-msgstr ""
-
-#: classes/models.py:139
-msgid "Is moderator"
-msgstr ""
-
-#: classes/models.py:140
-msgid "Enrolled at"
-msgstr ""
-
-#: classes/models.py:141
-msgid "Joined at"
-msgstr "Joined at"
-
-#: classes/models.py:142
-msgid "Left at"
-msgstr ""
-
-#: classes/models.py:147
-msgid "Class Enrollment"
+#: classes/models.py:143
+msgid "Enrolled count"
 msgstr ""
 
 #: classes/models.py:148
-msgid "Class Enrollments"
+msgid "Is full"
 msgstr ""
 
-#: classes/models.py:156
-msgid "Teacher users cannot be enrolled as students."
+#: classes/models.py:154
+msgid "Only scheduled classes can be started."
 msgstr ""
 
-#: classes/models.py:158
-msgid "Class teacher cannot be enrolled as student."
+#: classes/models.py:161
+msgid "Only active classes can be ended."
 msgstr ""
 
-#: classes/models.py:173
-msgid "Inactive enrollment cannot join."
+#: classes/models.py:168
+msgid "Only scheduled or active classes can be cancelled."
+msgstr ""
+
+#: classes/models.py:178 classes/models.py:251 classes/models.py:315
+#: classes/models.py:370
+msgid "Class session"
 msgstr ""
 
 #: classes/models.py:186
+msgid "Can unmute"
+msgstr ""
+
+#: classes/models.py:187
+msgid "Can share video"
+msgstr ""
+
+#: classes/models.py:188
+msgid "Can share screen"
+msgstr ""
+
+#: classes/models.py:189
+msgid "Is moderator"
+msgstr ""
+
+#: classes/models.py:190 classes/models.py:215
+msgid "Enrolled at"
+msgstr ""
+
+#: classes/models.py:191 classes/models.py:220
+msgid "Joined at"
+msgstr "Joined at"
+
+#: classes/models.py:192 classes/models.py:225
+msgid "Left at"
+msgstr ""
+
+#: classes/models.py:197
+msgid "Class Enrollment"
+msgstr ""
+
+#: classes/models.py:198
+msgid "Class Enrollments"
+msgstr ""
+
+#: classes/models.py:206
+msgid "Teacher users cannot be enrolled as students."
+msgstr ""
+
+#: classes/models.py:208
+msgid "Class teacher cannot be enrolled as student."
+msgstr ""
+
+#: classes/models.py:234
+msgid "Is currently joined"
+msgstr ""
+
+#: classes/models.py:240
+msgid "Inactive enrollment cannot join."
+msgstr ""
+
+#: classes/models.py:253 classes/models.py:276
 msgid "Raised at"
 msgstr "Raised at"
 
-#: classes/models.py:187
+#: classes/models.py:254 classes/models.py:281
 msgid "Lowered at"
 msgstr "Lowered at"
 
-#: classes/models.py:194
+#: classes/models.py:261
 msgid "Acknowledged by"
 msgstr "Acknowledged by"
 
-#: classes/models.py:196
+#: classes/models.py:263 classes/models.py:286
 msgid "Acknowledged at"
 msgstr "Acknowledged at"
 
-#: classes/models.py:200
+#: classes/models.py:267
 msgid "Hand Raise"
 msgstr ""
 
-#: classes/models.py:201
+#: classes/models.py:268
 msgid "Hand Raises"
 msgstr ""
 
-#: classes/models.py:231 classroom/models.py:868
+#: classes/models.py:295
+#, fuzzy
+#| msgid "Acknowledged by"
+msgid "Is acknowledged"
+msgstr "Acknowledged by"
+
+#: classes/models.py:300
+msgid "Duration (seconds)"
+msgstr ""
+
+#: classes/models.py:316 classroom/models.py:868
 msgid "Sender"
 msgstr "Sender"
 
-#: classes/models.py:232 core/admin.py:40 core/admin.py:79 core/admin.py:106
+#: classes/models.py:317 core/admin.py:40 core/admin.py:79 core/admin.py:106
 #: core/models.py:13 core/models.py:25 core/models.py:37 core/models.py:91
 msgid "Content"
 msgstr ""
 
-#: classes/models.py:233
+#: classes/models.py:318
 msgid "Is private"
 msgstr "Is private"
 
-#: classes/models.py:240
+#: classes/models.py:325
 msgid "Recipient"
 msgstr "Recipient"
 
-#: classes/models.py:242
+#: classes/models.py:327
 msgid "Is deleted"
 msgstr "Is deleted"
 
-#: classes/models.py:249
+#: classes/models.py:334
 msgid "Deleted by"
 msgstr "Deleted by"
 
-#: classes/models.py:251
+#: classes/models.py:336 classes/models.py:350
 msgid "Deleted at"
 msgstr "Deleted at"
 
-#: classes/models.py:255
+#: classes/models.py:340
 msgid "Class Message"
 msgstr ""
 
-#: classes/models.py:256
+#: classes/models.py:341
 msgid "Class Messages"
 msgstr "Class Messages"
 
-#: classes/models.py:272
+#: classes/models.py:362
 msgid "Thumbs Up"
 msgstr "Thumbs Up"
 
-#: classes/models.py:273 exercise/models.py:458
+#: classes/models.py:363 exercise/models.py:458
 msgid "Heart"
 msgstr ""
 
-#: classes/models.py:274
+#: classes/models.py:364
 msgid "Clap"
 msgstr "Clap"
 
-#: classes/models.py:275
+#: classes/models.py:365
 msgid "Party"
 msgstr "Party"
 
-#: classes/models.py:276
+#: classes/models.py:366
 msgid "Thinking"
 msgstr "Thinking"
 
-#: classes/models.py:277
+#: classes/models.py:367
 msgid "Surprised"
 msgstr "Surprised"
 
-#: classes/models.py:282
+#: classes/models.py:372
 msgid "Emoji"
 msgstr "Emoji"
 
-#: classes/models.py:283 core/forms.py:36 core/models.py:76
+#: classes/models.py:373 core/forms.py:36 core/models.py:76
 msgid "Message"
 msgstr ""
 
-#: classes/models.py:288
+#: classes/models.py:378
 msgid "Class Reaction"
 msgstr ""
 
-#: classes/models.py:289
+#: classes/models.py:379
 msgid "Class Reactions"
 msgstr ""
 
