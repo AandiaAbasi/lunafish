@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-17 10:53+0330\n"
+"POT-Creation-Date: 2026-06-17 11:36+0330\n"
 "PO-Revision-Date: 2026-06-17 11:00+0330\n"
 "Last-Translator: Auto Fixed <translations@example.com>\n"
 "Language-Team: en <en@example.com>\n"
@@ -135,8 +135,8 @@ msgid "Metadata"
 msgstr ""
 
 #: account/admin.py:289 account/admin.py:359 account/admin.py:438
-#: account/admin.py:496 core/abstract_models.py:8 core/abstract_models.py:35
-#: core/models.py:95
+#: account/admin.py:496 classes/models.py:284 core/abstract_models.py:8
+#: core/abstract_models.py:35 core/models.py:95
 msgid "Created at"
 msgstr ""
 
@@ -177,7 +177,8 @@ msgid "Timestamps"
 msgstr ""
 
 #: account/admin.py:380 account/models.py:520 account/models.py:711
-#: classes/models.py:134 exercise/models.py:371 exercise/models.py:480
+#: classes/models.py:134 classes/models.py:185 classes/models.py:281
+#: exercise/models.py:371 exercise/models.py:480
 msgid "Student"
 msgstr ""
 
@@ -2222,6 +2223,10 @@ msgstr "Course deleted successfully"
 msgid "این دوره دارای اطلاعات وابسته است و قابل حذف نیست"
 msgstr "This course has dependent data and cannot be deleted"
 
+#: classes/apps.py:8 classes/models.py:63
+msgid "Online Classes"
+msgstr ""
+
 #: classes/models.py:18
 msgid "Scheduled"
 msgstr ""
@@ -2253,6 +2258,10 @@ msgstr ""
 #: classes/models.py:37
 msgid "کلاس رزرو شده"
 msgstr "Booked class"
+
+#: classes/models.py:41
+msgid "Reward granted"
+msgstr ""
 
 #: classes/models.py:42
 msgid "Scheduled start"
@@ -2298,10 +2307,6 @@ msgstr ""
 msgid "Online Class"
 msgstr ""
 
-#: classes/models.py:63
-msgid "Online Classes"
-msgstr ""
-
 #: classes/models.py:71
 msgid "Selected user must have teacher role."
 msgstr ""
@@ -2322,7 +2327,8 @@ msgstr ""
 msgid "Only scheduled or active classes can be cancelled."
 msgstr ""
 
-#: classes/models.py:128
+#: classes/models.py:128 classes/models.py:184 classes/models.py:230
+#: classes/models.py:280
 msgid "Class session"
 msgstr ""
 
@@ -2374,27 +2380,108 @@ msgstr ""
 msgid "Inactive enrollment cannot join."
 msgstr ""
 
-#: classes/models.py:199
-msgid "Hand Raise"
+#: classes/models.py:186
+#, fuzzy
+#| msgid "Read at"
+msgid "Raised at"
+msgstr "Read at"
+
+#: classes/models.py:187
+#, fuzzy
+#| msgid "Joined at"
+msgid "Lowered at"
+msgstr "Joined at"
+
+#: classes/models.py:194
+msgid "Acknowledged by"
+msgstr ""
+
+#: classes/models.py:196
+msgid "Acknowledged at"
 msgstr ""
 
 #: classes/models.py:200
+msgid "Hand Raise"
+msgstr ""
+
+#: classes/models.py:201
 msgid "Hand Raises"
 msgstr ""
 
-#: classes/models.py:252
+#: classes/models.py:231 classroom/models.py:868
+msgid "Sender"
+msgstr "Sender"
+
+#: classes/models.py:232 core/admin.py:40 core/admin.py:79 core/admin.py:106
+#: core/models.py:13 core/models.py:25 core/models.py:37 core/models.py:91
+msgid "Content"
+msgstr ""
+
+#: classes/models.py:233
+msgid "Is private"
+msgstr ""
+
+#: classes/models.py:240
+msgid "Recipient"
+msgstr ""
+
+#: classes/models.py:242
+msgid "Is deleted"
+msgstr ""
+
+#: classes/models.py:249
+msgid "Deleted by"
+msgstr ""
+
+#: classes/models.py:251
+msgid "Deleted at"
+msgstr ""
+
+#: classes/models.py:255
 msgid "Class Message"
 msgstr ""
 
-#: classes/models.py:253
+#: classes/models.py:256
 msgid "Class Messages"
 msgstr "Class Messages"
 
-#: classes/models.py:285
+#: classes/models.py:272
+msgid "Thumbs Up"
+msgstr ""
+
+#: classes/models.py:273 exercise/models.py:458
+msgid "Heart"
+msgstr ""
+
+#: classes/models.py:274
+msgid "Clap"
+msgstr ""
+
+#: classes/models.py:275
+msgid "Party"
+msgstr ""
+
+#: classes/models.py:276
+msgid "Thinking"
+msgstr ""
+
+#: classes/models.py:277
+msgid "Surprised"
+msgstr ""
+
+#: classes/models.py:282
+msgid "Emoji"
+msgstr ""
+
+#: classes/models.py:283 core/forms.py:36 core/models.py:76
+msgid "Message"
+msgstr ""
+
+#: classes/models.py:288
 msgid "Class Reaction"
 msgstr ""
 
-#: classes/models.py:286
+#: classes/models.py:289
 msgid "Class Reactions"
 msgstr ""
 
@@ -3350,10 +3437,6 @@ msgstr "Support Message Attachments"
 msgid "معلمی که پیام را ارسال کرد"
 msgstr "Teacher who sent the message"
 
-#: classroom/models.py:868
-msgid "Sender"
-msgstr "Sender"
-
 #: classroom/models.py:869
 msgid "فردی که پیام را فرستاد (معلم یا پشتیبان)"
 msgstr "Person who sent the message (teacher or support staff)"
@@ -3641,11 +3724,6 @@ msgstr "Package installment payments"
 msgid "Media"
 msgstr ""
 
-#: core/admin.py:40 core/admin.py:79 core/admin.py:106 core/models.py:13
-#: core/models.py:25 core/models.py:37 core/models.py:91
-msgid "Content"
-msgstr ""
-
 #: core/admin.py:54 core/admin.py:195 core/admin.py:272
 msgid "No image"
 msgstr ""
@@ -3726,10 +3804,6 @@ msgstr ""
 
 #: core/forms.py:35 core/models.py:75
 msgid "Subject"
-msgstr ""
-
-#: core/forms.py:36 core/models.py:76
-msgid "Message"
 msgstr ""
 
 #: core/models.py:12 core/models.py:89 core/models.py:126 exercise/models.py:54
@@ -4234,10 +4308,6 @@ msgstr ""
 
 #: exercise/models.py:457
 msgid "Star"
-msgstr ""
-
-#: exercise/models.py:458
-msgid "Heart"
 msgstr ""
 
 #: exercise/models.py:459
