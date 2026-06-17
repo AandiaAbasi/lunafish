@@ -2324,7 +2324,7 @@ msgstr "System information"
 
 #: classroom/admin.py:346
 msgid "تصویری وجود ندارد"
-msgstr ""
+msgstr "No image available"
 
 #: classroom/admin.py:347
 msgid "پیش‌نمایش عکس کاور"
@@ -2490,7 +2490,7 @@ msgstr "Reject selected requests"
 #: classroom/admin.py:809
 #, python-format
 msgid "%(count)d درخواست رد شد و SMS ارسال شد"
-msgstr ""
+msgstr "%(count)d request(s) were rejected and an SMS was sent"
 
 #: classroom/admin.py:821
 msgid "درخواست کننده"
@@ -2510,7 +2510,7 @@ msgstr "Transaction"
 
 #: classroom/admin.py:837 classroom/models.py:551
 msgid "فیش واریزی"
-msgstr ""
+msgstr "Payment receipt"
 
 #: classroom/admin.py:840 classroom/models.py:29 classroom/models.py:440
 #: classroom/models.py:542 classroom/models.py:1121 classroom/models.py:1251
@@ -2519,7 +2519,7 @@ msgstr "Notes"
 
 #: classroom/admin.py:858
 msgid "پیش‌نمایش فیش"
-msgstr ""
+msgstr "Receipt preview"
 
 #: classroom/admin.py:887 classroom/models.py:539
 msgid "اطلاعات حساب"
@@ -3816,7 +3816,7 @@ msgstr "Creation date"
 #: exercise/admin.py:507 exercise/admin.py:578 exercise/admin.py:648
 #: exercise/admin.py:737
 msgid "عملیات"
-msgstr ""
+msgstr "Actions"
 
 #: exercise/admin.py:257 exercise/admin.py:522 exercise/admin.py:552
 msgid "سؤال"
