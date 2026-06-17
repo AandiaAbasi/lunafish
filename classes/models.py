@@ -1,6 +1,7 @@
 import uuid
 
 from django.conf import settings
+from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -120,26 +121,31 @@ class OnlineClass(BaseModel):
     actual_end_display.admin_order_field = 'actual_end'
 
     @property
+    @admin.display(boolean=True, description=_('Is active'), ordering='status')
     def is_active(self):
         return self.status == self.STATUS_ACTIVE
 
     @property
+    @admin.display(description=_('Duration (minutes)'))
     def duration_minutes(self):
         if not self.scheduled_start or not self.scheduled_end:
             return 0
         return int((self.scheduled_end - self.scheduled_start).total_seconds() / 60)
 
     @property
+    @admin.display(description=_('Actual duration (minutes)'))
     def actual_duration_minutes(self):
         if not self.actual_start or not self.actual_end:
             return 0
         return int((self.actual_end - self.actual_start).total_seconds() / 60)
 
     @property
+    @admin.display(description=_('Enrolled count'))
     def enrolled_count(self):
         return self.enrollments.filter(left_at__isnull=True).count()
 
     @property
+    @admin.display(boolean=True, description=_('Is full'))
     def is_full(self):
         return self.enrolled_count >= self.max_students
 
@@ -220,10 +226,12 @@ class ClassEnrollment(BaseModel):
     left_at_display.admin_order_field = 'left_at'
 
     @property
+    @admin.display(boolean=True, description=_('Is active'), ordering='left_at')
     def is_active(self):
         return self.left_at is None
 
     @property
+    @admin.display(boolean=True, description=_('Is currently joined'), ordering='joined_at')
     def is_currently_joined(self):
         return self.joined_at is not None and self.left_at is None
 
@@ -279,14 +287,17 @@ class HandRaise(models.Model):
     acknowledged_at_display.admin_order_field = 'acknowledged_at'
 
     @property
+    @admin.display(boolean=True, description=_('Is active'), ordering='lowered_at')
     def is_active(self):
         return self.lowered_at is None
 
     @property
+    @admin.display(boolean=True, description=_('Is acknowledged'), ordering='acknowledged_at')
     def is_acknowledged(self):
         return self.acknowledged_at is not None
 
     @property
+    @admin.display(description=_('Duration (seconds)'))
     def duration_seconds(self):
         return int(((self.lowered_at or timezone.now()) - self.raised_at).total_seconds())
 
