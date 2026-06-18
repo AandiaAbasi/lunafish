@@ -144,67 +144,67 @@ class ContactAdmin(admin.ModelAdmin):
     admin_actions.short_description = _("Actions")
 
 
-@admin.register(ContactMessage)
-class ContactMessageAdmin(admin.ModelAdmin):
-    list_display = ("name", "phone", "subject", "is_read", "created_at_display", "view_details")
-    readonly_fields = ("name", "phone", "subject", "message")
-    search_fields = ("name", "phone", "subject")
-    actions = None
-    list_display_links = ("view_details",)
-    list_filter = ("is_read", "created_at")
-    ordering = ("-created_at",)
+# @admin.register(ContactMessage)
+# class ContactMessageAdmin(admin.ModelAdmin):
+#     list_display = ("name", "phone", "subject", "is_read", "created_at_display", "view_details")
+#     readonly_fields = ("name", "phone", "subject", "message")
+#     search_fields = ("name", "phone", "subject")
+#     actions = None
+#     list_display_links = ("view_details",)
+#     list_filter = ("is_read", "created_at")
+#     ordering = ("-created_at",)
 
-    fieldsets = (
-        (_("Contact Information"), {"fields": ("name", "phone")}),
-        (_("Message Details"), {"fields": ("subject", "message")}),
-        (_("Status"), {"fields": ("is_read",)}),
-    )
+#     fieldsets = (
+#         (_("Contact Information"), {"fields": ("name", "phone")}),
+#         (_("Message Details"), {"fields": ("subject", "message")}),
+#         (_("Status"), {"fields": ("is_read",)}),
+#     )
     
-    def has_change_permission(self, request, obj=None):
-        return True
+#     def has_change_permission(self, request, obj=None):
+#         return True
 
-    def has_add_permission(self, request):
-        return False
+#     def has_add_permission(self, request):
+#         return False
 
-    def get_readonly_fields(self, request, obj=None):
-        if obj:
-            return ("name", "phone", "subject", "message")
-        return self.readonly_fields
+#     def get_readonly_fields(self, request, obj=None):
+#         if obj:
+#             return ("name", "phone", "subject", "message")
+#         return self.readonly_fields
 
-    def view_details(self, obj):
-        url = reverse("admin:core_contactmessage_change", args=[obj.id])
-        return format_html('<a href="{}"> {}</a>', url, _("View details"))
-    view_details.short_description = _("View details")
+#     def view_details(self, obj):
+#         url = reverse("admin:core_contactmessage_change", args=[obj.id])
+#         return format_html('<a href="{}"> {}</a>', url, _("View details"))
+#     view_details.short_description = _("View details")
 
 
-@admin.register(Article)
-class ArticleAdmin(admin.ModelAdmin):
-    list_display = ("title", "image_tag", "created_at_display", "updated_at_display", "admin_actions")
-    search_fields = ("title_fa", "content_fa", "short_description_fa", "title_en", "content_en", "short_description_en")
-    list_filter = ("created_at", "updated_at")
-    ordering = ("-created_at",)
-    readonly_fields = ("image_tag",)
-    fieldsets = (
-        (_("Main Information"), {"fields": ("title_en", "title_fa", "short_description_en", "short_description_fa", "content_en", "content_fa")}),
-        (_("Media"), {"fields": ("image", "image_tag")}),
-    )
+# @admin.register(Article)
+# class ArticleAdmin(admin.ModelAdmin):
+#     list_display = ("title", "image_tag", "created_at_display", "updated_at_display", "admin_actions")
+#     search_fields = ("title_fa", "content_fa", "short_description_fa", "title_en", "content_en", "short_description_en")
+#     list_filter = ("created_at", "updated_at")
+#     ordering = ("-created_at",)
+#     readonly_fields = ("image_tag",)
+#     fieldsets = (
+#         (_("Main Information"), {"fields": ("title_en", "title_fa", "short_description_en", "short_description_fa", "content_en", "content_fa")}),
+#         (_("Media"), {"fields": ("image", "image_tag")}),
+#     )
 
-    def image_tag(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" width="100" style="border-radius: 10px;"/>', obj.image.url)
-        return _("No image")
-    image_tag.short_description = _("Image preview")
+#     def image_tag(self, obj):
+#         if obj.image:
+#             return format_html('<img src="{}" width="100" style="border-radius: 10px;"/>', obj.image.url)
+#         return _("No image")
+#     image_tag.short_description = _("Image preview")
         
-    def admin_actions(self, obj):
-        edit_url = reverse('admin:core_article_change', args=[obj.id])
-        delete_url = reverse('admin:core_article_delete', args=[obj.id])
+#     def admin_actions(self, obj):
+#         edit_url = reverse('admin:core_article_change', args=[obj.id])
+#         delete_url = reverse('admin:core_article_delete', args=[obj.id])
         
-        return format_html(
-            '<a href="{}" class="button" style="margin-right:10px; padding:5px;">✏️ {}</a>'
-            '<a href="{}" class="button" style="margin-right: 5px; padding:5px; background-color: #ba2121;">🗑 {}</a>',
-            edit_url, _("Edit"), delete_url, _("Delete")
-        )
-    admin_actions.short_description = _("Actions")
+#         return format_html(
+#             '<a href="{}" class="button" style="margin-right:10px; padding:5px;">✏️ {}</a>'
+#             '<a href="{}" class="button" style="margin-right: 5px; padding:5px; background-color: #ba2121;">🗑 {}</a>',
+#             edit_url, _("Edit"), delete_url, _("Delete")
+#         )
+#     admin_actions.short_description = _("Actions")
 
 
 @admin.register(FAQ)
