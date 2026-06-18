@@ -3,15 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Fofofish\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-17 10:21+0330\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"POT-Creation-Date: 2026-06-17 12:12+0330\n"
+"PO-Revision-Date: 2026-06-17 11:00+0330\n"
+"Last-Translator: Auto Fixed <translations@example.com>\n"
+"Language-Team: fa <fa@example.com>\n"
 "Language: fa\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -117,7 +116,7 @@ msgid "User Management"
 msgstr "مديريت کاربران"
 
 #: account/admin.py:245 account/admin.py:510 account/models.py:54
-#: account/models.py:720 classes/models.py:31 classroom/models.py:859
+#: account/models.py:720 classes/models.py:56 classroom/models.py:859
 #: exercise/models.py:23 exercise/models.py:362 exercise/models.py:471
 msgid "Teacher"
 msgstr "معلم"
@@ -135,8 +134,8 @@ msgid "Metadata"
 msgstr "اطلاعات فراشروحی"
 
 #: account/admin.py:289 account/admin.py:359 account/admin.py:438
-#: account/admin.py:496 core/abstract_models.py:8 core/abstract_models.py:35
-#: core/models.py:95
+#: account/admin.py:496 classes/models.py:374 core/abstract_models.py:8
+#: core/abstract_models.py:35 core/models.py:95
 msgid "Created at"
 msgstr "ایجاد شده در"
 
@@ -167,7 +166,7 @@ msgstr "مجوزه‌ها"
 msgid "Usage Time Control"
 msgstr "کنترل زمان استفاده"
 
-#: account/admin.py:344 classes/models.py:57 classroom/models.py:884
+#: account/admin.py:344 classes/models.py:82 classroom/models.py:884
 #: core/admin.py:160 core/admin.py:299
 msgid "Status"
 msgstr "وضعیت"
@@ -177,7 +176,8 @@ msgid "Timestamps"
 msgstr "تاریخ ها"
 
 #: account/admin.py:380 account/models.py:520 account/models.py:711
-#: classes/models.py:134 exercise/models.py:371 exercise/models.py:480
+#: classes/models.py:184 classes/models.py:252 classes/models.py:371
+#: exercise/models.py:371 exercise/models.py:480
 msgid "Student"
 msgstr "دانش‌آموز"
 
@@ -608,7 +608,8 @@ msgstr "زمان پایان مجاز"
 msgid "ساعت پایان مجاز استفاده (مثال: 22:00)"
 msgstr "ساعت پایان مجاز استفاده (مثال: 22:00)"
 
-#: account/models.py:590
+#: account/models.py:590 classes/models.py:124 classes/models.py:229
+#: classes/models.py:290
 msgid "Is active"
 msgstr "فعال است"
 
@@ -2231,211 +2232,291 @@ msgstr "دوره با موفقیت حذف شد"
 msgid "این دوره دارای اطلاعات وابسته است و قابل حذف نیست"
 msgstr "این دوره دارای اطلاعات وابسته است و قابل حذف نیست"
 
-#: classes/models.py:18
-msgid "Scheduled"
-msgstr ""
+#: classes/apps.py:8 classes/models.py:88
+msgid "Online Classes"
+msgstr "کلاس‌های آنلاین"
 
-#: classes/models.py:19 core/admin.py:292 core/models.py:130
+#: classes/models.py:43
+msgid "Scheduled"
+msgstr "برنامه‌ریزی‌شده"
+
+#: classes/models.py:44 core/admin.py:292 core/models.py:130
 msgid "Active"
 msgstr "فعال"
 
-#: classes/models.py:20
-#, fuzzy
-#| msgid "Refunded"
+#: classes/models.py:45
 msgid "Ended"
-msgstr "بازگشت‌شده"
+msgstr "پایان‌یافته"
 
-#: classes/models.py:21
+#: classes/models.py:46
 msgid "Cancelled"
 msgstr "لغو شده"
 
-#: classes/models.py:25 core/admin.py:38 core/admin.py:78 core/admin.py:105
+#: classes/models.py:50 core/admin.py:38 core/admin.py:78 core/admin.py:105
 #: core/models.py:11 core/models.py:24 core/models.py:36 core/models.py:59
 #: core/models.py:88 core/models.py:124 exercise/models.py:29
 #: exercise/models.py:111
 msgid "Title"
 msgstr "عنوان"
 
-#: classes/models.py:26 exercise/models.py:88 exercise/models.py:155
+#: classes/models.py:51 exercise/models.py:88 exercise/models.py:155
 #: exercise/models.py:519
 msgid "Description"
 msgstr "توضیح"
 
-#: classes/models.py:42
-msgid "Scheduled start"
-msgstr ""
-
-#: classes/models.py:43
-msgid "Scheduled end"
-msgstr ""
-
-#: classes/models.py:44
-msgid "Actual start"
-msgstr ""
-
-#: classes/models.py:45
-msgid "Actual end"
-msgstr ""
-
-#: classes/models.py:46
-msgid "RTC room ID"
-msgstr ""
-
-#: classes/models.py:47
-#, fuzzy
-#| msgid "Max Users"
-msgid "Max students"
-msgstr "حداکثر کاربران"
-
-#: classes/models.py:48
-#, fuzzy
-#| msgid "Allowed start time"
-msgid "Allow student chat"
-msgstr "زمان شروع مجاز"
-
-#: classes/models.py:49
-#, fuzzy
-#| msgid "Student Ratings"
-msgid "Allow student reactions"
-msgstr "امتیازهای دانش‌آموز"
-
-#: classes/models.py:50
-#, fuzzy
-#| msgid "Require operator to login first"
-msgid "Require approval to join"
-msgstr "الزام به ورود اپراتور ابتدا"
-
-#: classes/models.py:51
-msgid "Enable recording"
-msgstr ""
-
 #: classes/models.py:62
-#, fuzzy
-#| msgid "Online status"
-msgid "Online Class"
-msgstr "وضعيت براز به اينترنت"
+msgid "کلاس رزرو شده"
+msgstr "کلاس رزرو شده"
 
-#: classes/models.py:63
-#, fuzzy
-#| msgid "Online status"
-msgid "Online Classes"
-msgstr "وضعيت براز به اينترنت"
+#: classes/models.py:66
+msgid "Reward granted"
+msgstr "پاداش اعطا شده"
+
+#: classes/models.py:67 classes/models.py:105
+msgid "Scheduled start"
+msgstr "زمان شروع برنامه‌ریزی‌شده"
+
+#: classes/models.py:68 classes/models.py:110
+msgid "Scheduled end"
+msgstr "زمان پایان برنامه‌ریزی‌شده"
+
+#: classes/models.py:69 classes/models.py:115
+msgid "Actual start"
+msgstr "زمان شروع واقعی"
+
+#: classes/models.py:70 classes/models.py:120
+msgid "Actual end"
+msgstr "زمان پایان واقعی"
 
 #: classes/models.py:71
-msgid "Selected user must have teacher role."
-msgstr ""
+msgid "RTC room ID"
+msgstr "شناسه اتاق RTC"
+
+#: classes/models.py:72
+msgid "Max students"
+msgstr "حداکثر دانش‌آموزان"
 
 #: classes/models.py:73
+msgid "Allow student chat"
+msgstr "اجازه گفتگوی دانش‌آموز"
+
+#: classes/models.py:74
+msgid "Allow student reactions"
+msgstr "اجازه واکنش‌های دانش‌آموز"
+
+#: classes/models.py:75
+msgid "Require approval to join"
+msgstr "نیاز به تأیید برای پیوستن"
+
+#: classes/models.py:76
+msgid "Enable recording"
+msgstr "فعال‌سازی ضبط"
+
+#: classes/models.py:87
+msgid "Online Class"
+msgstr "کلاس آنلاین"
+
+#: classes/models.py:96
+msgid "Selected user must have teacher role."
+msgstr "کاربر انتخاب‌شده باید نقش معلم داشته باشد."
+
+#: classes/models.py:98
 msgid "Scheduled end must be after scheduled start."
-msgstr ""
+msgstr "زمان پایان برنامه‌ریزی‌شده باید بعد از زمان شروع برنامه‌ریزی‌شده باشد."
 
-#: classes/models.py:104
-msgid "Only scheduled classes can be started."
-msgstr ""
-
-#: classes/models.py:111
-msgid "Only active classes can be ended."
-msgstr ""
-
-#: classes/models.py:118
-msgid "Only scheduled or active classes can be cancelled."
-msgstr ""
-
-#: classes/models.py:128
-#, fuzzy
-#| msgid "Class Booking"
-msgid "Class session"
-msgstr "رزرو کلاس"
+#: classes/models.py:129
+msgid "Duration (minutes)"
+msgstr "مدت زمان (دقیقه)"
 
 #: classes/models.py:136
-msgid "Can unmute"
-msgstr ""
+msgid "Actual duration (minutes)"
+msgstr "مدت زمان واقعی (دقیقه)"
 
-#: classes/models.py:137
-msgid "Can share video"
-msgstr ""
-
-#: classes/models.py:138
-msgid "Can share screen"
-msgstr ""
-
-#: classes/models.py:139
-#, fuzzy
-#| msgid "Operator"
-msgid "Is moderator"
-msgstr "اپراتور"
-
-#: classes/models.py:140
-msgid "Enrolled at"
-msgstr ""
-
-#: classes/models.py:141
-#, fuzzy
-#| msgid "Read at"
-msgid "Joined at"
-msgstr "خوانده‌شده در"
-
-#: classes/models.py:142
-msgid "Left at"
-msgstr ""
-
-#: classes/models.py:147
-#, fuzzy
-#| msgid "Class Payment"
-msgid "Class Enrollment"
-msgstr "پرداخت کلاس"
+#: classes/models.py:143
+msgid "Enrolled count"
+msgstr "تعداد ثبت‌نام‌ها"
 
 #: classes/models.py:148
-#, fuzzy
-#| msgid "Class Payment"
+msgid "Is full"
+msgstr "تکمیل ظرفیت است"
+
+#: classes/models.py:154
+msgid "Only scheduled classes can be started."
+msgstr "فقط کلاس‌های برنامه‌ریزی‌شده قابل شروع هستند."
+
+#: classes/models.py:161
+msgid "Only active classes can be ended."
+msgstr "فقط کلاس‌های فعال قابل پایان دادن هستند."
+
+#: classes/models.py:168
+msgid "Only scheduled or active classes can be cancelled."
+msgstr "فقط کلاس‌های برنامه‌ریزی‌شده یا فعال قابل لغو هستند."
+
+#: classes/models.py:178 classes/models.py:251 classes/models.py:315
+#: classes/models.py:370
+msgid "Class session"
+msgstr "جلسه کلاس"
+
+#: classes/models.py:186
+msgid "Can unmute"
+msgstr "می‌تواند صدا را وصل کند"
+
+#: classes/models.py:187
+msgid "Can share video"
+msgstr "می‌تواند ویدیو را به اشتراک بگذارد"
+
+#: classes/models.py:188
+msgid "Can share screen"
+msgstr "می‌تواند صفحه را به اشتراک بگذارد"
+
+#: classes/models.py:189
+msgid "Is moderator"
+msgstr "مدیر جلسه است"
+
+#: classes/models.py:190 classes/models.py:215
+msgid "Enrolled at"
+msgstr "ثبت‌نام‌شده در"
+
+#: classes/models.py:191 classes/models.py:220
+msgid "Joined at"
+msgstr "پیوسته در"
+
+#: classes/models.py:192 classes/models.py:225
+msgid "Left at"
+msgstr "خارج‌شده در"
+
+#: classes/models.py:197
+msgid "Class Enrollment"
+msgstr "ثبت‌نام کلاس"
+
+#: classes/models.py:198
 msgid "Class Enrollments"
-msgstr "پرداخت کلاس"
+msgstr "ثبت‌نام‌های کلاس"
 
-#: classes/models.py:156
+#: classes/models.py:206
 msgid "Teacher users cannot be enrolled as students."
-msgstr ""
+msgstr "کاربران معلم نمی‌توانند به‌عنوان دانش‌آموز ثبت‌نام شوند."
 
-#: classes/models.py:158
+#: classes/models.py:208
 msgid "Class teacher cannot be enrolled as student."
-msgstr ""
+msgstr "معلم کلاس نمی‌تواند به‌عنوان دانش‌آموز ثبت‌نام شود."
 
-#: classes/models.py:173
-#, fuzzy
-#| msgid "Enrollment not found"
+#: classes/models.py:234
+msgid "Is currently joined"
+msgstr "در حال حاضر پیوسته است"
+
+#: classes/models.py:240
 msgid "Inactive enrollment cannot join."
-msgstr "ثبت‌نام یافت نشد"
+msgstr "ثبت‌نام غیرفعال امکان پیوستن ندارد."
 
-#: classes/models.py:199
+#: classes/models.py:253 classes/models.py:276
+msgid "Raised at"
+msgstr "زمان بالا بردن دست"
+
+#: classes/models.py:254 classes/models.py:281
+msgid "Lowered at"
+msgstr "زمان پایین آوردن دست"
+
+#: classes/models.py:261
+msgid "Acknowledged by"
+msgstr "تأییدشده توسط"
+
+#: classes/models.py:263 classes/models.py:286
+msgid "Acknowledged at"
+msgstr "زمان تأیید"
+
+#: classes/models.py:267
 msgid "Hand Raise"
-msgstr ""
+msgstr "بالا بردن دست"
 
-#: classes/models.py:200
+#: classes/models.py:268
 msgid "Hand Raises"
-msgstr ""
+msgstr "بالا بردن دست‌ها"
 
-#: classes/models.py:252
-#, fuzzy
-#| msgid "Message"
+#: classes/models.py:295
+msgid "Is acknowledged"
+msgstr "تأیید شده است"
+
+#: classes/models.py:300
+msgid "Duration (seconds)"
+msgstr "مدت زمان (ثانیه)"
+
+#: classes/models.py:316 classroom/models.py:868
+msgid "Sender"
+msgstr "فرستنده"
+
+#: classes/models.py:317 core/admin.py:40 core/admin.py:79 core/admin.py:106
+#: core/models.py:13 core/models.py:25 core/models.py:37 core/models.py:91
+msgid "Content"
+msgstr "محتوا"
+
+#: classes/models.py:318
+msgid "Is private"
+msgstr "خصوصی است"
+
+#: classes/models.py:325
+msgid "Recipient"
+msgstr "گیرنده"
+
+#: classes/models.py:327
+msgid "Is deleted"
+msgstr "حذف شده است"
+
+#: classes/models.py:334
+msgid "Deleted by"
+msgstr "حذف‌شده توسط"
+
+#: classes/models.py:336 classes/models.py:350
+msgid "Deleted at"
+msgstr "حذف‌شده در"
+
+#: classes/models.py:340
 msgid "Class Message"
-msgstr "پیام"
+msgstr "پیام کلاس"
 
-#: classes/models.py:253
-#, fuzzy
-#| msgid "Message"
+#: classes/models.py:341
 msgid "Class Messages"
+msgstr "پیام‌های کلاس"
+
+#: classes/models.py:362
+msgid "Thumbs Up"
+msgstr "پسندیدن"
+
+#: classes/models.py:363 exercise/models.py:458
+msgid "Heart"
+msgstr "قلب"
+
+#: classes/models.py:364
+msgid "Clap"
+msgstr "تشویق"
+
+#: classes/models.py:365
+msgid "Party"
+msgstr "جشن"
+
+#: classes/models.py:366
+msgid "Thinking"
+msgstr "در حال فکر کردن"
+
+#: classes/models.py:367
+msgid "Surprised"
+msgstr "متعجب"
+
+#: classes/models.py:372
+msgid "Emoji"
+msgstr "ایموجی"
+
+#: classes/models.py:373 core/forms.py:36 core/models.py:76
+msgid "Message"
 msgstr "پیام"
 
-#: classes/models.py:285
-#, fuzzy
-#| msgid "Class Revenue"
+#: classes/models.py:378
 msgid "Class Reaction"
-msgstr "درآمد کلاس"
+msgstr "واکنش کلاس"
 
-#: classes/models.py:286
-#, fuzzy
-#| msgid "Class Revenues"
+#: classes/models.py:379
 msgid "Class Reactions"
-msgstr "درآمدهای کلاس"
+msgstr "واکنش‌های کلاس"
 
 #: classroom/admin.py:93
 msgid "تاریخ میلادی"
@@ -3388,10 +3469,6 @@ msgstr "فایل‌های پیوست پیام‌های پشتیبانی"
 msgid "معلمی که پیام را ارسال کرد"
 msgstr "معلمی که پیام را ارسال کرد"
 
-#: classroom/models.py:868
-msgid "Sender"
-msgstr "فرستنده"
-
 #: classroom/models.py:869
 msgid "فردی که پیام را فرستاد (معلم یا پشتیبان)"
 msgstr "فردی که پیام را فرستاد (معلم یا پشتیبان)"
@@ -3677,11 +3754,6 @@ msgstr "پرداخت‌های قسط‌های پکیج"
 msgid "Media"
 msgstr "رسانه"
 
-#: core/admin.py:40 core/admin.py:79 core/admin.py:106 core/models.py:13
-#: core/models.py:25 core/models.py:37 core/models.py:91
-msgid "Content"
-msgstr "محتوا"
-
 #: core/admin.py:54 core/admin.py:195 core/admin.py:272
 msgid "No image"
 msgstr "بدون تصویر"
@@ -3763,10 +3835,6 @@ msgstr "نام"
 #: core/forms.py:35 core/models.py:75
 msgid "Subject"
 msgstr "موضوع"
-
-#: core/forms.py:36 core/models.py:76
-msgid "Message"
-msgstr "پیام"
 
 #: core/models.py:12 core/models.py:89 core/models.py:126 exercise/models.py:54
 #: exercise/models.py:130
@@ -4272,10 +4340,6 @@ msgstr "برنز"
 msgid "Star"
 msgstr "ستاره"
 
-#: exercise/models.py:458
-msgid "Heart"
-msgstr "قلب"
-
 #: exercise/models.py:459
 msgid "Trophy"
 msgstr "جام"
@@ -4635,9 +4699,6 @@ msgstr "پیام ها"
 
 #~ msgid "Operator Login First"
 #~ msgstr "ورود اپراتور اول"
-
-#~ msgid "Session Duration (seconds)"
-#~ msgstr "مدت نشست (ثانیه)"
 
 #~ msgid "Maximum session duration in seconds"
 #~ msgstr "حداکثر مدت نشست بر ثانیه"
