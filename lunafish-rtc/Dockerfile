@@ -11,7 +11,11 @@ ENV ALL_PROXY=
 ENV http_proxy=
 ENV https_proxy=
 ENV all_proxy=
-RUN pip install --break-system-packages -i https://mirror.abrha.net/repository/pypi/simple --trusted-host mirror.abrha.net pysocks
+RUN env -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u http_proxy -u https_proxy -u all_proxy \
+    pip install --break-system-packages --proxy="" \
+    -i https://mirror.abrha.net/repository/pypi/simple \
+    --trusted-host mirror.abrha.net \
+    pysocks
 
 ENV ALL_PROXY=socks5h://172.17.0.1:1082
 ENV HTTP_PROXY=socks5h://172.17.0.1:1082
