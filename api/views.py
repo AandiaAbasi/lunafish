@@ -146,50 +146,44 @@ class SendOTPAPIView(APIView):
             
             # For registration, check if user already exists
             if purpose == 'registration':
-                # Normalize phone if needed
                 import phonenumbers
+
                 check_identifier = identifier
                 if identifier.startswith('09'):
                     try:
                         phone_obj = phonenumbers.parse(identifier, "IR")
-                        check_identifier = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
+                        check_identifier = phonenumbers.format_number(
+                            phone_obj,
+                            phonenumbers.PhoneNumberFormat.E164
+                        )
                     except:
                         pass
-                
-                # Check if FULLY registered user exists (has username)
-                existing_user = User.objects.filter(phone=check_identifier).first() or User.objects.filter(phone=identifier).first()
+
+                # Check existing user by phone
+                existing_user = (
+                    User.objects.filter(phone=check_identifier).first() or
+                    User.objects.filter(phone=identifier).first()
+                )
+
                 if existing_user and existing_user.username and not existing_user.username.startswith('user_'):
+                    role_display = dict(User.ROLE_CHOICES).get(existing_user.role, existing_user.role)
+
                     return Response({
                         "success": False,
-                        "message": _("This phone number is already registered. Please log in.")
+                        "message": _(f"این شماره قبلاً به عنوان {role_display} ثبت شده است. لطفاً وارد شوید.")
                     }, status=status.HTTP_400_BAD_REQUEST)
-                
+
+                # Email check
                 if '@' in identifier:
                     existing_user = User.objects.filter(email=identifier).first()
+
                     if existing_user and existing_user.username and not existing_user.username.startswith('user_'):
+                        role_display = dict(User.ROLE_CHOICES).get(existing_user.role, existing_user.role)
+
                         return Response({
                             "success": False,
-                            "message": _("This email is already registered. Please log in.")
+                            "message": _(f"این ایمیل قبلاً به عنوان «{role_display}» ثبت شده است. لطفاً وارد شوید.")
                         }, status=status.HTTP_400_BAD_REQUEST)
-                
-                # Check for unused verification tokens (incomplete registration)
-                # Delete expired tokens
-                VerificationToken.objects.filter(
-                    expires_at__lt=timezone.now()
-                ).delete()
-                
-                # Check if there's a valid unused token for this phone/email
-                unused_token = VerificationToken.objects.filter(
-                    phone=check_identifier if not '@' in identifier else None,
-                    email=identifier if '@' in identifier else None,
-                    is_used=False,
-                    expires_at__gt=timezone.now()
-                ).first()
-                
-                if unused_token:
-                    # User started registration but didn't complete it
-                    # Allow them to continue - they can request new OTP
-                    pass
             
             # Check if can send OTP (cooldown check)
             recent_otp = OTP.objects.filter(
@@ -658,6 +652,27 @@ class TeacherSendOTPAPIView(APIView):
             # Normalize phone for consistent lookup
             normalized_identifier = identifier
             phone_formats = [identifier]
+            existing_user = None
+
+            if is_email:
+                existing_user = User.objects.filter(email=identifier).first()
+            else:
+                existing_user = User.objects.filter(phone__in=phone_formats).first()
+
+            if existing_user and existing_user.username and not existing_user.username.startswith('user_'):
+                role_display = dict(User.ROLE_CHOICES).get(existing_user.role, existing_user.role)
+
+                if existing_user.role != 'teacher':
+                    return Response({
+                        "success": False,
+                        "message": _(f"این شماره قبلاً به عنوان {role_display} ثبت شده است. لطفاً وارد شوید.")
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                if purpose == 'registration' and existing_user.role == 'teacher':
+                    return Response({
+                        "success": False,
+                        "message": _("این شماره قبلاً به عنوان معلم ثبت شده است. لطفاً وارد شوید.")
+                    }, status=status.HTTP_400_BAD_REQUEST)
             
             if not is_email:
                 is_phone = identifier.startswith('09') or identifier.startswith('+98')

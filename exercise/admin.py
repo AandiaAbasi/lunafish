@@ -74,8 +74,8 @@ class CategoryFieldInline(admin.TabularInline):
     model = CategoryField
     extra = 0
     can_delete = False
-    fields = ['teachingsubject', 'step', 'sort', 'type_badge', 'is_conditional']
-    readonly_fields = ['teachingsubject', 'step', 'sort', 'type_badge', 'is_conditional']
+    fields = ['teachingsubject', 'step', 'sort', 'type_badge']
+    readonly_fields = ['teachingsubject', 'step', 'sort', 'type_badge']
     
     def has_add_permission(self, request, obj=None):
         return False
@@ -311,10 +311,10 @@ class FieldDetailAdmin(admin.ModelAdmin):
 # ===== CategoryField Admin (آزمون) =====
 @admin.register(CategoryField)
 class CategoryFieldAdmin(admin.ModelAdmin):
-    list_display = ['teachingsubject', 'field', 'step', 'sort', 'type_badge', 'is_conditional_badge', 'created_at_display', 'detail_button']
-    list_filter = ['teachingsubject', 'is_conditional', 'type']
+    list_display = ['teachingsubject', 'field', 'step', 'sort', 'type_badge', 'created_at_display', 'detail_button']
+    list_filter = ['teachingsubject', 'type']
     search_fields = ['field__title', 'teachingsubject__title']
-    readonly_fields = ['teachingsubject', 'field', 'step', 'sort', 'type', 'is_conditional', 'created_at_display', 'updated_at_display']
+    readonly_fields = ['teachingsubject', 'field', 'step', 'sort', 'type', 'created_at_display', 'updated_at_display']
     
     fieldsets = (
         (_('کلاس و سؤال'), {
@@ -323,9 +323,7 @@ class CategoryFieldAdmin(admin.ModelAdmin):
         (_('ترتیب'), {
             'fields': ('step', 'sort')
         }),
-        (_('شرط'), {
-            'fields': ('type', 'is_conditional')
-        }),
+        
         (_('اطلاعات سیستم'), {
             'fields': ('created_at_display', 'updated_at_display'),
             'classes': ('collapse',)
@@ -357,11 +355,7 @@ class CategoryFieldAdmin(admin.ModelAdmin):
         return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, label)
     type_badge.short_description = _('نوع')
     
-    def is_conditional_badge(self, obj):
-        color = '#ffc107' if obj.is_conditional else '#28a745'
-        text = _('شرطی') if obj.is_conditional else _('عادی')
-        return format_html('<span style="background-color:{}; color:white; padding:3px 8px; border-radius:3px;">{}</span>', color, text)
-    is_conditional_badge.short_description = _('شرط')
+
     
     def created_at_display(self, obj):
         return format_date(obj.created_at)
