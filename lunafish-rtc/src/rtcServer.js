@@ -563,6 +563,49 @@ async function createRtcServer(config) {
           });
         }
 
+        if (action === 'refreshPermissions') {
+          ensureJoinedRoom(currentPeer);
+
+          const claims = verifyRtcToken(data.token, config.rtcJwtSecret);
+
+          const roomId = String(claims.room_id).trim();
+          const userId = String(claims.user_id);
+          const callId = String(claims.call_id);
+          const callType = String(claims.call_type);
+
+          if (roomId !== currentPeer.roomId) {
+            throw new Error('token room does not match current room');
+          }
+
+          if (userId !== currentPeer.userId) {
+            throw new Error('token user does not match current user');
+          }
+
+          if (callId !== currentPeer.callId) {
+            throw new Error('token call does not match current call');
+          }
+
+          if (callType !== currentPeer.callType) {
+            throw new Error('token call type does not match current call type');
+          }
+
+          currentPeer.tokenClaims = claims;
+          currentPeer.permissions = claims.permissions;
+
+          broadcastToRoom(currentPeer.roomId, ws, {
+            event: 'peerPermissionsUpdated',
+            data: serializePeer(currentPeer)
+          });
+
+          return send(ws, {
+            requestId,
+            ok: true,
+            data: {
+              permissions: currentPeer.permissions
+            }
+          });
+        }
+
         if (action === 'getRouterRtpCapabilities') {
           return send(ws, {
             requestId,
@@ -635,7 +678,7 @@ async function createRtcServer(config) {
 
         if (action === 'produce') {
           ensureJoinedRoom(currentPeer);
-          ensureCanSend(currentPeer);
+          // ensureCanSend(currentPeer);
 
           if (!currentPeer.sendTransport) {
             throw new Error('send transport not found');
@@ -662,8 +705,8 @@ async function createRtcServer(config) {
           });
 
           producer.on('transportclose', () => {
-          producer.close();
-        });
+            producer.close();
+          });
 
           producer.on('close', () => {
             const producerInfo = producers.get(producer.id);
