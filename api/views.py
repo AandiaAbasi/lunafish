@@ -170,7 +170,7 @@ class SendOTPAPIView(APIView):
 
                     return Response({
                         "success": False,
-                        "message": _(f"This phone number is already registered as {role_display}. Please log in.")
+                        "message": _(f"این شماره قبلاً به عنوان {role_display} ثبت شده است. لطفاً وارد شوید.")
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 # Email check
@@ -182,7 +182,7 @@ class SendOTPAPIView(APIView):
 
                         return Response({
                             "success": False,
-                            "message": _(f"This email is already registered as {role_display}. Please log in.")
+                            "message": _(f"این ایمیل قبلاً به عنوان «{role_display}» ثبت شده است. لطفاً وارد شوید.")
                         }, status=status.HTTP_400_BAD_REQUEST)
             
             # Check if can send OTP (cooldown check)
@@ -665,13 +665,13 @@ class TeacherSendOTPAPIView(APIView):
                 if existing_user.role != 'teacher':
                     return Response({
                         "success": False,
-                        "message": _(f"This phone number is already registered as {role_display}.")
+                        "message": _(f"این شماره قبلاً به عنوان {role_display} ثبت شده است. لطفاً وارد شوید.")
                     }, status=status.HTTP_400_BAD_REQUEST)
 
                 if purpose == 'registration' and existing_user.role == 'teacher':
                     return Response({
                         "success": False,
-                        "message": _("This phone number is already registered as Teacher. Please log in.")
+                        "message": _("این شماره قبلاً به عنوان معلم ثبت شده است. لطفاً وارد شوید.")
                     }, status=status.HTTP_400_BAD_REQUEST)
             
             if not is_email:
