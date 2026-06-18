@@ -218,17 +218,33 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Grant student score once per class
+        # Attendance & scoring
         if not class_instance.reward_granted:
-            student_ids = ClassEnrollment.objects.filter(
-                class_session=class_instance
-            ).values_list('student_id', flat=True)
+            from classroom.models import Attendance
 
-            User.objects.filter(
-                id__in=student_ids
-            ).update(
-                student_score=F('student_score') + 20
+            enrollments = ClassEnrollment.objects.select_related('student').filter(
+                class_session=class_instance
             )
+
+            present_student_ids = []
+
+            for enrollment in enrollments:
+                attendance, created = Attendance.objects.get_or_create(
+                    booking=class_instance.booking,
+                    student=enrollment.student,
+                    defaults={'status': 'absent'}
+                )
+
+                if attendance.status == 'present':
+                    present_student_ids.append(enrollment.student_id)
+
+            # Give score only to present students
+            if present_student_ids:
+                User.objects.filter(
+                    id__in=present_student_ids
+                ).update(
+                    student_score=F('student_score') + 20
+                )
 
             class_instance.reward_granted = True
             class_instance.save(update_fields=['reward_granted'])
@@ -347,6 +363,13 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         role = 'teacher' if teacher_participant else 'student'
         if enrollment:
             enrollment.join()
+            from classroom.models import Attendance
+            if enrollment and not teacher_participant:
+                Attendance.objects.get_or_create(
+                    booking=class_instance.booking,
+                    student=user,
+                    defaults={'status': 'present'}
+                ) 
 
         if teacher_participant:
             permissions = {
