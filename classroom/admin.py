@@ -379,10 +379,32 @@ class TeachingSubjectAdmin(BilingualModelAdmin):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ['title', 'subject', 'teacher_name', 'price', 'discounted_price', 'session_count', 'status_badge', 'is_active_badge', 'created_at_display']
+    list_display = [
+        'title',
+        'subject',
+        'teacher_name',
+        'price',
+        'discounted_price',
+        'session_count',
+        'status_badge',
+        'is_active_badge',
+        'created_at_display',
+    ]
     list_filter = ['status', 'is_active', 'subject']
     search_fields = ['title', 'description']
-    readonly_fields = ['created_at_display', 'updated_at_display', 'subject', 'title', 'description', 'cover_image', 'price', 'discounted_price', 'session_count', 'is_active']
+    list_select_related = ["subject", "subject__teacher"]
+    readonly_fields = [
+        'created_at_display',
+        'updated_at_display',
+        'subject',
+        'title',
+        'description',
+        'cover_image',
+        'price',
+        'discounted_price',
+        'session_count',
+        'is_active',
+    ]
     
     fieldsets = (
         (_('اطلاعات اصلی'), {
@@ -404,16 +426,30 @@ class CourseAdmin(admin.ModelAdmin):
         }),
     )
     
+    @admin.display(description=_("معلم"), ordering="subject__teacher")
     def teacher_name(self, obj):
-        try:
-            if obj.subject and obj.subject.teacher:
-                teacher = obj.subject.teacher
-                name = f"{teacher.first_name} {teacher.last_name}".strip()
-                return name if name else "-"
-        except:
-            pass
-        return "-"
-    teacher_name.short_description = _("معلم")
+        teacher = getattr(getattr(obj, "subject", None), "teacher", None)
+
+        if not teacher:
+            return "-"
+
+        full_name = ""
+        if hasattr(teacher, "get_full_name"):
+            full_name = teacher.get_full_name().strip()
+
+        if full_name:
+            return full_name
+
+        if getattr(teacher, "username", None):
+            return teacher.username
+
+        if getattr(teacher, "phone", None):
+            return teacher.phone
+
+        if getattr(teacher, "email", None):
+            return teacher.email
+
+        return str(teacher) or "-"
     
     def status_badge(self, obj):
         colors = {
