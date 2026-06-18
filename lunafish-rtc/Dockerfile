@@ -5,7 +5,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip build-essential libssl-dev pkg-config \
     && rm -rf /var/lib/apt/lists/*
-
+ENV HTTP_PROXY=
+ENV HTTPS_PROXY=
+ENV ALL_PROXY=
+ENV http_proxy=
+ENV https_proxy=
+ENV all_proxy=
 RUN pip install --break-system-packages -i https://mirror.abrha.net/repository/pypi/simple --trusted-host mirror.abrha.net pysocks
 
 ENV ALL_PROXY=socks5h://172.17.0.1:1082
