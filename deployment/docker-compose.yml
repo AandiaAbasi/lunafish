@@ -49,6 +49,14 @@ services:
     build:
       context: ../lunafish-rtc
       dockerfile: Dockerfile
+      network: host
+      args:
+        HTTP_PROXY: socks5h://127.0.0.1:1082
+        HTTPS_PROXY: socks5h://127.0.0.1:1082
+        ALL_PROXY: socks5h://127.0.0.1:1082
+        http_proxy: socks5h://127.0.0.1:1082
+        https_proxy: socks5h://127.0.0.1:1082
+        all_proxy: socks5h://127.0.0.1:1082
     container_name: lunafish-mediasoup
     restart: unless-stopped
     environment:
