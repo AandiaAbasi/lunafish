@@ -11,8 +11,9 @@ from rest_framework.response import Response
 from zoneinfo import ZoneInfo
 from . import conf
 from .broadcast import publish_to_class, publish_to_user
-from .models import ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass
+from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass
 from .serializers import (
+    ClassAttachmentSerializer,
     ClassEnrollmentSerializer,
     ClassMessageSerializer,
     ClassReactionSerializer,
@@ -23,6 +24,8 @@ from .serializers import (
 )
 from django.db.models import F
 from .signals import (
+    attachment_deleted,
+    attachment_uploaded,
     class_cancelled,
     class_created,
     class_ended,
@@ -135,6 +138,20 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             'deletedBy': UserBasicSerializer(message.deleted_by).data if message.deleted_by else None,
             'deletedAt': message.deleted_at.isoformat() if message.deleted_at else None,
             'createdAt': message.created_at.isoformat() if message.created_at else None,
+        }
+
+    def _attachment_payload(self, attachment, request):
+        return {
+            'id': str(attachment.id),
+            'uploadedBy': UserBasicSerializer(attachment.uploaded_by).data,
+            'fileUrl': request.build_absolute_uri(attachment.file.url),
+            'fileName': attachment.original_filename,
+            'fileSize': attachment.file_size,
+            'contentType': attachment.content_type,
+            'isDeleted': attachment.is_deleted,
+            'deletedBy': UserBasicSerializer(attachment.deleted_by).data if attachment.deleted_by else None,
+            'deletedAt': attachment.deleted_at.isoformat() if attachment.deleted_at else None,
+            'createdAt': attachment.created_at.isoformat() if attachment.created_at else None,
         }
 
     def _hand_payload(self, hand):
@@ -506,6 +523,54 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         message.soft_delete(request.user)
         publish_to_class(str(class_instance.id), 'chat.deleted', {'message_id': str(message.id)})
         message_deleted.send(sender=ClassMessage, class_instance=class_instance, message=message, deleted_by=request.user)
+        return Response({'ok': True})
+
+    @action(detail=True, methods=['get', 'post'], url_path='attachments')
+    def attachments(self, request, pk=None):
+        class_instance = self.get_object()
+        is_teacher_user, _, error = self._ensure_participant(class_instance)
+        if error:
+            return error
+
+        if request.method == 'GET':
+            attachments = class_instance.attachments.select_related('uploaded_by', 'deleted_by').filter(
+                is_deleted=False,
+            ).order_by('created_at')
+            return Response({'results': [self._attachment_payload(attachment, request) for attachment in attachments]})
+
+        if not is_teacher_user:
+            return Response({'error': 'Only the class teacher can upload attachments'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ClassAttachmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        uploaded_file = serializer.validated_data['file']
+        if uploaded_file.size > conf.ATTACHMENT_MAX_SIZE_BYTES:
+            raise ValidationError({'file': f'File exceeds the maximum size of {conf.ATTACHMENT_MAX_SIZE_BYTES // (1024 * 1024)}MB.'})
+
+        attachment = ClassAttachment.objects.create(
+            class_session=class_instance,
+            uploaded_by=request.user,
+            file=uploaded_file,
+            original_filename=uploaded_file.name,
+            file_size=uploaded_file.size,
+            content_type=getattr(uploaded_file, 'content_type', '') or '',
+        )
+        attachment_data = self._attachment_payload(attachment, request)
+        publish_to_class(str(class_instance.id), 'attachment.added', attachment_data)
+        attachment_uploaded.send(sender=ClassAttachment, class_instance=class_instance, attachment=attachment)
+        return Response(attachment_data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['delete'], url_path='attachments/(?P<attachment_id>[^/.]+)')
+    def delete_attachment(self, request, pk=None, attachment_id=None):
+        class_instance = self.get_object()
+        attachment = ClassAttachment.objects.filter(class_session=class_instance, pk=attachment_id).first()
+        if not attachment:
+            return Response({'error': 'Attachment not found'}, status=status.HTTP_404_NOT_FOUND)
+        if class_instance.teacher_id != request.user.id:
+            return Response({'error': 'Only the class teacher can delete attachments'}, status=status.HTTP_403_FORBIDDEN)
+        attachment.soft_delete(request.user)
+        publish_to_class(str(class_instance.id), 'attachment.deleted', {'attachment_id': str(attachment.id)})
+        attachment_deleted.send(sender=ClassAttachment, class_instance=class_instance, attachment=attachment, deleted_by=request.user)
         return Response({'ok': True})
 
     @action(detail=True, methods=['post'], url_path='hand/raise')

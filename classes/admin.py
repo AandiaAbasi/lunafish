@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from .models import (
+    ClassAttachment,
     ClassEnrollment,
     ClassMessage,
     ClassReaction,
@@ -181,6 +182,36 @@ class ClassMessageAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
         'sender__username',
         'sender__phone',
         'content',
+    ]
+    date_fields_to_hide = [
+        'deleted_at',
+    ]
+    localized_readonly_date_fields = [
+        'deleted_at_display',
+        'created_at_display',
+        'updated_at_display',
+    ]
+
+
+@admin.register(ClassAttachment)
+class ClassAttachmentAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
+    list_display = [
+        'class_session',
+        'uploaded_by',
+        'original_filename',
+        'file_size',
+        'is_deleted',
+        'created_at_display',
+    ]
+    list_filter = [
+        'is_deleted',
+        'created_at',
+    ]
+    search_fields = [
+        'class_session__title',
+        'uploaded_by__username',
+        'uploaded_by__phone',
+        'original_filename',
     ]
     date_fields_to_hide = [
         'deleted_at',

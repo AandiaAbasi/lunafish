@@ -9,13 +9,14 @@ def upload_to_dynamic(instance, filename):
     from .models import About, Article, Banner
     from account.models import User
     from classroom.models import TeachingSubject
+    from classes.models import ClassAttachment
     """Dynamic upload path for user images"""
     name, ext = os.path.splitext(filename)
     filename = f"{uuid.uuid4().hex}{ext}"
     folder = "users"
-    if isinstance(instance, About):  
+    if isinstance(instance, About):
         folder = "about"
-    elif isinstance(instance, Article): 
+    elif isinstance(instance, Article):
         folder = "articles"
     elif isinstance(instance, Banner):
         folder = "banners"
@@ -23,9 +24,11 @@ def upload_to_dynamic(instance, filename):
         folder = "users"
     elif isinstance(instance, TeachingSubject):
         folder = "teacher_subjects"
+    elif isinstance(instance, ClassAttachment):
+        folder = "class_attachments"
     else:
         folder = "others"
-    
+
     return os.path.join(folder, filename)
     
     

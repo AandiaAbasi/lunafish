@@ -18,6 +18,9 @@ message_sent = Signal()
 message_deleted = Signal()
 reaction_sent = Signal()
 
+attachment_uploaded = Signal()
+attachment_deleted = Signal()
+
 mic_granted = Signal()
 mic_revoked = Signal()
 student_kicked = Signal()

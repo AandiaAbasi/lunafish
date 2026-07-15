@@ -9,6 +9,7 @@ from django.utils.translation import get_language, gettext_lazy as _
 import jdatetime
 
 from core.abstract_models import BaseModel
+from core.utils import upload_to_dynamic
 
 
 def format_datetime_display(instance, dt):
@@ -344,6 +345,48 @@ class ClassMessage(BaseModel):
             models.Index(fields=['sender', 'created_at']),
             models.Index(fields=['is_deleted', 'created_at']),
         ]
+
+    def deleted_at_display(self):
+        return format_datetime_display(self, self.deleted_at)
+    deleted_at_display.short_description = _('Deleted at')
+    deleted_at_display.admin_order_field = 'deleted_at'
+
+    def soft_delete(self, by_user):
+        self.is_deleted = True
+        self.deleted_by = by_user
+        self.deleted_at = timezone.now()
+        self.save(update_fields=['is_deleted', 'deleted_by', 'deleted_at', 'updated_at'])
+
+
+class ClassAttachment(BaseModel):
+    class_session = models.ForeignKey(OnlineClass, on_delete=models.CASCADE, related_name='attachments', verbose_name=_('Class session'))
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='class_attachments_uploaded', verbose_name=_('Uploaded by'))
+    file = models.FileField(upload_to=upload_to_dynamic, verbose_name=_('File'))
+    original_filename = models.CharField(max_length=255, verbose_name=_('Original filename'))
+    file_size = models.PositiveIntegerField(default=0, verbose_name=_('File size (bytes)'))
+    content_type = models.CharField(max_length=150, blank=True, verbose_name=_('Content type'))
+    is_deleted = models.BooleanField(default=False, verbose_name=_('Is deleted'))
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name='deleted_class_attachments',
+        null=True,
+        blank=True,
+        verbose_name=_('Deleted by'),
+    )
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Deleted at'))
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = _('Class Attachment')
+        verbose_name_plural = _('Class Attachments')
+        indexes = [
+            models.Index(fields=['class_session', 'created_at']),
+            models.Index(fields=['is_deleted', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.original_filename} ({self.class_session_id})'
 
     def deleted_at_display(self):
         return format_datetime_display(self, self.deleted_at)

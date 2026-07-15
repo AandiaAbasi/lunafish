@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from datetime import datetime
-from .models import ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass
+from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass
 from .utils import get_student_queryset, get_teacher_queryset
 from classroom.models import ClassBooking
 
@@ -187,6 +187,32 @@ class ClassMessageSerializer(serializers.ModelSerializer):
         if not is_private:
             attrs['recipient'] = None
         return attrs
+
+
+class ClassAttachmentSerializer(serializers.ModelSerializer):
+    uploaded_by = UserBasicSerializer(read_only=True)
+    deleted_by = UserBasicSerializer(read_only=True)
+    file = serializers.FileField(write_only=True)
+
+    class Meta:
+        model = ClassAttachment
+        fields = [
+            'id',
+            'class_session',
+            'uploaded_by',
+            'file',
+            'original_filename',
+            'file_size',
+            'content_type',
+            'is_deleted',
+            'deleted_by',
+            'deleted_at',
+            'created_at',
+        ]
+        read_only_fields = [
+            'id', 'class_session', 'uploaded_by', 'original_filename', 'file_size', 'content_type',
+            'is_deleted', 'deleted_by', 'deleted_at', 'created_at',
+        ]
 
 
 class ClassReactionSerializer(serializers.ModelSerializer):
