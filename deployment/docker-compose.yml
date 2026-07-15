@@ -1,5 +1,5 @@
 ################################################################################
-# Lunafish Production Stack — fofofish.app
+# Lunafish Production Stack — lunafish.app
 ################################################################################
 
 services:
@@ -101,9 +101,9 @@ services:
       CENTRIFUGO_API_URL: "http://centrifugo:8000/api"
       CENTRIFUGO_API_KEY: ${CENTRIFUGO_API_KEY}
       CENTRIFUGO_TOKEN_SECRET: ${CENTRIFUGO_TOKEN_SECRET}
-      CENTRIFUGO_WS_URL: "wss://fofofish.app/realtime/connection/websocket"
+      CENTRIFUGO_WS_URL: "wss://lunafish.app/realtime/connection/websocket"
       RTC_JWT_SECRET: ${RTC_JWT_SECRET}
-      RTC_WS_URL: "wss://fofofish.app/rtc/ws"
+      RTC_WS_URL: "wss://lunafish.app/rtc/ws"
       INTERNAL_CALLBACK_SECRET: ${INTERNAL_CALLBACK_SECRET}
     volumes:
       - static_files:/app/staticfiles

@@ -1,5 +1,5 @@
 """
-Production settings for fofofish.app
+Production settings for lunafish.app
 Imports base settings and overrides for Docker deployment.
 """
 from .settings import *  # noqa
@@ -7,8 +7,8 @@ import os
 
 DEBUG = False
 SECRET_KEY = os.environ.get('SECRET_KEY', os.environ.get('DJANGO_SECRET_KEY', 'fallback-change-me'))
-ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app', 'django', 'localhost', '127.0.0.1']
-CSRF_TRUSTED_ORIGINS = ['https://fofofish.app', 'https://www.fofofish.app']
+ALLOWED_HOSTS = ['lunafish.app', 'www.lunafish.app', 'django', 'localhost', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://lunafish.app', 'https://www.lunafish.app']
 
 # Database — PostgreSQL
 DATABASES = {
@@ -32,11 +32,11 @@ MEDIA_ROOT = '/app/mediafiles'
 CENTRIFUGO_API_URL = os.environ.get('CENTRIFUGO_API_URL', 'http://centrifugo:8000/api')
 CENTRIFUGO_API_KEY = os.environ.get('CENTRIFUGO_API_KEY', '')
 CENTRIFUGO_TOKEN_SECRET = os.environ.get('CENTRIFUGO_TOKEN_SECRET', '')
-CENTRIFUGO_WS_URL = os.environ.get('CENTRIFUGO_WS_URL', 'wss://fofofish.app/realtime/connection/websocket')
+CENTRIFUGO_WS_URL = os.environ.get('CENTRIFUGO_WS_URL', 'wss://lunafish.app/realtime/connection/websocket')
 
 # RTC
 RTC_JWT_SECRET = os.environ.get('RTC_JWT_SECRET', '')
-RTC_WS_URL = os.environ.get('RTC_WS_URL', 'wss://fofofish.app/rtc/ws')
+RTC_WS_URL = os.environ.get('RTC_WS_URL', 'wss://lunafish.app/rtc/ws')
 
 # Redis cache (optional — falls back if Redis unavailable)
 _redis_password = os.environ.get('REDIS_PASSWORD', '')

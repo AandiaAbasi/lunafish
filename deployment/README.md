@@ -1,4 +1,4 @@
-# Lunafish Production Deployment — fofofish.app
+# Lunafish Production Deployment — lunafish.app
 
 ## Architecture
 
@@ -42,7 +42,7 @@ Public ports:
 
 - Linux server (Ubuntu 22.04+ recommended)
 - Docker + Docker Compose v2
-- Domain `fofofish.app` pointing to server IP
+- Domain `lunafish.app` pointing to server IP
 - Firewall allowing: 80, 443, 40000-40100/udp
 
 ## Quick Start
@@ -83,11 +83,11 @@ nano .env
 
 | URL | Purpose |
 |-----|---------|
-| `https://fofofish.app/api/` | Django REST API |
-| `wss://fofofish.app/realtime/connection/websocket` | Centrifugo WebSocket |
-| `https://fofofish.app/realtime/connection/http_stream` | Centrifugo HTTP streaming (fallback) |
-| `wss://fofofish.app/rtc/ws` | Mediasoup WebSocket (signaling) |
-| `https://fofofish.app/admin/` | Django admin |
+| `https://lunafish.app/api/` | Django REST API |
+| `wss://lunafish.app/realtime/connection/websocket` | Centrifugo WebSocket |
+| `https://lunafish.app/realtime/connection/http_stream` | Centrifugo HTTP streaming (fallback) |
+| `wss://lunafish.app/rtc/ws` | Mediasoup WebSocket (signaling) |
+| `https://lunafish.app/admin/` | Django admin |
 
 ## Adding Django
 

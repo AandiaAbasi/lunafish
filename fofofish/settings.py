@@ -26,7 +26,7 @@ SHOP_NAME = _("Nozima")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-BASE_URL = 'https://fofofish.app/'
+BASE_URL = 'https://lunafish.app/'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -37,8 +37,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-s%3ursx!kyqj!t_q6a+=g8p(%r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['fofofish.app', 'www.fofofish.app', 'lunafish.app', 'www.lunafish.app', 'localhost', '127.0.0.1', '*']
-CSRF_TRUSTED_ORIGINS = ["https://fofofish.app", "https://www.fofofish.app", "https://lunafish.app", "https://www.lunafish.app"]
+ALLOWED_HOSTS = ['lunafish.app', 'www.lunafish.app', 'localhost', '127.0.0.1', '*']
+CSRF_TRUSTED_ORIGINS = ["https://lunafish.app", "https://www.lunafish.app"]
 
 # Application definition
 
@@ -249,7 +249,7 @@ SPECTACULAR_SETTINGS = {
     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
     'SERVERS': [
         {
-            'url': 'https://fofofish.app',
+            'url': 'https://lunafish.app',
             'description': 'Production server',
         },
         {
@@ -354,29 +354,29 @@ OTP_LENGTH = 6
 # Zibal Payment Gateway
 
 ZIBAL_MERCHANT_ID = "zibal"  # برای sandbox از 'zibal' استفاده کنید
-ZIBAL_CALLBACK_URL = "fofofish.app/api/payment/callback/"
+ZIBAL_CALLBACK_URL = "lunafish.app/api/payment/callback/"
 USE_SANDBOX = config('USE_SANDBOX', default=True, cast=bool)
 if USE_SANDBOX:
     ZIBAL_REQUEST_URL = "https://gateway.zibal.ir/v1/request"
     ZIBAL_VERIFY_URL = "https://gateway.zibal.ir/v1/verify"
     ZIBAL_START_PAY_URL = "https://gateway.zibal.ir/start/{trackId}"
-    ZIBAL_CALLBACK_URL = config('ZIBAL_CALLBACK_URL', default='https://fofofish.app/api/payment/callback/')
+    ZIBAL_CALLBACK_URL = config('ZIBAL_CALLBACK_URL', default='https://lunafish.app/api/payment/callback/')
 else:
     # Production URLs (همون هست)
     ZIBAL_REQUEST_URL = "https://gateway.zibal.ir/v1/request"
     ZIBAL_VERIFY_URL = "https://gateway.zibal.ir/v1/verify"
     ZIBAL_START_PAY_URL = "https://gateway.zibal.ir/start/{trackId}"
-    
-ZIBAL_CALLBACK_URL_COURSE = 'https://fofofish.app/api/courses/payment/callback/'
+
+ZIBAL_CALLBACK_URL_COURSE = 'https://lunafish.app/api/courses/payment/callback/'
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='info@fofofish.app')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='info@lunafish.app')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your-password')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='info@fofofish.app')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='info@lunafish.app')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field

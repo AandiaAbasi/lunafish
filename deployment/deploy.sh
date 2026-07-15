@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Lunafish Deploy Script — fofofish.app
+# Lunafish Deploy Script — lunafish.app
 # ==============================================================================
 # Usage:
 #   ./deploy.sh setup    — First time setup (generates secrets, gets SSL cert)
@@ -17,8 +17,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-DOMAIN="fofofish.app"
-EMAIL="admin@fofofish.app"
+DOMAIN="lunafish.app"
+EMAIL="admin@lunafish.app"
 
 # Colors
 RED='\033[0;31m'
@@ -160,7 +160,7 @@ cmd_logs() {
 cmd_status() {
     echo ""
     echo "╔══════════════════════════════════════════════════════╗"
-    echo "║          Lunafish — fofofish.app                     ║"
+    echo "║          Lunafish — lunafish.app                     ║"
     echo "╠══════════════════════════════════════════════════════╣"
     docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null
     echo "╚══════════════════════════════════════════════════════╝"
