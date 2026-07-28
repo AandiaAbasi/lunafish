@@ -28,6 +28,7 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('api/v1/classes/', include('classes.urls')),
     path("recommendation/",include("recommendation.urls")),
+    path("",include("luna_game.urls")),
     
     # Swagger/OpenAPI Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

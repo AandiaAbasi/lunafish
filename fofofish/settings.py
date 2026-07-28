@@ -73,7 +73,8 @@ INSTALLED_APPS = [
     'classroom',
     'exercise',
     'classes',
-    'recommendation'
+    'recommendation',
+    'luna_game.apps.LunaGameConfig'
 ]
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
