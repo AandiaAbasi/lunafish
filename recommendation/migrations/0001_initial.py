@@ -26,7 +26,6 @@ class Migration(migrations.Migration):
                 ('description', models.TextField(blank=True, help_text='توضیحات کلی درباره تست', verbose_name='توضیحات')),
                 ('description_fa', models.TextField(blank=True, help_text='توضیحات کلی درباره تست', null=True, verbose_name='توضیحات')),
                 ('description_en', models.TextField(blank=True, help_text='توضیحات کلی درباره تست', null=True, verbose_name='توضیحات')),
-                ('description_ar', models.TextField(blank=True, help_text='توضیحات کلی درباره تست', null=True, verbose_name='توضیحات')),
                 ('is_active', models.BooleanField(default=True, verbose_name='فعال')),
             ],
             options={
@@ -122,7 +121,6 @@ class Migration(migrations.Migration):
                 ('description', models.TextField(blank=True, verbose_name='توضیحات')),
                 ('description_fa', models.TextField(blank=True, null=True, verbose_name='توضیحات')),
                 ('description_en', models.TextField(blank=True, null=True, verbose_name='توضیحات')),
-                ('description_ar', models.TextField(blank=True, null=True, verbose_name='توضیحات')),
                 ('test', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='scales', to='recommendation.psychologicaltest', verbose_name='تست')),
             ],
             options={
@@ -165,7 +163,6 @@ class Migration(migrations.Migration):
                 ('description', models.TextField(help_text='تفسیر روانشناختی کامل', verbose_name='توضیحات تفسیر')),
                 ('description_fa', models.TextField(help_text='تفسیر روانشناختی کامل', null=True, verbose_name='توضیحات تفسیر')),
                 ('description_en', models.TextField(help_text='تفسیر روانشناختی کامل', null=True, verbose_name='توضیحات تفسیر')),
-                ('description_ar', models.TextField(help_text='تفسیر روانشناختی کامل', null=True, verbose_name='توضیحات تفسیر')),
                 ('order', models.PositiveIntegerField(default=0, help_text='ترتیب نمایش تفسیر', verbose_name='ترتیب')),
                 ('scale', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='interpretations', to='recommendation.testscale', verbose_name='مقیاس')),
             ],
