@@ -611,6 +611,10 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         if not hand:
             return Response({'error': 'Active hand raise not found'}, status=status.HTTP_404_NOT_FOUND)
         hand.acknowledge(request.user)
+        # Acknowledging is the teacher's dismiss action, so close the active
+        # request instead of leaving it in the hand queue.
+        hand.lowered_at = timezone.now()
+        hand.save(update_fields=['lowered_at'])
         publish_to_class(str(class_instance.id), 'hand.acknowledged', {
             'user_id': str(user_id),
             'acknowledged_by': UserBasicSerializer(request.user).data,
