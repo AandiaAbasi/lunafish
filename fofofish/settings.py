@@ -73,7 +73,7 @@ INSTALLED_APPS = [
     'classroom',
     'exercise',
     'classes',
-    'recommendation',
+    'recommendation.apps.RecommendationConfig',
     'luna_game.apps.LunaGameConfig'
 ]
 
