@@ -1,0 +1,353 @@
+{% extends "admin/custom_base.html" %}
+{% load static recommendation_settings %}
+{% recommendation_translation_fields_enabled as show_translation_fields %}
+
+{% block title %}مدیریت بازه‌های تفسیری - {{ scale.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid content-inner pb-0">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="card-title mb-1">
+                                مدیریت بازه‌های تفسیری
+                            </h4>
+                            <small class="text-muted">
+                                مقیاس: <span class="badge bg-primary">{{ scale.code }}</span> {{ scale.title }}
+                            </small>
+                            <br>
+                            <small class="text-muted">
+                                تست: {{ test.title }}
+                            </small>
+                        </div>
+                        <a href="{% url 'recommendation:test_detail' test.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right ms-1"></i>
+                            بازگشت
+                        </a>
+                    </div>
+                </div>
+                
+                {% if scale.description %}
+                <div class="card-body">
+                    <p class="text-muted mb-0">{{ scale.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Help Alert -->
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle ms-1"></i>
+                <strong>راهنما:</strong>
+                بازه‌های تفسیری به شما کمک می‌کنند تا بر اساس امتیاز کسب شده در هر مقیاس، تفسیر روانشناختی مناسب را ارائه دهید.
+                <br>
+                <small>مثال: امتیاز 0-10 = رغبت پایین، امتیاز 11-20 = رغبت متوسط، امتیاز 21-30 = رغبت بالا</small>
+            </div>
+            
+            <!-- Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list-ol ms-1"></i>
+                        بازه‌های تفسیری
+                    </h5>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" id="interpretationForm">
+                        {% csrf_token %}
+                        {{ formset.management_form }}
+                        
+                        <div id="interpretations-container">
+                            {% for form in formset %}
+                                <div class="interpretation-form mb-3 p-3 border rounded {% if form.instance.pk %}bg-light{% endif %}" data-form-index="{{ forloop.counter0 }}">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">
+                                            <span class="badge bg-secondary">بازه {{ forloop.counter }}</span>
+                                        </h6>
+                                        {% if form.instance.pk %}
+                                            <span class="badge bg-success">ذخیره شده</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">جدید</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Hidden fields -->
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                    
+                                    <div class="row g-2">
+                                        <!-- Min Score -->
+                                        <div class="col-md-2">
+                                            <label class="form-label">{{ form.min_score.label }}</label>
+                                            {{ form.min_score }}
+                                            {% if form.min_score.errors %}
+                                                <div class="text-danger small">{{ form.min_score.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Max Score -->
+                                        <div class="col-md-2">
+                                            <label class="form-label">{{ form.max_score.label }}</label>
+                                            {{ form.max_score }}
+                                            {% if form.max_score.errors %}
+                                                <div class="text-danger small">{{ form.max_score.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Title -->
+                                        <div class="col-md-3">
+                                            <label class="form-label">{{ form.title_fa.label }}</label>
+                                            {{ form.title_fa }}
+                                            {% if form.title_fa.errors %}
+                                                <div class="text-danger small">{{ form.title_fa.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        {% if show_translation_fields %}
+                                        <div class="col-md-3">
+                                            <label class="form-label">{{ form.title_en.label }}</label>
+                                            {{ form.title_en }}
+                                            {% if form.title_en.errors %}
+                                                <div class="text-danger small">{{ form.title_en.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- Order -->
+                                        <div class="col-md-2">
+                                            <label class="form-label">{{ form.order.label }}</label>
+                                            {{ form.order }}
+                                            {% if form.order.errors %}
+                                                <div class="text-danger small">{{ form.order.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Delete -->
+                                        <div class="col-md-3 d-flex align-items-end">
+                                            {% if form.instance.pk %}
+                                                <div class="form-check">
+                                                    {{ form.DELETE }}
+                                                    <label class="form-check-label text-danger" for="{{ form.DELETE.id_for_label }}">
+                                                        حذف
+                                                    </label>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Description -->
+                                    <div class="row mt-2">
+                                        <div class="col-12">
+                                            <label class="form-label">{{ form.description_fa.label }}</label>
+                                            {{ form.description_fa }}
+                                            {% if form.description.errors %}
+                                                <div class="text-danger small">{{ form.description_fa.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if show_translation_fields %}
+                                    <div class="row mt-2">
+                                        <div class="col-12">
+                                            <label class="form-label">{{ form.description_en.label }}</label>
+                                            {{ form.description_en }}
+                                            {% if form.description_en.errors %}
+                                                <div class="text-danger small">{{ form.description_en.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    
+                                    {% if form.non_field_errors %}
+                                        <div class="alert alert-danger mt-2 mb-0">
+                                            {{ form.non_field_errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Add New Button -->
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-primary" id="addInterpretationBtn">
+                                <i class="fas fa-plus ms-1"></i>
+                                افزودن بازه جدید
+                            </button>
+                        </div>
+                        
+                        <!-- Form Errors -->
+                        {% if formset.non_form_errors %}
+                            <div class="alert alert-danger">
+                                {{ formset.non_form_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save ms-1"></i>
+                                ذخیره تغییرات
+                            </button>
+                            <a href="{% url 'recommendation:test_detail' test.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times ms-1"></i>
+                                انصراف
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Empty Form Template (Hidden) -->
+<div id="empty-form-template" style="display: none;">
+    <div class="interpretation-form mb-3 p-3 border rounded" data-form-index="__prefix__">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">
+                <span class="badge bg-secondary">بازه جدید</span>
+            </h6>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-interpretation-btn">
+                <i class="fas fa-trash ms-1"></i>
+                حذف
+            </button>
+        </div>
+        
+        {{ formset.empty_form.id }}
+        {{ formset.empty_form.scale }}
+        
+        <div class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label">حداقل امتیاز</label>
+                {{ formset.empty_form.min_score }}
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label">حداکثر امتیاز</label>
+                {{ formset.empty_form.max_score }}
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">عنوان تفسیر (فارسی)</label>
+                {{ formset.empty_form.title_fa }}
+            </div>
+            {% if show_translation_fields %}
+            <div class="col-md-3">
+                <label class="form-label">عنوان تفسیر (انگلیسی)</label>
+                {{ formset.empty_form.title_en }}
+            </div>
+            {% else %}
+                {{ formset.empty_form.title_en }}
+            {% endif %}
+            
+            <div class="col-md-2">
+                <label class="form-label">ترتیب</label>
+                {{ formset.empty_form.order }}
+            </div>
+        </div>
+        
+        <div class="row mt-2">
+            <div class="col-12">
+                <label class="form-label">توضیحات تفسیر (فارسی)</label>
+                {{ formset.empty_form.description_fa }}
+            </div>
+        </div>
+        {% if show_translation_fields %}
+        <div class="row mt-2">
+            <div class="col-12">
+                <label class="form-label">توضیحات تفسیر (انگلیسی)</label>
+                {{ formset.empty_form.description_en }}
+            </div>
+        </div>
+        {% else %}
+            {{ formset.empty_form.description_en }}
+        {% endif %}
+         
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('interpretations-container');
+    const addBtn = document.getElementById('addInterpretationBtn');
+    const emptyFormTemplate = document.getElementById('empty-form-template');
+    const totalFormsInput = document.querySelector('#id_interpretations-TOTAL_FORMS');
+    
+    // Add new interpretation
+    addBtn.addEventListener('click', function() {
+        const currentFormCount = parseInt(totalFormsInput.value);
+        const newFormHtml = emptyFormTemplate.innerHTML.replace(/__prefix__/g, currentFormCount);
+        
+        // Create new element
+        const div = document.createElement('div');
+        div.innerHTML = newFormHtml;
+        const newForm = div.firstElementChild;
+        
+        // Append to container
+        container.appendChild(newForm);
+        
+        // Update form count
+        totalFormsInput.value = currentFormCount + 1;
+        
+        // Add remove handler
+        const removeBtn = newForm.querySelector('.remove-interpretation-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                newForm.remove();
+                updateFormIndices();
+            });
+        }
+    });
+    
+    // Update form indices after removal
+    function updateFormIndices() {
+        const forms = container.querySelectorAll('.interpretation-form');
+        forms.forEach((form, index) => {
+            form.setAttribute('data-form-index', index);
+            
+            // Update all input names and ids
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                const name = input.getAttribute('name');
+                const id = input.getAttribute('id');
+                
+                if (name) {
+                    const newName = name.replace(/interpretations-\d+-/, `interpretations-${index}-`);
+                    input.setAttribute('name', newName);
+                }
+                
+                if (id) {
+                    const newId = id.replace(/id_interpretations-\d+-/, `id_interpretations-${index}-`);
+                    input.setAttribute('id', newId);
+                }
+            });
+            
+            // Update labels
+            const labels = form.querySelectorAll('label[for]');
+            labels.forEach(label => {
+                const forAttr = label.getAttribute('for');
+                if (forAttr) {
+                    const newFor = forAttr.replace(/id_interpretations-\d+-/, `id_interpretations-${index}-`);
+                    label.setAttribute('for', newFor);
+                }
+            });
+        });
+        
+        // Update total forms count
+        totalFormsInput.value = forms.length;
+    }
+    
+    // Initial remove button handlers for existing forms
+    document.querySelectorAll('.remove-interpretation-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            btn.closest('.interpretation-form').remove();
+            updateFormIndices();
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -27,11 +27,13 @@ urlpatterns = [
     path('', include('core.urls')),
     path('api/', include('api.urls')),
     path('api/v1/classes/', include('classes.urls')),
+    path("recommendation/",include("recommendation.urls")),
     
     # Swagger/OpenAPI Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/docs/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+
 ]
 
 if settings.DEBUG:

@@ -1,0 +1,41 @@
+ @font-face {
+	font-family: IRANSans;
+	src: url('../fonts/IRANSans/IRANSansWeb.eot');
+	src: url('../fonts/IRANSans/IRANSansWeb.eot') format('embedded-opentype'), url('../fonts/IRANSans/IRANSansWeb(FaNum).woff') format('woff'), url('../fonts/IRANSans/IRANSansWeb.ttf') format('truetype');
+	font-weight: 400;
+	font-style: normal
+}
+@font-face {
+	font-family: vazir;
+	src: url('../fonts/vazir/Vazir-Light-FD-WOL.eot');
+	src: url('../fonts/vazir/Vazir-Light-FD-WOL.eot') format('embedded-opentype'), url('../fonts/vazir/Vazir-Light-FD-WOL.woff') format('woff'), url('../fonts/vazir/Vazir-Light-FD-WOL.ttf') format('truetype');
+	font-weight: 400;
+	font-style: normal
+}
+@font-face {
+	font-family: vazir-bold;
+	src: url('../fonts/vazir/vazir-Bold.eot');
+	src: url('../fonts/vazir/vazir-Blod.eot') format('embedded-opentype'), url('../fonts/vazir/Vazir-Bold-FD.woff') format('woff'), url('../fonts/vazir/vazir-Bold.ttf') format('truetype');
+	font-weight: 400;
+	font-style: normal
+}
+body, a, select {
+  font-family: "IRANSans", sans-serif !important;
+}
+.form-row img, .form-row input{
+  font-family: "IRANSans", sans-serif !important;
+    
+}
+.admin-interface .button, .admin-interface input[type=submit], .admin-interface input[type=button], .admin-interface .submit-row input, .admin-interface a.button{
+      font-family: "IRANSans", sans-serif !important;
+    
+}
+
+.admin-interface .object-tools{
+    width:100% !important;
+}
+.object-tools a:link, .object-tools a:visited{
+    padding: 10px 12px !important;
+    background: #ff005c !important;
+    font-size: 0.9rem !important;
+}

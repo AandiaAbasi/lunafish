@@ -1,0 +1,839 @@
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions, generics, parsers
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.contrib.auth import authenticate, get_user_model
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.shortcuts import get_object_or_404, redirect
+from django.http import HttpResponseRedirect
+from django.contrib import messages
+from django.db import models
+from django.http import StreamingHttpResponse, HttpResponse
+import re
+from django.core.paginator import Paginator
+from recommendation.selectors import get_last_test_register
+from recommendation.serializers import PsychologicalTestSerializer
+import jdatetime
+import logging
+logger = logging.getLogger(__name__)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def psychological_tests_list_api(request):
+    """
+    List all psychological tests (no assignment / no user response).
+
+    Query Parameters:
+    - page: Page number (default: 1)
+    - page_size: Items per page (default: 10, max: 50)
+    - search: Search query (title, description) [در صورت نیاز می‌توان اضافه کرد]
+    - filter_status: نگه داشته شده برای سازگاری، ولی چون status واقعی نداریم،
+                     فقط همه را 'not_started' می‌گذاریم.
+
+    Response:
+    {
+        "success": true,
+        "message": "لیست تست‌های روانشناسی با موفقیت دریافت شد",
+        "data": {
+            "tests": [...],
+            "pagination": {...},
+            "stats": {"not_started": n, "in_progress": 0, "completed": 0, "total": n}
+        }
+    }
+    """
+    try:
+        from recommendation.models import PsychologicalTest, StudentTestResponse
+
+        # --- جمع‌آوری و فیلتر پایه (در صورت نیاز به search می‌توانی اینجا اضافه کنی) ---
+        tests_qs = PsychologicalTest.objects.all()
+        user_responses = StudentTestResponse.objects.filter(
+            user=request.user,
+            test__in=tests_qs
+        )
+        
+        # تبدیل به دیکشنری برای lookup سریع
+        responses_map = {
+            response.test_id: response
+            for response in user_responses
+        }
+        
+        # اگر search می‌خواهی، این بلاک را فعال کن:
+        search_query = request.GET.get('search', '').strip()
+        if search_query:
+            from django.db.models import Q
+            tests_qs = tests_qs.filter(
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+
+        # همه تست‌ها را تبدیل به لیست دیکشنری می‌کنیم
+        tests_data = []
+        stats = {
+            'not_started': 0,
+            'in_progress': 0,
+            'completed': 0,
+            'total': 0
+        }
+        
+        
+
+        for test in tests_qs:
+            # چون هیچ assignment / response نداریم، همه not_started هستند
+            test_status = 'not_started'
+            completed_at = None
+            started_at = None
+
+            # تاریخ‌های جلالی وابسته به assignment/deadline نداریم
+            completed_at_jalali = ''
+            started_at_jalali = ''
+            response = responses_map.get(test.id)
+            if response:
+                test_status = response.status
+                started_at = response.started_at
+                completed_at = response.completed_at
+                is_completed = response.status == 'completed'
+            else:
+                test_status = 'not_started'
+                started_at = None
+                completed_at = None
+                is_completed = False
+                
+                
+            if completed_at:
+                completed_at_jalali = jdatetime.datetime.fromgregorian(
+                    datetime=completed_at
+                ).strftime('%Y/%m/%d - %H:%M')
+
+            if started_at:
+                started_at_jalali = jdatetime.datetime.fromgregorian(
+                    datetime=started_at
+                ).strftime('%Y/%m/%d - %H:%M')
+
+            question_count = test.questions.count()
+            
+            test_item = {
+                'id': test.id,
+                'title': test.title,
+                'description': test.description,
+                'question_count': question_count,
+
+                # چون assignment/deadline نداریم:
+                'assigned_at': None,
+                'assigned_at_jalali': '',
+                'deadline': None,
+                'deadline_jalali': '',
+                'deadline_passed': False,
+
+                'status': test_status,
+                'status_display': {
+                    'not_started': 'شروع نشده',
+                    'in_progress': 'در حال پاسخ',
+                    'completed': 'تکمیل شده'
+                }.get(test_status, 'شروع نشده'),
+
+                'is_completed': is_completed,
+                'is_expired': False,
+                'can_take': True,
+
+                'completed_at': None,
+                'completed_at_jalali': completed_at_jalali,
+                'started_at': None,
+                'started_at_jalali': started_at_jalali,
+            }
+
+            tests_data.append(test_item)
+
+            stats['not_started'] += 1
+            stats['total'] += 1
+
+        # --- فیلتر status برای سازگاری با فرانت (همه not_started هستند) ---
+        filter_status = request.GET.get('filter_status', 'all').strip().lower()
+        if filter_status != 'all':
+            if filter_status == 'open':
+                tests_data = [t for t in tests_data if t['status'] in ['not_started', 'in_progress']]
+            elif filter_status == 'closed':
+                tests_data = [t for t in tests_data if t['status'] == 'completed' or t['is_expired']]
+            elif filter_status in ['not_started', 'in_progress', 'completed']:
+                tests_data = [t for t in tests_data if t['status'] == filter_status]
+
+        # --- Pagination ---
+        try:
+            page = int(request.GET.get('page', 1))
+        except ValueError:
+            page = 1
+
+        try:
+            page_size = int(request.GET.get('page_size', 10))
+        except ValueError:
+            page_size = 10
+
+        page_size = min(page_size, 50)
+
+        paginator = Paginator(tests_data, page_size)
+
+        try:
+            tests_page = paginator.page(page)
+        except Exception:
+            tests_page = paginator.page(1)
+            page = 1
+
+        return Response({
+            'success': True,
+            'message': 'لیست تست‌های روانشناسی با موفقیت دریافت شد',
+            'data': {
+                'tests': list(tests_page),
+                'pagination': {
+                    'page': page,
+                    'page_size': page_size,
+                    'total_pages': paginator.num_pages,
+                    'total_count': paginator.count,
+                    'has_next': tests_page.has_next(),
+                    'has_previous': tests_page.has_previous()
+                },
+                'stats': stats
+            }
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in psychological_tests_list_api: {str(e)}", exc_info=True)
+        return Response({
+            'success': False,
+            'message': f'خطا در دریافت لیست تست‌های روانشناسی: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+
+@permission_classes([AllowAny])
+def psychological_test_detail_api(request, test_id):
+    """
+    Get detailed information about a psychological test.
+    Returns test questions and options if test is not yet taken or in progress.
+    
+    Response:
+    {
+        "success": true,
+        "message": "جزئیات تست با موفقیت دریافت شد",
+        "data": {
+            "test": {...},
+            "assignment": {...},
+            "response": {...} or null,
+            "questions": [...]
+        }
+    }
+    """
+    try:
+        from recommendation.models import PsychologicalTest, StudentTestResponse
+        from django.utils import timezone
+        
+         
+        
+        # Get test
+        try:
+            test = PsychologicalTest.objects.get(
+                id=test_id,
+                is_active=True
+            )
+        except PsychologicalTest.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'تست مورد نظر یافت نشد'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if test is assigned to user's class
+        
+        
+        
+        response = None
+        has_started = False
+        is_completed = False
+        
+        # Check if deadline has passed
+        deadline_passed = False
+        
+        
+        # Get questions with options
+        questions = test.questions.prefetch_related('options').order_by('order')
+        questions_data = []
+        
+        for question in questions:
+            options_data = []
+            if question.question_type == 'multiple_choice':
+                for option in question.options.all().order_by('order'):
+                    options_data.append({
+                        'id': option.id,
+                        'text': option.option_text,
+                        'order': option.order,
+                        'icon': option.icon
+                    })
+            
+            questions_data.append({
+                'id': question.id,
+                'icon': question.icon,
+                'text': question.question_text,
+                'question_type': question.question_type,
+                'question_type_display': {
+                    'multiple_choice': 'چند گزینه‌ای',
+                    'text_input': 'ورودی متنی کوتاه',
+                    'textarea': 'متن بلند'
+                }.get(question.question_type, ''),
+                'order': question.order,
+                'is_required': question.is_required,
+                'options': options_data
+            })
+        
+        # Prepare response data
+        response_data = None
+        if response:
+            started_at_jalali = ''
+            if response.started_at:
+                j_date = jdatetime.datetime.fromgregorian(datetime=response.started_at)
+                started_at_jalali = j_date.strftime('%Y/%m/%d - %H:%M')
+            
+            completed_at_jalali = ''
+            if response.completed_at:
+                j_date = jdatetime.datetime.fromgregorian(datetime=response.completed_at)
+                completed_at_jalali = j_date.strftime('%Y/%m/%d - %H:%M')
+            
+            response_data = {
+                'id': response.id,
+                'status': response.status,
+                'status_display': {
+                    'not_started': 'شروع نشده',
+                    'in_progress': 'در حال پاسخ',
+                    'completed': 'تکمیل شده'
+                }.get(response.status, ''),
+                'started_at': response.started_at.isoformat() if response.started_at else None,
+                'started_at_jalali': started_at_jalali,
+                'completed_at': response.completed_at.isoformat() if response.completed_at else None,
+                'completed_at_jalali': completed_at_jalali
+            }
+        
+        test_data = {
+            'id': test.id,
+            'title': test.title,
+            'description': test.description,
+            'question_count': len(questions_data),
+            'is_active': test.is_active
+        }
+         
+        
+        return Response({
+            'success': True,
+            'message': 'جزئیات تست با موفقیت دریافت شد',
+            'data': {
+                'test': test_data,
+                'response': response_data,
+                'questions': questions_data,
+                'has_started': has_started,
+                'is_completed': is_completed,
+                'can_take': True
+            }
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error in psychological_test_detail_api: {str(e)}", exc_info=True)
+        return Response({
+            'success': False,
+            'message': f'خطا در دریافت جزئیات تست: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+
+@permission_classes([IsAuthenticated])
+def psychological_test_submit_api(request, test_id):
+    """
+    Submit answers to a psychological test.
+    
+    Request Body:
+    {
+        "answers": {
+            "question_id": "selected_option_id" (for multiple_choice),
+            "question_id": "text answer" (for text_input/textarea)
+        }
+    }
+    
+    Response:
+    {
+        "success": true,
+        "message": "تست با موفقیت ثبت شد",
+        "data": {
+            "response_id": 123,
+            "completed_at": "...",
+            "has_result": true/false
+        }
+    }
+    """
+    try:
+        from recommendation.models import (
+            PsychologicalTest, StudentTestResponse,
+            TestQuestion, StudentAnswer, QuestionOption
+        )
+        from django.utils import timezone
+        
+        # Get user from JWT token
+        user = request.user
+        if not user:
+            return Response({
+                'success': False,
+                'message': 'دانش‌آموز یافت نشد'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+         
+        # Get test
+        try:
+            test = PsychologicalTest.objects.get(id=test_id, is_active=True)
+        except PsychologicalTest.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'تست مورد نظر یافت نشد'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+         
+       
+        # Get or create user response
+        response, created = StudentTestResponse.objects.get_or_create(
+            test=test,
+            user=user,
+            defaults={
+                'status': 'in_progress',
+                'started_at': timezone.now()
+            }
+        )
+        
+        # If not newly created and status is not_started, update to in_progress
+        if not created and response.status == 'not_started':
+            response.status = 'in_progress'
+            response.started_at = timezone.now()
+            response.save()
+        
+        # Check if already completed
+       
+        # Get answers from request
+        answers_dict = request.data.get('answers', {})
+        if not answers_dict:
+            return Response({
+                'success': False,
+                'message': 'لطفاً به سوالات پاسخ دهید'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Process answers
+        questions = test.questions.all()
+        errors = []
+        
+        for question in questions:
+            answer_value = answers_dict.get(str(question.id))
+            
+            if question.question_type == 'multiple_choice':
+                # Expecting option ID
+                if answer_value:
+                    try:
+                        option = QuestionOption.objects.get(
+                            id=int(answer_value),
+                            question=question
+                        )
+                        # Create or update answer
+                        StudentAnswer.objects.update_or_create(
+                            response=response,
+                            question=question,
+                            defaults={
+                                'selected_option': option,
+                                'text_answer': ''
+                            }
+                        )
+                    except (QuestionOption.DoesNotExist, ValueError):
+                        if question.is_required:
+                            errors.append(f'گزینه انتخابی برای سوال {question.order} نامعتبر است')
+                elif question.is_required:
+                    errors.append(f'لطفاً به سوال {question.order} پاسخ دهید')
+            
+            else:  # text_input or textarea
+                if answer_value and str(answer_value).strip():
+                    # Create or update answer
+                    StudentAnswer.objects.update_or_create(
+                        response=response,
+                        question=question,
+                        defaults={
+                            'selected_option': None,
+                            'text_answer': str(answer_value).strip()
+                        }
+                    )
+                elif question.is_required:
+                    errors.append(f'لطفاً به سوال {question.order} پاسخ دهید')
+        
+        if errors:
+            return Response({
+                'success': False,
+                'message': 'خطاهای زیر رخ داد',
+                'errors': errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Mark as completed
+        response.status = 'completed'
+        response.completed_at = timezone.now()
+        response.save()
+        
+        # Check if result was calculated (by signal)
+        has_result = hasattr(response, 'result')
+        
+        completed_at_jalali = ''
+        if response.completed_at:
+            j_date = jdatetime.datetime.fromgregorian(datetime=response.completed_at)
+            completed_at_jalali = j_date.strftime('%Y/%m/%d - %H:%M')
+        
+        return Response({
+            'success': True,
+            'message': 'تست با موفقیت ثبت شد. از صبر و دقت شما متشکریم',
+            'data': {
+                'response_id': response.id,
+                'completed_at': response.completed_at.isoformat(),
+                'completed_at_jalali': completed_at_jalali,
+                'has_result': has_result
+            }
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error in psychological_test_submit_api: {str(e)}", exc_info=True)
+        return Response({
+            'success': False,
+            'message': f'خطا در ثبت تست: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+
+@permission_classes([IsAuthenticated])
+def psychological_test_view_answers_api(request, test_id):
+    """
+    View submitted answers to a completed test - read-only.
+    
+    Response:
+    {
+        "success": true,
+        "message": "پاسخ‌های تست با موفقیت دریافت شد",
+        "data": {
+            "test": {...},
+            "response": {...},
+            "questions_with_answers": [...]
+        }
+    }
+    """
+    try:
+        from recommendation.models import PsychologicalTest, StudentTestResponse, StudentAnswer
+        
+        # Get user from JWT token
+        user = request.user
+        if not user:
+            return Response({
+                'success': False,
+                'message': 'دانش‌آموز یافت نشد'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get test
+        try:
+            test = PsychologicalTest.objects.get(
+                id=test_id,
+                is_active=True
+            )
+        except PsychologicalTest.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'تست مورد نظر یافت نشد'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get user's response
+        try:
+            response = StudentTestResponse.objects.get(test=test, user=user)
+        except StudentTestResponse.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'شما هنوز این تست را شروع نکرده‌اید'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if test is completed
+        if response.status != 'completed':
+            return Response({
+                'success': False,
+                'message': 'شما هنوز این تست را تکمیل نکرده‌اید'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get all questions with answers
+        questions = test.questions.prefetch_related('options').order_by('order')
+        answers = StudentAnswer.objects.filter(
+            response=response
+        ).select_related('question', 'selected_option')
+        
+        # Create answers dict
+        answers_dict = {answer.question_id: answer for answer in answers}
+        
+        # Combine questions with answers
+        questions_with_answers = []
+        for question in questions:
+            answer = answers_dict.get(question.id)
+            
+            # Prepare options
+            options_data = []
+            if question.question_type == 'multiple_choice':
+                for option in question.options.all().order_by('order'):
+                    options_data.append({
+                        'id': option.id,
+                        'text': option.option_text,
+                        'order': option.order,
+                        'is_selected': answer and answer.selected_option_id == option.id
+                    })
+            
+            # Prepare answer data
+            answer_data = None
+            if answer:
+                if question.question_type == 'multiple_choice':
+                    answer_data = {
+                        'type': 'option',
+                        'selected_option_id': answer.selected_option_id,
+                        'selected_option_text': answer.selected_option.option_text if answer.selected_option else ''
+                    }
+                else:
+                    answer_data = {
+                        'type': 'text',
+                        'text': answer.text_answer
+                    }
+            
+            questions_with_answers.append({
+                'question': {
+                    'id': question.id,
+                    'text': question.question_text,
+                    'question_type': question.question_type,
+                    'question_type_display': {
+                        'multiple_choice': 'چند گزینه‌ای',
+                        'text_input': 'ورودی متنی کوتاه',
+                        'textarea': 'متن بلند'
+                    }.get(question.question_type, ''),
+                    'order': question.order,
+                    'options': options_data
+                },
+                'answer': answer_data
+            })
+        
+        # Convert dates to Jalali
+        completed_at_jalali = ''
+        if response.completed_at:
+            j_date = jdatetime.datetime.fromgregorian(datetime=response.completed_at)
+            completed_at_jalali = j_date.strftime('%Y/%m/%d - %H:%M')
+        
+        test_data = {
+            'id': test.id,
+            'title': test.title,
+            'description': test.description,
+        }
+        
+        response_data = {
+            'id': response.id,
+            'status': response.status,
+            'completed_at': response.completed_at.isoformat(),
+            'completed_at_jalali': completed_at_jalali
+        }
+        
+        return Response({
+            'success': True,
+            'message': 'پاسخ‌های تست با موفقیت دریافت شد',
+            'data': {
+                'test': test_data,
+                'response': response_data,
+                'questions_with_answers': questions_with_answers
+            }
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error in psychological_test_view_answers_api: {str(e)}", exc_info=True)
+        return Response({
+            'success': False,
+            'message': f'خطا در دریافت پاسخ‌های تست: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+
+@permission_classes([IsAuthenticated])
+def psychological_test_result_api(request, test_id):
+    """
+    Get test result with scale scores and interpretations.
+    
+    Response:
+    {
+        "success": true,
+        "message": "نتیجه تست با موفقیت دریافت شد",
+        "data": {
+            "test": {...},
+            "response": {...},
+            "result": {...},
+            "scale_results": [...]
+        }
+    }
+    """
+    try:
+        from recommendation.models import (
+            PsychologicalTest, StudentTestResponse, TestResult,
+            TestScale, ScaleInterpretation
+        )
+        
+        # Get user from JWT token
+        user = request.user
+        if not user:
+            return Response({
+                'success': False,
+                'message': 'دانش‌آموز یافت نشد'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get test
+        try:
+            test = PsychologicalTest.objects.get(
+                id=test_id,
+                is_active=True
+            )
+        except PsychologicalTest.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'تست مورد نظر یافت نشد'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get user's response
+        try:
+            response = StudentTestResponse.objects.get(test=test, user=user)
+        except StudentTestResponse.DoesNotExist:
+            return Response({
+                'success': False,
+                'message': 'شما هنوز این تست را شروع نکرده‌اید'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if test is completed
+        if response.status != 'completed':
+            return Response({
+                'success': False,
+                'message': 'شما هنوز این تست را تکمیل نکرده‌اید'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get or calculate result
+        
+        if test.scales.exists():
+            try:
+                from recommendation.utils import calculate_test_result
+                # debug_test_calculation(response.id)
+
+                result = calculate_test_result(response)
+            except Exception as calc_error:
+                logger.error(f"Error calculating result: {str(calc_error)}", exc_info=True)
+                return Response({
+                    'success': False,
+                    'message': 'خطا در محاسبه نتیجه تست. لطفاً با مشاور تماس بگیرید'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            # Test has no scales, can't calculate result
+            return Response({
+                'success': False,
+                'message': 'این تست فاقد سیستم امتیازدهی است'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get all scales for this test
+        scales = TestScale.objects.filter(test=test).prefetch_related('interpretations').order_by('code')
+        
+        # Prepare scale data with scores and interpretations
+        scale_results = []
+        raw_scores = result.raw_scores or {}
+        
+        summary = result.summary or {}
+        scale_details = summary.get('scale_details', [])
+        
+        # تبدیل لیست به دیکشنری بر اساس code
+        scale_details_map = {
+            item.get('code'): item
+            for item in scale_details
+            if isinstance(item, dict) and item.get('code')
+        }
+        
+        for scale in scales:
+            raw_score = raw_scores.get(scale.code, 0)
+        
+            scale_detail = scale_details_map.get(scale.code, {})
+            percentage = scale_detail.get('percentage')
+        
+            # Find matching interpretation
+            interpretation = None
+            interpretations = scale.interpretations.all().order_by('min_score')
+            for interp in interpretations:
+                if interp.min_score <= raw_score <= interp.max_score:
+                    interpretation = interp
+                    break
+        
+            scale_results.append({
+                'code': scale.code,
+                'name': scale.title,
+                'description': scale.description,
+                'raw_score': raw_score,
+                'percentage': percentage,
+                'interpretation': {
+                    'id': interpretation.id if interpretation else None,
+                    'level': interpretation.title if interpretation else '',
+                    'description': interpretation.description if interpretation else '',
+                } if interpretation else None
+            })
+        
+        # Convert dates to Jalali
+        completed_at_jalali = ''
+        if response.completed_at:
+            j_date = jdatetime.datetime.fromgregorian(datetime=response.completed_at)
+            completed_at_jalali = j_date.strftime('%Y/%m/%d - %H:%M')
+        
+        test_data = {
+            'id': test.id,
+            'title': test.title,
+            'description': test.description,
+        }
+        
+        response_data = {
+            'id': response.id,
+            'status': response.status,
+            'completed_at': response.completed_at.isoformat(),
+            'completed_at_jalali': completed_at_jalali
+        }
+        
+        result_data = {
+            'id': result.id,
+            'raw_scores': result.raw_scores,
+            'summary': result.summary or {},
+            'holland_code': result.summary.get('holland_code', '') if result.summary else ''
+        }
+        
+        return Response({
+            'success': True,
+            'message': 'نتیجه تست با موفقیت دریافت شد',
+            'data': {
+                'test': test_data,
+                'response': response_data,
+                'result': result_data,
+                'scale_results': scale_results
+            }
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error in psychological_test_result_api: {str(e)}", exc_info=True)
+        return Response({
+            'success': False,
+            'message': f'خطا در دریافت نتیجه تست: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def last_test_register(request):
+    test = get_last_test_register()
+
+    if not test:
+        return Response(None, status=status.HTTP_200_OK)
+
+    serializer = PsychologicalTestSerializer(test)
+    return Response(serializer.data, status=status.HTTP_200_OK)

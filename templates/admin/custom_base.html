@@ -1,0 +1,72 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+
+<link rel="stylesheet" href="{% static 'admin-assets/bootstrap/css/bootstrap.min.css' %}">
+<link rel="stylesheet" href="{% static 'admin-assets/bootstrap-icons/bootstrap-icons.css' %}">
+<link rel="stylesheet" href="{% static 'admin-assets/css/style-rtl.css' %}">
+<link rel="stylesheet" href="{% static 'admin-assets/vendor/font-awesome/css/all.min.css' %}">
+
+<script src="{% static 'admin-assets/js/jquery-3.7.1.min.js' %}"></script>
+<script src="{% static 'admin-assets/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+<style>
+.fa,
+.fas,
+.fa-solid,
+.fa::before,
+.fas::before,
+.fa-solid::before {
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+    font-weight: 900 !important;
+}
+
+.far,
+.fa-regular,
+.far::before,
+.fa-regular::before {
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+    font-weight: 400 !important;
+}
+
+.fab,
+.fa-brands,
+.fab::before,
+.fa-brands::before {
+    font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands" !important;
+    font-weight: 400 !important;
+}
+
+.bi,
+.bi::before,
+[class^="bi-"]::before,
+[class*=" bi-"]::before {
+    font-family: "bootstrap-icons" !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    font-variant: normal !important;
+    text-transform: none !important;
+    line-height: 1 !important;
+    speak: never;
+}
+
+.fade {
+    transition: opacity 0.15s linear;
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fade {
+        transition: none;
+    }
+}
+
+.fade:not(.show) {
+    opacity: 0;
+}
+</style>
+
+{% block extra_js %}{% endblock %}
+{% endblock %}

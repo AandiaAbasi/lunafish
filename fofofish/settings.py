@@ -22,7 +22,7 @@ except ImportError:
     # If python-dotenv is not installed, config will try to read from environment
     pass
 
-SHOP_NAME = _("Nozima")
+SHOP_NAME = _("Lunafish")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     'classroom',
     'exercise',
     'classes',
+    'recommendation'
 ]
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
@@ -153,15 +154,30 @@ WSGI_APPLICATION = 'fofofish.wsgi.application'
 #         },
 #     }
 # }
-
+# اینجارو برای لوکال فعلا کامنت کردم
+# DATABASES = {
+#     'default': {
+#         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+#         'NAME': os.getenv('DB_NAME', 'fofofish'),
+#         'USER': os.getenv('DB_USER', 'fofofish'),
+#         'PASSWORD': os.getenv('DB_PASSWORD', ''),
+#         'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+#         'PORT': os.getenv('DB_PORT', '5432'),
+#     }
+# }
+# این رو برای لوکال گذاشتم
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': os.getenv('DB_NAME', 'fofofish'),
-        'USER': os.getenv('DB_USER', 'fofofish'),
+        'USER': os.getenv('DB_USER', 'root'),
         'PASSWORD': os.getenv('DB_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', '127.0.0.1'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'PORT': os.getenv('DB_PORT', '3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
 }
 
