@@ -15,21 +15,13 @@ class Migration(migrations.Migration):
             name='description_ar',
         ),
         migrations.RemoveField(
-            model_name='psychologicaltest',
-            name='title_ar',
-        ),
-        migrations.RemoveField(
             model_name='questionoption',
             name='option_text_ar',
         ),
         migrations.RemoveField(
             model_name='scaleinterpretation',
             name='description_ar',
-        ),
-        migrations.RemoveField(
-            model_name='scaleinterpretation',
-            name='title_ar',
-        ),
+        ), 
         migrations.RemoveField(
             model_name='testquestion',
             name='question_text_ar',
@@ -37,9 +29,5 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name='testscale',
             name='description_ar',
-        ),
-        migrations.RemoveField(
-            model_name='testscale',
-            name='title_ar',
-        ),
+        ), 
     ]
