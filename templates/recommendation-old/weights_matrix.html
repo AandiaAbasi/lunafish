@@ -1,0 +1,278 @@
+{% extends "admin/custom_base.html" %}
+{% load static %}
+{% load adviser_tags %}
+
+{% block title %}تخصیص وزن‌ها - {{ test.title }}{% endblock %}
+
+
+
+
+{% block content %}
+<style>
+    .weight-matrix-container {
+        overflow-x: auto;
+    }
+    
+    .weight-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .weight-table th,
+    .weight-table td {
+        padding: 12px;
+        border: 1px solid #dee2e6;
+        text-align: center;
+    }
+    
+    .weight-table thead th {
+        background: #0d6efd;
+        color: white;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .weight-table tbody tr:nth-child(even) {
+        background: #f8f9fa;
+    }
+    
+    .weight-table tbody tr:hover {
+        background: #e7f1ff;
+    }
+    
+    .question-col {
+        text-align: right;
+        font-weight: 500;
+        min-width: 200px;
+        max-width: 300px;
+    }
+    
+    .option-col {
+        text-align: right;
+        padding-right: 30px;
+        min-width: 150px;
+        max-width: 250px;
+    }
+    
+    .weight-input {
+        width: 80px;
+        text-align: center;
+        padding: 6px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+    }
+    
+    .weight-input:focus {
+        outline: none;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+    }
+    
+    .scale-header {
+        writing-mode: horizontal-tb;
+        white-space: nowrap;
+    }
+    
+    .question-header {
+        background: #6c757d;
+        color: white;
+        font-weight: bold;
+        text-align: right;
+    }
+    
+    .save-sticky {
+        position: sticky;
+        bottom: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        z-index: 100;
+        margin-top: 20px;
+    }
+    
+    .legend {
+        background: #fff3cd;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #ffc107;
+        margin-bottom: 20px;
+    }
+    
+    .legend ul {
+        margin: 0;
+        padding-right: 20px;
+    }
+</style>
+<div class="container-fluid content-inner pb-0">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mb-1">
+                            <i class="fas fa-balance-scale ms-1"></i>
+                            تخصیص وزن‌ها به گزینه‌ها
+                        </h4>
+                        <small class="text-muted">{{ test.title }}</small>
+                    </div>
+                    <a href="{% url 'recommendation:test_detail' test.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right ms-1"></i>
+                        بازگشت
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Legend -->
+            <div class="legend">
+                <h6 class="mb-2">
+                    <i class="fas fa-lightbulb ms-1"></i>
+                    راهنما:
+                </h6>
+                <ul class="small mb-0">
+                    <li>برای هر گزینه، وزن مربوط به هر مقیاس را وارد کنید</li>
+                    <li>وزن‌ها می‌توانند اعداد مثبت (مثل 1، 2) یا منفی (مثل -1، -0.5) باشند</li>
+                    <li>صفر یعنی این گزینه در آن مقیاس تأثیری ندارد</li>
+                    <li>برای تست هالند معمولاً از اعداد 1، 0، -1 استفاده می‌شود</li>
+                </ul>
+            </div>
+            
+            <!-- Weight Matrix -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" id="weightForm">
+                        {% csrf_token %}
+                        
+                        <div class="weight-matrix-container">
+                            <table class="weight-table">
+                                <thead>
+                                    <tr>
+                                        <th class="question-col">سوال</th>
+                                        <th class="option-col">گزینه</th>
+                                        {% for scale in scales %}
+                                            <th class="scale-header">
+                                                <div>{{ scale.code }}</div>
+                                                <small class="fw-normal">{{ scale.title }}</small>
+                                            </th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for question_data in matrix_data %}
+                                        {% for option_data in question_data.options %}
+                                            <tr>
+                                                {% if forloop.first %}
+                                                    <td class="question-header" rowspan="{{ question_data.options|length }}">
+                                                        <strong>سوال {{ question_data.question.order }}:</strong><br>
+                                                        <small>{{ question_data.question.question_text|truncatewords:15 }}</small>
+                                                    </td>
+                                                {% endif %}
+                                                <td class="option-col">
+                                                    {{ option_data.option.option_text }}
+                                                </td>
+                                                {% for scale in scales %}
+                                                    <td>
+                                                        <input type="number" 
+                                                               step="0.1" 
+                                                               class="weight-input"
+                                                               name="weight_option_{{ option_data.option.id }}_scale_{{ scale.id }}"
+                                                               value="{{ option_data.weights|get_weight:scale.code }}"
+                                                               placeholder="0">
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Save Button -->
+                        <div class="save-sticky">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-muted">
+                                    <i class="fas fa-info-circle ms-1"></i>
+                                    تعداد سوالات: {{ matrix_data|length }} | 
+                                    تعداد مقیاس‌ها: {{ scales|length }}
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-warning" id="clearBtn">
+                                        <i class="fas fa-eraser ms-1"></i>
+                                        پاک کردن همه
+                                    </button>
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-save ms-1"></i>
+                                        ذخیره وزن‌ها
+                                    </button>
+                                    <a href="{% url 'recommendation:test_detail' test.id %}" class="btn btn-secondary btn-lg">
+                                        <i class="fas fa-times ms-1"></i>
+                                        انصراف
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Clear All Weights
+document.getElementById('clearBtn').addEventListener('click', function() {
+    if (confirm('آیا مطمئن هستید که می‌خواهید تمام وزن‌ها را پاک کنید؟')) {
+        document.querySelectorAll('.weight-input').forEach(input => {
+            input.value = '0';
+        });
+    }
+});
+
+// Form Validation
+document.getElementById('weightForm').addEventListener('submit', function(e) {
+    const inputs = document.querySelectorAll('.weight-input');
+    let hasValue = false;
+    
+    inputs.forEach(input => {
+        if (input.value && input.value !== '0') {
+            hasValue = true;
+        }
+    });
+    
+    if (!hasValue) {
+        if (!confirm('هیچ وزنی تعیین نشده است. آیا می‌خواهید ادامه دهید؟')) {
+            e.preventDefault();
+            return false;
+        }
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl+S to save
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        document.getElementById('weightForm').submit();
+    }
+});
+
+// Auto-save draft (optional - store in localStorage)
+let saveTimer;
+document.querySelectorAll('.weight-input').forEach(input => {
+    input.addEventListener('input', function() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+            // Optional: Save to localStorage as draft
+            console.log('Auto-saving draft...');
+        }, 2000);
+    });
+});
+</script>
+{% endblock %}

@@ -12,7 +12,7 @@ import hashlib
 import jdatetime
 from core.abstract_models import BaseModel
 from core.utils import upload_to_dynamic
-
+from .english_level_choices import EnglishLevel
 
 class CustomUserManager(BaseUserManager):
     """Custom manager for username-based authentication"""
@@ -77,6 +77,44 @@ class User(AbstractUser, BaseModel):
         blank=True,
         null=True,
         unique=False  # Allow multiple users with no email
+    )
+    class EnglishLevelSource(models.TextChoices):
+        PLACEMENT_TEST = 'placement_test', _('Placement test')
+        ADMIN = 'admin', _('Admin assessment')
+        TEACHER = 'teacher', _('Teacher assessment')
+        IMPORTED = 'imported', _('Imported')
+
+
+    english_level = models.CharField(
+        _('سطح فعلی زبان انگلیسی'),
+        max_length=10,
+        choices=EnglishLevel.choices,
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+
+    english_level_source = models.CharField(
+        _('منبع تعیین سطح'),
+        max_length=30,
+        choices=EnglishLevelSource.choices,
+        null=True,
+        blank=True,
+    )
+
+    english_level_updated_at = models.DateTimeField(
+        _('زمان آخرین تعیین سطح'),
+        null=True,
+        blank=True,
+    )
+
+    english_level_assessed_by = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assessed_students',
+        verbose_name=_('تعیین سطح شده توسط'),
     )
     
     # Contact Information

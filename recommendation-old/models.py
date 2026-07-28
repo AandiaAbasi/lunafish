@@ -3,7 +3,6 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, MaxValueValidator
 from recommendation.abstract_models import BaseModel
 from django.conf import settings
 class PsychologicalTest(BaseModel):
@@ -13,8 +12,7 @@ class PsychologicalTest(BaseModel):
     
     TEST_TYPES = (
         ("register", _("Register")),
-        ("regular", _("Regular")),
-        ("english_placement", _("English placement")),
+        ("regular", _("Regular")), 
     )
     
     title = models.CharField(
@@ -29,7 +27,7 @@ class PsychologicalTest(BaseModel):
     )
     
     is_active = models.BooleanField(_('فعال'), default=True)
-    test_type = models.CharField(max_length=50, choices=TEST_TYPES, default='english_placement', verbose_name=_("Type"))
+    test_type = models.CharField(max_length=50, choices=TEST_TYPES, default='regular', verbose_name=_("Type"))
     class Meta:
         verbose_name = _('تست راهنمای مهاجرت')
         verbose_name_plural = _('Immigration Guide Tests')
@@ -253,17 +251,8 @@ class StudentAnswer(BaseModel):
 
 class TestScale(BaseModel):
     """
-    A scoring scale used by a test.
-
-    English placement tests use LEVEL scales (A1...C1) and SKILL scales
-    (GRAM, VOCAB, READ, USE). Existing tests can keep GENERAL.
+    Psychological scale or factor (e.g. R, I, A, S, E, C)
     """
-
-    class ScaleType(models.TextChoices):
-        GENERAL = 'general', _('عمومی')
-        LEVEL = 'level', _('سطح زبان')
-        SKILL = 'skill', _('مهارت زبان')
-
     test = models.ForeignKey(
         PsychologicalTest,
         on_delete=models.CASCADE,
@@ -283,25 +272,6 @@ class TestScale(BaseModel):
     description = models.TextField(
         _('توضیحات'),
         blank=True
-    )
-    scale_type = models.CharField(
-        _('نوع مقیاس'),
-        max_length=20,
-        choices=ScaleType.choices,
-        default=ScaleType.GENERAL,
-        db_index=True,
-    )
-    rank = models.PositiveSmallIntegerField(
-        _('ترتیب سطح'),
-        null=True,
-        blank=True,
-        help_text=_('برای سطح‌ها: A1=1، A2=2، B1=3، B2=4، C1=5'),
-    )
-    pass_score = models.FloatField(
-        _('حداقل امتیاز قبولی'),
-        default=70,
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
-        help_text=_('حداقل امتیاز لازم برای عبور از این سطح'),
     )
 
     class Meta:
@@ -381,123 +351,6 @@ class TestResult(BaseModel):
     def __str__(self):
         return f'نتیجه: {self.response.user.name} - {self.response.test.title}'
         
-class EnglishPlacementAssessment(BaseModel):
-    """
-    Immutable history item for an English placement submission or an admin/teacher
-    assessment. StudentTestResponse itself remains unique per test/user and keeps
-    being updated exactly as before.
-    """
-
-    class EnglishLevel(models.TextChoices):
-        PRE_A1 = 'pre_a1', _('Pre-A1')
-        A1 = 'a1', _('A1 - Beginner')
-        A2 = 'a2', _('A2 - Elementary')
-        B1 = 'b1', _('B1 - Intermediate')
-        B2 = 'b2', _('B2 - Upper Intermediate')
-        C1 = 'c1', _('C1 - Advanced')
-        C2 = 'c2', _('C2 - Proficient')
-
-    class Status(models.TextChoices):
-        PENDING = 'pending', _('در انتظار بررسی')
-        CONFIRMED = 'confirmed', _('تأیید شده')
-        OVERRIDDEN = 'overridden', _('تغییر داده شده توسط ارزیاب')
-
-    class Source(models.TextChoices):
-        TEST = 'test', _('آزمون تعیین سطح')
-        ADMIN = 'admin', _('تعیین دستی ادمین')
-        TEACHER = 'teacher', _('تعیین دستی مدرس')
-
-    student = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='english_placement_assessments',
-        verbose_name=_('دانش‌آموز'),
-    )
-    response = models.ForeignKey(
-        StudentTestResponse,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='placement_assessments',
-        verbose_name=_('پاسخ آزمون'),
-    )
-    test = models.ForeignKey(
-        PsychologicalTest,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='placement_assessments',
-        verbose_name=_('آزمون'),
-    )
-    suggested_level = models.CharField(
-        _('سطح پیشنهادی سیستم'),
-        max_length=10,
-        choices=EnglishLevel.choices,
-        null=True,
-        blank=True,
-        db_index=True,
-    )
-    final_level = models.CharField(
-        _('سطح نهایی'),
-        max_length=10,
-        choices=EnglishLevel.choices,
-        null=True,
-        blank=True,
-        db_index=True,
-    )
-    source = models.CharField(
-        _('روش تعیین سطح'),
-        max_length=20,
-        choices=Source.choices,
-        default=Source.TEST,
-    )
-    status = models.CharField(
-        _('وضعیت بررسی'),
-        max_length=20,
-        choices=Status.choices,
-        default=Status.PENDING,
-        db_index=True,
-    )
-    assessed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='performed_english_assessments',
-        verbose_name=_('بررسی شده توسط'),
-    )
-    assessed_at = models.DateTimeField(
-        _('زمان بررسی نهایی'),
-        null=True,
-        blank=True,
-    )
-    response_completed_at = models.DateTimeField(
-        _('زمان ثبت این نوبت آزمون'),
-        null=True,
-        blank=True,
-    )
-    raw_scores_snapshot = models.JSONField(
-        _('تصویر امتیازهای آزمون'),
-        default=dict,
-        blank=True,
-    )
-    result_summary_snapshot = models.JSONField(
-        _('تصویر خلاصه نتیجه'),
-        default=dict,
-        blank=True,
-    )
-    note = models.TextField(_('یادداشت ارزیاب'), blank=True)
-
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = _('تعیین سطح زبان')
-        verbose_name_plural = _('تاریخچه تعیین سطح زبان')
-
-    def __str__(self):
-        level = self.final_level or self.suggested_level or '-'
-        return f'{self.student} - {level}'
-
-
 class ScaleInterpretation(BaseModel):
     """
     Interpretation text for a scale based on score range.

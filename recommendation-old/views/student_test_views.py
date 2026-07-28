@@ -13,7 +13,7 @@ from django.utils.translation import gettext as _
 from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponseRedirect
 from django.contrib import messages
-from django.db import models, transaction
+from django.db import models
 from django.http import StreamingHttpResponse, HttpResponse
 import re
 from django.core.paginator import Paginator
@@ -347,7 +347,6 @@ def psychological_test_detail_api(request, test_id):
 @api_view(['POST'])
 
 @permission_classes([IsAuthenticated])
-@transaction.atomic
 def psychological_test_submit_api(request, test_id):
     """
     Submit answers to a psychological test.
@@ -475,21 +474,13 @@ def psychological_test_submit_api(request, test_id):
                 'errors': errors
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Mark as completed. The existing row is intentionally updated so the
-        # current one-response-per-user-per-test behaviour remains unchanged.
+        # Mark as completed
         response.status = 'completed'
         response.completed_at = timezone.now()
-        response.save(update_fields=['status', 'completed_at', 'updated_at'])
-
-        # Calculate immediately and save an immutable placement snapshot.
-        from recommendation.utils import calculate_test_result
-        from recommendation.services.placement_service import (
-            create_placement_history_from_result,
-        )
-
-        result = calculate_test_result(response)
-        create_placement_history_from_result(response, result)
-        has_result = result is not None
+        response.save()
+        
+        # Check if result was calculated (by signal)
+        has_result = hasattr(response, 'result')
         
         completed_at_jalali = ''
         if response.completed_at:
@@ -814,9 +805,7 @@ def psychological_test_result_api(request, test_id):
             'id': result.id,
             'raw_scores': result.raw_scores,
             'summary': result.summary or {},
-            'holland_code': result.summary.get('holland_code', '') if result.summary else '',
-            'suggested_level': result.summary.get('suggested_level') if result.summary else None,
-            'result_type': result.summary.get('result_type') if result.summary else None,
+            'holland_code': result.summary.get('holland_code', '') if result.summary else ''
         }
         
         return Response({

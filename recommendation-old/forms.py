@@ -127,7 +127,8 @@ class PsychologicalTestForm(TranslationFieldVisibilityMixin, forms.ModelForm):
         model = PsychologicalTest
         fields = [
             'title_fa', 'title_en',
-            'description_fa', 'description_en', 'is_active',
+            'description_fa', 'description_en',
+            'is_active',
         ]
         widgets = {
             'title_fa': forms.TextInput(attrs={
@@ -150,20 +151,11 @@ class PsychologicalTestForm(TranslationFieldVisibilityMixin, forms.ModelForm):
                 'placeholder': 'Description (English)',
             }),
              
+
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
             }),
         }
-        
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.test_type = "english_placement"
-
-        if commit:
-            instance.save()
-            self.save_m2m()
-
-        return instance
 
 
 class TestQuestionForm(TranslationFieldVisibilityMixin, forms.ModelForm):
@@ -265,27 +257,12 @@ class TestScaleForm(TranslationFieldVisibilityMixin, forms.ModelForm):
             'code',
             'title_fa', 'title_en',
             'description_fa', 'description_en',
-            'scale_type', 'rank', 'pass_score',
         ]
         widgets = {
             'code': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'مثال: R, I, A',
                 'maxlength': '20',
-            }),
-            'scale_type': forms.Select(attrs={
-                'class': 'form-select',
-            }),
-            'rank': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '1',
-                'placeholder': 'مثال: A1=1',
-            }),
-            'pass_score': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '0',
-                'max': '100',
-                'step': '0.01',
             }),
             'title_fa': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -311,25 +288,8 @@ class TestScaleForm(TranslationFieldVisibilityMixin, forms.ModelForm):
             'title_fa': _('عنوان مقیاس (فارسی)'),
             'title_en': _('عنوان مقیاس (انگلیسی)'),
             'description_fa': _('توضیحات (فارسی)'),
-            'description_en': _('توضیحات (انگلیسی)'),
-            'scale_type': _('نوع مقیاس'),
-            'rank': _('ترتیب سطح'),
-            'pass_score': _('حداقل امتیاز قبولی'),
+            'description_en': _('توضیحات (انگلیسی)'), 
         }
-
-
-    def clean_code(self):
-        return (self.cleaned_data.get('code') or '').strip().upper()
-
-    def clean(self):
-        cleaned_data = super().clean()
-        scale_type = cleaned_data.get('scale_type')
-        rank = cleaned_data.get('rank')
-
-        if scale_type == TestScale.ScaleType.LEVEL and not rank:
-            self.add_error('rank', _('برای مقیاس سطح زبان، ترتیب سطح الزامی است.'))
-
-        return cleaned_data
 
 
 class ScaleInterpretationForm(TranslationFieldVisibilityMixin, forms.ModelForm):

@@ -10,7 +10,7 @@ from .utils import send_sms, format_phone_display, send_sms_general
 import random
 import string
 from django.utils.translation import gettext_lazy as _
-
+from urllib.parse import urlencode
 
 # Utility function for datetime formatting
 def format_datetime_display(dt):
@@ -64,58 +64,226 @@ class TeacherCreationForm(forms.ModelForm):
 
 class RegularUserAdmin(BaseUserAdmin):
     """Admin for regular users only"""
-    
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.filter(role='user')
-    
+
     def has_add_permission(self, request):
         return False
-    
+
     def has_delete_permission(self, request, obj=None):
         return False
-    
+
     def created_at_display(self, obj):
         return format_datetime_display(obj.created_at)
+
     created_at_display.short_description = _('Registration Date')
-    
+
     def updated_at_display(self, obj):
         return format_datetime_display(obj.updated_at)
+
     updated_at_display.short_description = _('Last Update')
-    
+
     def last_login_jalali(self, obj):
         return format_datetime_display(obj.last_login)
+
     last_login_jalali.short_description = _('Last Login')
-    
-    def admin_actions(self, obj):
-        edit_url = reverse('admin:account_regularuserproxy_change', args=[obj.pk])
-        return format_html(
-            '<a href="{}" class="button" style="padding:5px 10px;">✏️ {}</a>',
-            edit_url, _('Edit')
-        )
-    admin_actions.short_description = _('Actions')
-    
-    list_display = ['username', 'email', 'phone', 'is_active', 'created_at_display', 'admin_actions']
-    list_filter = ['is_active', 'is_staff']
-    search_fields = ['username', 'email', 'phone']
-    ordering = ['-created_at']
-    
-    fieldsets = (
-        (_('Main Info'), {'fields': ('username', 'email', 'phone', 'role')}),
-        (_('Personal Info'), {'fields': ('profile_photo_path', 'bio', 'name')}),
-        (_('Dates'), {'fields': ('last_login_jalali', 'created_at_display', 'updated_at_display'), 'classes': ('collapse',)}),
+
+    @admin.display(
+        description=_('English Level'),
+        ordering='english_level',
     )
-    
-    readonly_fields = [
-        'username', 'email', 'phone',
-        'profile_photo_path', 'name', 'bio',
-        'created_at_display', 'updated_at_display', 'last_login_jalali'
+    def english_level_display(self, obj):
+        if not obj.english_level:
+            return format_html(
+                '<span style="color:#999;">{}</span>',
+                _('Not determined'),
+            )
+
+        return format_html(
+            '<strong style="'
+            'display:inline-block;'
+            'padding:4px 10px;'
+            'border-radius:20px;'
+            'background:#e8f0fe;'
+            'color:#174ea6;'
+            '">{}</strong>',
+            obj.get_english_level_display(),
+        )
+
+    @admin.display(description=_('Placement History'))
+    def placement_history_link(self, obj):
+        if not obj.pk:
+            return '-'
+
+        history_url = reverse(
+            'admin:recommendation_englishplacementassessment_changelist'
+        )
+        history_query = urlencode({
+            'student__id__exact': obj.pk,
+        })
+
+        add_url = reverse(
+            'admin:recommendation_englishplacementassessment_add'
+        )
+        add_query = urlencode({
+            'student': obj.pk,
+            'source': 'admin',
+        })
+
+        return format_html(
+            '<a class="button" href="{}?{}" style="margin-left:8px;">'
+            '📋 {}</a>'
+            '<a class="button" href="{}?{}" '
+            'style="background:#417690;color:#fff;">'
+            '🎯 {}</a>',
+            history_url,
+            history_query,
+            _('View history'),
+            add_url,
+            add_query,
+            _('Set level'),
+        )
+
+    def admin_actions(self, obj):
+        edit_url = reverse(
+            'admin:account_regularuserproxy_change',
+            args=[obj.pk],
+        )
+
+        history_url = reverse(
+            'admin:recommendation_englishplacementassessment_changelist'
+        )
+        history_query = urlencode({
+            'student__id__exact': obj.pk,
+        })
+
+        add_url = reverse(
+            'admin:recommendation_englishplacementassessment_add'
+        )
+        add_query = urlencode({
+            'student': obj.pk,
+            'source': 'admin',
+        })
+
+        return format_html(
+            '<a href="{}" class="button" '
+            'style="padding:5px 10px;margin-left:5px;">'
+            '✏️ {}</a>'
+            '<a href="{}?{}" class="button" '
+            'style="padding:5px 10px;margin-left:5px;">'
+            '📋 {}</a>'
+            '<a href="{}?{}" class="button" '
+            'style="padding:5px 10px;background:#417690;color:white;">'
+            '🎯 {}</a>',
+            edit_url,
+            _('Edit'),
+            history_url,
+            history_query,
+            _('History'),
+            add_url,
+            add_query,
+            _('Set level'),
+        )
+
+    admin_actions.short_description = _('Actions')
+
+    list_display = [
+        'username',
+        'email',
+        'phone',
+        'english_level_display',
+        'is_active',
+        'created_at_display',
+        'admin_actions',
     ]
-    
+
+    list_filter = [
+        'english_level',
+        'english_level_source',
+        'is_active',
+        'is_staff',
+    ]
+
+    search_fields = [
+        'username',
+        'email',
+        'phone',
+        'name',
+    ]
+
+    ordering = ['-created_at']
+
+    fieldsets = (
+        (
+            _('Main Info'),
+            {
+                'fields': (
+                    'username',
+                    'email',
+                    'phone',
+                    'role',
+                ),
+            },
+        ),
+        (
+            _('Personal Info'),
+            {
+                'fields': (
+                    'profile_photo_path',
+                    'bio',
+                    'name',
+                ),
+            },
+        ),
+        (
+            _('English Placement'),
+            {
+                'fields': (
+                    'english_level',
+                    'english_level_source',
+                    'english_level_updated_at',
+                    'english_level_assessed_by',
+                    'placement_history_link',
+                ),
+            },
+        ),
+        (
+            _('Dates'),
+            {
+                'fields': (
+                    'last_login_jalali',
+                    'created_at_display',
+                    'updated_at_display',
+                ),
+                'classes': ('collapse',),
+            },
+        ),
+    )
+
+    readonly_fields = [
+        'username',
+        'email',
+        'phone',
+        'profile_photo_path',
+        'name',
+        'bio',
+
+        # تعیین سطح فقط از بخش تاریخچه انجام شود
+        'english_level',
+        'english_level_source',
+        'english_level_updated_at',
+        'english_level_assessed_by',
+        'placement_history_link',
+
+        'created_at_display',
+        'updated_at_display',
+        'last_login_jalali',
+    ]
+
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-
-
 class TeacherUserAdmin(BaseUserAdmin):
     add_form = TeacherCreationForm
     

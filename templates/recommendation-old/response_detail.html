@@ -1,0 +1,163 @@
+{% extends "admin/custom_base.html" %}
+{% load static %}
+
+{% block title %}پاسخ‌های دانش‌آموز{% endblock %}
+
+{% block content %}
+<div class="container-fluid content-inner pb-0">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mb-1">پاسخ‌های: {{ student.get_full_name }}</h4>
+                        <small class="text-muted">
+                            تست: {{ test.title }}
+                        </small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'recommendation:test_results' test.id %}" class="btn btn-primary">
+                            <i class="fas fa-arrow-right ms-1"></i>
+                            بازگشت به نتایج
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response Info -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <p class="mb-2">
+                                <strong>دانش‌آموز:</strong><br>
+                                {{ student.first_name }} {{ student.last_name }}
+                            </p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="mb-2">
+                                <strong>کلاس:</strong><br>
+                                {% if student.school_class %}
+                                    {{ student.school_class.full_name }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="mb-2">
+                                <strong>تاریخ شروع:</strong><br>
+                                {% if response.started_at %}
+                                    {{ response.started_at }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="mb-2">
+                                <strong>تاریخ ارسال:</strong><br>
+                                {% if response.completed_at %}
+                                    {{ response.completed_at }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-12">
+                            <p class="mb-0">
+                                <strong>وضعیت:</strong>
+                                {% if response.status == 'completed' %}
+                                    <span class="badge bg-success">تکمیل شده</span>
+                                {% elif response.status == 'in_progress' %}
+                                    <span class="badge bg-warning">در حال پاسخ</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">شروع نشده</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Answers -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list-check ms-1"></i>
+                        پاسخ‌های ارسال شده
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if answers %}
+                        {% for answer in answers %}
+                            <div class="card mb-3 {% if forloop.last %}mb-0{% endif %}">
+                                <div class="card-header bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">
+                                            <span class="badge bg-primary ms-2">{{ answer.question.order }}</span>
+                                            {{ answer.question.question_text }}
+                                        </h6>
+                                        {% if answer.question.question_type %}
+                                            <span class="badge bg-info">
+                                                {{ answer.question.get_question_type_display }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    {% if answer.question.question_type == 'multiple_choice' %}
+                                        <!-- Multiple Choice Answer -->
+                                        <div class="row">
+                                            {% for option in answer.question.options.all %}
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" 
+                                                               {% if answer.selected_option_id == option.id %}checked{% endif %} 
+                                                               disabled>
+                                                        <label class="form-check-label {% if answer.selected_option_id == option.id %}fw-bold text-primary{% endif %}" style="opacity: 1;">
+                                                            {{ option.option_text }}
+                                                            {% if answer.selected_option_id == option.id %}
+                                                                <i class="fas fa-check-circle text-success ms-1"></i>
+                                                            {% endif %}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% elif answer.question.question_type == 'text_input' or answer.question.question_type == 'textarea' %}
+                                        <!-- Text Answer -->
+                                        <div class="alert alert-secondary mb-0">
+                                            <strong>پاسخ:</strong><br>
+                                            {{ answer.text_answer|default:"پاسخ داده نشده"|linebreaks }}
+                                        </div>
+                                    {% else %}
+                                        <!-- Other types -->
+                                        <div class="alert alert-info mb-0">
+                                            {% if answer.text_answer %}
+                                                <strong>پاسخ:</strong> {{ answer.text_answer }}
+                                            {% elif answer.selected_option %}
+                                                <strong>پاسخ:</strong> {{ answer.selected_option.option_text }}
+                                            {% else %}
+                                                <span class="text-muted">پاسخ داده نشده</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle ms-1"></i>
+                            هنوز پاسخی ثبت نشده است.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,299 @@
+{% extends "admin/custom_base.html" %}
+{% load static %}
+
+{% block title %}{{ test.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid content-inner pb-0">
+    <div class="row">
+        <div class="col-12">
+            <!-- Test Header Card -->
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mb-1">{{ test.title }}</h4>
+                        <small class="text-muted">
+                            ایجاد شده در {{ test.created_at }}
+                        </small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if test.is_active %}
+                            <span class="badge bg-success">فعال</span>
+                        {% else %}
+                            <span class="badge bg-secondary">غیرفعال</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Description -->
+                    {% if test.description %}
+                        <div class="mb-3">
+                            <h6 class="text-muted">توضیحات:</h6>
+                            <p>{{ test.description }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Instructions -->
+                    {% if test.instructions %}
+                        <div class="mb-3">
+                            <h6 class="text-muted">دستورالعمل:</h6>
+                            <p class="text-secondary">{{ test.instructions }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Statistics -->
+                    <div class="row g-3 text-center">
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3 class="text-primary">{{ test.questions.count }}</h3>
+                                    <p class="text-muted mb-0">تعداد سوالات</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3 class="text-success">{{ test.assignment_count }}</h3>
+                                    <p class="text-muted mb-0">کلاس‌های تخصیص داده شده</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3 class="text-info">{{ test.total_responses }}</h3>
+                                    <p class="text-muted mb-0">کل پاسخ‌ها</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3 class="text-warning">{{ test.completed_responses }}</h3>
+                                    <p class="text-muted mb-0">پاسخ‌های تکمیل شده</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 mt-4 flex-wrap">
+                        <a href="{% url 'recommendation:test_edit' test.id %}" class="btn btn-primary">
+                            <i class="fas fa-edit ms-1"></i>
+                            ویرایش
+                        </a>
+                        
+                        {% if test.assignments.count > 0 %}
+                            <a href="{% url 'recommendation:test_results' test.id %}" class="btn btn-info">
+                                <i class="fas fa-chart-bar ms-1"></i>
+                                مشاهده نتایج
+                            </a>
+                        {% endif %}
+                        {% if scales and test.completed_responses > 0 %}
+                            <a href="{% url 'recommendation:test_recalculate_results' test.id %}" class="btn btn-warning" 
+                               onclick="return confirm('آیا مطمئن هستید که می‌خواهید نتایج را مجدداً محاسبه کنید؟ این عملیات ممکن است زمان‌بر باشد.')">
+                                <i class="fas fa-sync-alt ms-1"></i>
+                                محاسبه مجدد نتایج
+                            </a>
+                        {% endif %}
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="fas fa-trash ms-1"></i>
+                            حذف
+                        </button>
+                        <a href="{% url 'recommendation:test_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right ms-1"></i>
+                            بازگشت
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Questions Card -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle ms-1"></i>
+                        سوالات ({{ test.questions.count }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for question in test.questions.all %}
+                        <div class="mb-4 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="text-primary">
+                                    <span class="badge bg-primary ms-1">{{ forloop.counter }}</span>
+                                    {{ question.question_text }}
+                                </h6>
+                                <!-- <div>
+                                    {% if question.is_required %}
+                                        <span class="badge bg-danger">اجباری</span>
+                                    {% endif %}
+                                    <span class="badge bg-secondary">
+                                        {% if question.question_type == 'multiple_choice' %}
+                                            چندگزینه‌ای
+                                        {% elif question.question_type == 'text_input' %}
+                                            متن کوتاه
+                                        {% else %}
+                                            متن بلند
+                                        {% endif %}
+                                    </span>
+                                </div> -->
+                            </div>
+                            
+                            <!-- Options for multiple choice -->
+                            {% if question.question_type == 'multiple_choice' %}
+                                <div class="ms-4">
+                                    {% for option in question.options.all %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" disabled>
+                                            <label class="form-check-label">
+                                                {{ option.option_text }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle ms-1"></i>
+                            هیچ سوالی برای این تست تعریف نشده است.
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Scales Card -->
+            {% if scales %}
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-balance-scale ms-1"></i>
+                            مقیاس‌های تست ({{ scales|length }})
+                        </h5>
+                        {% if can_assign_weights %}
+                            <a href="{% url 'recommendation:test_weights' test.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-sliders-h ms-1"></i>
+                                تخصیص وزن‌ها
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if can_assign_weights %}
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-info-circle ms-1"></i>
+                                تست شما آماده تخصیص وزن‌هاست. با کلیک روی دکمه "تخصیص وزن‌ها"، وزن هر گزینه را برای هر مقیاس مشخص کنید.
+                            </div>
+                        {% elif not test.questions.filter|slice:":1" %}
+                            <div class="alert alert-warning mb-3">
+                                <i class="fas fa-exclamation-triangle ms-1"></i>
+                                ابتدا سوالات چندگزینه‌ای را به تست اضافه کنید تا بتوانید وزن‌ها را تخصیص دهید.
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning mb-3">
+                                <i class="fas fa-exclamation-triangle ms-1"></i>
+                                برخی سوالات چندگزینه‌ای هنوز گزینه ندارند. لطفاً ابتدا از بخش ویرایش، گزینه‌ها را اضافه کنید.
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row g-3">
+                            {% for scale in scales %}
+                                <div class="col-md-6">
+                                    <div class="card border">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <h6 class="text-primary mb-1">
+                                                        <span class="badge bg-primary ms-1">{{ scale.code }}</span>
+                                                        {{ scale.title }}
+                                                    </h6>
+                                                    {% if scale.description %}
+                                                        <small class="text-muted">{{ scale.description }}</small>
+                                                    {% endif %}
+                                                </div>
+                                                <a 
+                                                 href="{% url 'recommendation:scale_interpretations' test.id scale.id %}"  
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   title="مدیریت بازه‌های تفسیری">
+                                                    <i class="fas fa-cog"></i>
+                                                </a>
+                                            </div>
+                                            
+                                            <!-- Interpretation Ranges -->
+                                            {% if scale.interpretations.all %}
+                                                <div class="mt-2">
+                                                    <small class="text-muted d-block mb-2">
+                                                        <i class="fas fa-chart-line ms-1"></i>
+                                                        بازه‌های تفسیر ({{ scale.interpretations.count }} مورد):
+                                                    </small>
+                                                    <div class="interpretation-ranges">
+                                                        {% for interp in scale.interpretations.all %}
+                                                            <div class="d-flex justify-content-between align-items-center mb-1 ps-3">
+                                                                <span class="badge bg-secondary small">
+                                                                    {{ interp.min_score }} - {{ interp.max_score }}
+                                                                </span>
+                                                                <small class="text-truncate ms-2" style="max-width: 150px;" title="{{ interp.title }}">
+                                                                    {{ interp.title|truncatechars:25 }}
+                                                                </small>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-warning small mt-2 mb-0 py-2">
+                                                    <i class="fas fa-exclamation-triangle ms-1"></i>
+                                                    هیچ بازه تفسیری تعریف نشده است
+                                                    <br>
+                                                    <small>برای تعریف بازه‌ها روی دکمه <i class="fas fa-cog"></i> کلیک کنید</small>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+     
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تایید حذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>آیا مطمئن هستید که می‌خواهید این تست را حذف کنید؟</p>
+                {% if test.assignments.count > 0 %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle ms-1"></i>
+                        توجه: این تست به {{ test.assignments.count }} کلاس تخصیص داده شده است.
+                    </div>
+                {% endif %}
+                {% if test.total_responses > 0 %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle ms-1"></i>
+                        هشدار: {{ test.total_responses }} دانش‌آموز به این تست پاسخ داده‌اند.
+                    </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <form method="post" action="{% url 'recommendation:test_delete' test.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">حذف قطعی</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
