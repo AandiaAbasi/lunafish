@@ -75,12 +75,9 @@ def calculate_test_result(student_response):
     # Round scores to 2 decimal places
     scale_scores = {k: round(v, 2) for k, v in scale_scores.items()}
     
-    # Generate a test-specific summary. English placement tests must not use
-    # Holland-style highest-scale logic.
-    if test.test_type == 'english_placement':
-        summary = generate_english_placement_summary(scale_scores, scales)
-    else:
-        summary = generate_test_summary(scale_scores, scales)
+    # This application now stores only English placement tests. Never generate
+    # Holland-style fields such as holland_code/top_3_scales for these results.
+    summary = generate_english_placement_summary(scale_scores, scales)
     
     # Match interpretations
     interpretations = match_interpretations(scale_scores, scales)

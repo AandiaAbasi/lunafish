@@ -121,13 +121,14 @@ class TranslationFieldVisibilityMixin:
 
 # Psychological Test Forms
 class PsychologicalTestForm(TranslationFieldVisibilityMixin, forms.ModelForm):
-    """Form for creating/editing psychological tests with multilingual fields."""
-    
+    """Form for creating/editing English placement tests."""
+
     class Meta:
         model = PsychologicalTest
         fields = [
             'title_fa', 'title_en',
-            'description_fa', 'description_en', 'is_active',
+            'description_fa', 'description_en',
+            'is_active',
         ]
         widgets = {
             'title_fa': forms.TextInput(attrs={
@@ -138,7 +139,6 @@ class PsychologicalTestForm(TranslationFieldVisibilityMixin, forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Title (English)',
             }),
-
             'description_fa': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
@@ -149,20 +149,17 @@ class PsychologicalTestForm(TranslationFieldVisibilityMixin, forms.ModelForm):
                 'rows': 3,
                 'placeholder': 'Description (English)',
             }),
-             
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
             }),
         }
-        
+
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.test_type = "english_placement"
-
+        instance.test_type = 'english_placement'
         if commit:
             instance.save()
             self.save_m2m()
-
         return instance
 
 
@@ -257,8 +254,25 @@ OptionFormSet = inlineformset_factory(
 # ===== Scale and Interpretation Forms =====
 
 class TestScaleForm(TranslationFieldVisibilityMixin, forms.ModelForm):
-    """Form for defining psychological scales/factors."""
-    
+    """Form for defining CEFR level and English-skill scales."""
+
+    LEVEL_RANKS = {
+        'A1': 1,
+        'A2': 2,
+        'B1': 3,
+        'B2': 4,
+        'C1': 5,
+        'C2': 6,
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # These values are filled automatically for standard CEFR levels.
+        # Keeping them optional prevents a silent invalid formset when the admin
+        # selects "level" but leaves rank/pass score blank.
+        self.fields['rank'].required = False
+        self.fields['pass_score'].required = False
+
     class Meta:
         model = TestScale
         fields = [
@@ -324,10 +338,28 @@ class TestScaleForm(TranslationFieldVisibilityMixin, forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         scale_type = cleaned_data.get('scale_type')
+        code = (cleaned_data.get('code') or '').strip().upper()
         rank = cleaned_data.get('rank')
+        pass_score = cleaned_data.get('pass_score')
 
-        if scale_type == TestScale.ScaleType.LEVEL and not rank:
-            self.add_error('rank', _('برای مقیاس سطح زبان، ترتیب سطح الزامی است.'))
+        if scale_type == TestScale.ScaleType.LEVEL:
+            if not rank:
+                auto_rank = self.LEVEL_RANKS.get(code)
+                if auto_rank:
+                    cleaned_data['rank'] = auto_rank
+                else:
+                    self.add_error(
+                        'rank',
+                        _('برای مقیاس سطح زبان، ترتیب سطح را وارد کنید.'),
+                    )
+
+            if pass_score is None:
+                cleaned_data['pass_score'] = 60 if code == 'A1' else 70
+        else:
+            # Rank only has meaning for CEFR level scales.
+            cleaned_data['rank'] = None
+            if pass_score is None:
+                cleaned_data['pass_score'] = 0
 
         return cleaned_data
 

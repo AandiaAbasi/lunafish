@@ -143,6 +143,16 @@
                 <div class="card-body">
                     <form method="post" id="testForm">
                         {% csrf_token %}
+
+                        {% if form.errors or question_formset.errors or scale_formset.errors or scale_formset.non_form_errors %}
+                            <div class="alert alert-danger mb-4">
+                                <strong>فرم ذخیره نشد.</strong>
+                                لطفاً خطاهای مشخص‌شده را اصلاح کنید.
+                                {% if scale_formset.non_form_errors %}
+                                    <div class="mt-2">{{ scale_formset.non_form_errors }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                         
                         <!-- Step 1: Basic Information -->
                         <div class="mb-4">
@@ -203,7 +213,6 @@
                                 
                                  
                                 
-                                 
                                 <div class="col-md-12">
                                     <div class="form-check form-switch">
                                         {{ form.is_active }}
@@ -398,15 +407,28 @@
                                                         <div class="text-danger small">{{ scale_form.scale_type.errors }}</div>
                                                     {% endif %}
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-4 scale-rank-wrapper">
                                                     <label class="form-label">ترتیب سطح</label>
                                                     {{ scale_form.rank }}
-                                                    <div class="form-text">فقط برای سطح‌ها؛ A1=1، A2=2، B1=3 و ...</div>
+                                                    {% if scale_form.rank.errors %}
+                                                        <div class="text-danger small">{{ scale_form.rank.errors }}</div>
+                                                    {% endif %}
+                                                    <div class="form-text">برای A1 تا C2 به‌صورت خودکار تنظیم می‌شود.</div>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-4 scale-pass-score-wrapper">
                                                     <label class="form-label">حداقل امتیاز قبولی</label>
                                                     {{ scale_form.pass_score }}
+                                                    {% if scale_form.pass_score.errors %}
+                                                        <div class="text-danger small">{{ scale_form.pass_score.errors }}</div>
+                                                    {% endif %}
                                                 </div>
+                                                {% if scale_form.non_field_errors %}
+                                                    <div class="col-12">
+                                                        <div class="alert alert-danger py-2 mb-0">
+                                                            {{ scale_form.non_field_errors }}
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
                                                 <div class="col-md-4">
                                                     <label class="form-label">عنوان مقیاس (فارسی)</label>
                                                     {{ scale_form.title_fa }}
@@ -1063,7 +1085,7 @@ function createScaleHTML(index) {
                             <option value="skill">مهارت زبان</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 scale-rank-wrapper">
                         <label class="form-label">ترتیب سطح</label>
                         <input type="number"
                                name="scales-${index}-rank"
@@ -1072,7 +1094,7 @@ function createScaleHTML(index) {
                                min="1"
                                placeholder="مثال: A1=1">
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 scale-pass-score-wrapper">
                         <label class="form-label">حداقل امتیاز قبولی</label>
                         <input type="number"
                                name="scales-${index}-pass_score"
@@ -1131,30 +1153,90 @@ function createScaleHTML(index) {
 }
 
 // Attach Scale Events
+const CEFR_LEVEL_RANKS = {
+    A1: 1,
+    A2: 2,
+    B1: 3,
+    B2: 4,
+    C1: 5,
+    C2: 6,
+};
+
+function syncScaleFields(scaleItem) {
+    const typeSelect = scaleItem.querySelector('select[name$="-scale_type"]');
+    const codeInput = scaleItem.querySelector('input[name$="-code"]');
+    const rankInput = scaleItem.querySelector('input[name$="-rank"]');
+    const passScoreInput = scaleItem.querySelector('input[name$="-pass_score"]');
+    const rankWrapper = scaleItem.querySelector('.scale-rank-wrapper');
+
+    if (!typeSelect || !rankInput || !passScoreInput) {
+        return;
+    }
+
+    const isLevel = typeSelect.value === 'level';
+    const code = (codeInput?.value || '').trim().toUpperCase();
+
+    if (rankWrapper) {
+        rankWrapper.style.opacity = isLevel ? '1' : '0.55';
+    }
+
+    rankInput.disabled = !isLevel;
+    rankInput.required = isLevel;
+
+    if (isLevel) {
+        const autoRank = CEFR_LEVEL_RANKS[code];
+        if (autoRank && !rankInput.value) {
+            rankInput.value = autoRank;
+        }
+
+        if (!passScoreInput.value) {
+            passScoreInput.value = code === 'A1' ? '60' : '70';
+        }
+    } else {
+        rankInput.required = false;
+        rankInput.value = '';
+    }
+}
+
 function attachScaleEvents() {
-    document.querySelectorAll('.remove-scale-btn').forEach(btn => {
-        btn.onclick = function() {
-            const scaleItem = this.closest('.scale-item');
-            const deleteInput = scaleItem.querySelector('input[name$="-DELETE"]');
-            const idInput = scaleItem.querySelector('input[name$="-id"]');
-            
-            // اگر scale موجود هست (دارای id)
-            if (idInput && idInput.value) {
-                deleteInput.value = 'on';
-                scaleItem.style.display = 'none';
-                // TOTAL_FORMS رو دست نزن!
-            } else {
-                // scale جدید - از DOM حذف کن
-                scaleItem.remove();
-                
-                // TOTAL_FORMS رو کم کن
-                const totalForms = document.getElementById('id_scales-TOTAL_FORMS');
-                totalForms.value = parseInt(totalForms.value) - 1;
-                
-                // scaleCounter رو هم کم کن
-                scaleCounter--;
-            }
-        };
+    document.querySelectorAll('.scale-item').forEach(scaleItem => {
+        const removeBtn = scaleItem.querySelector('.remove-scale-btn');
+        const typeSelect = scaleItem.querySelector('select[name$="-scale_type"]');
+        const codeInput = scaleItem.querySelector('input[name$="-code"]');
+
+        if (removeBtn) {
+            removeBtn.onclick = function() {
+                const deleteInput = scaleItem.querySelector('input[name$="-DELETE"]');
+                const idInput = scaleItem.querySelector('input[name$="-id"]');
+
+                if (idInput && idInput.value) {
+                    deleteInput.value = 'on';
+                    scaleItem.style.display = 'none';
+                } else {
+                    scaleItem.remove();
+                    const totalForms = document.getElementById('id_scales-TOTAL_FORMS');
+                    totalForms.value = Math.max(0, parseInt(totalForms.value || '0', 10) - 1);
+                    scaleCounter = Math.max(0, scaleCounter - 1);
+                }
+            };
+        }
+
+        if (typeSelect) {
+            typeSelect.onchange = () => syncScaleFields(scaleItem);
+        }
+
+        if (codeInput) {
+            codeInput.oninput = () => {
+                codeInput.value = codeInput.value.toUpperCase();
+                const rankInput = scaleItem.querySelector('input[name$="-rank"]');
+                if (typeSelect?.value === 'level' && CEFR_LEVEL_RANKS[codeInput.value.trim()]) {
+                    rankInput.value = CEFR_LEVEL_RANKS[codeInput.value.trim()];
+                }
+                syncScaleFields(scaleItem);
+            };
+        }
+
+        syncScaleFields(scaleItem);
     });
 }
 

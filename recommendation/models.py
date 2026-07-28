@@ -29,7 +29,7 @@ class PsychologicalTest(BaseModel):
     )
     
     is_active = models.BooleanField(_('فعال'), default=True)
-    test_type = models.CharField(max_length=50, choices=TEST_TYPES, default='english_placement', verbose_name=_("Type"))
+    test_type = models.CharField(max_length=50, choices=TEST_TYPES, default='english_placement', editable=False, verbose_name=_("Type"))
     class Meta:
         verbose_name = _('تست راهنمای مهاجرت')
         verbose_name_plural = _('Immigration Guide Tests')

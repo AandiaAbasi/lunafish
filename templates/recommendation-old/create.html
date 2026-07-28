@@ -203,6 +203,7 @@
                                 
                                  
                                 
+                                 
                                 <div class="col-md-12">
                                     <div class="form-check form-switch">
                                         {{ form.is_active }}
@@ -389,6 +390,22 @@
                                                             حذف
                                                         </label>
                                                     </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">نوع مقیاس</label>
+                                                    {{ scale_form.scale_type }}
+                                                    {% if scale_form.scale_type.errors %}
+                                                        <div class="text-danger small">{{ scale_form.scale_type.errors }}</div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">ترتیب سطح</label>
+                                                    {{ scale_form.rank }}
+                                                    <div class="form-text">فقط برای سطح‌ها؛ A1=1، A2=2، B1=3 و ...</div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">حداقل امتیاز قبولی</label>
+                                                    {{ scale_form.pass_score }}
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label class="form-label">عنوان مقیاس (فارسی)</label>
@@ -929,7 +946,7 @@ function reindexScales() {
     
     visibleScales.forEach((scale, newIndex) => {
         // Find all inputs in this scale
-        scale.querySelectorAll('input, textarea').forEach(field => {
+        scale.querySelectorAll('input, textarea, select').forEach(field => {
             // Extract old index from field name
             const nameMatch = field.name.match(/scales-(\d+)-/);
             if (nameMatch) {
@@ -1035,6 +1052,33 @@ function createScaleHTML(index) {
                             <i class="fas fa-trash"></i>
                         </button>
                         <input type="hidden" name="scales-${index}-DELETE" id="id_scales-${index}-DELETE" value="">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">نوع مقیاس</label>
+                        <select name="scales-${index}-scale_type"
+                                id="id_scales-${index}-scale_type"
+                                class="form-select">
+                            <option value="general" selected>عمومی</option>
+                            <option value="level">سطح زبان</option>
+                            <option value="skill">مهارت زبان</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">ترتیب سطح</label>
+                        <input type="number"
+                               name="scales-${index}-rank"
+                               id="id_scales-${index}-rank"
+                               class="form-control"
+                               min="1"
+                               placeholder="مثال: A1=1">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">حداقل امتیاز قبولی</label>
+                        <input type="number"
+                               name="scales-${index}-pass_score"
+                               id="id_scales-${index}-pass_score"
+                               class="form-control"
+                               min="0" max="100" step="0.01" value="70">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">عنوان مقیاس (فارسی)</label>

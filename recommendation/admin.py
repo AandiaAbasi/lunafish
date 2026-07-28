@@ -1,4 +1,3 @@
-import json
 from urllib.parse import urlencode
 
 from django.contrib import admin, messages
@@ -15,6 +14,7 @@ from recommendation.models import (
     TestResult,
 )
 from recommendation.services.placement_service import sync_user_english_level
+from recommendation.admin_result_renderer import render_placement_result
 
 
 class StudentAnswerInline(admin.TabularInline):
@@ -34,13 +34,12 @@ class PsychologicalTestAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'title',
-        'test_type',
         'responses_count',
         'results_button',
         'edit_button',
         'view_button',
     )
-    list_filter = ('test_type', 'is_active')
+    list_filter = ('is_active',)
     search_fields = ('title', 'description')
     list_display_links = None
 
@@ -94,8 +93,7 @@ class StudentTestResponseAdmin(admin.ModelAdmin):
     readonly_fields = (
         'started_at',
         'completed_at',
-        'scores_preview',
-        'summary_preview',
+        'placement_result_preview',
         'placement_history_link',
     )
     inlines = (StudentAnswerInline,)
@@ -119,24 +117,22 @@ class StudentTestResponseAdmin(admin.ModelAdmin):
         assessment = self._latest_assessment(obj)
         return assessment.get_final_level_display() if assessment and assessment.final_level else '-'
 
-    @admin.display(description='امتیازها')
-    def scores_preview(self, obj):
+    @admin.display(description='نتیجه تعیین سطح')
+    def placement_result_preview(self, obj):
         result = getattr(obj, 'result', None)
         if not result:
-            return '-'
-        return format_html(
-            '<pre style="direction:ltr;text-align:left;white-space:pre-wrap">{}</pre>',
-            json.dumps(result.raw_scores, ensure_ascii=False, indent=2),
-        )
+            return format_html(
+                '<div style="padding:12px;border:1px solid #fde68a;background:#fffbeb;border-radius:10px;">'
+                'هنوز نتیجه‌ای برای این پاسخ محاسبه نشده است.'
+                '</div>'
+            )
 
-    @admin.display(description='خلاصه نتیجه')
-    def summary_preview(self, obj):
-        result = getattr(obj, 'result', None)
-        if not result:
-            return '-'
-        return format_html(
-            '<pre style="direction:ltr;text-align:left;white-space:pre-wrap">{}</pre>',
-            json.dumps(result.summary, ensure_ascii=False, indent=2),
+        latest = self._latest_assessment(obj)
+        final_level = latest.final_level if latest else None
+        return render_placement_result(
+            raw_scores=result.raw_scores,
+            summary=result.summary,
+            final_level=final_level,
         )
 
     @admin.display(description='تاریخچه تعیین سطح')
@@ -160,8 +156,8 @@ class TestResultAdmin(admin.ModelAdmin):
     list_filter = ('response__test', 'response__test__test_type', 'calculated_at')
     search_fields = ('response__user__name', 'response__test__title')
     raw_id_fields = ('response',)
-    fields = ('response', 'calculated_at', 'raw_scores_preview', 'summary_preview')
-    readonly_fields = ('response', 'calculated_at', 'raw_scores_preview', 'summary_preview')
+    fields = ('response', 'calculated_at', 'placement_result_preview')
+    readonly_fields = ('response', 'calculated_at', 'placement_result_preview')
 
     def has_add_permission(self, request):
         return False
@@ -181,18 +177,14 @@ class TestResultAdmin(admin.ModelAdmin):
     def suggested_level(self, obj):
         return (obj.summary or {}).get('suggested_level', '-')
 
-    @admin.display(description='امتیازها')
-    def raw_scores_preview(self, obj):
-        return format_html(
-            '<pre style="direction:ltr;text-align:left;white-space:pre-wrap">{}</pre>',
-            json.dumps(obj.raw_scores, ensure_ascii=False, indent=2),
-        )
-
-    @admin.display(description='خلاصه نتیجه')
-    def summary_preview(self, obj):
-        return format_html(
-            '<pre style="direction:ltr;text-align:left;white-space:pre-wrap">{}</pre>',
-            json.dumps(obj.summary, ensure_ascii=False, indent=2),
+    @admin.display(description='نتیجه تعیین سطح')
+    def placement_result_preview(self, obj):
+        latest = obj.response.placement_assessments.order_by('-created_at').first()
+        final_level = latest.final_level if latest else None
+        return render_placement_result(
+            raw_scores=obj.raw_scores,
+            summary=obj.summary,
+            final_level=final_level,
         )
 
 
@@ -225,8 +217,7 @@ class EnglishPlacementAssessmentAdmin(admin.ModelAdmin):
         'assessed_by',
         'assessed_at',
         'response_completed_at',
-        'raw_scores_preview',
-        'summary_preview',
+        'placement_result_preview',
     )
     actions = ('confirm_suggested_level',)
     date_hierarchy = 'created_at'
@@ -243,7 +234,7 @@ class EnglishPlacementAssessmentAdmin(admin.ModelAdmin):
             'fields': ('assessed_by', 'assessed_at', 'response_completed_at'),
         }),
         ('Snapshot نتیجه آزمون', {
-            'fields': ('raw_scores_preview', 'summary_preview'),
+            'fields': ('placement_result_preview',),
             'classes': ('collapse',),
         }),
     )
@@ -260,18 +251,19 @@ class EnglishPlacementAssessmentAdmin(admin.ModelAdmin):
     def final_level_display(self, obj):
         return obj.get_final_level_display() if obj.final_level else '-'
 
-    @admin.display(description='امتیازهای ثبت‌شده')
-    def raw_scores_preview(self, obj):
-        return format_html(
-            '<pre style="direction:ltr;text-align:left;white-space:pre-wrap">{}</pre>',
-            json.dumps(obj.raw_scores_snapshot or {}, ensure_ascii=False, indent=2),
-        )
+    @admin.display(description='نتیجه ثبت‌شده آزمون')
+    def placement_result_preview(self, obj):
+        if not obj.raw_scores_snapshot and not obj.result_summary_snapshot:
+            return format_html(
+                '<div style="padding:12px;border:1px solid #e5e7eb;background:#f8fafc;border-radius:10px;">'
+                'این تعیین سطح به‌صورت دستی ثبت شده و نتیجه آزمون ندارد.'
+                '</div>'
+            )
 
-    @admin.display(description='خلاصه ثبت‌شده')
-    def summary_preview(self, obj):
-        return format_html(
-            '<pre style="direction:ltr;text-align:left;white-space:pre-wrap">{}</pre>',
-            json.dumps(obj.result_summary_snapshot or {}, ensure_ascii=False, indent=2),
+        return render_placement_result(
+            raw_scores=obj.raw_scores_snapshot,
+            summary=obj.result_summary_snapshot,
+            final_level=obj.final_level,
         )
 
     def save_model(self, request, obj, form, change):
