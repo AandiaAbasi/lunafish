@@ -1,4 +1,5 @@
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 
 
 LEVEL_CODES = ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')
@@ -139,13 +140,13 @@ def render_placement_result(raw_scores=None, summary=None, final_level=None):
 
     warning = ''
     if is_legacy:
-        warning = format_html(
+        warning = mark_safe(
             '<div style="padding:10px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin-bottom:14px;">'
             'این نتیجه با ساختار قدیمی ذخیره شده است. گزینه «محاسبه مجدد نتیجه» را اجرا کنید.'
             '</div>'
         )
     elif all_zero:
-        warning = format_html(
+        warning = mark_safe(
             '<div style="padding:10px 12px;border-radius:10px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;margin-bottom:14px;">'
             'تمام امتیازها صفر هستند. وزن گزینه‌های صحیح را بررسی کنید و سپس نتیجه را مجدداً محاسبه کنید.'
             '</div>'
@@ -173,7 +174,7 @@ def render_placement_result(raw_scores=None, summary=None, final_level=None):
                 pass_scores.get(code),
             ),
         ) for code, score in level_scores.items()),
-    ) or format_html('<span style="color:#6b7280;">امتیاز سطحی ثبت نشده است.</span>')
+    ) or mark_safe('<span style="color:#6b7280;">امتیاز سطحی ثبت نشده است.</span>')
 
     skill_cards = format_html_join(
         '',
@@ -186,7 +187,7 @@ def render_placement_result(raw_scores=None, summary=None, final_level=None):
                 detail_map.get(code, {}).get('description', ''),
             ),
         ) for code, score in skill_scores.items()),
-    ) or format_html('<span style="color:#6b7280;">امتیاز مهارتی ثبت نشده است.</span>')
+    ) or mark_safe('<span style="color:#6b7280;">امتیاز مهارتی ثبت نشده است.</span>')
 
     interpretations = summary.get('interpretations') or {}
     interpretation_items = []

@@ -399,3 +399,4 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='info@lunafish.app')
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000

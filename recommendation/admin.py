@@ -5,6 +5,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from recommendation.models import (
     EnglishPlacementAssessment,
@@ -121,7 +122,7 @@ class StudentTestResponseAdmin(admin.ModelAdmin):
     def placement_result_preview(self, obj):
         result = getattr(obj, 'result', None)
         if not result:
-            return format_html(
+            return mark_safe(
                 '<div style="padding:12px;border:1px solid #fde68a;background:#fffbeb;border-radius:10px;">'
                 'هنوز نتیجه‌ای برای این پاسخ محاسبه نشده است.'
                 '</div>'
@@ -254,7 +255,7 @@ class EnglishPlacementAssessmentAdmin(admin.ModelAdmin):
     @admin.display(description='نتیجه ثبت‌شده آزمون')
     def placement_result_preview(self, obj):
         if not obj.raw_scores_snapshot and not obj.result_summary_snapshot:
-            return format_html(
+            return mark_safe(
                 '<div style="padding:12px;border:1px solid #e5e7eb;background:#f8fafc;border-radius:10px;">'
                 'این تعیین سطح به‌صورت دستی ثبت شده و نتیجه آزمون ندارد.'
                 '</div>'
