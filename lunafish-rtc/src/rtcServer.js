@@ -740,6 +740,37 @@ async function createRtcServer(config) {
           });
         }
 
+        if (action === 'closeProducer') {
+          ensureJoinedRoom(currentPeer);
+
+          const producerId = String(data.producerId || '');
+          const producer = currentPeer.producers.get(producerId);
+
+          if (!producer) {
+            throw new Error('producer not found');
+          }
+
+          const producerInfo = producers.get(producerId);
+          currentPeer.producers.delete(producerId);
+          producers.delete(producerId);
+          producer.close();
+
+          // Do this explicitly: mediasoup's server-side producer close signal
+          // is not a network message to remote clients by itself.
+          if (producerInfo) {
+            broadcastToRoom(currentPeer.roomId, ws, {
+              event: 'producerClosed',
+              data: serializeProducerInfo(producerId, producerInfo)
+            });
+          }
+
+          return send(ws, {
+            requestId,
+            ok: true,
+            data: { closed: true }
+          });
+        }
+
         if (action === 'getProducers') {
           ensureJoinedRoom(currentPeer);
           ensureCanConsume(currentPeer);
