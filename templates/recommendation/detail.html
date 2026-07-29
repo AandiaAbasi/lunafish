@@ -80,7 +80,7 @@
                     
                     <!-- Action Buttons -->
                     <div class="d-flex gap-2 mt-4 flex-wrap">
-                        <a href="{% url 'recommendation:test_edit' test.id %}" class="btn btn-primary">
+                        <a href="{% url 'recommendation:test_edit' test.id %}" class="btn btn-primary" style="color: #fff">
                             <i class="fas fa-edit ms-1"></i>
                             ویرایش
                         </a>
@@ -174,7 +174,7 @@
                             مقیاس‌های آزمون ({{ scales|length }})
                         </h5>
                         {% if can_assign_weights %}
-                            <a href="{% url 'recommendation:test_weights' test.id %}" class="btn btn-sm btn-primary">
+                            <a href="{% url 'recommendation:test_weights' test.id %}" class="btn btn-sm btn-primary" style="color: #fff">
                                 <i class="fas fa-sliders-h ms-1"></i>
                                 تخصیص وزن‌ها
                             </a>
