@@ -666,159 +666,275 @@ def psychological_test_view_answers_api(request, test_id):
 
 
 @api_view(['GET'])
-
 @permission_classes([IsAuthenticated])
 def psychological_test_result_api(request, test_id):
     """
-    Get test result with scale scores and interpretations.
-    
-    Response:
-    {
-        "success": true,
-        "message": "نتیجه تست با موفقیت دریافت شد",
-        "data": {
-            "test": {...},
-            "response": {...},
-            "result": {...},
-            "scale_results": [...]
-        }
-    }
+    Return an English placement result prepared for direct UI rendering.
+
+    Level and skill metadata are entirely database-driven:
+    - TestScale.scale_type determines the group.
+    - TestScale.rank determines level order.
+    - TestScale.pass_score determines pass/fail.
+    - TestScale title/description and ScaleInterpretation provide display copy.
+
+    ``scale_results`` remains in the response temporarily for backward
+    compatibility with older application versions.
     """
     try:
         from recommendation.models import (
-            PsychologicalTest, StudentTestResponse, TestResult,
-            TestScale, ScaleInterpretation
+            EnglishPlacementAssessment,
+            PsychologicalTest,
+            StudentTestResponse,
+            TestScale,
         )
-        
-        # Get user from JWT token
+
         user = request.user
         if not user:
             return Response({
                 'success': False,
-                'message': 'دانش‌آموز یافت نشد'
+                'message': 'دانش‌آموز یافت نشد',
             }, status=status.HTTP_404_NOT_FOUND)
-        
-        # Get test
+
         try:
-            test = PsychologicalTest.objects.get(
-                id=test_id,
-                is_active=True
-            )
+            test = PsychologicalTest.objects.get(id=test_id, is_active=True)
         except PsychologicalTest.DoesNotExist:
             return Response({
                 'success': False,
-                'message': 'تست مورد نظر یافت نشد'
+                'message': 'تست مورد نظر یافت نشد',
             }, status=status.HTTP_404_NOT_FOUND)
-        
-        # Get user's response
+
         try:
             response = StudentTestResponse.objects.get(test=test, user=user)
         except StudentTestResponse.DoesNotExist:
             return Response({
                 'success': False,
-                'message': 'شما هنوز این تست را شروع نکرده‌اید'
+                'message': 'شما هنوز این تست را شروع نکرده‌اید',
             }, status=status.HTTP_404_NOT_FOUND)
-        
-        # Check if test is completed
+
         if response.status != 'completed':
             return Response({
                 'success': False,
-                'message': 'شما هنوز این تست را تکمیل نکرده‌اید'
+                'message': 'شما هنوز این تست را تکمیل نکرده‌اید',
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get or calculate result
-        
-        if test.scales.exists():
-            try:
-                from recommendation.utils import calculate_test_result
-                # debug_test_calculation(response.id)
 
-                result = calculate_test_result(response)
-            except Exception as calc_error:
-                logger.error(f"Error calculating result: {str(calc_error)}", exc_info=True)
-                return Response({
-                    'success': False,
-                    'message': 'خطا در محاسبه نتیجه تست. لطفاً با مشاور تماس بگیرید'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            # Test has no scales, can't calculate result
+        if not test.scales.exists():
             return Response({
                 'success': False,
-                'message': 'این تست فاقد سیستم امتیازدهی است'
+                'message': 'این تست فاقد سیستم امتیازدهی است',
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get all scales for this test
-        scales = TestScale.objects.filter(test=test).prefetch_related('interpretations').order_by('code')
-        
-        # Prepare scale data with scores and interpretations
-        scale_results = []
+
+        try:
+            from recommendation.utils import calculate_test_result
+            result = calculate_test_result(response)
+        except Exception as calc_error:
+            logger.error(
+                'Error calculating placement result: %s',
+                str(calc_error),
+                exc_info=True,
+            )
+            return Response({
+                'success': False,
+                'message': 'خطا در محاسبه نتیجه تست. لطفاً با مشاور تماس بگیرید',
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        scales = list(
+            TestScale.objects
+            .filter(test=test)
+            .prefetch_related('interpretations')
+        )
         raw_scores = result.raw_scores or {}
-        
         summary = result.summary or {}
-        scale_details = summary.get('scale_details', [])
-        
-        # تبدیل لیست به دیکشنری بر اساس code
+
         scale_details_map = {
-            item.get('code'): item
-            for item in scale_details
-            if isinstance(item, dict) and item.get('code')
+            str(item.get('code')): item
+            for item in summary.get('scale_details', [])
+            if isinstance(item, dict) and item.get('code') is not None
         }
-        
-        for scale in scales:
-            raw_score = raw_scores.get(scale.code, 0)
-        
-            scale_detail = scale_details_map.get(scale.code, {})
-            percentage = scale_detail.get('percentage')
-        
-            # Find matching interpretation
-            interpretation = None
-            interpretations = scale.interpretations.all().order_by('min_score')
-            for interp in interpretations:
-                if interp.min_score <= raw_score <= interp.max_score:
-                    interpretation = interp
+
+        def numeric_score(value, default=0.0):
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                return float(default)
+
+        def serialize_interpretation(scale, score):
+            matched = None
+            for item in scale.interpretations.all():
+                if item.min_score <= score <= item.max_score:
+                    matched = item
                     break
-        
-            scale_results.append({
+
+            if not matched:
+                return None
+
+            return {
+                'id': matched.id,
+                'level': matched.title,
+                'title': matched.title,
+                'description': matched.description,
+                'min_score': numeric_score(matched.min_score),
+                'max_score': numeric_score(matched.max_score),
+                'order': matched.order,
+            }
+
+        def serialize_scale_result(scale):
+            raw_score = numeric_score(raw_scores.get(scale.code, 0))
+            detail = scale_details_map.get(str(scale.code), {})
+            percentage = numeric_score(detail.get('percentage', raw_score))
+            percentage = max(0.0, min(100.0, percentage))
+            pass_score = numeric_score(scale.pass_score)
+
+            item = {
+                'id': scale.id,
                 'code': scale.code,
                 'name': scale.title,
+                'title': scale.title,
                 'description': scale.description,
+                'scale_type': scale.scale_type,
+                'rank': scale.rank,
                 'raw_score': raw_score,
-                'percentage': percentage,
-                'interpretation': {
-                    'id': interpretation.id if interpretation else None,
-                    'level': interpretation.title if interpretation else '',
-                    'description': interpretation.description if interpretation else '',
-                } if interpretation else None
-            })
-        
-        # Convert dates to Jalali
+                'percentage': round(percentage, 2),
+                'pass_score': pass_score,
+                'interpretation': serialize_interpretation(scale, raw_score),
+            }
+
+            if scale.scale_type == TestScale.ScaleType.LEVEL:
+                item['passed'] = raw_score >= pass_score
+
+            return item
+
+        scale_results = [serialize_scale_result(scale) for scale in scales]
+
+        level_results = sorted(
+            [
+                item for item in scale_results
+                if item['scale_type'] == TestScale.ScaleType.LEVEL
+            ],
+            key=lambda item: (
+                item['rank'] is None,
+                item['rank'] if item['rank'] is not None else 0,
+                item['id'],
+            ),
+        )
+
+        skill_results = sorted(
+            [
+                item for item in scale_results
+                if item['scale_type'] == TestScale.ScaleType.SKILL
+            ],
+            key=lambda item: (
+                item['rank'] is None,
+                item['rank'] if item['rank'] is not None else 0,
+                item['id'],
+            ),
+        )
+
+        other_results = [
+            item for item in scale_results
+            if item['scale_type'] not in {
+                TestScale.ScaleType.LEVEL,
+                TestScale.ScaleType.SKILL,
+            }
+        ]
+
+        def normalize_level_value(value):
+            if value is None:
+                return ''
+            return str(value).strip().lower().replace('-', '_')
+
+        level_scale_map = {
+            normalize_level_value(item['code']): item
+            for item in level_results
+        }
+
+        def serialize_level(value):
+            normalized = normalize_level_value(value)
+            if not normalized:
+                return None
+
+            configured = level_scale_map.get(normalized)
+            if configured:
+                return {
+                    'id': configured['id'],
+                    'code': configured['code'],
+                    'title': configured['title'],
+                    'description': configured['description'],
+                    'rank': configured['rank'],
+                }
+
+            # This is only a defensive fallback for an old stored result whose
+            # scale no longer exists. New results always resolve from TestScale.
+            return {
+                'id': None,
+                'code': str(value).replace('_', '-').upper(),
+                'title': '',
+                'description': '',
+                'rank': None,
+            }
+
+        latest_assessment = (
+            EnglishPlacementAssessment.objects
+            .filter(response=response)
+            .order_by('-created_at')
+            .first()
+        )
+
+        suggested_level_value = summary.get('suggested_level')
+        final_level_value = (
+            latest_assessment.final_level
+            if latest_assessment and latest_assessment.final_level
+            else None
+        )
+
+        suggested_level = serialize_level(suggested_level_value)
+        final_level = serialize_level(final_level_value)
+        display_level = final_level or suggested_level
+
+        placement = {
+            'suggested_level': suggested_level,
+            'final_level': final_level,
+            'display_level': display_level,
+            'is_final': bool(final_level),
+            'status': (
+                latest_assessment.status
+                if latest_assessment
+                else EnglishPlacementAssessment.Status.PENDING
+            ),
+            'source': latest_assessment.source if latest_assessment else None,
+            'assessed_at': (
+                latest_assessment.assessed_at.isoformat()
+                if latest_assessment and latest_assessment.assessed_at
+                else None
+            ),
+        }
+
         completed_at_jalali = ''
         if response.completed_at:
             j_date = jdatetime.datetime.fromgregorian(datetime=response.completed_at)
             completed_at_jalali = j_date.strftime('%Y/%m/%d - %H:%M')
-        
+
         test_data = {
             'id': test.id,
             'title': test.title,
             'description': test.description,
+            'test_type': test.test_type,
         }
-        
+
         response_data = {
             'id': response.id,
             'status': response.status,
             'completed_at': response.completed_at.isoformat(),
-            'completed_at_jalali': completed_at_jalali
+            'completed_at_jalali': completed_at_jalali,
         }
-        
+
         result_data = {
             'id': result.id,
-            'raw_scores': result.raw_scores,
-            'summary': result.summary or {},
-            'holland_code': result.summary.get('holland_code', '') if result.summary else '',
-            'suggested_level': result.summary.get('suggested_level') if result.summary else None,
-            'result_type': result.summary.get('result_type') if result.summary else None,
+            'raw_scores': raw_scores,
+            'summary': summary,
+            'suggested_level': suggested_level,
+            'result_type': summary.get('result_type'),
         }
-        
+
         return Response({
             'success': True,
             'message': 'نتیجه تست با موفقیت دریافت شد',
@@ -826,15 +942,23 @@ def psychological_test_result_api(request, test_id):
                 'test': test_data,
                 'response': response_data,
                 'result': result_data,
-                'scale_results': scale_results
-            }
+                'placement': placement,
+                'level_results': level_results,
+                'skill_results': skill_results,
+                'other_results': other_results,
+                'scale_results': scale_results,
+            },
         }, status=status.HTTP_200_OK)
-        
+
     except Exception as e:
-        logger.error(f"Error in psychological_test_result_api: {str(e)}", exc_info=True)
+        logger.error(
+            'Error in psychological_test_result_api: %s',
+            str(e),
+            exc_info=True,
+        )
         return Response({
             'success': False,
-            'message': f'خطا در دریافت نتیجه تست: {str(e)}'
+            'message': f'خطا در دریافت نتیجه تست: {str(e)}',
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

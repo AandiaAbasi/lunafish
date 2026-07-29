@@ -98,62 +98,75 @@ def calculate_test_result(student_response):
 
 
 def generate_english_placement_summary(scale_scores, scales):
-    """Build CEFR placement and skill scores from configured scale metadata."""
-    from recommendation.models import EnglishPlacementAssessment, TestScale
+    """
+    Build placement and skill results only from TestScale metadata.
+
+    No level order or skill code is hard-coded here. Administrators control:
+    - which scales are levels or skills via ``scale_type``;
+    - level progression via ``rank``;
+    - pass thresholds via ``pass_score``;
+    - display titles and descriptions on the scale itself.
+    """
+    from recommendation.models import TestScale
 
     scales = list(scales)
-    level_rank_map = {
-        'A1': 1,
-        'A2': 2,
-        'B1': 3,
-        'B2': 4,
-        'C1': 5,
-        'C2': 6,
-    }
-    skill_codes = {'GRAM', 'VOCAB', 'READ', 'USE'}
-
-    # Explicit metadata is preferred. Known codes are accepted as a safe fallback
-    # so an already-created placement test does not become unusable after deploy.
-    level_scales = [
-        scale for scale in scales
-        if scale.scale_type == TestScale.ScaleType.LEVEL
-        or scale.code.strip().upper() in level_rank_map
-    ]
-    level_scales.sort(
+    level_scales = sorted(
+        [
+            scale for scale in scales
+            if scale.scale_type == TestScale.ScaleType.LEVEL
+        ],
         key=lambda scale: (
-            scale.rank or level_rank_map.get(scale.code.strip().upper(), 999),
-            scale.code,
-        )
+            scale.rank is None,
+            scale.rank if scale.rank is not None else 0,
+            scale.id,
+        ),
     )
-    skill_scales = [
-        scale for scale in scales
-        if scale.scale_type == TestScale.ScaleType.SKILL
-        or scale.code.strip().upper() in skill_codes
-    ]
+    skill_scales = sorted(
+        [
+            scale for scale in scales
+            if scale.scale_type == TestScale.ScaleType.SKILL
+        ],
+        key=lambda scale: (
+            scale.rank is None,
+            scale.rank if scale.rank is not None else 0,
+            scale.id,
+        ),
+    )
 
-    suggested_level = EnglishPlacementAssessment.EnglishLevel.PRE_A1
+    suggested_level = None
     passed_levels = []
-    valid_levels = {value for value, _ in EnglishPlacementAssessment.EnglishLevel.choices}
 
-    # Levels are sequential. Once a level is failed, higher levels are not used
-    # as the final placement even if a lucky score is higher there.
+    # Placement is sequential according to the ranks configured by the admin.
+    # The first failed level stops progression to higher levels.
     for scale in level_scales:
-        normalized_code = scale.code.strip().upper()
         score = float(scale_scores.get(scale.code, 0) or 0)
-        pass_score = float(scale.pass_score)
-
-        # Backward-compatible default for an old A1 scale that has not been
-        # configured through the new admin fields yet.
-        if scale.scale_type == TestScale.ScaleType.GENERAL and normalized_code == 'A1':
-            pass_score = 60.0
+        pass_score = float(scale.pass_score or 0)
 
         if score < pass_score:
             break
 
-        level_value = normalized_code.lower().replace('-', '_')
-        if level_value in valid_levels:
-            suggested_level = level_value
-            passed_levels.append(normalized_code)
+        suggested_level = scale.code.strip().lower().replace('-', '_')
+        passed_levels.append(scale.code)
+
+    # Preserve the established below-first-level result without requiring the
+    # mobile application to know or define it. The API serializes this value.
+    if suggested_level is None and level_scales:
+        suggested_level = 'pre_a1'
+
+    def sort_key(scale):
+        if scale.scale_type == TestScale.ScaleType.LEVEL:
+            group = 0
+        elif scale.scale_type == TestScale.ScaleType.SKILL:
+            group = 1
+        else:
+            group = 2
+
+        return (
+            group,
+            scale.rank is None,
+            scale.rank if scale.rank is not None else 0,
+            scale.id,
+        )
 
     return {
         'has_scales': True,
@@ -175,23 +188,11 @@ def generate_english_placement_summary(scale_scores, scales):
                 'score': scale_scores.get(scale.code, 0),
                 'percentage': scale_scores.get(scale.code, 0),
                 'scale_type': scale.scale_type,
-                'pass_score': (
-                    60.0
-                    if scale.scale_type == TestScale.ScaleType.GENERAL
-                    and scale.code.strip().upper() == 'A1'
-                    else scale.pass_score
-                ),
-                'rank': scale.rank or level_rank_map.get(scale.code.strip().upper()),
+                'pass_score': float(scale.pass_score or 0),
+                'rank': scale.rank,
                 'description': scale.description,
             }
-            for scale in sorted(
-                scales,
-                key=lambda item: (
-                    item.code.strip().upper() not in level_rank_map,
-                    item.rank or level_rank_map.get(item.code.strip().upper(), 999),
-                    item.code,
-                ),
-            )
+            for scale in sorted(scales, key=sort_key)
         ],
     }
 
