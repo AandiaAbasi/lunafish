@@ -2,7 +2,7 @@
 {% load static %}
 {% load adviser_tags %}
 
-{% block title %}نتایج تست{% endblock %}
+{% block title %}نتایج آزمون{% endblock %}
 
 {% block content %}
 <div class="container-fluid content-inner pb-0">
@@ -20,7 +20,7 @@
                     <div class="d-flex gap-2">
                         <a href="{% url 'recommendation:test_detail' test.id %}" class="btn btn-primary">
                             <i class="fas fa-arrow-right ms-1"></i>
-                            بازگشت به تست
+                            بازگشت به آزمون
                         </a>
                     </div>
                 </div>
@@ -71,7 +71,7 @@
                     {% else %}
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle ms-1"></i>
-                            هنوز هیچ دانش‌آموزی به این تست پاسخ نداده است.
+                            هنوز هیچ دانش‌آموزی به این آزمون پاسخ نداده است.
                         </div>
                     {% endif %}
                 </div>
@@ -357,7 +357,7 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="responseModalLabel{{ response.id }}">
-                                نتایج تست: {{ response.student.first_name }} {{ response.student.last_name }}
+                                نتایج آزمون: {{ response.student.first_name }} {{ response.student.last_name }}
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>

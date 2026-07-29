@@ -170,27 +170,27 @@ def test_weights_view(request, test_id):
             id=test_id,  
         )
     except PsychologicalTest.DoesNotExist:
-        messages.error(request, _('تست یافت نشد'))
+        messages.error(request, _('آزمون تعیین سطح یافت نشد'))
         return redirect('recommendation:test_list')
     
     # Get scales
     scales = test.scales.all().order_by('code')
     
     if not scales.exists():
-        messages.warning(request, _('ابتدا باید مقیاس‌ها را تعریف کنید'))
+        messages.warning(request, _('ابتدا باید سطح‌ها و مهارت‌های آزمون تعیین سطح را تعریف کنید'))
         return redirect('recommendation:test_edit', test_id=test.id)
     
     # Get all multiple choice questions with their options
     questions = test.questions.filter(question_type='multiple_choice').prefetch_related('options').order_by('order')
     
     if not questions.exists():
-        messages.warning(request, _('این تست سوال چند گزینه‌ای ندارد'))
+        messages.warning(request, _('این آزمون تعیین سطح سؤال چندگزینه‌ای ندارد'))
         return redirect('recommendation:test_detail', test_id=test.id)
     
     # Check if any question has no options
     questions_without_options = [q for q in questions if not q.options.exists()]
     if questions_without_options:
-        messages.warning(request, _('برخی سوالات هنوز گزینه ندارند. لطفاً ابتدا گزینه‌ها را اضافه کنید'))
+        messages.warning(request, _('برخی سؤال‌های آزمون تعیین سطح هنوز گزینه ندارند. ابتدا گزینه‌ها را اضافه کنید.'))
         return redirect('recommendation:test_edit', test_id=test.id)
     
     if request.method == 'POST':
@@ -230,11 +230,11 @@ def test_weights_view(request, test_id):
                             )
                             saved_count += 1
             
-            messages.success(request, _(f'وزن‌ها با موفقیت ذخیره شد ({saved_count} مورد)'))
+            messages.success(request, _('وزن‌ها با موفقیت ذخیره شدند (%(count)s مورد).') % {'count': saved_count})
             return redirect('recommendation:test_detail', test_id=test.id)
             
         except Exception as e:
-            messages.error(request, _(f'خطا در ذخیره وزن‌ها: {str(e)}'))
+            messages.error(request, _('خطا در ذخیره وزن‌ها: %(error)s') % {'error': str(e)})
     
     # Prepare weight matrix data
     # Get existing weights
@@ -287,14 +287,14 @@ def scale_interpretations_manage_view(request, test_id, scale_id):
             id=test_id, 
         )
     except PsychologicalTest.DoesNotExist:
-        messages.error(request, _('تست یافت نشد'))
+        messages.error(request, _('آزمون تعیین سطح یافت نشد'))
         return redirect('recommendation:test_list')
     
     # Get scale
     try:
         scale = TestScale.objects.get(id=scale_id, test=test)
     except TestScale.DoesNotExist:
-        messages.error(request, _('مقیاس یافت نشد'))
+        messages.error(request, _('سطح یا مهارت موردنظر یافت نشد'))
         return redirect('recommendation:test_detail', test_id=test_id)
     
     if request.method == 'POST':
@@ -302,7 +302,7 @@ def scale_interpretations_manage_view(request, test_id, scale_id):
         
         if formset.is_valid():
             formset.save()
-            messages.success(request, _('بازه‌های تفسیری با موفقیت ذخیره شد'))
+            messages.success(request, _('بازه‌های تفسیری تعیین سطح با موفقیت ذخیره شدند'))
             return redirect('recommendation:test_detail', test_id=test_id)
         else:
             messages.error(request, _('لطفاً خطاهای فرم را برطرف کنید'))

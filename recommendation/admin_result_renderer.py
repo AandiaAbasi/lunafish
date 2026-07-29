@@ -1,5 +1,5 @@
 from django.utils.html import format_html, format_html_join
-from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 
 
 LEVEL_CODES = ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')
@@ -16,10 +16,10 @@ LEVEL_LABELS = {
 }
 
 SKILL_LABELS = {
-    'GRAM': 'گرامر',
-    'VOCAB': 'واژگان',
-    'READ': 'درک مطلب',
-    'USE': 'کاربرد زبان',
+    'GRAM': _('گرامر'),
+    'VOCAB': _('واژگان'),
+    'READ': _('درک مطلب'),
+    'USE': _('کاربرد زبان'),
 }
 
 DEFAULT_PASS_SCORES = {
@@ -41,7 +41,7 @@ def _safe_score(value):
 
 def _level_label(value):
     if not value:
-        return 'تعیین نشده'
+        return _('تعیین نشده')
     value = str(value).strip().lower()
     return LEVEL_LABELS.get(value, value.upper())
 
@@ -84,7 +84,8 @@ def _score_card(code, title, score, description='', pass_score=None):
     threshold_html = ''
     if pass_score is not None:
         threshold_html = format_html(
-            '<span style="font-size:11px;color:#6b7280;">حدنصاب: {}٪</span>',
+            '<span style="font-size:11px;color:#6b7280;">{}: {}٪</span>',
+            _('حدنصاب'),
             round(float(pass_score), 1),
         )
 
@@ -140,25 +141,24 @@ def render_placement_result(raw_scores=None, summary=None, final_level=None):
 
     warning = ''
     if is_legacy:
-        warning = mark_safe(
-            '<div style="padding:10px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin-bottom:14px;">'
-            'این نتیجه با ساختار قدیمی ذخیره شده است. گزینه «محاسبه مجدد نتیجه» را اجرا کنید.'
-            '</div>'
+        warning = format_html(
+            '<div style="padding:10px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;margin-bottom:14px;">{}</div>',
+            _('این نتیجه با ساختار قدیمی ذخیره شده است. گزینه «محاسبه مجدد نتیجه» را اجرا کنید.'),
         )
     elif all_zero:
-        warning = mark_safe(
-            '<div style="padding:10px 12px;border-radius:10px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;margin-bottom:14px;">'
-            'تمام امتیازها صفر هستند. وزن گزینه‌های صحیح را بررسی کنید و سپس نتیجه را مجدداً محاسبه کنید.'
-            '</div>'
+        warning = format_html(
+            '<div style="padding:10px 12px;border-radius:10px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;margin-bottom:14px;">{}</div>',
+            _('تمام امتیازها صفر هستند. وزن گزینه‌های صحیح را بررسی کنید و سپس نتیجه را مجدداً محاسبه کنید.'),
         )
 
     final_badge = ''
     if final_level:
         final_badge = format_html(
             '<div style="padding:10px 16px;border-radius:12px;background:#ecfdf5;border:1px solid #a7f3d0;">'
-            '<div style="font-size:11px;color:#047857;">سطح نهایی تأییدشده</div>'
+            '<div style="font-size:11px;color:#047857;">{}</div>'
             '<strong style="font-size:24px;color:#065f46;direction:ltr;display:block;">{}</strong>'
             '</div>',
+            _('سطح نهایی تأییدشده'),
             _level_label(final_level),
         )
 
@@ -168,13 +168,13 @@ def render_placement_result(raw_scores=None, summary=None, final_level=None):
         ((
             _score_card(
                 code,
-                detail_map.get(code, {}).get('title', 'سطح زبان'),
+                detail_map.get(code, {}).get('title', _('سطح زبان')),
                 score,
                 detail_map.get(code, {}).get('description', ''),
                 pass_scores.get(code),
             ),
         ) for code, score in level_scores.items()),
-    ) or mark_safe('<span style="color:#6b7280;">امتیاز سطحی ثبت نشده است.</span>')
+    ) or format_html('<span style="color:#6b7280;">{}</span>', _('امتیاز سطحی ثبت نشده است.'))
 
     skill_cards = format_html_join(
         '',
@@ -187,7 +187,7 @@ def render_placement_result(raw_scores=None, summary=None, final_level=None):
                 detail_map.get(code, {}).get('description', ''),
             ),
         ) for code, score in skill_scores.items()),
-    ) or mark_safe('<span style="color:#6b7280;">امتیاز مهارتی ثبت نشده است.</span>')
+    ) or format_html('<span style="color:#6b7280;">{}</span>', _('امتیاز مهارتی ثبت نشده است.'))
 
     interpretations = summary.get('interpretations') or {}
     interpretation_items = []
@@ -199,9 +199,10 @@ def render_placement_result(raw_scores=None, summary=None, final_level=None):
     if interpretation_items:
         interpretations_html = format_html(
             '<div style="margin-top:18px;">'
-            '<h3 style="font-size:14px;margin:0 0 10px;">تفسیر نتیجه</h3>'
+            '<h3 style="font-size:14px;margin:0 0 10px;">{}</h3>'
             '<div style="display:grid;gap:8px;">{}</div>'
             '</div>',
+            _('تفسیر نتیجه'),
             format_html_join(
                 '',
                 '<div style="border-right:4px solid #2563eb;background:#eff6ff;padding:10px 12px;border-radius:8px;">'
@@ -220,20 +221,23 @@ def render_placement_result(raw_scores=None, summary=None, final_level=None):
         '{}'
         '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px;">'
         '<div style="padding:10px 16px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;">'
-        '<div style="font-size:11px;color:#1d4ed8;">سطح پیشنهادی سیستم</div>'
+        '<div style="font-size:11px;color:#1d4ed8;">{}</div>'
         '<strong style="font-size:24px;color:#1e3a8a;direction:ltr;display:block;">{}</strong>'
         '</div>{}'
         '</div>'
-        '<h3 style="font-size:14px;margin:0 0 10px;">امتیاز سطح‌های CEFR</h3>'
+        '<h3 style="font-size:14px;margin:0 0 10px;">{}</h3>'
         '<div style="display:flex;flex-wrap:wrap;gap:10px;">{}</div>'
-        '<h3 style="font-size:14px;margin:20px 0 10px;">ارزیابی مهارت‌ها</h3>'
+        '<h3 style="font-size:14px;margin:20px 0 10px;">{}</h3>'
         '<div style="display:flex;flex-wrap:wrap;gap:10px;">{}</div>'
         '{}'
         '</div>',
         warning,
+        _('سطح پیشنهادی سیستم'),
         _level_label(suggested),
         final_badge,
+        _('امتیاز سطح‌های CEFR'),
         level_cards,
+        _('ارزیابی مهارت‌ها'),
         skill_cards,
         interpretations_html,
     )

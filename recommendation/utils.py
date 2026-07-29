@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 def calculate_test_result(student_response):
     """
-    Calculate psychological test results for a student response.
+    Calculate English placement test results for a student response.
     
     This function:
     1. Aggregates weights from selected options for each scale

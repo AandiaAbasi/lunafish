@@ -37,7 +37,7 @@ class UsernameLoginForm(forms.Form):
         label=_('شماره تماس یا کد ملی'),
         max_length=11,
         widget=forms.TextInput(attrs={
-            'placeholder': 'شماره تماس یا کد ملی',
+            'placeholder': _('شماره تماس یا کد ملی'),
             'class': 'form-control',
             'dir': 'ltr',
         })
@@ -46,7 +46,7 @@ class UsernameLoginForm(forms.Form):
     password = forms.CharField(
         label=_('رمز عبور'),
         widget=forms.PasswordInput(attrs={
-            'placeholder': 'رمز عبور',
+            'placeholder': _('رمز عبور'),
             'class': 'form-control',
         })
     )
@@ -77,7 +77,7 @@ class SetPasswordForm(forms.Form):
         label=_('رمز عبور جدید'),
         min_length=6,
         widget=forms.PasswordInput(attrs={
-            'placeholder': 'رمز عبور جدید',
+            'placeholder': _('رمز عبور جدید'),
             'class': 'form-control',
         })
     )
@@ -86,7 +86,7 @@ class SetPasswordForm(forms.Form):
         label=_('تایید رمز عبور'),
         min_length=6,
         widget=forms.PasswordInput(attrs={
-            'placeholder': 'تایید رمز عبور',
+            'placeholder': _('تایید رمز عبور'),
             'class': 'form-control',
         })
     )
@@ -119,7 +119,7 @@ class TranslationFieldVisibilityMixin:
                 field.widget = forms.HiddenInput()
 
 
-# Psychological Test Forms
+# English Placement Test Forms
 class PsychologicalTestForm(TranslationFieldVisibilityMixin, forms.ModelForm):
     """Form for creating/editing English placement tests."""
 
@@ -133,21 +133,21 @@ class PsychologicalTestForm(TranslationFieldVisibilityMixin, forms.ModelForm):
         widgets = {
             'title_fa': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'عنوان (فارسی)',
+                'placeholder': _('عنوان (فارسی)'),
             }),
             'title_en': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Title (English)',
+                'placeholder': _('Title (English)'),
             }),
             'description_fa': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': 'توضیحات (فارسی)',
+                'placeholder': _('توضیحات (فارسی)'),
             }),
             'description_en': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': 'Description (English)',
+                'placeholder': _('Description (English)'),
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input',
@@ -175,17 +175,17 @@ class TestQuestionForm(TranslationFieldVisibilityMixin, forms.ModelForm):
         widgets = {
             'icon': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'آیکون',
+                'placeholder': _('آیکون'),
             }),
             'question_text_fa': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': 'متن سؤال (فارسی)',
+                'placeholder': _('متن سؤال (فارسی)'),
             }),
             'question_text_en': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': 'Question text (English)',
+                'placeholder': _('Question text (English)'),
             }),
             'question_type': forms.Select(attrs={
                 'class': 'form-select question-type-select',
@@ -212,15 +212,15 @@ class QuestionOptionForm(TranslationFieldVisibilityMixin, forms.ModelForm):
         widgets = {
             'icon': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'آیکون',
+                'placeholder': _('آیکون'),
             }),
             'option_text_fa': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'گزینه (فارسی)',
+                'placeholder': _('گزینه (فارسی)'),
             }),
             'option_text_en': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Option (English)',
+                'placeholder': _('Option (English)'),
             }),
             'order': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -284,7 +284,7 @@ class TestScaleForm(TranslationFieldVisibilityMixin, forms.ModelForm):
         widgets = {
             'code': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'مثال: R, I, A',
+                'placeholder': _('مثال: A1، B1، GRAM، READ'),
                 'maxlength': '20',
             }),
             'scale_type': forms.Select(attrs={
@@ -293,7 +293,7 @@ class TestScaleForm(TranslationFieldVisibilityMixin, forms.ModelForm):
             'rank': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '1',
-                'placeholder': 'مثال: A1=1',
+                'placeholder': _('مثال: A1=1'),
             }),
             'pass_score': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -303,21 +303,21 @@ class TestScaleForm(TranslationFieldVisibilityMixin, forms.ModelForm):
             }),
             'title_fa': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'مثال: واقع‌گرا، پژوهشگر',
+                'placeholder': _('مثال: سطح متوسط B1 یا گرامر'),
             }),
             'title_en': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Example: Realistic, Investigative',
+                'placeholder': _('Example: B1 Intermediate or Grammar'),
             }),
             'description_fa': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': 'توضیحات مقیاس (اختیاری)',
+                'placeholder': _('توضیحات مقیاس (اختیاری)'),
             }),
             'description_en': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': 'Scale description (optional)',
+                'placeholder': _('Scale description (optional)'),
             }), 
         }
         labels = {
@@ -379,30 +379,30 @@ class ScaleInterpretationForm(TranslationFieldVisibilityMixin, forms.ModelForm):
             'min_score': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.1',
-                'placeholder': 'مثال: 0',
+                'placeholder': _('مثال: 0'),
             }),
             'max_score': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.1',
-                'placeholder': 'مثال: 20',
+                'placeholder': _('مثال: 20'),
             }),
             'title_fa': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'مثال: رغبت پایین، رغبت متوسط، رغبت بالا',
+                'placeholder': _('مثال: نیازمند تقویت، قابل قبول، تسلط قوی'),
             }),
             'title_en': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Example: Low interest, Medium interest, High interest',
+                'placeholder': _('Example: Needs improvement, Acceptable, Strong mastery'),
             }),
             'description_fa': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': 'تفسیر روانشناختی این بازه نمره',
+                'placeholder': _('توضیح آموزشی این بازه امتیاز'),
             }),
             'description_en': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': 'Psychological interpretation of this score range',
+                'placeholder': _('English placement interpretation for this score range'),
             }),
             'order': forms.NumberInput(attrs={
                 'class': 'form-control',

@@ -33,7 +33,7 @@ class Command(BaseCommand):
             "--test-id",
             type=int,
             default=None,
-            help="ID of the PsychologicalTest to configure.",
+            help="ID of the English placement test to configure.",
         )
         parser.add_argument(
             "--test-title",

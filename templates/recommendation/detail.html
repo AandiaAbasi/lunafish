@@ -159,7 +159,7 @@
                     {% empty %}
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle ms-1"></i>
-                            هیچ سوالی برای این تست تعریف نشده است.
+                            هیچ سوالی برای این آزمون تعریف نشده است.
                         </div>
                     {% endfor %}
                 </div>
@@ -171,7 +171,7 @@
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">
                             <i class="fas fa-balance-scale ms-1"></i>
-                            مقیاس‌های تست ({{ scales|length }})
+                            مقیاس‌های آزمون ({{ scales|length }})
                         </h5>
                         {% if can_assign_weights %}
                             <a href="{% url 'recommendation:test_weights' test.id %}" class="btn btn-sm btn-primary">
@@ -184,12 +184,12 @@
                         {% if can_assign_weights %}
                             <div class="alert alert-info mb-3">
                                 <i class="fas fa-info-circle ms-1"></i>
-                                تست شما آماده تخصیص وزن‌هاست. با کلیک روی دکمه "تخصیص وزن‌ها"، وزن هر گزینه را برای هر مقیاس مشخص کنید.
+                                آزمون شما آماده تخصیص وزن‌هاست. با کلیک روی دکمه "تخصیص وزن‌ها"، وزن هر گزینه را برای هر مقیاس مشخص کنید.
                             </div>
                         {% elif not test.questions.filter|slice:":1" %}
                             <div class="alert alert-warning mb-3">
                                 <i class="fas fa-exclamation-triangle ms-1"></i>
-                                ابتدا سوالات چندگزینه‌ای را به تست اضافه کنید تا بتوانید وزن‌ها را تخصیص دهید.
+                                ابتدا سوالات چندگزینه‌ای را به آزمون اضافه کنید تا بتوانید وزن‌ها را تخصیص دهید.
                             </div>
                         {% else %}
                             <div class="alert alert-warning mb-3">
@@ -272,17 +272,17 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>آیا مطمئن هستید که می‌خواهید این تست را حذف کنید؟</p>
+                <p>آیا مطمئن هستید که می‌خواهید این آزمون را حذف کنید؟</p>
                 {% if test.assignments.count > 0 %}
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle ms-1"></i>
-                        توجه: این تست به {{ test.assignments.count }} کلاس تخصیص داده شده است.
+                        توجه: این آزمون به {{ test.assignments.count }} کلاس تخصیص داده شده است.
                     </div>
                 {% endif %}
                 {% if test.total_responses > 0 %}
                     <div class="alert alert-danger">
                         <i class="fas fa-exclamation-circle ms-1"></i>
-                        هشدار: {{ test.total_responses }} دانش‌آموز به این تست پاسخ داده‌اند.
+                        هشدار: {{ test.total_responses }} دانش‌آموز به این آزمون پاسخ داده‌اند.
                     </div>
                 {% endif %}
             </div>

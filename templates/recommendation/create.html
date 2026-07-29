@@ -2,7 +2,7 @@
 {% load static recommendation_settings %}
 {% recommendation_translation_fields_enabled as show_translation_fields %}
 
-{% block title %}{% if is_create %}ایجاد تست جدید{% else %}ویرایش تست{% endif %}{% endblock %}
+{% block title %}{% if is_create %}ایجاد آزمون جدید{% else %}ویرایش آزمون{% endif %}{% endblock %}
 
 
 
@@ -127,10 +127,10 @@
                         <h4 class="card-title mb-0">
                             {% if is_create %}
                                 <i class="fas fa-plus ms-1"></i>
-                                ایجاد تست روانشناسی جدید
+                                ایجاد آزمون تعیین سطح جدید
                             {% else %}
                                 <i class="fas fa-edit ms-1"></i>
-                                ویرایش تست: {{ test.title_fa|default:test.title_en }}
+                                ویرایش آزمون: {{ test.title_fa|default:test.title_en }}
                             {% endif %}
                         </h4>
                     </div>
@@ -163,7 +163,7 @@
                             
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="form-label">عنوان (فارسی)</label>
+                                    <label class="form-label">عنوان</label>
                                     {{ form.title_fa }}
                                     {% if form.title_fa.errors %}
                                         <div class="text-danger small mt-1">
@@ -188,7 +188,7 @@
                                 
                                 
                                 <div class="col-md-4">
-                                    <label class="form-label">توضیحات (فارسی)</label>
+                                    <label class="form-label">توضیحات</label>
                                     {{ form.description_fa }}
                                     {% if form.description_fa.errors %}
                                         <div class="text-danger small mt-1">
@@ -217,7 +217,7 @@
                                     <div class="form-check form-switch">
                                         {{ form.is_active }}
                                         <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                                            تست فعال است (دانش‌آموزان می‌توانند پاسخ دهند)
+                                            آزمون فعال است (دانش‌آموزان می‌توانند پاسخ دهند)
                                         </label>
                                     </div>
                                 </div>
@@ -228,7 +228,7 @@
                         <div class="mb-4">
                             <h5 class="border-bottom pb-2 mb-3">
                                 <i class="fas fa-question-circle ms-1"></i>
-                                مرحله 2: سوالات تست
+                                مرحله 2: سوالات آزمون
                             </h5>
                             
                             <!-- Formset Management Fields -->
@@ -274,7 +274,7 @@
                                             {{ question_form.icon }}
                                             </div>
                                             <div class="col-md-3">
-                                            <label class="form-label">سوال (فارسی)</label>
+                                            <label class="form-label">سوال</label>
                                             {{ question_form.question_text_fa }}
                                             </div>
                                             
@@ -309,7 +309,7 @@
                                                     class="form-control option-text-input option-fa"
                                                     name="options-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}-option_text_fa"
                                                     value="{{ option.option_text_fa }}"
-                                                    placeholder="گزینه فارسی">
+                                                    placeholder="گزینه">
                                                     
                                                     {% if show_translation_fields %}
                                                     <input type="text"
@@ -366,8 +366,7 @@
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle ms-1"></i>
                                 <strong>مقیاس‌ها چیست؟</strong><br>
-                                مقیاس‌ها برای تست‌هایی مانند هالند استفاده می‌شوند که به گزینه‌ها وزن می‌دهند و نتیجه محاسبه می‌کنند.
-                                اگر می‌خواهید یک تست ساده بدون امتیازدهی ایجاد کنید، این بخش را خالی بگذارید.
+                             برای تعیین سطح باید این مقادیر را تعریف کنید
                             </div>
                             
                             <!-- Scale Formset Management Fields -->
@@ -430,7 +429,7 @@
                                                     </div>
                                                 {% endif %}
                                                 <div class="col-md-4">
-                                                    <label class="form-label">عنوان مقیاس (فارسی)</label>
+                                                    <label class="form-label">عنوان مقیاس</label>
                                                     {{ scale_form.title_fa }}
                                                     {% if scale_form.title_fa.errors %}
                                                         <div class="text-danger small">{{ scale_form.title_fa.errors }}</div>
@@ -448,7 +447,7 @@
                                                     {{ scale_form.title_en }}
                                                 {% endif %}
                                                 <div class="col-md-4">
-                                                    <label class="form-label">توضیحات (فارسی)</label>
+                                                    <label class="form-label">توضیحات</label>
                                                     {{ scale_form.description_fa }}
                                                 </div>
                                                 {% if show_translation_fields %}
@@ -474,7 +473,7 @@
                             
                             <div class="alert alert-warning mt-3">
                                 <i class="fas fa-exclamation-triangle ms-1"></i>
-                                <strong>توجه:</strong> پس از ایجاد تست و تعریف مقیاس‌ها، باید وزن‌ها را به گزینه‌های سوالات تخصیص دهید.
+                                <strong>توجه:</strong> پس از ایجاد آزمون و تعریف مقیاس‌ها، باید وزن‌ها را به گزینه‌های سوالات تخصیص دهید.
                             </div>
                         </div>
                         
@@ -482,7 +481,7 @@
                         <div class="text-center mt-4 mb-3">
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save ms-1"></i>
-                                {% if is_create %}ایجاد تست{% else %}ذخیره تغییرات{% endif %}
+                                {% if is_create %}ایجاد آزمون{% else %}ذخیره تغییرات{% endif %}
                             </button>
                             <a href="{% url 'recommendation:test_list' %}" class="btn btn-secondary btn-lg">
                                 <i class="fas fa-times ms-1"></i>
@@ -552,7 +551,7 @@ function createQuestionHTML(index) {
                 <input type="text"
                 name="questions-${index}-question_text_fa"
                 class="form-control"
-                placeholder="سوال فارسی"
+                placeholder="سوال"
                 required>
                 </div>
                 
@@ -616,7 +615,7 @@ function createOptionHTML(questionIndex, optionIndex) {
             <input type="text"
                 class="form-control option-text-input option-fa"
                 name="options-${questionIndex}-${optionIndex}-option_text_fa"
-                placeholder="گزینه فارسی"
+                placeholder="گزینه"
                 required>
 
             ${showTranslationFields ? `
@@ -1103,7 +1102,7 @@ function createScaleHTML(index) {
                                min="0" max="100" step="0.01" value="70">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">عنوان مقیاس (فارسی)</label>
+                        <label class="form-label">عنوان مقیاس</label>
                         <input type="text" 
                                name="scales-${index}-title_fa" 
                                id="id_scales-${index}-title_fa"
@@ -1124,7 +1123,7 @@ function createScaleHTML(index) {
                            id="id_scales-${index}-title_en"
                            value="">`}
                     <div class="col-md-4">
-                        <label class="form-label">توضیحات (فارسی)</label>
+                        <label class="form-label">توضیحات</label>
                         <textarea name="scales-${index}-description_fa" 
                                   id="id_scales-${index}-description_fa"
                                   class="form-control" 

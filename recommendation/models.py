@@ -8,7 +8,7 @@ from recommendation.abstract_models import BaseModel
 from django.conf import settings
 class PsychologicalTest(BaseModel):
     """
-    Psychological test created by adviser for students.
+    English placement test configured for students.
     """
     
     TEST_TYPES = (
@@ -18,21 +18,21 @@ class PsychologicalTest(BaseModel):
     )
     
     title = models.CharField(
-        _('عنوان تست'),
+        _('عنوان آزمون تعیین سطح'),
         max_length=255,
-        help_text=_('مثال: تست مهاجرت تحصیلی')
+        help_text=_('مثال: آزمون تعیین سطح زبان انگلیسی')
     )
     description = models.TextField(
         _('توضیحات'),
         blank=True,
-        help_text=_('توضیحات کلی درباره تست')
+        help_text=_('توضیحات کلی درباره آزمون تعیین سطح زبان انگلیسی')
     )
     
     is_active = models.BooleanField(_('فعال'), default=True)
-    test_type = models.CharField(max_length=50, choices=TEST_TYPES, default='english_placement', editable=False, verbose_name=_("Type"))
+    test_type = models.CharField(max_length=50, choices=TEST_TYPES, default='english_placement', editable=False, verbose_name=_("نوع آزمون"))
     class Meta:
-        verbose_name = _('تست راهنمای مهاجرت')
-        verbose_name_plural = _('Immigration Guide Tests')
+        verbose_name = _('آزمون تعیین سطح زبان انگلیسی')
+        verbose_name_plural = _('آزمون‌های تعیین سطح زبان انگلیسی')
         ordering = ['-created_at']
     
     def __str__(self):
@@ -41,7 +41,7 @@ class PsychologicalTest(BaseModel):
 
 class TestQuestion(BaseModel):
     """
-    Questions belonging to a psychological test.
+    Questions belonging to an English placement test.
     """
     class QuestionType(models.TextChoices):
         MULTIPLE_CHOICE = 'multiple_choice', _('چند گزینه‌ای')
@@ -50,7 +50,7 @@ class TestQuestion(BaseModel):
         PsychologicalTest,
         on_delete=models.CASCADE,
         related_name='questions',
-        verbose_name=_('تست')
+        verbose_name=_('آزمون تعیین سطح')
     )
     icon = models.CharField(
         _('آیکون سوال'),
@@ -72,7 +72,7 @@ class TestQuestion(BaseModel):
     order = models.PositiveIntegerField(
         _('ترتیب'),
         default=0,
-        help_text=_('ترتیب نمایش سوال در تست')
+        help_text=_('ترتیب نمایش سؤال در آزمون تعیین سطح')
     )
     is_required = models.BooleanField(
         _('اجباری'),
@@ -81,8 +81,8 @@ class TestQuestion(BaseModel):
     )
     
     class Meta:
-        verbose_name = _('سوال تست')
-        verbose_name_plural = _('سوالات تست')
+        verbose_name = _('سؤال آزمون تعیین سطح')
+        verbose_name_plural = _('سؤال‌های آزمون تعیین سطح')
         ordering = ['test', 'order']
     
     def __str__(self):
@@ -128,7 +128,7 @@ class QuestionOption(BaseModel):
 
 class StudentTestResponse(BaseModel):
     """
-    Student's response to a psychological test.
+    Student's response to an English placement test.
     """
     class SubmissionStatus(models.TextChoices):
         NOT_STARTED = 'not_started', _('شروع نشده')
@@ -139,7 +139,7 @@ class StudentTestResponse(BaseModel):
         PsychologicalTest,
         on_delete=models.CASCADE,
         related_name='student_responses',
-        verbose_name=_('تست')
+        verbose_name=_('آزمون تعیین سطح')
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -165,8 +165,8 @@ class StudentTestResponse(BaseModel):
     )
     
     class Meta:
-        verbose_name = _('پاسخ کاربر')
-        verbose_name_plural = _('پاسخ‌های کاربران')
+        verbose_name = _('پاسخ دانش‌آموز به آزمون تعیین سطح')
+        verbose_name_plural = _('پاسخ‌های دانش‌آموزان به آزمون تعیین سطح')
         unique_together = ['test', 'user']
         ordering = ['-completed_at']
     
@@ -268,17 +268,17 @@ class TestScale(BaseModel):
         PsychologicalTest,
         on_delete=models.CASCADE,
         related_name='scales',
-        verbose_name=_('تست')
+        verbose_name=_('آزمون تعیین سطح')
     )
     code = models.CharField(
         _('کد مقیاس'),
         max_length=20,
-        help_text=_('مثال: R, I, A, S, E, C')
+        help_text=_('مثال سطح: A1، A2، B1؛ مثال مهارت: GRAM، VOCAB، READ، USE')
     )
     title = models.CharField(
         _('عنوان مقیاس'),
         max_length=255,
-        help_text=_('مثال: واقع‌گرا، پژوهشگر')
+        help_text=_('مثال: سطح متوسط B1 یا مهارت گرامر')
     )
     description = models.TextField(
         _('توضیحات'),
@@ -305,8 +305,8 @@ class TestScale(BaseModel):
     )
 
     class Meta:
-        verbose_name = _('مقیاس تست')
-        verbose_name_plural = _('مقیاس‌های تست')
+        verbose_name = _('مقیاس تعیین سطح')
+        verbose_name_plural = _('مقیاس‌های تعیین سطح')
         unique_together = ['test', 'code']
         ordering = ['test', 'code']
     
@@ -333,7 +333,7 @@ class OptionScaleWeight(BaseModel):
     )
     weight = models.FloatField(
         _('وزن'),
-        help_text=_('مثال: 1 ، 0.5 ، -1')
+        help_text=_('امتیاز این گزینه برای سطح یا مهارت انتخاب‌شده')
     )
 
     class Meta:
@@ -374,8 +374,8 @@ class TestResult(BaseModel):
     )
 
     class Meta:
-        verbose_name = _('نتیجه آزمون')
-        verbose_name_plural = _('نتایج آزمون‌ها')
+        verbose_name = _('نتیجه آزمون تعیین سطح')
+        verbose_name_plural = _('نتایج آزمون‌های تعیین سطح')
         ordering = ['-calculated_at']
     
     def __str__(self):
@@ -500,7 +500,7 @@ class EnglishPlacementAssessment(BaseModel):
 class ScaleInterpretation(BaseModel):
     """
     Interpretation text for a scale based on score range.
-    Provides psychological interpretation for different score levels.
+    Provides English-placement interpretation for different score ranges.
     """
     scale = models.ForeignKey(
         TestScale,
@@ -521,12 +521,12 @@ class ScaleInterpretation(BaseModel):
     title = models.CharField(
         _('عنوان تفسیر'),
         max_length=255,
-        help_text=_('مثال: رغبت بالا، رغبت متوسط')
+        help_text=_('مثال: تسلط قوی، قابل قبول، نیازمند تقویت')
     )
 
     description = models.TextField(
         _('توضیحات تفسیر'),
-        help_text=_('تفسیر روانشناختی کامل')
+        help_text=_('توضیح آموزشی نتیجه در این بازه امتیاز')
     )
 
     order = models.PositiveIntegerField(

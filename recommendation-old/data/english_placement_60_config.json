@@ -1,0 +1,1086 @@
+{
+  "schema_version": 1,
+  "name": "English Placement Test - 60 Questions",
+  "matching": {
+    "question_field": "order",
+    "expected_question_orders": {
+      "start": 1,
+      "end": 60
+    },
+    "option_field": "order",
+    "option_mapping": {
+      "A": 1,
+      "B": 2,
+      "C": 3,
+      "D": 4
+    }
+  },
+  "managed_scale_codes": [
+    "A1",
+    "A2",
+    "B1",
+    "B2",
+    "C1",
+    "GRAM",
+    "VOCAB",
+    "READ",
+    "USE"
+  ],
+  "scales": [
+    {
+      "code": "A1",
+      "title_fa": "سطح مقدماتی A1",
+      "title_en": "A1 Beginner",
+      "description_fa": "توانایی درک و استفاده از ساختارها و واژگان بسیار ساده و روزمره",
+      "description_en": "Ability to understand and use very basic everyday expressions and structures.",
+      "scale_type": "level",
+      "rank": 1,
+      "pass_score": 60,
+      "interpretations": [
+        {
+          "min_score": 0,
+          "max_score": 39.99,
+          "title_fa": "تسلط ناکافی",
+          "title_en": "Insufficient mastery",
+          "description_fa": "دانش‌آموز هنوز تسلط کافی بر ساختارها و واژگان این سطح ندارد و بهتر است آموزش را از سطح پایین‌تر یا مباحث پایه همین سطح آغاز کند.",
+          "description_en": "The student has not yet demonstrated sufficient mastery of the structures and vocabulary at this level.",
+          "order": 1
+        },
+        {
+          "min_score": 40,
+          "max_score": 59.99,
+          "title_fa": "در حال یادگیری",
+          "title_en": "Developing",
+          "description_fa": "بخشی از مفاهیم این سطح آموخته شده است، اما دانش و عملکرد هنوز پایدار نیست و به تمرین هدفمند نیاز دارد.",
+          "description_en": "Some concepts at this level are understood, but performance is not yet consistent.",
+          "order": 2
+        },
+        {
+          "min_score": 60,
+          "max_score": 74.99,
+          "title_fa": "تسلط قابل قبول در A1",
+          "title_en": "Competent at A1",
+          "description_fa": "دانش‌آموز توانایی لازم برای درک و استفاده از عبارت‌ها و ساختارهای بسیار ساده را دارد و سطح A1 را گذرانده است.",
+          "description_en": "The student can understand and use very basic expressions and has met the A1 standard.",
+          "order": 3
+        },
+        {
+          "min_score": 75,
+          "max_score": 89.99,
+          "title_fa": "تسلط خوب در A1",
+          "title_en": "Good mastery at A1",
+          "description_fa": "دانش‌آموز در مباحث پایه عملکرد خوبی دارد و برای شروع محتوای A2 آمادگی مناسبی دارد.",
+          "description_en": "The student performs well in foundational content and is ready to begin A2 material.",
+          "order": 4
+        },
+        {
+          "min_score": 90,
+          "max_score": 100,
+          "title_fa": "تسلط بسیار خوب در A1",
+          "title_en": "Very strong mastery at A1",
+          "description_fa": "دانش‌آموز تقریباً تمام مباحث پایه این سطح را به‌خوبی فراگرفته و می‌تواند با اطمینان وارد سطح بعد شود.",
+          "description_en": "The student has mastered nearly all foundational A1 content and can confidently progress.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "code": "A2",
+      "title_fa": "سطح پایه A2",
+      "title_en": "A2 Elementary",
+      "description_fa": "توانایی استفاده از جملات و عبارت‌های رایج در موقعیت‌های روزمره",
+      "description_en": "Ability to use common sentences and expressions in everyday situations.",
+      "scale_type": "level",
+      "rank": 2,
+      "pass_score": 70,
+      "interpretations": [
+        {
+          "min_score": 0,
+          "max_score": 39.99,
+          "title_fa": "تسلط ناکافی",
+          "title_en": "Insufficient mastery",
+          "description_fa": "دانش‌آموز هنوز تسلط کافی بر ساختارها و واژگان این سطح ندارد و بهتر است آموزش را از سطح پایین‌تر یا مباحث پایه همین سطح آغاز کند.",
+          "description_en": "The student has not yet demonstrated sufficient mastery of the structures and vocabulary at this level.",
+          "order": 1
+        },
+        {
+          "min_score": 40,
+          "max_score": 59.99,
+          "title_fa": "در حال یادگیری",
+          "title_en": "Developing",
+          "description_fa": "بخشی از مفاهیم این سطح آموخته شده است، اما دانش و عملکرد هنوز پایدار نیست و به تمرین هدفمند نیاز دارد.",
+          "description_en": "Some concepts at this level are understood, but performance is not yet consistent.",
+          "order": 2
+        },
+        {
+          "min_score": 60,
+          "max_score": 69.99,
+          "title_fa": "مرزی",
+          "title_en": "Borderline",
+          "description_fa": "دانش‌آموز به حد این سطح نزدیک است، اما برای ورود مطمئن به سطح بعدی باید ضعف‌های باقی‌مانده را برطرف کند.",
+          "description_en": "The student is close to the expected standard but should consolidate remaining weaknesses before progressing.",
+          "order": 3
+        },
+        {
+          "min_score": 70,
+          "max_score": 84.99,
+          "title_fa": "تسلط قابل قبول",
+          "title_en": "Competent",
+          "description_fa": "دانش‌آموز حداقل مهارت لازم این سطح را دارد و می‌تواند آموزش سطح بعدی را با مرور محدود آغاز کند.",
+          "description_en": "The student meets the expected standard and can begin the next level with limited review.",
+          "order": 4
+        },
+        {
+          "min_score": 85,
+          "max_score": 100,
+          "title_fa": "تسلط قوی",
+          "title_en": "Strong mastery",
+          "description_fa": "دانش‌آموز تسلط خوبی بر محتوای این سطح دارد و برای ورود به مباحث سطح بالاتر آمادگی مناسبی نشان می‌دهد.",
+          "description_en": "The student demonstrates strong mastery and is well prepared for higher-level material.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "code": "B1",
+      "title_fa": "سطح متوسط B1",
+      "title_en": "B1 Intermediate",
+      "description_fa": "توانایی درک و استفاده مستقل از زبان در موضوعات آشنا و روزمره",
+      "description_en": "Ability to use English independently in familiar and everyday situations.",
+      "scale_type": "level",
+      "rank": 3,
+      "pass_score": 70,
+      "interpretations": [
+        {
+          "min_score": 0,
+          "max_score": 39.99,
+          "title_fa": "تسلط ناکافی",
+          "title_en": "Insufficient mastery",
+          "description_fa": "دانش‌آموز هنوز تسلط کافی بر ساختارها و واژگان این سطح ندارد و بهتر است آموزش را از سطح پایین‌تر یا مباحث پایه همین سطح آغاز کند.",
+          "description_en": "The student has not yet demonstrated sufficient mastery of the structures and vocabulary at this level.",
+          "order": 1
+        },
+        {
+          "min_score": 40,
+          "max_score": 59.99,
+          "title_fa": "در حال یادگیری",
+          "title_en": "Developing",
+          "description_fa": "بخشی از مفاهیم این سطح آموخته شده است، اما دانش و عملکرد هنوز پایدار نیست و به تمرین هدفمند نیاز دارد.",
+          "description_en": "Some concepts at this level are understood, but performance is not yet consistent.",
+          "order": 2
+        },
+        {
+          "min_score": 60,
+          "max_score": 69.99,
+          "title_fa": "مرزی",
+          "title_en": "Borderline",
+          "description_fa": "دانش‌آموز به حد این سطح نزدیک است، اما برای ورود مطمئن به سطح بعدی باید ضعف‌های باقی‌مانده را برطرف کند.",
+          "description_en": "The student is close to the expected standard but should consolidate remaining weaknesses before progressing.",
+          "order": 3
+        },
+        {
+          "min_score": 70,
+          "max_score": 84.99,
+          "title_fa": "تسلط قابل قبول",
+          "title_en": "Competent",
+          "description_fa": "دانش‌آموز حداقل مهارت لازم این سطح را دارد و می‌تواند آموزش سطح بعدی را با مرور محدود آغاز کند.",
+          "description_en": "The student meets the expected standard and can begin the next level with limited review.",
+          "order": 4
+        },
+        {
+          "min_score": 85,
+          "max_score": 100,
+          "title_fa": "تسلط قوی",
+          "title_en": "Strong mastery",
+          "description_fa": "دانش‌آموز تسلط خوبی بر محتوای این سطح دارد و برای ورود به مباحث سطح بالاتر آمادگی مناسبی نشان می‌دهد.",
+          "description_en": "The student demonstrates strong mastery and is well prepared for higher-level material.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "code": "B2",
+      "title_fa": "سطح متوسط رو به بالا B2",
+      "title_en": "B2 Upper Intermediate",
+      "description_fa": "توانایی درک متن‌های نسبتاً پیچیده و برقراری ارتباط روان‌تر",
+      "description_en": "Ability to understand relatively complex texts and communicate with greater fluency.",
+      "scale_type": "level",
+      "rank": 4,
+      "pass_score": 70,
+      "interpretations": [
+        {
+          "min_score": 0,
+          "max_score": 39.99,
+          "title_fa": "تسلط ناکافی",
+          "title_en": "Insufficient mastery",
+          "description_fa": "دانش‌آموز هنوز تسلط کافی بر ساختارها و واژگان این سطح ندارد و بهتر است آموزش را از سطح پایین‌تر یا مباحث پایه همین سطح آغاز کند.",
+          "description_en": "The student has not yet demonstrated sufficient mastery of the structures and vocabulary at this level.",
+          "order": 1
+        },
+        {
+          "min_score": 40,
+          "max_score": 59.99,
+          "title_fa": "در حال یادگیری",
+          "title_en": "Developing",
+          "description_fa": "بخشی از مفاهیم این سطح آموخته شده است، اما دانش و عملکرد هنوز پایدار نیست و به تمرین هدفمند نیاز دارد.",
+          "description_en": "Some concepts at this level are understood, but performance is not yet consistent.",
+          "order": 2
+        },
+        {
+          "min_score": 60,
+          "max_score": 69.99,
+          "title_fa": "مرزی",
+          "title_en": "Borderline",
+          "description_fa": "دانش‌آموز به حد این سطح نزدیک است، اما برای ورود مطمئن به سطح بعدی باید ضعف‌های باقی‌مانده را برطرف کند.",
+          "description_en": "The student is close to the expected standard but should consolidate remaining weaknesses before progressing.",
+          "order": 3
+        },
+        {
+          "min_score": 70,
+          "max_score": 84.99,
+          "title_fa": "تسلط قابل قبول",
+          "title_en": "Competent",
+          "description_fa": "دانش‌آموز حداقل مهارت لازم این سطح را دارد و می‌تواند آموزش سطح بعدی را با مرور محدود آغاز کند.",
+          "description_en": "The student meets the expected standard and can begin the next level with limited review.",
+          "order": 4
+        },
+        {
+          "min_score": 85,
+          "max_score": 100,
+          "title_fa": "تسلط قوی",
+          "title_en": "Strong mastery",
+          "description_fa": "دانش‌آموز تسلط خوبی بر محتوای این سطح دارد و برای ورود به مباحث سطح بالاتر آمادگی مناسبی نشان می‌دهد.",
+          "description_en": "The student demonstrates strong mastery and is well prepared for higher-level material.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "code": "C1",
+      "title_fa": "سطح پیشرفته C1",
+      "title_en": "C1 Advanced",
+      "description_fa": "توانایی درک و استفاده دقیق، منعطف و پیشرفته از زبان انگلیسی",
+      "description_en": "Ability to understand and use English accurately, flexibly and at an advanced level.",
+      "scale_type": "level",
+      "rank": 5,
+      "pass_score": 70,
+      "interpretations": [
+        {
+          "min_score": 0,
+          "max_score": 39.99,
+          "title_fa": "تسلط ناکافی",
+          "title_en": "Insufficient mastery",
+          "description_fa": "دانش‌آموز هنوز تسلط کافی بر ساختارها و واژگان این سطح ندارد و بهتر است آموزش را از سطح پایین‌تر یا مباحث پایه همین سطح آغاز کند.",
+          "description_en": "The student has not yet demonstrated sufficient mastery of the structures and vocabulary at this level.",
+          "order": 1
+        },
+        {
+          "min_score": 40,
+          "max_score": 59.99,
+          "title_fa": "در حال یادگیری",
+          "title_en": "Developing",
+          "description_fa": "بخشی از مفاهیم این سطح آموخته شده است، اما دانش و عملکرد هنوز پایدار نیست و به تمرین هدفمند نیاز دارد.",
+          "description_en": "Some concepts at this level are understood, but performance is not yet consistent.",
+          "order": 2
+        },
+        {
+          "min_score": 60,
+          "max_score": 69.99,
+          "title_fa": "مرزی",
+          "title_en": "Borderline",
+          "description_fa": "دانش‌آموز به حد این سطح نزدیک است، اما برای ورود مطمئن به سطح بعدی باید ضعف‌های باقی‌مانده را برطرف کند.",
+          "description_en": "The student is close to the expected standard but should consolidate remaining weaknesses before progressing.",
+          "order": 3
+        },
+        {
+          "min_score": 70,
+          "max_score": 84.99,
+          "title_fa": "تسلط قابل قبول",
+          "title_en": "Competent",
+          "description_fa": "دانش‌آموز حداقل مهارت لازم این سطح را دارد و می‌تواند آموزش سطح بعدی را با مرور محدود آغاز کند.",
+          "description_en": "The student meets the expected standard and can begin the next level with limited review.",
+          "order": 4
+        },
+        {
+          "min_score": 85,
+          "max_score": 100,
+          "title_fa": "تسلط قوی",
+          "title_en": "Strong mastery",
+          "description_fa": "دانش‌آموز تسلط خوبی بر محتوای این سطح دارد و برای ورود به مباحث سطح بالاتر آمادگی مناسبی نشان می‌دهد.",
+          "description_en": "The student demonstrates strong mastery and is well prepared for higher-level material.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "code": "GRAM",
+      "title_fa": "گرامر",
+      "title_en": "Grammar",
+      "description_fa": "میزان تسلط بر ساختارهای دستوری زبان انگلیسی",
+      "description_en": "Mastery of English grammatical structures.",
+      "scale_type": "skill",
+      "rank": null,
+      "pass_score": 60,
+      "interpretations": [
+        {
+          "min_score": 0,
+          "max_score": 39.99,
+          "title_fa": "نیازمند تقویت جدی",
+          "title_en": "Needs substantial improvement",
+          "description_fa": "دانش‌آموز در تشخیص و استفاده از ساختارهای دستوری پایه و متوسط مشکل دارد و به آموزش مرحله‌ای گرامر نیاز دارد.",
+          "description_en": "",
+          "order": 1
+        },
+        {
+          "min_score": 40,
+          "max_score": 59.99,
+          "title_fa": "نیازمند تمرین بیشتر",
+          "title_en": "Needs more practice",
+          "description_fa": "دانش‌آموز برخی ساختارها را می‌شناسد، اما در انتخاب و کاربرد صحیح آن‌ها هنوز ثبات کافی ندارد.",
+          "description_en": "",
+          "order": 2
+        },
+        {
+          "min_score": 60,
+          "max_score": 74.99,
+          "title_fa": "قابل قبول",
+          "title_en": "Acceptable",
+          "description_fa": "دانش‌آموز بیشتر ساختارهای متناسب با سطح خود را تشخیص می‌دهد، اما در ساختارهای پیچیده‌تر نیازمند تمرین است.",
+          "description_en": "",
+          "order": 3
+        },
+        {
+          "min_score": 75,
+          "max_score": 89.99,
+          "title_fa": "خوب",
+          "title_en": "Good",
+          "description_fa": "دانش‌آموز تسلط خوبی بر گرامر دارد و خطاهای او معمولاً محدود به ساختارهای دشوارتر است.",
+          "description_en": "",
+          "order": 4
+        },
+        {
+          "min_score": 90,
+          "max_score": 100,
+          "title_fa": "بسیار خوب",
+          "title_en": "Very good",
+          "description_fa": "دانش‌آموز ساختارهای دستوری را با دقت بالا تشخیص می‌دهد و در کاربرد آن‌ها عملکرد بسیار خوبی دارد.",
+          "description_en": "",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "code": "VOCAB",
+      "title_fa": "واژگان",
+      "title_en": "Vocabulary",
+      "description_fa": "گستردگی و دقت دانش واژگان و عبارت‌های انگلیسی",
+      "description_en": "Breadth and accuracy of English vocabulary and expressions.",
+      "scale_type": "skill",
+      "rank": null,
+      "pass_score": 60,
+      "interpretations": [
+        {
+          "min_score": 0,
+          "max_score": 39.99,
+          "title_fa": "نیازمند تقویت جدی",
+          "title_en": "Needs substantial improvement",
+          "description_fa": "دامنه واژگان دانش‌آموز محدود است و برای درک متن‌ها و موقعیت‌های روزمره به توسعه واژگان پایه نیاز دارد.",
+          "description_en": "",
+          "order": 1
+        },
+        {
+          "min_score": 40,
+          "max_score": 59.99,
+          "title_fa": "نیازمند تمرین بیشتر",
+          "title_en": "Needs more practice",
+          "description_fa": "دانش‌آموز بخشی از واژگان رایج را می‌داند، اما در معنی، کاربرد و انتخاب واژه مناسب ضعف دارد.",
+          "description_en": "",
+          "order": 2
+        },
+        {
+          "min_score": 60,
+          "max_score": 74.99,
+          "title_fa": "قابل قبول",
+          "title_en": "Acceptable",
+          "description_fa": "دامنه واژگان دانش‌آموز برای موضوعات رایج قابل قبول است، هرچند در واژگان دقیق‌تر و سطح بالاتر نیاز به تمرین دارد.",
+          "description_en": "",
+          "order": 3
+        },
+        {
+          "min_score": 75,
+          "max_score": 89.99,
+          "title_fa": "خوب",
+          "title_en": "Good",
+          "description_fa": "دانش‌آموز دامنه واژگان مناسبی دارد و بیشتر واژه‌ها و عبارت‌های متناسب با سطح را در بافت درست تشخیص می‌دهد.",
+          "description_en": "",
+          "order": 4
+        },
+        {
+          "min_score": 90,
+          "max_score": 100,
+          "title_fa": "بسیار خوب",
+          "title_en": "Very good",
+          "description_fa": "دانش‌آموز از دامنه واژگان گسترده و دقیقی برخوردار است و تفاوت‌های معنایی را به‌خوبی تشخیص می‌دهد.",
+          "description_en": "",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "code": "READ",
+      "title_fa": "درک مطلب",
+      "title_en": "Reading",
+      "description_fa": "توانایی درک مفهوم، جزئیات و منظور متن‌های انگلیسی",
+      "description_en": "Ability to understand meaning, details and purpose in English texts.",
+      "scale_type": "skill",
+      "rank": null,
+      "pass_score": 60,
+      "interpretations": [
+        {
+          "min_score": 0,
+          "max_score": 39.99,
+          "title_fa": "نیازمند تقویت جدی",
+          "title_en": "Needs substantial improvement",
+          "description_fa": "دانش‌آموز در یافتن مفهوم اصلی، جزئیات صریح و ارتباط میان جمله‌های متن مشکل دارد.",
+          "description_en": "",
+          "order": 1
+        },
+        {
+          "min_score": 40,
+          "max_score": 59.99,
+          "title_fa": "نیازمند تمرین بیشتر",
+          "title_en": "Needs more practice",
+          "description_fa": "دانش‌آموز مفهوم کلی متن‌های ساده را درک می‌کند، اما در جزئیات و استنباط دچار خطا می‌شود.",
+          "description_en": "",
+          "order": 2
+        },
+        {
+          "min_score": 60,
+          "max_score": 74.99,
+          "title_fa": "قابل قبول",
+          "title_en": "Acceptable",
+          "description_fa": "دانش‌آموز مفهوم اصلی و بیشتر جزئیات متن‌های متناسب با سطح را درک می‌کند.",
+          "description_en": "",
+          "order": 3
+        },
+        {
+          "min_score": 75,
+          "max_score": 89.99,
+          "title_fa": "خوب",
+          "title_en": "Good",
+          "description_fa": "دانش‌آموز متن‌ها را با دقت خوبی می‌خواند و درک مناسبی از جزئیات، هدف نویسنده و نتیجه‌گیری دارد.",
+          "description_en": "",
+          "order": 4
+        },
+        {
+          "min_score": 90,
+          "max_score": 100,
+          "title_fa": "بسیار خوب",
+          "title_en": "Very good",
+          "description_fa": "دانش‌آموز در درک متن، استنباط، تشخیص دیدگاه نویسنده و تحلیل اطلاعات عملکرد بسیار خوبی دارد.",
+          "description_en": "",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "code": "USE",
+      "title_fa": "کاربرد زبان",
+      "title_en": "Use of English",
+      "description_fa": "توانایی استفاده صحیح از واژگان و ساختارها در بافت و موقعیت مناسب",
+      "description_en": "Ability to use vocabulary and structures appropriately in context.",
+      "scale_type": "skill",
+      "rank": null,
+      "pass_score": 60,
+      "interpretations": [
+        {
+          "min_score": 0,
+          "max_score": 39.99,
+          "title_fa": "نیازمند تقویت جدی",
+          "title_en": "Needs substantial improvement",
+          "description_fa": "دانش‌آموز در انتخاب عبارت مناسب برای موقعیت و استفاده طبیعی از زبان مشکل دارد.",
+          "description_en": "",
+          "order": 1
+        },
+        {
+          "min_score": 40,
+          "max_score": 59.99,
+          "title_fa": "نیازمند تمرین بیشتر",
+          "title_en": "Needs more practice",
+          "description_fa": "دانش‌آموز منظور کلی را منتقل می‌کند، اما انتخاب عبارت یا ساختار او همیشه طبیعی و متناسب با موقعیت نیست.",
+          "description_en": "",
+          "order": 2
+        },
+        {
+          "min_score": 60,
+          "max_score": 74.99,
+          "title_fa": "قابل قبول",
+          "title_en": "Acceptable",
+          "description_fa": "دانش‌آموز در بیشتر موقعیت‌های رایج می‌تواند عبارت مناسب را انتخاب و منظور خود را منتقل کند.",
+          "description_en": "",
+          "order": 3
+        },
+        {
+          "min_score": 75,
+          "max_score": 89.99,
+          "title_fa": "خوب",
+          "title_en": "Good",
+          "description_fa": "دانش‌آموز زبان را متناسب با موقعیت، لحن و هدف ارتباطی به‌خوبی به کار می‌برد.",
+          "description_en": "",
+          "order": 4
+        },
+        {
+          "min_score": 90,
+          "max_score": 100,
+          "title_fa": "بسیار خوب",
+          "title_en": "Very good",
+          "description_fa": "دانش‌آموز در انتخاب لحن، عبارت و ساختار متناسب با موقعیت، دقت و انعطاف بسیار خوبی دارد.",
+          "description_en": "",
+          "order": 5
+        }
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "question_order": 1,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "A1",
+      "level_weight": 10.0,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 2,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "A1",
+      "level_weight": 10.0,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 3,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "A1",
+      "level_weight": 10.0,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 4,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "A1",
+      "level_weight": 10.0,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 5,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "A1",
+      "level_weight": 10.0,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 6,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "A1",
+      "level_weight": 10.0,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 7,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "A1",
+      "level_weight": 10.0,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 8,
+      "correct_option_letter": "D",
+      "correct_option_order": 4,
+      "level_scale": "A1",
+      "level_weight": 10.0,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 9,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "A1",
+      "level_weight": 10.0,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 10,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "A1",
+      "level_weight": 10.0,
+      "skill_scale": "USE",
+      "skill_weight": 10.0
+    },
+    {
+      "question_order": 11,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 12,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 13,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 14,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 15,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 16,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 17,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 18,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 19,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 20,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 21,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "USE",
+      "skill_weight": 10.0
+    },
+    {
+      "question_order": 22,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "A2",
+      "level_weight": 8.333333,
+      "skill_scale": "USE",
+      "skill_weight": 10.0
+    },
+    {
+      "question_order": 23,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 24,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 25,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 26,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 27,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 28,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 29,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 30,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 31,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 32,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 33,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 34,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "USE",
+      "skill_weight": 10.0
+    },
+    {
+      "question_order": 35,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "USE",
+      "skill_weight": 10.0
+    },
+    {
+      "question_order": 36,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B1",
+      "level_weight": 7.142857,
+      "skill_scale": "USE",
+      "skill_weight": 10.0
+    },
+    {
+      "question_order": 37,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 38,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 39,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 40,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 41,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 42,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 43,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 44,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 45,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 46,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 47,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 48,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "USE",
+      "skill_weight": 10.0
+    },
+    {
+      "question_order": 49,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "USE",
+      "skill_weight": 10.0
+    },
+    {
+      "question_order": 50,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "B2",
+      "level_weight": 7.142857,
+      "skill_scale": "USE",
+      "skill_weight": 10.0
+    },
+    {
+      "question_order": 51,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "C1",
+      "level_weight": 10.0,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 52,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "C1",
+      "level_weight": 10.0,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 53,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "C1",
+      "level_weight": 10.0,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 54,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "C1",
+      "level_weight": 10.0,
+      "skill_scale": "GRAM",
+      "skill_weight": 5.0
+    },
+    {
+      "question_order": 55,
+      "correct_option_letter": "A",
+      "correct_option_order": 1,
+      "level_scale": "C1",
+      "level_weight": 10.0,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 56,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "C1",
+      "level_weight": 10.0,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 57,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "C1",
+      "level_weight": 10.0,
+      "skill_scale": "VOCAB",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 58,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "C1",
+      "level_weight": 10.0,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 59,
+      "correct_option_letter": "C",
+      "correct_option_order": 3,
+      "level_scale": "C1",
+      "level_weight": 10.0,
+      "skill_scale": "READ",
+      "skill_weight": 6.666667
+    },
+    {
+      "question_order": 60,
+      "correct_option_letter": "B",
+      "correct_option_order": 2,
+      "level_scale": "C1",
+      "level_weight": 10.0,
+      "skill_scale": "USE",
+      "skill_weight": 10.0
+    }
+  ]
+}

@@ -366,7 +366,7 @@ def psychological_tests_list_api(request):
 @permission_classes([AllowAny])
 def psychological_test_detail_api(request, test_id):
     """
-    Get detailed information about a psychological test.
+    Get detailed information about a English placement test.
     Returns test questions and options if test is not yet taken or in progress.
     
     Response:
@@ -504,7 +504,7 @@ def psychological_test_detail_api(request, test_id):
 @transaction.atomic
 def psychological_test_submit_api(request, test_id):
     """
-    Submit answers to a psychological test.
+    Submit answers to a English placement test.
     
     Request Body:
     {
