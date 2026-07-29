@@ -133,7 +133,7 @@ class PsychologicalTestForm(TranslationFieldVisibilityMixin, forms.ModelForm):
         widgets = {
             'title_fa': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': _('عنوان (فارسی)'),
+                'placeholder': _('عنوان '),
             }),
             'title_en': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -142,7 +142,7 @@ class PsychologicalTestForm(TranslationFieldVisibilityMixin, forms.ModelForm):
             'description_fa': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': _('توضیحات (فارسی)'),
+                'placeholder': _('توضیحات '),
             }),
             'description_en': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -180,7 +180,7 @@ class TestQuestionForm(TranslationFieldVisibilityMixin, forms.ModelForm):
             'question_text_fa': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': _('متن سؤال (فارسی)'),
+                'placeholder': _('متن سؤال '),
             }),
             'question_text_en': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -216,7 +216,7 @@ class QuestionOptionForm(TranslationFieldVisibilityMixin, forms.ModelForm):
             }),
             'option_text_fa': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': _('گزینه (فارسی)'),
+                'placeholder': _('گزینه '),
             }),
             'option_text_en': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -322,9 +322,9 @@ class TestScaleForm(TranslationFieldVisibilityMixin, forms.ModelForm):
         }
         labels = {
             'code': _('کد مقیاس'),
-            'title_fa': _('عنوان مقیاس (فارسی)'),
+            'title_fa': _('عنوان مقیاس '),
             'title_en': _('عنوان مقیاس (انگلیسی)'),
-            'description_fa': _('توضیحات (فارسی)'),
+            'description_fa': _('توضیحات '),
             'description_en': _('توضیحات (انگلیسی)'),
             'scale_type': _('نوع مقیاس'),
             'rank': _('ترتیب سطح'),
@@ -412,9 +412,9 @@ class ScaleInterpretationForm(TranslationFieldVisibilityMixin, forms.ModelForm):
         labels = {
             'min_score': _('حداقل امتیاز'),
             'max_score': _('حداکثر امتیاز'),
-            'title_fa': _('عنوان تفسیر (فارسی)'),
+            'title_fa': _('عنوان تفسیر '),
             'title_en': _('عنوان تفسیر (انگلیسی)'),
-            'description_fa': _('توضیحات تفسیر (فارسی)'),
+            'description_fa': _('توضیحات تفسیر '),
             'description_en': _('توضیحات تفسیر (انگلیسی)'),
             'order': _('ترتیب'),
         }

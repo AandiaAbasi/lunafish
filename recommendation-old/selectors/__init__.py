@@ -1,1 +1,0 @@
-from .test_selectors import list_tests, get_test_detail_queryset, get_last_test_register
