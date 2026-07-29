@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth import authenticate, get_user_model
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.shortcuts import get_object_or_404, redirect
@@ -23,107 +23,193 @@ import jdatetime
 import logging
 logger = logging.getLogger(__name__)
 
+
+def _assessment_online_class(assessment):
+    if not assessment:
+        return None
+
+    try:
+        return assessment.online_class
+    except (ObjectDoesNotExist, AttributeError):
+        return None
+
+
+def _select_online_class_assessment(assessments):
+    """
+    Select the most useful class for the student test list:
+    active first, then scheduled, then the latest ended/cancelled class.
+    Assessments are expected to be ordered newest first.
+    """
+    scheduled_assessment = None
+    fallback_assessment = None
+
+    for assessment in assessments:
+        online_class = _assessment_online_class(assessment)
+        if not online_class:
+            continue
+
+        if fallback_assessment is None:
+            fallback_assessment = assessment
+
+        if (
+            online_class.status == online_class.STATUS_ACTIVE
+            and online_class.actual_start
+            and not online_class.actual_end
+        ):
+            return assessment
+
+        if (
+            scheduled_assessment is None
+            and online_class.status == online_class.STATUS_SCHEDULED
+        ):
+            scheduled_assessment = assessment
+
+    return scheduled_assessment or fallback_assessment
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def psychological_tests_list_api(request):
     """
-    List all psychological tests (no assignment / no user response).
+    List tests together with the current user's response and the most relevant
+    online class created from that test's placement history.
 
-    Query Parameters:
-    - page: Page number (default: 1)
-    - page_size: Items per page (default: 10, max: 50)
-    - search: Search query (title, description) [در صورت نیاز می‌توان اضافه کرد]
-    - filter_status: نگه داشته شده برای سازگاری، ولی چون status واقعی نداریم،
-                     فقط همه را 'not_started' می‌گذاریم.
+    Online class selection priority:
+    1. active and joinable class
+    2. scheduled class
+    3. latest ended/cancelled class
 
-    Response:
-    {
-        "success": true,
-        "message": "لیست تست‌های روانشناسی با موفقیت دریافت شد",
-        "data": {
-            "tests": [...],
-            "pagination": {...},
-            "stats": {"not_started": n, "in_progress": 0, "completed": 0, "total": n}
-        }
-    }
+    The nested ``online_class`` object contains complete class information.
+    Compatibility aliases such as ``online_class_id`` and
+    ``online_actual_start`` are also returned so the current booking join flow
+    can be reused without a second classroom implementation.
     """
     try:
-        from recommendation.models import PsychologicalTest, StudentTestResponse
-
-        # --- جمع‌آوری و فیلتر پایه (در صورت نیاز به search می‌توانی اینجا اضافه کنی) ---
-        tests_qs = PsychologicalTest.objects.all()
-        user_responses = StudentTestResponse.objects.filter(
-            user=request.user,
-            test__in=tests_qs
+        from django.db.models import Count, Prefetch, Q
+        from recommendation.models import (
+            EnglishPlacementAssessment,
+            PsychologicalTest,
+            StudentTestResponse,
         )
-        
-        # تبدیل به دیکشنری برای lookup سریع
+        from recommendation.services.placement_history_service import (
+            serialize_online_class,
+        )
+
+        search_query = request.GET.get('search', '').strip()
+
+        tests_qs = PsychologicalTest.objects.all()
+        if search_query:
+            tests_qs = tests_qs.filter(
+                Q(title__icontains=search_query)
+                | Q(description__icontains=search_query)
+            )
+
+        tests_qs = tests_qs.annotate(
+            questions_total=Count('questions', distinct=True)
+        ).order_by('id')
+
+        placement_assessments_qs = (
+            EnglishPlacementAssessment.objects
+            .select_related(
+                'test',
+                'assessed_by',
+                'online_class__teacher',
+            )
+            .annotate(
+                online_class_enrolled_count=Count(
+                    'online_class__enrollments',
+                    filter=Q(online_class__enrollments__left_at__isnull=True),
+                    distinct=True,
+                )
+            )
+            .order_by('-created_at')
+        )
+
+        user_responses = (
+            StudentTestResponse.objects
+            .filter(user=request.user, test__in=tests_qs)
+            .select_related('test')
+            .prefetch_related(
+                Prefetch(
+                    'placement_assessments',
+                    queryset=placement_assessments_qs,
+                    to_attr='placement_history_cache',
+                )
+            )
+        )
+
         responses_map = {
             response.test_id: response
             for response in user_responses
         }
-        
-        # اگر search می‌خواهی، این بلاک را فعال کن:
-        search_query = request.GET.get('search', '').strip()
-        if search_query:
-            from django.db.models import Q
-            tests_qs = tests_qs.filter(
-                Q(title__icontains=search_query) |
-                Q(description__icontains=search_query)
-            )
 
-        # همه تست‌ها را تبدیل به لیست دیکشنری می‌کنیم
         tests_data = []
         stats = {
             'not_started': 0,
             'in_progress': 0,
             'completed': 0,
-            'total': 0
+            'total': 0,
         }
-        
-        
 
         for test in tests_qs:
-            # چون هیچ assignment / response نداریم، همه not_started هستند
-            test_status = 'not_started'
-            completed_at = None
-            started_at = None
-
-            # تاریخ‌های جلالی وابسته به assignment/deadline نداریم
-            completed_at_jalali = ''
-            started_at_jalali = ''
             response = responses_map.get(test.id)
+
             if response:
                 test_status = response.status
                 started_at = response.started_at
                 completed_at = response.completed_at
-                is_completed = response.status == 'completed'
+                is_completed = test_status == 'completed'
+                assessments = getattr(
+                    response,
+                    'placement_history_cache',
+                    [],
+                )
             else:
                 test_status = 'not_started'
                 started_at = None
                 completed_at = None
                 is_completed = False
-                
-                
+                assessments = []
+
+            latest_assessment = assessments[0] if assessments else None
+            class_assessment = _select_online_class_assessment(assessments)
+            online_class = (
+                serialize_online_class(class_assessment)
+                if class_assessment
+                else None
+            )
+
+            completed_at_jalali = ''
+            started_at_jalali = ''
+
             if completed_at:
                 completed_at_jalali = jdatetime.datetime.fromgregorian(
-                    datetime=completed_at
+                    datetime=timezone.localtime(completed_at)
                 ).strftime('%Y/%m/%d - %H:%M')
 
             if started_at:
                 started_at_jalali = jdatetime.datetime.fromgregorian(
-                    datetime=started_at
+                    datetime=timezone.localtime(started_at)
                 ).strftime('%Y/%m/%d - %H:%M')
 
-            question_count = test.questions.count()
-            
+            online_class_id = online_class['id'] if online_class else None
+            online_actual_start = (
+                online_class['actual_start']['iso']
+                if online_class
+                else None
+            )
+            online_actual_end = (
+                online_class['actual_end']['iso']
+                if online_class
+                else None
+            )
+
             test_item = {
                 'id': test.id,
                 'title': test.title,
                 'description': test.description,
-                'question_count': question_count,
+                'test_type': getattr(test, 'test_type', None),
+                'question_count': test.questions_total,
 
-                # چون assignment/deadline نداریم:
                 'assigned_at': None,
                 'assigned_at_jalali': '',
                 'deadline': None,
@@ -134,47 +220,111 @@ def psychological_tests_list_api(request):
                 'status_display': {
                     'not_started': 'شروع نشده',
                     'in_progress': 'در حال پاسخ',
-                    'completed': 'تکمیل شده'
+                    'completed': 'تکمیل شده',
                 }.get(test_status, 'شروع نشده'),
 
                 'is_completed': is_completed,
                 'is_expired': False,
                 'can_take': True,
 
-                'completed_at': None,
+                'response_id': response.id if response else None,
+                'completed_at': (
+                    completed_at.isoformat()
+                    if completed_at
+                    else None
+                ),
                 'completed_at_jalali': completed_at_jalali,
-                'started_at': None,
+                'started_at': (
+                    started_at.isoformat()
+                    if started_at
+                    else None
+                ),
                 'started_at_jalali': started_at_jalali,
+
+                'latest_placement_assessment_id': (
+                    latest_assessment.id
+                    if latest_assessment
+                    else None
+                ),
+                'class_placement_assessment_id': (
+                    class_assessment.id
+                    if class_assessment
+                    else None
+                ),
+
+                # Full nested payload.
+                'online_class': online_class,
+                'has_online_class': bool(online_class),
+                'can_join_online_class': bool(
+                    online_class and online_class['can_join']
+                ),
+
+                # Compatibility fields matching the booking list.
+                'online_class_id': online_class_id,
+                'online_class_status': (
+                    online_class['status']
+                    if online_class
+                    else None
+                ),
+                'online_scheduled_start': (
+                    online_class['scheduled_start']['iso']
+                    if online_class
+                    else None
+                ),
+                'online_scheduled_end': (
+                    online_class['scheduled_end']['iso']
+                    if online_class
+                    else None
+                ),
+                'online_actual_start': online_actual_start,
+                'online_actual_end': online_actual_end,
             }
 
             tests_data.append(test_item)
 
-            stats['not_started'] += 1
+            if test_status in stats:
+                stats[test_status] += 1
+            else:
+                stats['not_started'] += 1
             stats['total'] += 1
 
-        # --- فیلتر status برای سازگاری با فرانت (همه not_started هستند) ---
-        filter_status = request.GET.get('filter_status', 'all').strip().lower()
+        filter_status = request.GET.get(
+            'filter_status',
+            'all',
+        ).strip().lower()
+
         if filter_status != 'all':
             if filter_status == 'open':
-                tests_data = [t for t in tests_data if t['status'] in ['not_started', 'in_progress']]
+                tests_data = [
+                    item for item in tests_data
+                    if item['status'] in ['not_started', 'in_progress']
+                ]
             elif filter_status == 'closed':
-                tests_data = [t for t in tests_data if t['status'] == 'completed' or t['is_expired']]
-            elif filter_status in ['not_started', 'in_progress', 'completed']:
-                tests_data = [t for t in tests_data if t['status'] == filter_status]
+                tests_data = [
+                    item for item in tests_data
+                    if item['status'] == 'completed' or item['is_expired']
+                ]
+            elif filter_status in [
+                'not_started',
+                'in_progress',
+                'completed',
+            ]:
+                tests_data = [
+                    item for item in tests_data
+                    if item['status'] == filter_status
+                ]
 
-        # --- Pagination ---
         try:
-            page = int(request.GET.get('page', 1))
-        except ValueError:
+            page = max(int(request.GET.get('page', 1)), 1)
+        except (TypeError, ValueError):
             page = 1
 
         try:
-            page_size = int(request.GET.get('page_size', 10))
-        except ValueError:
+            page_size = max(int(request.GET.get('page_size', 10)), 1)
+        except (TypeError, ValueError):
             page_size = 10
 
         page_size = min(page_size, 50)
-
         paginator = Paginator(tests_data, page_size)
 
         try:
@@ -185,7 +335,7 @@ def psychological_tests_list_api(request):
 
         return Response({
             'success': True,
-            'message': 'لیست تست‌های روانشناسی با موفقیت دریافت شد',
+            'message': 'لیست تست‌ها با موفقیت دریافت شد',
             'data': {
                 'tests': list(tests_page),
                 'pagination': {
@@ -194,17 +344,21 @@ def psychological_tests_list_api(request):
                     'total_pages': paginator.num_pages,
                     'total_count': paginator.count,
                     'has_next': tests_page.has_next(),
-                    'has_previous': tests_page.has_previous()
+                    'has_previous': tests_page.has_previous(),
                 },
-                'stats': stats
-            }
+                'stats': stats,
+            },
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
-        logger.error(f"Error in psychological_tests_list_api: {str(e)}", exc_info=True)
+        logger.error(
+            'Error in psychological_tests_list_api: %s',
+            str(e),
+            exc_info=True,
+        )
         return Response({
             'success': False,
-            'message': f'خطا در دریافت لیست تست‌های روانشناسی: {str(e)}'
+            'message': f'خطا در دریافت لیست تست‌ها: {str(e)}',
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])

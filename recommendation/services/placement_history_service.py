@@ -89,28 +89,97 @@ def normalize_level_value(value) -> str:
 
 
 def serialize_online_class(assessment):
-    online_class = getattr(assessment, "online_class", None)
+    """
+    Serialize the online class created from one placement assessment.
+
+    The payload intentionally contains both presentation fields and everything
+    the student list needs to decide whether the existing join endpoint can be
+    called. The actual room join data is still returned by POST /classes/{id}/join/.
+    """
+    try:
+        online_class = assessment.online_class
+    except Exception:
+        online_class = None
+
     if not online_class:
         return None
 
     teacher = online_class.teacher
+    status_value = online_class.status
+    actual_start = online_class.actual_start
+    actual_end = online_class.actual_end
+
+    can_join = bool(
+        status_value == online_class.STATUS_ACTIVE
+        and actual_start
+        and not actual_end
+    )
+
+    if can_join:
+        join_state = "joinable"
+        join_message = "کلاس فعال است و امکان پیوستن وجود دارد."
+    elif status_value == online_class.STATUS_SCHEDULED:
+        join_state = "not_started"
+        join_message = "کلاس هنوز توسط معلم شروع نشده است."
+    elif status_value == online_class.STATUS_ENDED or actual_end:
+        join_state = "ended"
+        join_message = "کلاس پایان یافته است."
+    elif status_value == online_class.STATUS_CANCELLED:
+        join_state = "cancelled"
+        join_message = "کلاس لغو شده است."
+    else:
+        join_state = "unavailable"
+        join_message = "در حال حاضر امکان پیوستن به کلاس وجود ندارد."
+
+    enrolled_count = getattr(
+        assessment,
+        "online_class_enrolled_count",
+        None,
+    )
+    if enrolled_count is None:
+        try:
+            enrolled_count = online_class.enrolled_count
+        except Exception:
+            enrolled_count = 0
+
+    source_type = getattr(online_class, "source_type", None)
+    if not source_type:
+        source_type = (
+            "placement_assessment"
+            if getattr(online_class, "placement_assessment_id", None)
+            else "booking"
+        )
+
     return {
         "id": str(online_class.id),
         "title": online_class.title,
         "description": online_class.description,
-        "status": online_class.status,
+        "status": status_value,
         "status_display": online_class.get_status_display(),
-        "class_source": online_class.source_type,
+        "class_source": source_type,
+        "placement_assessment_id": assessment.id,
         "scheduled_start": format_datetime_payload(online_class.scheduled_start),
         "scheduled_end": format_datetime_payload(online_class.scheduled_end),
-        "actual_start": format_datetime_payload(online_class.actual_start),
-        "actual_end": format_datetime_payload(online_class.actual_end),
+        "actual_start": format_datetime_payload(actual_start),
+        "actual_end": format_datetime_payload(actual_end),
         "room_id": str(online_class.room_id),
+        "max_students": online_class.max_students,
+        "enrolled_count": int(enrolled_count or 0),
+        "is_full": int(enrolled_count or 0) >= online_class.max_students,
         "teacher": {
             "id": teacher.id,
             "name": getattr(teacher, "name", "") or "",
             "username": getattr(teacher, "username", "") or "",
         },
+        "settings": {
+            "allow_student_chat": online_class.allow_student_chat,
+            "allow_student_reactions": online_class.allow_student_reactions,
+            "require_approval_to_join": online_class.require_approval_to_join,
+            "enable_recording": online_class.enable_recording,
+        },
+        "can_join": can_join,
+        "join_state": join_state,
+        "join_message": join_message,
     }
 
 
