@@ -483,10 +483,10 @@
                                 <i class="fas fa-save ms-1"></i>
                                 {% if is_create %}ایجاد آزمون{% else %}ذخیره تغییرات{% endif %}
                             </button>
-                            <a href="{% url 'recommendation:test_list' %}" class="btn btn-secondary btn-lg">
+                            {% comment %} <a href="{% url 'recommendation:test_list' %}" class="btn btn-secondary btn-lg">
                                 <i class="fas fa-times ms-1"></i>
                                 انصراف
-                            </a>
+                            </a> {% endcomment %}
                         </div>
                     </form>
                 </div>
