@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True, null=True, verbose_name='Updated at')),
                 ('suggested_level', models.CharField(blank=True, choices=[('pre_a1', 'Pre-A1'), ('a1', 'A1 - Beginner'), ('a2', 'A2 - Elementary'), ('b1', 'B1 - Intermediate'), ('b2', 'B2 - Upper Intermediate'), ('c1', 'C1 - Advanced'), ('c2', 'C2 - Proficient')], db_index=True, max_length=10, null=True, verbose_name='سطح پیشنهادی سیستم')),
                 ('final_level', models.CharField(blank=True, choices=[('pre_a1', 'Pre-A1'), ('a1', 'A1 - Beginner'), ('a2', 'A2 - Elementary'), ('b1', 'B1 - Intermediate'), ('b2', 'B2 - Upper Intermediate'), ('c1', 'C1 - Advanced'), ('c2', 'C2 - Proficient')], db_index=True, max_length=10, null=True, verbose_name='سطح نهایی')),
-                ('source', models.CharField(choices=[('test', 'آزمون تعیین سطح'), ('admin', 'تعیین دستی ادمین'), ('teacher', 'تعیین دستی مدرس')], default='test', max_length=20, verbose_name='روش تعیین سطح')),
+                ('source', models.CharField(choices=[('test', 'آزمون تعیین سطح'), ('admin', 'تعیین دستی ادمین')], default='test', max_length=20, verbose_name='روش تعیین سطح')),
                 ('status', models.CharField(choices=[('pending', 'در انتظار بررسی'), ('confirmed', 'تأیید شده'), ('overridden', 'تغییر داده شده توسط ارزیاب')], db_index=True, default='pending', max_length=20, verbose_name='وضعیت بررسی')),
                 ('assessed_at', models.DateTimeField(blank=True, null=True, verbose_name='زمان بررسی نهایی')),
                 ('response_completed_at', models.DateTimeField(blank=True, null=True, verbose_name='زمان ثبت این نوبت آزمون')),

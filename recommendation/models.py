@@ -405,7 +405,6 @@ class EnglishPlacementAssessment(BaseModel):
     class Source(models.TextChoices):
         TEST = 'test', _('آزمون تعیین سطح')
         ADMIN = 'admin', _('تعیین دستی ادمین')
-        TEACHER = 'teacher', _('تعیین دستی مدرس')
 
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL,

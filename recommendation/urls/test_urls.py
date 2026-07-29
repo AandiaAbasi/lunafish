@@ -1,5 +1,10 @@
 from django.urls import path
-from recommendation.views import test_views, scale_views, student_test_views
+from recommendation.views import (
+    scale_views,
+    student_test_views,
+    teacher_placement_views,
+    test_views,
+)
 
 app_name = "recommendation"
 
@@ -53,6 +58,17 @@ urlpatterns = [
     path('psychological-tests/<int:test_id>/submit/', student_test_views.psychological_test_submit_api, name='psychological_test_submit'),
     path('psychological-tests/<int:test_id>/view-answers/', student_test_views.psychological_test_view_answers_api, name='psychological_test_view_answers'),
     path('psychological-tests/<int:test_id>/result/', student_test_views.psychological_test_result_api, name='psychological_test_result'),
+
+    path(
+        'teacher/students/<int:student_id>/placement-history/',
+        teacher_placement_views.student_placement_history_api,
+        name='teacher_student_placement_history',
+    ),
+    path(
+        'teacher/placement-history/<int:assessment_id>/',
+        teacher_placement_views.placement_assessment_detail_api,
+        name='teacher_placement_assessment_detail',
+    ),
     
 
 ]
