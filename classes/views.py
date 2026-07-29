@@ -441,13 +441,17 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         role = 'teacher' if teacher_participant else 'student'
         if enrollment:
             enrollment.join()
-            from classroom.models import Attendance
-            if enrollment and not teacher_participant:
+
+            # Attendance is tied to ClassBooking and must only be created for
+            # booking-based classes. Placement classes have booking=None.
+            if not teacher_participant and class_instance.booking_id:
+                from classroom.models import Attendance
+
                 Attendance.objects.get_or_create(
                     booking=class_instance.booking,
                     student=user,
-                    defaults={'status': 'present'}
-                ) 
+                    defaults={'status': 'present'},
+                )
 
         if teacher_participant:
             permissions = {
