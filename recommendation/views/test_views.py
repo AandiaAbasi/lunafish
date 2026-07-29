@@ -154,7 +154,7 @@ def test_delete_view(request, test_id):
 
     messages.success(request, _("Test deleted successfully"))
 
-    return redirect("recommendation:test_list")
+    return redirect("admin:recommendation_psychologicaltest_changelist")
 
 
 
