@@ -4,6 +4,7 @@ from datetime import datetime
 from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass
 from .utils import get_student_queryset, get_teacher_queryset
 from classroom.models import ClassBooking
+from recommendation.models import EnglishPlacementAssessment
 
 User = get_user_model()
 
@@ -11,10 +12,14 @@ User = get_user_model()
 class UserBasicSerializer(serializers.ModelSerializer):
     firstName = serializers.SerializerMethodField()
     lastName = serializers.SerializerMethodField()
+    profile_photo = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'name', 'email', 'phone', 'role', 'firstName', 'lastName']
+        fields = [
+            'id', 'username', 'name', 'email', 'phone', 'role',
+            'firstName', 'lastName', 'profile_photo',
+        ]
         read_only_fields = fields
 
     def get_firstName(self, obj):
@@ -22,6 +27,20 @@ class UserBasicSerializer(serializers.ModelSerializer):
 
     def get_lastName(self, obj):
         return obj.last_name or ''
+
+    def get_profile_photo(self, obj):
+        selected_avatar = getattr(obj, 'selected_avatar', None)
+        avatar_image = getattr(selected_avatar, 'image', None) if selected_avatar else None
+        if not avatar_image:
+            return None
+
+        try:
+            url = avatar_image.url
+        except (ValueError, AttributeError):
+            return None
+
+        request = self.context.get('request')
+        return request.build_absolute_uri(url) if request else url
 
 
 class OnlineClassSerializer(serializers.ModelSerializer):
@@ -36,8 +55,18 @@ class OnlineClassSerializer(serializers.ModelSerializer):
         queryset=ClassBooking.objects.all(),
         source='booking',
         write_only=True,
-        required=True,
+        required=False,
+        allow_null=True,
     )
+    placement_assessment_id = serializers.PrimaryKeyRelatedField(
+        queryset=EnglishPlacementAssessment.objects.select_related('student', 'test'),
+        source='placement_assessment',
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
+    placement_assessment = serializers.SerializerMethodField()
+    class_source = serializers.CharField(source='source_type', read_only=True)
 
     enrolled_count = serializers.IntegerField(read_only=True)
     is_full = serializers.BooleanField(read_only=True)
@@ -53,6 +82,9 @@ class OnlineClassSerializer(serializers.ModelSerializer):
             'teacher',
             'teacher_id',
             'booking_id',
+            'placement_assessment_id',
+            'placement_assessment',
+            'class_source',
             'scheduled_start',
             'scheduled_end',
             'actual_start',
@@ -80,21 +112,97 @@ class OnlineClassSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+        extra_kwargs = {
+            'title': {'required': False, 'allow_blank': True},
+        }
+
+    def get_placement_assessment(self, obj):
+        assessment = getattr(obj, 'placement_assessment', None)
+        if not assessment:
+            return None
+
+        level = assessment.final_level or assessment.suggested_level
+        return {
+            'id': assessment.id,
+            'student': UserBasicSerializer(
+                assessment.student,
+                context=self.context,
+            ).data,
+            'suggested_level': assessment.suggested_level,
+            'final_level': assessment.final_level,
+            'display_level': level,
+            'status': assessment.status,
+            'status_display': assessment.get_status_display(),
+            'source': assessment.source,
+            'source_display': assessment.get_source_display(),
+        }
 
     def validate(self, attrs):
-        teacher = attrs.get('teacher')
-        booking = attrs.get('booking')
         request = self.context.get('request')
+        teacher = attrs.get('teacher')
 
         if not self.instance and teacher is None and request and getattr(request.user, 'role', None) == 'teacher':
             attrs['teacher'] = request.user
             teacher = request.user
 
-        if booking and teacher and hasattr(booking, 'teacher'):
-            if booking.teacher != teacher:
+        current_booking = getattr(self.instance, 'booking', None) if self.instance else None
+        current_assessment = (
+            getattr(self.instance, 'placement_assessment', None)
+            if self.instance else None
+        )
+        booking = attrs.get('booking', current_booking)
+        assessment = attrs.get('placement_assessment', current_assessment)
+
+        if booking and assessment:
+            raise serializers.ValidationError({
+                'non_field_errors': [
+                    'کلاس نمی‌تواند هم‌زمان به رزرو و نتیجه تعیین سطح متصل باشد.'
+                ]
+            })
+
+        if not self.instance and not booking and not assessment:
+            raise serializers.ValidationError({
+                'non_field_errors': [
+                    'برای ساخت کلاس باید booking_id یا placement_assessment_id ارسال شود.'
+                ]
+            })
+
+        if booking and teacher and hasattr(booking, 'teacher') and booking.teacher != teacher:
+            raise serializers.ValidationError({
+                'booking_id': 'این رزرو متعلق به این استاد نیست.'
+            })
+
+        if assessment:
+            if getattr(assessment.student, 'role', None) == 'teacher':
                 raise serializers.ValidationError({
-                    'booking_id': 'این رزرو متعلق به این استاد نیست.'
+                    'placement_assessment_id': 'این نتیجه متعلق به دانش‌آموز نیست.'
                 })
+
+            display_level = assessment.final_level or assessment.suggested_level
+            if not display_level:
+                raise serializers.ValidationError({
+                    'placement_assessment_id': 'برای این نتیجه هنوز سطح قابل استفاده‌ای ثبت نشده است.'
+                })
+
+            duplicate = OnlineClass.objects.filter(
+                placement_assessment=assessment
+            )
+            if self.instance:
+                duplicate = duplicate.exclude(pk=self.instance.pk)
+            if duplicate.exists():
+                raise serializers.ValidationError({
+                    'placement_assessment_id': 'برای این نتیجه تعیین سطح قبلاً کلاس ساخته شده است.'
+                })
+
+            if not attrs.get('title') and not (self.instance and self.instance.title):
+                student_name = (
+                    getattr(assessment.student, 'name', None)
+                    or getattr(assessment.student, 'username', '')
+                )
+                attrs['title'] = f'کلاس سطح {str(display_level).replace("_", "-").upper()} - {student_name}'
+
+            if not self.instance and 'max_students' not in attrs:
+                attrs['max_students'] = 1
 
         return attrs
 

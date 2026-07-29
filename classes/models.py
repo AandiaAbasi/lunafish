@@ -64,6 +64,15 @@ class OnlineClass(BaseModel):
         null=True,
         blank=True,
     )
+    placement_assessment = models.OneToOneField(
+        "recommendation.EnglishPlacementAssessment",
+        on_delete=models.PROTECT,
+        related_name='online_class',
+        verbose_name=_("نتیجه تعیین سطح"),
+        null=True,
+        blank=True,
+        help_text=_("نتیجه تعیین سطحی که این کلاس بر اساس آن ساخته شده است."),
+    )
     reward_granted = models.BooleanField(default=False, verbose_name=_('Reward granted'))
     scheduled_start = models.DateTimeField(verbose_name=_('Scheduled start'))
     scheduled_end = models.DateTimeField(verbose_name=_('Scheduled end'))
@@ -97,6 +106,18 @@ class OnlineClass(BaseModel):
             raise ValidationError({'teacher': _('Selected user must have teacher role.')})
         if self.scheduled_end and self.scheduled_start and self.scheduled_end <= self.scheduled_start:
             raise ValidationError({'scheduled_end': _('Scheduled end must be after scheduled start.')})
+        if self.booking_id and self.placement_assessment_id:
+            raise ValidationError(
+                _('An online class cannot be linked to both a booking and a placement result.')
+            )
+
+    @property
+    def source_type(self):
+        if self.placement_assessment_id:
+            return 'placement_assessment'
+        if self.booking_id:
+            return 'booking'
+        return 'manual'
 
     def __str__(self):
         return f'{self.title} - {self.teacher}'

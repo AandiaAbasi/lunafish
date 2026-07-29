@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
@@ -62,7 +63,16 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = OnlineClass.objects.select_related('teacher').prefetch_related('enrollments')
+        queryset = (
+            OnlineClass.objects
+            .select_related(
+                'teacher',
+                'booking',
+                'placement_assessment__student',
+                'placement_assessment__test',
+            )
+            .prefetch_related('enrollments')
+        )
         if is_teacher(user):
             return queryset.filter(teacher=user)
         return queryset.filter(enrollments__student=user).distinct()
@@ -73,8 +83,50 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             raise PermissionDenied('Only teachers can create online classes.')
         if not is_teacher(teacher):
             raise PermissionDenied('Class owner must be a teacher.')
-        class_instance = serializer.save(teacher=teacher)
-        class_created.send(sender=OnlineClass, class_instance=class_instance, created_by=self.request.user)
+
+        with transaction.atomic():
+            class_instance = serializer.save(teacher=teacher)
+            assessment = class_instance.placement_assessment
+
+            enrollment = None
+            enrollment_created = False
+            if assessment_id := class_instance.placement_assessment_id:
+                enrollment, enrollment_created = ClassEnrollment.objects.update_or_create(
+                    class_session=class_instance,
+                    student=assessment.student,
+                    defaults={
+                        'can_unmute': False,
+                        'can_share_video': False,
+                        'can_share_screen': False,
+                        'is_moderator': False,
+                        'left_at': None,
+                    },
+                )
+
+            def publish_creation_events():
+                class_created.send(
+                    sender=OnlineClass,
+                    class_instance=class_instance,
+                    created_by=self.request.user,
+                )
+
+                if enrollment and enrollment_created:
+                    student_enrolled.send(
+                        sender=ClassEnrollment,
+                        class_instance=class_instance,
+                        student=enrollment.student,
+                    )
+                    publish_to_user(
+                        enrollment.student_id,
+                        'class.enrolled',
+                        {
+                            'class_id': str(class_instance.id),
+                            'source': 'placement_assessment',
+                            'placement_assessment_id': assessment_id,
+                        },
+                    )
+
+            transaction.on_commit(publish_creation_events)
 
     def _get_participant_context(self, class_instance):
         user = self.request.user
@@ -111,6 +163,14 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             'description': class_instance.description,
             'teacher': UserBasicSerializer(class_instance.teacher).data,
             'status': class_instance.status,
+            'sourceType': class_instance.source_type,
+            'bookingId': class_instance.booking_id,
+            'placementAssessmentId': class_instance.placement_assessment_id,
+            'studentId': (
+                class_instance.placement_assessment.student_id
+                if class_instance.placement_assessment_id
+                else None
+            ),
             'settings': {
                 'allowStudentChat': class_instance.allow_student_chat,
                 'allowStudentReactions': class_instance.allow_student_reactions,
@@ -235,8 +295,10 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Attendance & scoring
-        if not class_instance.reward_granted:
+        # Attendance and score rewards belong to booking-based classes only.
+        # Placement-based classes have no ClassBooking, so they must not create
+        # Attendance rows with a null booking.
+        if class_instance.booking_id and not class_instance.reward_granted:
             from classroom.models import Attendance
 
             enrollments = ClassEnrollment.objects.select_related('student').filter(
@@ -255,7 +317,6 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
                 if attendance.status == 'present':
                     present_student_ids.append(enrollment.student_id)
 
-            # Give score only to present students
             if present_student_ids:
                 User.objects.filter(
                     id__in=present_student_ids

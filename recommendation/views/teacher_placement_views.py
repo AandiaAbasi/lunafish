@@ -63,7 +63,13 @@ def student_placement_history_api(request, student_id):
         queryset = (
             EnglishPlacementAssessment.objects
             .filter(student=student)
-            .select_related("student", "test", "response__test", "assessed_by")
+            .select_related(
+                "student",
+                "test",
+                "response__test",
+                "assessed_by",
+                "online_class__teacher",
+            )
             .order_by("-created_at")
         )
 
@@ -133,7 +139,12 @@ def student_placement_history_api(request, student_id):
         )
         latest = (
             all_student_assessments
-            .select_related("test", "response__test", "assessed_by")
+            .select_related(
+                "test",
+                "response__test",
+                "assessed_by",
+                "online_class__teacher",
+            )
             .order_by("-created_at")
             .first()
         )
@@ -200,7 +211,13 @@ def placement_assessment_detail_api(request, assessment_id):
         try:
             assessment = (
                 EnglishPlacementAssessment.objects
-                .select_related("student", "test", "response__test", "assessed_by")
+                .select_related(
+                "student",
+                "test",
+                "response__test",
+                "assessed_by",
+                "online_class__teacher",
+            )
                 .get(pk=assessment_id)
             )
         except EnglishPlacementAssessment.DoesNotExist:

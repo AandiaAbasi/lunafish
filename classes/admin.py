@@ -46,6 +46,7 @@ class OnlineClassAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
     list_display = [
         'title',
         'teacher',
+        'class_source_display',
         'status',
         'scheduled_start_display',
         'enrolled_count',
@@ -54,6 +55,7 @@ class OnlineClassAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
     list_filter = [
         'status',
         'scheduled_start',
+        'placement_assessment__status',
         'allow_student_chat',
         'allow_student_reactions',
         'enable_recording',
@@ -64,8 +66,20 @@ class OnlineClassAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
         'teacher__username',
         'teacher__phone',
         'teacher__email',
+        'placement_assessment__student__username',
+        'placement_assessment__student__name',
+        'placement_assessment__student__phone',
     ]
     readonly_fields = ['id', 'room_id']
+    list_select_related = ['teacher', 'booking', 'placement_assessment__student']
+
+    @admin.display(description=_('Class source'))
+    def class_source_display(self, obj):
+        if obj.placement_assessment_id:
+            return _('Placement assessment')
+        if obj.booking_id:
+            return _('Booking')
+        return _('Manual')
     localized_readonly_date_fields = [
         'scheduled_start_display',
         'scheduled_end_display',

@@ -88,6 +88,32 @@ def normalize_level_value(value) -> str:
     return str(value).strip().lower().replace("-", "_")
 
 
+def serialize_online_class(assessment):
+    online_class = getattr(assessment, "online_class", None)
+    if not online_class:
+        return None
+
+    teacher = online_class.teacher
+    return {
+        "id": str(online_class.id),
+        "title": online_class.title,
+        "description": online_class.description,
+        "status": online_class.status,
+        "status_display": online_class.get_status_display(),
+        "class_source": online_class.source_type,
+        "scheduled_start": format_datetime_payload(online_class.scheduled_start),
+        "scheduled_end": format_datetime_payload(online_class.scheduled_end),
+        "actual_start": format_datetime_payload(online_class.actual_start),
+        "actual_end": format_datetime_payload(online_class.actual_end),
+        "room_id": str(online_class.room_id),
+        "teacher": {
+            "id": teacher.id,
+            "name": getattr(teacher, "name", "") or "",
+            "username": getattr(teacher, "username", "") or "",
+        },
+    }
+
+
 def _assessment_test(assessment):
     if assessment.test_id:
         return assessment.test
@@ -295,6 +321,8 @@ def build_assessment_details(assessment: EnglishPlacementAssessment):
         "skill_results": skill_results,
         "other_results": other_results,
         "scale_results": scale_results,
+        "online_class": serialize_online_class(assessment),
+        "can_create_online_class": not bool(getattr(assessment, "online_class", None)),
         "historical_answers_available": False,
     }
 
@@ -309,6 +337,8 @@ def build_assessment_list_item(assessment: EnglishPlacementAssessment):
         "created_at": details["assessment"]["created_at"],
         "response_completed_at": details["assessment"]["response_completed_at"],
         "response_id": assessment.response_id,
+        "online_class": details["online_class"],
+        "can_create_online_class": details["can_create_online_class"],
         "level_results": details["level_results"],
         "skill_results": details["skill_results"],
     }
