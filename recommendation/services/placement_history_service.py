@@ -36,19 +36,46 @@ def format_datetime_payload(value):
 
 
 def serialize_student(student):
+    selected_avatar = getattr(student, "selected_avatar", None)
+    avatar_url = None
+
+    if selected_avatar:
+        avatar_image = getattr(selected_avatar, "image", None)
+
+        if avatar_image:
+            try:
+                avatar_url = avatar_image.url
+            except (ValueError, AttributeError):
+                avatar_url = None
+
     return {
         "id": student.id,
         "name": getattr(student, "name", "") or "",
         "username": getattr(student, "username", "") or "",
         "email": getattr(student, "email", "") or "",
         "phone": str(getattr(student, "phone", "") or ""),
-        "profile_photo": (
-            student.profile_photo_path.url
-            if getattr(student, "profile_photo_path", None)
+
+        "profile_photo": avatar_url,
+
+        "selected_avatar": (
+            {
+                "id": selected_avatar.id,
+                "image": avatar_url,
+            }
+            if selected_avatar
             else None
         ),
-        "current_english_level": getattr(student, "english_level", None),
-        "english_level_source": getattr(student, "english_level_source", None),
+
+        "current_english_level": getattr(
+            student,
+            "english_level",
+            None,
+        ),
+        "english_level_source": getattr(
+            student,
+            "english_level_source",
+            None,
+        ),
         "english_level_updated_at": format_datetime_payload(
             getattr(student, "english_level_updated_at", None)
         ),
