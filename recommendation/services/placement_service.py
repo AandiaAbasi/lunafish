@@ -28,41 +28,39 @@ def create_placement_history_from_result(response, result):
     )
 
 
-def sync_user_english_level(assessment, assessor):
+def sync_user_english_level(assessment):
     """
-    Copy the final approved level to User when the project User model contains
-    the documented English-level fields. Kept defensive because the account app
-    was not included in the supplied archive.
+    همگام‌سازی سطح نهایی تعیین‌شده با پروفایل دانش‌آموز.
     """
-    if not assessment.final_level:
-        return False
 
-    user = assessment.student
-    field_names = {field.name for field in user._meta.get_fields()}
-    required = {
-        'english_level',
-        'english_level_source',
-        'english_level_updated_at',
-        'english_level_assessed_by',
-    }
-    if not required.issubset(field_names):
-        return False
+    student = assessment.student
+    final_level = assessment.final_level
 
-    if assessment.source == EnglishPlacementAssessment.Source.TEACHER:
-        source = 'teacher'
-    elif assessment.response_id:
-        source = 'placement_test'
+    if not student or not final_level:
+        return
+
+    level_code = getattr(final_level, 'code', final_level)
+
+    if isinstance(level_code, str):
+        level_code = level_code.lower()
+
+    if assessment.source == EnglishPlacementAssessment.Source.ADMIN:
+        user_level_source = 'admin'
     else:
-        source = 'admin'
+        user_level_source = 'placement_test'
 
-    user.english_level = assessment.final_level
-    user.english_level_source = source
-    user.english_level_updated_at = assessment.assessed_at or timezone.now()
-    user.english_level_assessed_by = assessor
-    user.save(update_fields=[
-        'english_level',
-        'english_level_source',
-        'english_level_updated_at',
-        'english_level_assessed_by',
-    ])
-    return True
+    student.english_level = level_code
+    student.english_level_source = user_level_source
+    student.english_level_updated_at = (
+        assessment.assessed_at or timezone.now()
+    )
+    student.english_level_assessed_by = assessment.assessed_by
+
+    student.save(
+        update_fields=[
+            'english_level',
+            'english_level_source',
+            'english_level_updated_at',
+            'english_level_assessed_by',
+        ]
+    )
