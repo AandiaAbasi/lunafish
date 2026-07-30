@@ -239,13 +239,74 @@ class EnglishPlacementAssessmentAdmin(admin.ModelAdmin):
     # list_display و سایر تنظیمات فعلی خودت...
 
     def save_model(self, request, obj, form, change):
+        if obj.response_id:
+            obj.student = obj.response.user
+            obj.test = obj.response.test
+
+            if not obj.suggested_level:
+                try:
+                    result = obj.response.result
+                except Exception:
+                    result = None
+
+                if result:
+                    obj.suggested_level = (
+                        result.summary or {}
+                    ).get('suggested_level')
+
+                    obj.raw_scores_snapshot = dict(
+                        result.raw_scores or {}
+                    )
+                    obj.result_summary_snapshot = dict(
+                        result.summary or {}
+                    )
+                    obj.response_completed_at = obj.response.completed_at
+
+        elif obj.source == obj.Source.TEST:
+            obj.source = obj.Source.ADMIN
+
         if obj.final_level:
-            obj.status = EnglishPlacementAssessment.Status.CONFIRMED
-            obj.source = EnglishPlacementAssessment.Source.ADMIN
             obj.assessed_by = request.user
             obj.assessed_at = timezone.now()
 
+            obj.status = (
+                obj.Status.CONFIRMED
+                if obj.final_level == obj.suggested_level
+                else obj.Status.OVERRIDDEN
+            )
+
+        # اول خود نتیجه تعیین سطح ذخیره شود
         super().save_model(request, obj, form, change)
 
-        if obj.final_level:
-            sync_user_english_level(obj)
+        if not obj.final_level or not obj.student_id:
+            return
+
+        try:
+            UserModel = obj.student.__class__
+
+            updated_count = UserModel.objects.filter(
+                pk=obj.student_id
+            ).update(
+                english_level=obj.final_level,
+                english_level_source='admin',
+                english_level_updated_at=obj.assessed_at,
+                english_level_assessed_by_id=request.user.pk,
+            )
+
+            if not updated_count:
+                self.message_user(
+                    request,
+                    'نتیجه تأیید شد، اما حساب دانش‌آموز پیدا نشد.',
+                    level=messages.WARNING,
+                )
+
+        except Exception as exc:
+            
+
+            # این Exception دوباره raise نمی‌شود؛ پس ادمین 500 نمی‌گیرد.
+            self.message_user(
+                request,
+                f'نتیجه تعیین سطح ذخیره شد، اما انتقال سطح به پروفایل '
+                f'دانش‌آموز خطا داشت: {exc}',
+                level=messages.ERROR,
+            )
