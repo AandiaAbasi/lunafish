@@ -28,6 +28,7 @@ from django.views.generic import TemplateView
 import re
 import jdatetime
 import datetime as dt
+import logging
 from account.serializers import *
 from account.services import *
 from account.models import OTP, VerificationToken, ParentProfile, User
@@ -54,6 +55,7 @@ from .parent_serializers import (
     ParentLoginSerializer, ParentProfileSerializer, ParentUpdateUsageTimeSerializer,
     ChildClassHistorySerializer, ChildPaymentHistorySerializer
 )
+from .throttles import OTPRequestThrottle, OTPVerifyThrottle, PasswordLoginThrottle
 from classroom.serializers import (
     CourseSerializer
 )
@@ -77,6 +79,7 @@ from classroom.models import TeacherWallet
 from classes.views import InternalRTCEventAPIView
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 def get_tokens_for_user(user, is_parent=False):
@@ -125,6 +128,7 @@ class SendOTPAPIView(APIView):
             503 Service Unavailable - Email service not configured
     """
     permission_classes = [AllowAny]
+    throttle_classes = [OTPRequestThrottle]
     
     @extend_schema(
         tags=['Authentication - OTP'],
@@ -140,104 +144,47 @@ class SendOTPAPIView(APIView):
     )
     def post(self, request):
         serializer = SendOTPSerializer(data=request.data)
-        if serializer.is_valid():
-            identifier = serializer.validated_data['identifier']
-            purpose = serializer.validated_data.get('purpose', 'login')
-            
-            # For registration, check if user already exists
-            if purpose == 'registration':
-                import phonenumbers
+        if not serializer.is_valid():
+            return Response({
+                "success": False,
+                "message": _("Invalid data provided"),
+                "errors": serializer.errors,
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-                check_identifier = identifier
-                if identifier.startswith('09'):
-                    try:
-                        phone_obj = phonenumbers.parse(identifier, "IR")
-                        check_identifier = phonenumbers.format_number(
-                            phone_obj,
-                            phonenumbers.PhoneNumberFormat.E164
-                        )
-                    except:
-                        pass
+        identifier = serializer.validated_data['identifier']
+        purpose = serializer.validated_data['purpose']
 
-                # Check existing user by phone
-                existing_user = (
-                    User.objects.filter(phone=check_identifier).first() or
-                    User.objects.filter(phone=identifier).first()
-                )
-
-                if existing_user and existing_user.username and not existing_user.username.startswith('user_'):
-                    role_display = dict(User.ROLE_CHOICES).get(existing_user.role, existing_user.role)
-
-                    return Response({
-                        "success": False,
-                        "message": _(f"این شماره قبلاً به عنوان {role_display} ثبت شده است. لطفاً وارد شوید.")
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                # Email check
-                if '@' in identifier:
-                    existing_user = User.objects.filter(email=identifier).first()
-
-                    if existing_user and existing_user.username and not existing_user.username.startswith('user_'):
-                        role_display = dict(User.ROLE_CHOICES).get(existing_user.role, existing_user.role)
-
-                        return Response({
-                            "success": False,
-                            "message": _(f"این ایمیل قبلاً به عنوان «{role_display}» ثبت شده است. لطفاً وارد شوید.")
-                        }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Check if can send OTP (cooldown check)
-            recent_otp = OTP.objects.filter(
-                phone=identifier if '@' not in str(identifier) else None,
-                email=identifier if '@' in str(identifier) else None,
-                is_used=False
-            ).order_by('-created_at').first()
-            
-            if recent_otp and (timezone.now() - recent_otp.created_at).seconds < 120:
-                return Response({
-                    "success": False,
-                    "message": _("Please wait 2 minutes.")
-                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
-            
-            # Generate and send OTP
-            try:
-                if '@' in str(identifier):
-                    # Email OTP - check if send_email_otp is available
-                    if not send_email_otp:
-                        return Response({
-                            "success": False,
-                            "message": _("Email authentication is not configured on this server")
-                        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-                    # Generate and send email OTP
-                    generate_and_send_otp(identifier, purpose=purpose)
-                else:
-                    # Phone OTP - using utils.py send_sms
-                    generate_and_send_otp(identifier, purpose=purpose)
-                    
-                return Response({
-                    "success": True,
-                    "message": _("Verification code sent.")
-                }, status=status.HTTP_200_OK)
-            except Exception as e:
-                return Response({
-                    "success": False,
-                    "message": _(f"Error sending code: {str(e)}")
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        # Format errors for better readability
-        error_messages = []
-        for field, errors in serializer.errors.items():
-            if field == 'non_field_errors':
-                error_messages.extend([str(e) for e in errors])
+        if purpose == 'registration':
+            if '@' in identifier:
+                existing_user = User.objects.filter(email__iexact=identifier).first()
             else:
-                for error in errors:
-                    error_messages.append(f"{field}: {error}")
-        
-        return Response({
-            "success": False,
-            "message": " | ".join(error_messages) if error_messages else _("Invalid data provided"),
-            "errors": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+                existing_user = User.objects.filter(phone=identifier).first()
+            if existing_user:
+                role_display = dict(User.ROLE_CHOICES).get(existing_user.role, existing_user.role)
+                return Response({
+                    "success": False,
+                    "message": _(f"این مشخصات قبلاً برای حساب {role_display} ثبت شده است. لطفاً وارد شوید."),
+                }, status=status.HTTP_400_BAD_REQUEST)
 
+        ok, msg = can_send_otp(identifier, purpose=purpose)
+        if not ok:
+            return Response({"success": False, "message": msg}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        try:
+            generate_and_send_otp(identifier, purpose=purpose, user=None, is_teacher=False)
+        except OTPDeliveryError as exc:
+            return Response({"success": False, "message": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception:
+            logger.exception("Unexpected error while sending user OTP")
+            return Response({
+                "success": False,
+                "message": _("Unable to send verification code. Please try again."),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            "success": True,
+            "message": _("Verification code sent."),
+        }, status=status.HTTP_200_OK)
 
 class VerifyOTPAPIView(APIView):
     """
@@ -259,6 +206,7 @@ class VerifyOTPAPIView(APIView):
             For registration: verification token
     """
     permission_classes = [AllowAny]
+    throttle_classes = [OTPVerifyThrottle]
     
     @extend_schema(
         tags=['Authentication - OTP'],
@@ -272,58 +220,45 @@ class VerifyOTPAPIView(APIView):
     )
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
-        if serializer.is_valid():
-            identifier = serializer.validated_data['identifier']
-            code = serializer.validated_data['code']
-            purpose = serializer.validated_data.get('purpose', 'login')
-            
-            ok, result = validate_otp(identifier, code, purpose=purpose)
-            
-            if ok:
-                # If registration, return verification token
-                if purpose == 'registration' and isinstance(result, dict):
-                    return Response({
-                        "success": True,
-                        "message": _("Verification code is correct. Please complete registration"),
-                        "data": {
-                            "verification_token": result['verification_token'],
-                            "phone": result.get('phone'),
-                            "email": result.get('email')
-                        }
-                    }, status=status.HTTP_200_OK)
-                
-                # For login, return user and tokens
-                user = result
-                tokens = get_tokens_for_user(user)
-                user_data = UserProfileSerializer(user).data
-                
-                return Response({
-                    "success": True,
-                    "message": _("Login successful"),
-                    "user": user_data,
-                    "tokens": tokens
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response({
-                    "success": False,
-                    "message": result
-                }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Format errors for better readability
-        error_messages = []
-        for field, errors in serializer.errors.items():
-            if field == 'non_field_errors':
-                error_messages.extend([str(e) for e in errors])
-            else:
-                for error in errors:
-                    error_messages.append(f"{field}: {error}")
-        
-        return Response({
-            "success": False,
-            "message": " | ".join(error_messages) if error_messages else _("Invalid data"),
-            "errors": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+        if not serializer.is_valid():
+            return Response({
+                "success": False,
+                "message": _("Invalid data"),
+                "errors": serializer.errors,
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        identifier = serializer.validated_data['identifier']
+        code = serializer.validated_data['code']
+        purpose = serializer.validated_data['purpose']
+        ok, result = validate_otp(
+            identifier,
+            code,
+            purpose=purpose,
+            expected_role='user' if purpose != 'registration' else None,
+            registration_role='user',
+        )
+
+        if not ok:
+            return Response({"success": False, "message": result}, status=status.HTTP_400_BAD_REQUEST)
+
+        if purpose == 'registration':
+            return Response({
+                "success": True,
+                "message": _("Verification code is correct. Please complete registration"),
+                "data": {
+                    "verification_token": result['verification_token'],
+                    "phone": result.get('phone'),
+                    "email": result.get('email'),
+                },
+            }, status=status.HTTP_200_OK)
+
+        user = result
+        return Response({
+            "success": True,
+            "message": _("Login successful"),
+            "user": UserProfileSerializer(user).data,
+            "tokens": get_tokens_for_user(user),
+        }, status=status.HTTP_200_OK)
 
 class CompleteRegistrationAPIView(APIView):
     """
@@ -358,6 +293,7 @@ class CompleteRegistrationAPIView(APIView):
             401 Unauthorized - Invalid token
     """
     permission_classes = [AllowAny]
+    throttle_classes = [OTPVerifyThrottle]
     
     @extend_schema(
         tags=['Authentication - Registration'],
@@ -372,98 +308,71 @@ class CompleteRegistrationAPIView(APIView):
     )
     def post(self, request):
         serializer = CompleteRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            verification_token = serializer.validated_data['verification_token']
-            username = serializer.validated_data['username']
-            password = serializer.validated_data['password']
-            name = serializer.validated_data['name']
-            
-            # Get expo_push_token if provided
-            expo_push_token = serializer.validated_data.get('expo_push_token', '')
-            
-            ok, result = complete_registration(
-                verification_token=verification_token,
-                name=name,
-                username=username,
-                password=password,
-                expo_push_token=expo_push_token
-            )
-            
-            if ok:
-                user = result
-                tokens = get_tokens_for_user(user)
-                user_data = UserProfileSerializer(user).data
-                
-                # Create parent profile automatically for students (children)
-                if user.role == 'user' and user.phone:
-                    try:
-                        import secrets
-                        import string
-                        from django.contrib.auth.hashers import make_password
-                        from account.utils import send_sms_general
-                        
-                        # Generate random password for parent (8-12 characters)
-                        password_length = secrets.choice([8, 9, 10, 11, 12])
-                        parent_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(password_length))
-                        
-                        # Hash password using Django's hasher (compatible with ParentProfile.verify_password)
-                        hashed_password = make_password(parent_password)
-                        
-                        # Create parent profile
-                        parent_profile = ParentProfile.objects.create(
-                            student=user,
-                            parent_name=f"ولی {user.name}" if user.name else f"ولی {user.username}",
-                            phone=user.phone,
-                            parent_password_hash=hashed_password,
-                            can_view_class_history=True,
-                            can_view_payments=True,
-                            can_select_teacher=False,
-                            can_set_usage_time=True,
-                            is_active=True
-                        )
-                        
-                        # Send SMS to parent with credentials
-                        try:
-                            send_sms_general(
-                                phone_number=user.phone,
-                                template_id=555413,
-                                parameters=[
-                                    {'name': 'NAME', 'value': user.name if user.name else user.username},
-                                    {'name': 'PASS', 'value': parent_password}
-                                ]
-                            )
-                        except Exception as sms_error:
-                            # Log SMS error but don't fail registration
-                            import logging
-                            logger = logging.getLogger(__name__)
-                            logger.error(f"Failed to send parent SMS: {sms_error}")
-                    
-                    except Exception as e:
-                        # Log error but don't fail the registration
-                        import logging
-                        logger = logging.getLogger(__name__)
-                        logger.error(f"Failed to create parent profile: {e}")
-                
-                return Response({
-                    "success": True,
-                    "message": _("Registration completed successfully"),
-                    "user": user_data,
-                    "tokens": tokens
-                }, status=status.HTTP_201_CREATED)
-            else:
-                return Response({
-                    "success": False,
-                    "message": result
-                }, status=status.HTTP_400_BAD_REQUEST)
-        
+        if not serializer.is_valid():
+            return Response({
+                "success": False,
+                "message": _("Invalid data"),
+                "errors": serializer.errors,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        ok, result = complete_registration(
+            verification_token=serializer.validated_data['verification_token'],
+            username=serializer.validated_data.get('username') or None,
+            password=serializer.validated_data['password'],
+            name=serializer.validated_data.get('name') or None,
+            expo_push_token=serializer.validated_data.get('expo_push_token') or None,
+        )
+        if not ok:
+            return Response({"success": False, "message": result}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = result
+        tokens = get_tokens_for_user(user)
+        user_data = UserProfileSerializer(user).data
+
+        # Parent-profile creation is auxiliary: registration remains successful if SMS/provider fails.
+        if user.role == 'user' and user.phone:
+            try:
+                import secrets
+                import string
+                from django.contrib.auth.hashers import make_password
+                from account.utils import send_sms_general
+
+                password_length = secrets.choice([8, 9, 10, 11, 12])
+                parent_password = ''.join(
+                    secrets.choice(string.ascii_letters + string.digits)
+                    for _ in range(password_length)
+                )
+                parent_profile = ParentProfile.objects.create(
+                    student=user,
+                    parent_name=f"ولی {user.name}" if user.name else f"ولی {user.username}",
+                    phone=user.phone,
+                    parent_password_hash=make_password(parent_password),
+                    can_view_class_history=True,
+                    can_view_payments=True,
+                    can_select_teacher=False,
+                    can_set_usage_time=True,
+                    is_active=True,
+                )
+                try:
+                    send_sms_general(
+                        phone_number=user.phone,
+                        template_id=555413,
+                        parameters=[
+                            {'name': 'NAME', 'value': user.name or user.username},
+                            {'name': 'PASS', 'value': parent_password},
+                        ],
+                    )
+                except Exception:
+                    logger.exception("Failed to send parent credentials SMS for parent_id=%s", parent_profile.id)
+            except Exception:
+                logger.exception("Failed to create automatic parent profile for user_id=%s", user.id)
+
         return Response({
-            "success": False,
-            "message": _("Invalid data"),
-            "errors": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ========== Teacher Authentication APIs ==========
+            "success": True,
+            "message": _("Registration completed successfully"),
+            "user": user_data,
+            "tokens": tokens,
+        }, status=status.HTTP_201_CREATED)
 
 class UserLoginPasswordAPIView(APIView):
     """
@@ -494,6 +403,7 @@ class UserLoginPasswordAPIView(APIView):
             401 Unauthorized - Invalid username/password combination
     """
     permission_classes = [AllowAny]
+    throttle_classes = [PasswordLoginThrottle]
     
     @extend_schema(
         tags=['Authentication - Login'],
@@ -516,35 +426,35 @@ class UserLoginPasswordAPIView(APIView):
         }
     )
     def post(self, request):
-        username = request.data.get('username', '').strip()
-        password = request.data.get('password', '').strip()
-        
-        if not username or not password:
+        serializer = PasswordLoginSerializer(data=request.data)
+        if not serializer.is_valid():
             return Response({
                 "success": False,
-                "message": _("Username and password are required")
+                "message": _("Invalid login data"),
+                "errors": serializer.errors,
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        user = authenticate(username=username, password=password)
-        
-        if user is not None:
-            # Regular users (not teachers)
-            
-            tokens = get_tokens_for_user(user)
-            user_data = UserProfileSerializer(user).data
-            
-            return Response({
-                "success": True,
-                "message": _("Login successful"),
-                "user": user_data,
-                "tokens": tokens
-            }, status=status.HTTP_200_OK)
-        else:
+
+        user = authenticate(
+            username=serializer.validated_data['username'],
+            password=serializer.validated_data['password'],
+        )
+        if user is None:
             return Response({
                 "success": False,
-                "message": _("Username or password is incorrect")
+                "message": _("Username or password is incorrect"),
             }, status=status.HTTP_401_UNAUTHORIZED)
+        if user.role != 'user':
+            return Response({
+                "success": False,
+                "message": _("This account is not a regular user account. Please use the appropriate login."),
+            }, status=status.HTTP_403_FORBIDDEN)
 
+        return Response({
+            "success": True,
+            "message": _("Login successful"),
+            "user": UserProfileSerializer(user).data,
+            "tokens": get_tokens_for_user(user),
+        }, status=status.HTTP_200_OK)
 
 class TeacherLoginPasswordAPIView(APIView):
     """
@@ -563,6 +473,7 @@ class TeacherLoginPasswordAPIView(APIView):
         Returns: JWT tokens + teacher profile with specialization
     """
     permission_classes = [AllowAny]
+    throttle_classes = [PasswordLoginThrottle]
     
     @extend_schema(
         tags=['Teacher Authentication - Login'],
@@ -586,43 +497,34 @@ class TeacherLoginPasswordAPIView(APIView):
         }
     )
     def post(self, request):
-        username = request.data.get('username', '').strip()
-        password = request.data.get('password', '').strip()
-        
-        if not username or not password:
+        serializer = PasswordLoginSerializer(data=request.data)
+        if not serializer.is_valid():
             return Response({
                 "success": False,
-                "message": _("Username and password are required")
+                "message": _("Invalid login data"),
+                "errors": serializer.errors,
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        user = authenticate(username=username, password=password)
-        
-        if user is not None:
-            # Check if user is teacher
-            if user.role != 'teacher':
-                return Response({
-                    "success": False,
-                    "message": _("This account is not for a teacher")
-                }, status=status.HTTP_403_FORBIDDEN)
-            
-            tokens = get_tokens_for_user(user)
-            user_data = UserProfileSerializer(user).data
-            
-            return Response({
-                "success": True,
-                "message": _("Login successful"),
-                "user": user_data,
-                "tokens": tokens
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({
-                "success": False,
-                "message": _("Username or password is incorrect")
-            }, status=status.HTTP_401_UNAUTHORIZED)
 
+        user = authenticate(
+            username=serializer.validated_data['username'],
+            password=serializer.validated_data['password'],
+        )
+        if user is None:
+            return Response({"success": False, "message": _("Username or password is incorrect")}, status=status.HTTP_401_UNAUTHORIZED)
+        if user.role != 'teacher':
+            return Response({"success": False, "message": _("This account is not for a teacher")}, status=status.HTTP_403_FORBIDDEN)
+
+        # Intentionally allow unverified teachers to log in so they can complete their profile.
+        return Response({
+            "success": True,
+            "message": _("Login successful"),
+            "user": UserProfileSerializer(user).data,
+            "tokens": get_tokens_for_user(user),
+        }, status=status.HTTP_200_OK)
 
 class TeacherSendOTPAPIView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [OTPRequestThrottle]
     
     @extend_schema(
         tags=['Teacher Authentication - OTP'],
@@ -636,115 +538,46 @@ class TeacherSendOTPAPIView(APIView):
         }
     )
     def post(self, request):
-        import phonenumbers
-        
         serializer = SendOTPSerializer(data=request.data)
-        if serializer.is_valid():
-            identifier = serializer.validated_data['identifier']
-            purpose = request.data.get('purpose', 'login')
-            
-            # Convert Persian/Arabic digits to English
-            identifier = convert_persian_to_english(identifier)
-            
-            # Determine if it's email or phone
-            is_email = '@' in str(identifier)
-            
-            # Normalize phone for consistent lookup
-            normalized_identifier = identifier
-            phone_formats = [identifier]
-            existing_user = None
+        if not serializer.is_valid():
+            return Response({"success": False, "message": _("Invalid data provided"), "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-            if is_email:
-                existing_user = User.objects.filter(email=identifier).first()
-            else:
-                existing_user = User.objects.filter(phone__in=phone_formats).first()
+        identifier = serializer.validated_data['identifier']
+        purpose = serializer.validated_data['purpose']
+        if '@' in identifier:
+            existing_user = User.objects.filter(email__iexact=identifier).first()
+        else:
+            existing_user = User.objects.filter(phone=identifier).first()
 
-            if existing_user and existing_user.username and not existing_user.username.startswith('user_'):
-                role_display = dict(User.ROLE_CHOICES).get(existing_user.role, existing_user.role)
-
-                if existing_user.role != 'teacher':
-                    return Response({
-                        "success": False,
-                        "message": _(f"این شماره قبلاً به عنوان {role_display} ثبت شده است. لطفاً وارد شوید.")
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                if purpose == 'registration' and existing_user.role == 'teacher':
-                    return Response({
-                        "success": False,
-                        "message": _("این شماره قبلاً به عنوان معلم ثبت شده است. لطفاً وارد شوید.")
-                    }, status=status.HTTP_400_BAD_REQUEST)
-            
-            if not is_email:
-                is_phone = identifier.startswith('09') or identifier.startswith('+98')
-                if is_phone:
-                    try:
-                        if identifier.startswith('09'):
-                            phone_obj = phonenumbers.parse(identifier, "IR")
-                            normalized_identifier = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
-                        elif identifier.startswith('+98'):
-                            normalized_identifier = identifier
-                        
-                        # Add alternative formats
-                        phone_formats = [normalized_identifier]
-                        if identifier.startswith('09'):
-                            phone_formats.append(identifier)
-                        elif identifier.startswith('+98'):
-                            try:
-                                phone_obj = phonenumbers.parse(identifier, None)
-                                local_phone = '0' + str(phone_obj.national_number)
-                                phone_formats.append(local_phone)
-                            except:
-                                pass
-                    except Exception as e:
-                        logger.error(f"Phone normalization error: {e}")
-            
-            # Check cooldown with all phone formats
-            recent_otp = None
-            if is_email:
-                recent_otp = OTP.objects.filter(
-                    email=identifier,
-                    purpose=purpose,
-                    is_used=False
-                ).order_by('-created_at').first()
-            else:
-                for phone_format in phone_formats:
-                    recent_otp = OTP.objects.filter(
-                        phone=phone_format,
-                        purpose=purpose,
-                        is_used=False
-                    ).order_by('-created_at').first()
-                    if recent_otp:
-                        break
-            
-            if recent_otp and (timezone.now() - recent_otp.created_at).seconds < 120:
+        if existing_user:
+            if existing_user.role != 'teacher':
                 return Response({
                     "success": False,
-                    "message": _("Please wait 2 minutes before requesting a new code.")
-                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
-            
-            # Generate and send OTP with teacher template
-            # استفاده از normalized_identifier به جای identifier
-            try:
-                generate_and_send_otp(normalized_identifier, purpose=purpose, user=None, is_teacher=True)
-                    
-                return Response({
-                    "success": True,
-                    "message": _("Verification code sent successfully.")
-                }, status=status.HTTP_200_OK)
-            except Exception as e:
+                    "message": _("This identifier belongs to a non-teacher account. Please use regular login."),
+                }, status=status.HTTP_400_BAD_REQUEST)
+            if purpose == 'registration':
                 return Response({
                     "success": False,
-                    "message": _(f"Error sending verification code: {str(e)}")
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        return Response({
-            "success": False,
-            "message": _("Invalid data provided"),
-            "errors": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)        
-        
+                    "message": _("This teacher account already exists. Please log in."),
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        ok, msg = can_send_otp(identifier, purpose=purpose)
+        if not ok:
+            return Response({"success": False, "message": msg}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        try:
+            generate_and_send_otp(identifier, purpose=purpose, user=None, is_teacher=True)
+        except OTPDeliveryError as exc:
+            return Response({"success": False, "message": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception:
+            logger.exception("Unexpected error while sending teacher OTP")
+            return Response({"success": False, "message": _("Unable to send verification code. Please try again.")}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"success": True, "message": _("Verification code sent successfully.")}, status=status.HTTP_200_OK)
+
 class TeacherVerifyOTPAPIView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [OTPVerifyThrottle]
     
     @extend_schema(
         tags=['Teacher Authentication - OTP'],
@@ -758,76 +591,38 @@ class TeacherVerifyOTPAPIView(APIView):
         }
     )
     def post(self, request):
-        import phonenumbers
-        
         serializer = VerifyOTPSerializer(data=request.data)
-        if serializer.is_valid():
-            identifier = serializer.validated_data['identifier']
-            code = serializer.validated_data['code']
-            purpose = request.data.get('purpose', 'login')
-            
-            # Convert Persian/Arabic digits to English
-            identifier = convert_persian_to_english(identifier)
-            
-            # Normalize phone before validation
-            is_email = '@' in str(identifier)
-            normalized_identifier = identifier
-            
-            if not is_email:
-                is_phone = identifier.startswith('09') or identifier.startswith('+98')
-                if is_phone:
-                    try:
-                        if identifier.startswith('09'):
-                            phone_obj = phonenumbers.parse(identifier, "IR")
-                            normalized_identifier = phonenumbers.format_number(phone_obj, phonenumbers.PhoneNumberFormat.E164)
-                        elif identifier.startswith('+98'):
-                            normalized_identifier = identifier
-                    except Exception as e:
-                        logger.error(f"Phone normalization error: {e}")
-            
-            # استفاده از normalized_identifier
-            ok, result = validate_otp(normalized_identifier, code, purpose=purpose)
-            
-            if ok:
-                # اگر purpose='registration'، result یک dict است
-                if purpose == 'registration':
-                    return Response({
-                        "success": True,
-                        "verification_token": result['verification_token'],
-                        "phone": result.get('phone'),
-                        "email": result.get('email')
-                    }, status=status.HTTP_200_OK)
-                
-                # اگر purpose='login'، result یک User object است
-                user = result
-                
-                # فقط برای login چک کنیم که teacher باشد
-                if user.role != 'teacher':
-                    return Response({
-                        "success": False,
-                        "message": _("This account is not for teachers")
-                    }, status=status.HTTP_403_FORBIDDEN)
-                
-                tokens = get_tokens_for_user(user)
-                user_data = UserProfileSerializer(user).data
-                
-                return Response({
-                    "success": True,
-                    "message": _("Login successful"),
-                    "user": user_data,
-                    "tokens": tokens
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response({
-                    "success": False,
-                    "message": result
-                }, status=status.HTTP_400_BAD_REQUEST)
-        
+        if not serializer.is_valid():
+            return Response({"success": False, "message": _("Invalid data provided"), "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        identifier = serializer.validated_data['identifier']
+        code = serializer.validated_data['code']
+        purpose = serializer.validated_data['purpose']
+        ok, result = validate_otp(
+            identifier,
+            code,
+            purpose=purpose,
+            expected_role='teacher' if purpose != 'registration' else None,
+            registration_role='teacher',
+        )
+        if not ok:
+            return Response({"success": False, "message": result}, status=status.HTTP_400_BAD_REQUEST)
+
+        if purpose == 'registration':
+            return Response({
+                "success": True,
+                "verification_token": result['verification_token'],
+                "phone": result.get('phone'),
+                "email": result.get('email'),
+            }, status=status.HTTP_200_OK)
+
+        user = result
         return Response({
-            "success": False,
-            "message": _("Invalid data provided"),
-            "errors": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+            "success": True,
+            "message": _("Login successful"),
+            "user": UserProfileSerializer(user).data,
+            "tokens": get_tokens_for_user(user),
+        }, status=status.HTTP_200_OK)
 
 class TeacherCompleteRegistrationAPIView(APIView):
     """
@@ -853,6 +648,7 @@ class TeacherCompleteRegistrationAPIView(APIView):
             - tokens: {access, refresh} JWT tokens
     """
     permission_classes = [AllowAny]
+    throttle_classes = [OTPVerifyThrottle]
     
     @extend_schema(
         tags=['Teacher Authentication - Registration'],
@@ -866,51 +662,27 @@ class TeacherCompleteRegistrationAPIView(APIView):
     )
     def post(self, request):
         serializer = CompleteTeacherRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            verification_token = serializer.validated_data['verification_token']
-            username = serializer.validated_data['username']
-            password = serializer.validated_data['password']
-            name = serializer.validated_data.get('name', '')
-            bio = serializer.validated_data.get('bio', '')
-            
-            # Get expo_push_token if provided
-            expo_push_token = serializer.validated_data.get('expo_push_token', '')
-            
-            ok, result = complete_teacher_registration(
-                verification_token=verification_token,
-                name=name,
-                username=username,
-                password=password,
-                bio=bio,
-                expo_push_token=expo_push_token
-            )
-            
-            if ok:
-                user = result
-                wallet = TeacherWallet.objects.create(teacher=user)
-                tokens = get_tokens_for_user(user)
-                user_data = UserProfileSerializer(user).data
-                
-                return Response({
-                    "success": True,
-                    "message": _("Teacher registration completed successfully"),
-                    "user": user_data,
-                    "tokens": tokens
-                }, status=status.HTTP_201_CREATED)
-            else:
-                return Response({
-                    "success": False,
-                    "message": result
-                }, status=status.HTTP_400_BAD_REQUEST)
-        
+        if not serializer.is_valid():
+            return Response({"success": False, "message": _("Invalid data"), "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        ok, result = complete_teacher_registration(
+            verification_token=serializer.validated_data['verification_token'],
+            username=serializer.validated_data.get('username') or None,
+            password=serializer.validated_data['password'],
+            name=serializer.validated_data.get('name') or None,
+            bio=serializer.validated_data.get('bio') or None,
+            expo_push_token=serializer.validated_data.get('expo_push_token') or None,
+        )
+        if not ok:
+            return Response({"success": False, "message": result}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = result
         return Response({
-            "success": False,
-            "message": _("Invalid data"),
-            "errors": serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ========== Email-Based Authentication APIs ==========
+            "success": True,
+            "message": _("Teacher registration completed successfully"),
+            "user": UserProfileSerializer(user).data,
+            "tokens": get_tokens_for_user(user),
+        }, status=status.HTTP_201_CREATED)
 
 class UserSendEmailOTPAPIView(APIView):
     """
@@ -929,6 +701,7 @@ class UserSendEmailOTPAPIView(APIView):
         Returns: Email confirmation + OTP status
     """
     permission_classes = [AllowAny]
+    throttle_classes = [OTPRequestThrottle]
     
     @extend_schema(
         tags=['Authentication - Email OTP'],
@@ -951,49 +724,34 @@ class UserSendEmailOTPAPIView(APIView):
         }
     )
     def post(self, request):
-        email = request.data.get('email', '').strip().lower()
-        
-        if not email or '@' not in email:
-            return Response({
-                "success": False,
-                "message": _("Please provide a valid email address")
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Check cooldown
-        ok, msg = can_send_otp(email, purpose='login')
-        if not ok:
-            return Response({
-                "success": False,
-                "message": _(msg)
-            }, status=status.HTTP_429_TOO_MANY_REQUESTS)
-        
-        # Check if email belongs to teacher
-        existing_user = User.objects.filter(email=email).first()
-        if existing_user and existing_user.role == 'teacher':
-            return Response({
-                "success": False,
-                "message": _("This email is registered as a teacher account. Please use teacher login.")
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        if not send_email_otp:
-            return Response({
-                "success": False,
-                "message": _("Email authentication is not configured on this server")
-            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        
-        try:
-            generate_and_send_otp(email, purpose='login', user=None, is_teacher=False)
-            return Response({
-                "success": True,
-                "message": _("Verification code has been sent to your email"),
-                "email": email
-            }, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({
-                "success": False,
-                "message": _(f"Error sending OTP: {str(e)}")
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer = EmailOTPRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"success": False, "message": _("Invalid data"), "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+        email = serializer.validated_data['email']
+        purpose = serializer.validated_data['purpose']
+        existing_users = list(User.objects.filter(email__iexact=email).order_by('id')[:2])
+        if len(existing_users) > 1:
+            return Response({"success": False, "message": _("Multiple accounts use this email. Please contact support.")}, status=status.HTTP_409_CONFLICT)
+        existing_user = existing_users[0] if existing_users else None
+
+        if purpose == 'registration' and existing_user:
+            return Response({"success": False, "message": _("This email is already registered. Please log in.")}, status=status.HTTP_400_BAD_REQUEST)
+        if purpose == 'login' and existing_user and existing_user.role != 'user':
+            return Response({"success": False, "message": _("This email belongs to a different account type. Please use the appropriate login.")}, status=status.HTTP_400_BAD_REQUEST)
+
+        ok, msg = can_send_otp(email, purpose=purpose)
+        if not ok:
+            return Response({"success": False, "message": msg}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        try:
+            generate_and_send_otp(email, purpose=purpose, user=None, is_teacher=False)
+        except OTPDeliveryError as exc:
+            return Response({"success": False, "message": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception:
+            logger.exception("Unexpected error while sending user email OTP")
+            return Response({"success": False, "message": _("Unable to send verification code. Please try again.")}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"success": True, "message": _("Verification code has been sent to your email"), "email": email, "purpose": purpose}, status=status.HTTP_200_OK)
 
 class UserVerifyEmailOTPAPIView(APIView):
     """
@@ -1012,55 +770,39 @@ class UserVerifyEmailOTPAPIView(APIView):
         Returns: JWT tokens + user profile data
     """
     permission_classes = [AllowAny]
+    throttle_classes = [OTPVerifyThrottle]
     
     def post(self, request):
-        email = request.data.get('email', '').strip().lower()
-        code = request.data.get('code', '').strip()
-        
-        if not email or not code:
-            return Response({
-                "success": False,
-                "message": _("Email and verification code are required")
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        if len(code) != 6 or not code.isdigit():
-            return Response({
-                "success": False,
-                "message": _("Invalid verification code format")
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        ok, result = validate_otp(email, code, purpose='login')
-        
-        if ok:
-            user = result
-            
-            # Check if user is trying to login as regular user but is teacher
-            if user.role == 'teacher':
-                return Response({
-                    "success": False,
-                    "message": _("This email is registered as a teacher account. Please use teacher login.")
-                }, status=status.HTTP_403_FORBIDDEN)
-            
-            # Mark email as verified
-            if not user.email_verified_at:
-                user.email_verified_at = timezone.now()
-                user.save()
-            
-            tokens = get_tokens_for_user(user)
-            user_data = UserProfileSerializer(user).data
-            
-            return Response({
-                "success": True,
-                "message": _("Login successful"),
-                "user": user_data,
-                "tokens": tokens
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({
-                "success": False,
-                "message": result
-            }, status=status.HTTP_400_BAD_REQUEST)
+        serializer = EmailOTPVerifySerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"success": False, "message": _("Invalid data"), "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+        email = serializer.validated_data['email']
+        code = serializer.validated_data['code']
+        purpose = serializer.validated_data['purpose']
+        ok, result = validate_otp(
+            email,
+            code,
+            purpose=purpose,
+            expected_role='user' if purpose == 'login' else None,
+            registration_role='user',
+        )
+        if not ok:
+            return Response({"success": False, "message": result}, status=status.HTTP_400_BAD_REQUEST)
+
+        if purpose == 'registration':
+            payload = {
+                "verification_token": result['verification_token'],
+                "phone": result.get('phone'),
+                "email": result.get('email'),
+            }
+            return Response({"success": True, "message": _("Email verified. Please complete registration."), **payload, "data": payload}, status=status.HTTP_200_OK)
+
+        user = result
+        if not user.email_verified_at:
+            user.email_verified_at = timezone.now()
+            user.save(update_fields=['email_verified_at', 'updated_at'])
+        return Response({"success": True, "message": _("Login successful"), "user": UserProfileSerializer(user).data, "tokens": get_tokens_for_user(user)}, status=status.HTTP_200_OK)
 
 class TeacherSendEmailOTPAPIView(APIView):
     """
@@ -1082,51 +824,37 @@ class TeacherSendEmailOTPAPIView(APIView):
             - email: Confirmed email address
     """
     permission_classes = [AllowAny]
+    throttle_classes = [OTPRequestThrottle]
     
     def post(self, request):
-        email = request.data.get('email', '').strip().lower()
-        
-        if not email or '@' not in email:
-            return Response({
-                "success": False,
-                "message": _("Please provide a valid email address")
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Check cooldown
-        ok, msg = can_send_otp(email, purpose='login')
-        if not ok:
-            return Response({
-                "success": False,
-                "message": _(msg)
-            }, status=status.HTTP_429_TOO_MANY_REQUESTS)
-        
-        # Check if email belongs to regular user
-        existing_user = User.objects.filter(email=email).first()
-        if existing_user and existing_user.role != 'teacher':
-            return Response({
-                "success": False,
-                "message": _("This email is registered as a regular user account. Please use regular user login.")
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        if not send_email_otp:
-            return Response({
-                "success": False,
-                "message": _("Email authentication is not configured on this server")
-            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        
-        try:
-            generate_and_send_otp(email, purpose='login', user=None, is_teacher=True)
-            return Response({
-                "success": True,
-                "message": _("Verification code has been sent to your email"),
-                "email": email
-            }, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({
-                "success": False,
-                "message": _(f"Error sending OTP: {str(e)}")
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer = EmailOTPRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"success": False, "message": _("Invalid data"), "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+        email = serializer.validated_data['email']
+        purpose = serializer.validated_data['purpose']
+        existing_users = list(User.objects.filter(email__iexact=email).order_by('id')[:2])
+        if len(existing_users) > 1:
+            return Response({"success": False, "message": _("Multiple accounts use this email. Please contact support.")}, status=status.HTTP_409_CONFLICT)
+        existing_user = existing_users[0] if existing_users else None
+
+        if purpose == 'registration' and existing_user:
+            return Response({"success": False, "message": _("This email is already registered. Please log in.")}, status=status.HTTP_400_BAD_REQUEST)
+        if purpose == 'login' and existing_user and existing_user.role != 'teacher':
+            return Response({"success": False, "message": _("This email belongs to a regular user account. Please use regular login.")}, status=status.HTTP_400_BAD_REQUEST)
+
+        ok, msg = can_send_otp(email, purpose=purpose)
+        if not ok:
+            return Response({"success": False, "message": msg}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        try:
+            generate_and_send_otp(email, purpose=purpose, user=None, is_teacher=True)
+        except OTPDeliveryError as exc:
+            return Response({"success": False, "message": str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception:
+            logger.exception("Unexpected error while sending teacher email OTP")
+            return Response({"success": False, "message": _("Unable to send verification code. Please try again.")}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"success": True, "message": _("Verification code has been sent to your email"), "email": email, "purpose": purpose}, status=status.HTTP_200_OK)
 
 class TeacherVerifyEmailOTPAPIView(APIView):
     """
@@ -1149,55 +877,40 @@ class TeacherVerifyEmailOTPAPIView(APIView):
             - message: Status message
     """
     permission_classes = [AllowAny]
+    throttle_classes = [OTPVerifyThrottle]
     
     def post(self, request):
-        email = request.data.get('email', '').strip().lower()
-        code = request.data.get('code', '').strip()
-        
-        if not email or not code:
-            return Response({
-                "success": False,
-                "message": _("Email and verification code are required")
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        if len(code) != 6 or not code.isdigit():
-            return Response({
-                "success": False,
-                "message": _("Invalid verification code format")
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        ok, result = validate_otp(email, code, purpose='login')
-        
-        if ok:
-            user = result
-            
-            # Check if user is actually a teacher
-            if user.role != 'teacher':
-                return Response({
-                    "success": False,
-                    "message": _("This email is registered as a regular user account. Please use regular user login.")
-                }, status=status.HTTP_403_FORBIDDEN)
-            
-            # Mark email as verified
-            if not user.email_verified_at:
-                user.email_verified_at = timezone.now()
-                user.save()
-            
-            tokens = get_tokens_for_user(user)
-            user_data = UserProfileSerializer(user).data
-            
-            return Response({
-                "success": True,
-                "message": _("Login successful"),
-                "user": user_data,
-                "tokens": tokens
-            }, status=status.HTTP_200_OK)
-        else:
-            return Response({
-                "success": False,
-                "message": result
-            }, status=status.HTTP_400_BAD_REQUEST)
+        serializer = EmailOTPVerifySerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"success": False, "message": _("Invalid data"), "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+        email = serializer.validated_data['email']
+        code = serializer.validated_data['code']
+        purpose = serializer.validated_data['purpose']
+        ok, result = validate_otp(
+            email,
+            code,
+            purpose=purpose,
+            expected_role='teacher' if purpose == 'login' else None,
+            registration_role='teacher',
+        )
+        if not ok:
+            return Response({"success": False, "message": result}, status=status.HTTP_400_BAD_REQUEST)
+
+        if purpose == 'registration':
+            payload = {
+                "verification_token": result['verification_token'],
+                "phone": result.get('phone'),
+                "email": result.get('email'),
+            }
+            return Response({"success": True, "message": _("Email verified. Please complete teacher registration."), **payload, "data": payload}, status=status.HTTP_200_OK)
+
+        user = result
+        if not user.email_verified_at:
+            user.email_verified_at = timezone.now()
+            user.save(update_fields=['email_verified_at', 'updated_at'])
+        # Unverified teachers are intentionally allowed to log in to complete their profile.
+        return Response({"success": True, "message": _("Teacher login successful"), "user": UserProfileSerializer(user).data, "tokens": get_tokens_for_user(user)}, status=status.HTTP_200_OK)
 
 class CheckUsernameAPIView(APIView):
     """
@@ -6651,6 +6364,7 @@ class ParentLoginAPIView(APIView):
                 - errors: object - Validation errors
     """
     permission_classes = [AllowAny]
+    throttle_classes = [PasswordLoginThrottle]
     
     @extend_schema(
         tags=['Parent Portal'],

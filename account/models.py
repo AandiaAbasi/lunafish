@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Lower
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from phonenumber_field.modelfields import PhoneNumberField
 from django.conf import settings
@@ -76,7 +77,7 @@ class User(AbstractUser, BaseModel):
         verbose_name=_('email address'),
         blank=True,
         null=True,
-        unique=False  # Allow multiple users with no email
+        unique=False  # Case-insensitive uniqueness for nonblank emails is enforced in Meta.constraints
     )
     class EnglishLevelSource(models.TextChoices):
         PLACEMENT_TEST = 'placement_test', _('Placement test')
@@ -301,6 +302,13 @@ class User(AbstractUser, BaseModel):
             models.Index(fields=['role']),
             models.Index(fields=['is_teacher_verified']),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                Lower('email'),
+                condition=models.Q(email__isnull=False) & ~models.Q(email=''),
+                name='unique_nonblank_user_email_ci',
+            ),
+        ]
 
     @property
     def local_phone(self):
@@ -481,6 +489,10 @@ class OTP(BaseModel):
         default=False,
         verbose_name=_("Is used")
     )
+    failed_attempts = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name=_("Failed attempts")
+    )
     purpose = models.CharField(
         max_length=50,
         choices=PURPOSE_CHOICES,
@@ -514,6 +526,12 @@ class VerificationToken(BaseModel):
     email = models.EmailField(null=True, blank=True, verbose_name=_("Email"))
     expires_at = models.DateTimeField(verbose_name=_("Expires at"))
     is_used = models.BooleanField(default=False, verbose_name=_("Is used"))
+    target_role = models.CharField(
+        max_length=20,
+        choices=User.ROLE_CHOICES,
+        default='user',
+        verbose_name=_("Target role"),
+    )
     
     class Meta:
         db_table = 'verification_tokens'

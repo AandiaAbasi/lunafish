@@ -27,9 +27,10 @@ def send_sms(phone_number, code):
     
     try:
         response = requests.post(url, json=data, headers=headers, timeout=10)
+        response.raise_for_status()
         return response.json()
     except Exception as e:
-        print(f"SMS Error: {e}")
+        logger.error("SMS provider error: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -48,9 +49,10 @@ def send_teacher_sms(phone_number, code):
     
     try:
         response = requests.post(url, json=data, headers=headers, timeout=10)
+        response.raise_for_status()
         return response.json()
     except Exception as e:
-        print(f"SMS Error: {e}")
+        logger.error("SMS provider error: %s", e)
         return {"status": "error", "message": str(e)}
 
 

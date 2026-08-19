@@ -69,16 +69,22 @@ class ParentLoginSerializer(serializers.Serializer):
                 'username': _("Invalid username format")
             })
         
-        # بررسی والد
-        try:
-            parent = ParentProfile.objects.get(student=student, is_active=True)
-        except ParentProfile.DoesNotExist:
+        if not student.is_active:
+            raise serializers.ValidationError({
+                'username': _("This student account is inactive")
+            })
+
+        # A student may legitimately have multiple active parent profiles.
+        # Match the submitted password against all of them instead of using .get(),
+        # which raised MultipleObjectsReturned when a second parent was added.
+        parents = ParentProfile.objects.filter(student=student, is_active=True).order_by('id')
+        if not parents.exists():
             raise serializers.ValidationError({
                 'password': _("No parent profile found for this student")
             })
-        
-        # بررسی رمز
-        if not parent.verify_password(password):
+
+        parent = next((item for item in parents if item.verify_password(password)), None)
+        if parent is None:
             raise serializers.ValidationError({
                 'password': _("Invalid parent password")
             })

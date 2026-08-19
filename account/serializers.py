@@ -8,20 +8,77 @@ from .models import User, AvatarTemplate
 from . import services
 
 def convert_persian_to_english_digits(text):
-    """Convert Persian/Arabic digits to English digits"""
+    """Convert Persian/Arabic digits to English digits."""
+    text = str(text)
     persian_digits = '۰۱۲۳۴۵۶۷۸۹'
     arabic_digits = '٠١٢٣٤٥٦٧٨٩'
     english_digits = '0123456789'
-    
     translation_table = str.maketrans(
         persian_digits + arabic_digits,
         english_digits + english_digits
     )
     return text.translate(translation_table)
 
+
+def normalize_auth_identifier(value):
+    """Validate and canonicalize an authentication email/IR mobile number."""
+    import phonenumbers
+
+    value = convert_persian_to_english_digits(value).strip()
+    if not value:
+        raise serializers.ValidationError(_("Phone number or email is required"))
+
+    if '@' in value:
+        email = serializers.EmailField().run_validation(value)
+        return email.strip().lower()
+
+    compact = value.replace(' ', '').replace('-', '')
+    if compact.startswith('0098'):
+        compact = '+' + compact[2:]
+    elif compact.startswith('98') and not compact.startswith('+98'):
+        compact = '+' + compact
+
+    try:
+        parsed = phonenumbers.parse(compact, 'IR')
+    except phonenumbers.NumberParseException:
+        raise serializers.ValidationError(_("Please provide a valid Iranian mobile number or email address"))
+
+    if (
+        not phonenumbers.is_valid_number(parsed)
+        or phonenumbers.region_code_for_number(parsed) != 'IR'
+        or not str(parsed.national_number).startswith('9')
+    ):
+        raise serializers.ValidationError(_("Please provide a valid Iranian mobile number or email address"))
+
+    return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+
+
+def normalize_otp_purpose(value):
+    purpose = (value or 'login').strip().lower()
+    if purpose == 'register':
+        purpose = 'registration'
+    valid_purposes = {
+        'registration', 'login', 'phone_verification',
+        'email_verification', 'password_reset'
+    }
+    if purpose not in valid_purposes:
+        raise serializers.ValidationError(
+            _("Invalid purpose. Must be one of: {valid_purposes}").format(
+                valid_purposes=', '.join(sorted(valid_purposes))
+            )
+        )
+    return purpose
+
+
 # Username Check
 class CheckUsernameSerializer(serializers.Serializer):
     username = serializers.CharField(min_length=3, max_length=150)
+
+
+class PasswordLoginSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150, trim_whitespace=True)
+    password = serializers.CharField(max_length=255, trim_whitespace=False, write_only=True)
+
 
 # Authentication
 class SendOTPSerializer(serializers.Serializer):
@@ -29,73 +86,60 @@ class SendOTPSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False)
     phone = serializers.CharField(required=False)
     purpose = serializers.CharField(required=False, allow_blank=True)
-    
+
     def validate(self, data):
-        # Accept identifier, phone_number, or phone
         identifier = data.get('identifier') or data.get('phone_number') or data.get('phone')
         if not identifier:
-            raise serializers.ValidationError({"phone": _("Phone number or email is required")})
-        
-        # Convert Persian/Arabic digits to English
-        identifier = convert_persian_to_english_digits(identifier)
-        data['identifier'] = identifier
-        
-        # Normalize and validate purpose
-        purpose = data.get('purpose', 'login') or 'login'
-        if purpose == 'register':
-            purpose = 'registration'
-        
-        valid_purposes = ['registration', 'login', 'phone_verification', 'email_verification', 'password_reset']
-        if purpose not in valid_purposes:
-            raise serializers.ValidationError({"purpose": _("Invalid purpose. Must be one of: {valid_purposes}").format(valid_purposes=', '.join(valid_purposes))})
-        
-        data['purpose'] = purpose
-        
+            raise serializers.ValidationError({"identifier": _("Phone number or email is required")})
+
+        try:
+            data['identifier'] = normalize_auth_identifier(identifier)
+        except serializers.ValidationError as exc:
+            raise serializers.ValidationError({"identifier": exc.detail})
+
+        try:
+            data['purpose'] = normalize_otp_purpose(data.get('purpose', 'login'))
+        except serializers.ValidationError as exc:
+            raise serializers.ValidationError({"purpose": exc.detail})
         return data
 
 
-class VerifyOTPSerializer(serializers.Serializer):
-    identifier = serializers.CharField(required=False)
-    phone_number = serializers.CharField(required=False)
-    phone = serializers.CharField(required=False)
+class VerifyOTPSerializer(SendOTPSerializer):
     code = serializers.CharField(min_length=6, max_length=6)
-    purpose = serializers.CharField(required=False, allow_blank=True)
-    
+
     def validate(self, data):
-        # Accept identifier, phone_number, or phone
-        identifier = data.get('identifier') or data.get('phone_number') or data.get('phone')
-        if not identifier:
-            raise serializers.ValidationError({"phone": _("Phone number or email is required")})
-        
-        # Convert Persian/Arabic digits to English
-        identifier = convert_persian_to_english_digits(identifier)
-        data['identifier'] = identifier
-        
-        # Validate and convert code
-        code = data.get('code', '')
-        if not code:
-            raise serializers.ValidationError({"code": _("Verification code is required")})
-        
-        code = convert_persian_to_english_digits(code)
-        if not code.isdigit():
-            raise serializers.ValidationError({"code": _("Code must be numeric")})
-        
-        if len(code) != 6:
-            raise serializers.ValidationError({"code": _("Code must be 6 digits")})
-        
+        data = super().validate(data)
+        code = convert_persian_to_english_digits(data.get('code', '')).strip()
+        if len(code) != 6 or not code.isdigit():
+            raise serializers.ValidationError({"code": _("Code must be exactly 6 digits")})
         data['code'] = code
-        
-        # Normalize and validate purpose
-        purpose = data.get('purpose', 'login') or 'login'
-        if purpose == 'register':
-            purpose = 'registration'
-        
-        valid_purposes = ['registration', 'login', 'phone_verification', 'email_verification', 'password_reset']
-        if purpose not in valid_purposes:
-            raise serializers.ValidationError({"purpose": _("Invalid purpose. Must be one of: {valid_purposes}").format(valid_purposes=', '.join(valid_purposes))})
-        
-        data['purpose'] = purpose
-        
+        return data
+
+
+class EmailOTPRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    purpose = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, data):
+        data['email'] = data['email'].strip().lower()
+        try:
+            data['purpose'] = normalize_otp_purpose(data.get('purpose', 'login'))
+        except serializers.ValidationError as exc:
+            raise serializers.ValidationError({"purpose": exc.detail})
+        if data['purpose'] not in {'login', 'registration'}:
+            raise serializers.ValidationError({"purpose": _("Email OTP supports login or registration only")})
+        return data
+
+
+class EmailOTPVerifySerializer(EmailOTPRequestSerializer):
+    code = serializers.CharField(min_length=6, max_length=6)
+
+    def validate(self, data):
+        data = super().validate(data)
+        code = convert_persian_to_english_digits(data.get('code', '')).strip()
+        if len(code) != 6 or not code.isdigit():
+            raise serializers.ValidationError({"code": _("Code must be exactly 6 digits")})
+        data['code'] = code
         return data
 
 
