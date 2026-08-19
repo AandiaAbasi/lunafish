@@ -1,0 +1,312 @@
+{% load static %}
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0577b8">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <meta name="description" content="لونا فیش، اپلیکیشن آموزش زبان انگلیسی برای کودکان با کلاس‌های تعاملی، بازی‌های آموزشی، تمرین، امتیاز و تجربه‌ای شاد و کودک‌پسند.">
+    <meta name="enamad" content="70582881" />
+
+    <link rel="canonical" href="https://lunafish.app/">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="fa_IR">
+    <meta property="og:site_name" content="LunaFish">
+    <meta property="og:title" content="لونا فیش | یادگیری انگلیسی، مثل یک بازی شیرین">
+    <meta property="og:description" content="کلاس تعاملی، بازی و تمرین‌های جذاب در یک دنیای رنگی برای یادگیری زبان انگلیسی کودکان.">
+    <meta property="og:url" content="https://lunafish.app/">
+    <meta property="og:image" content="https://lunafish.app{% static 'core/landing/lunafish-social.jpg' %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <title>لونا فیش | اپلیکیشن آموزش زبان انگلیسی برای کودکان</title>
+
+    <link rel="preload" as="image" href="{% static 'core/landing/ocean-bg.webp' %}" fetchpriority="high">
+    <link rel="preload" as="image" href="{% static 'core/landing/luna-hero.webp' %}" fetchpriority="high">
+    <link rel="stylesheet" href="{% static 'core/landing/home.css' %}">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MobileApplication",
+      "name": "LunaFish",
+      "url": "https://lunafish.app/",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Mobile",
+      "inLanguage": ["fa", "en"],
+      "description": "اپلیکیشن آموزش زبان انگلیسی برای کودکان با کلاس‌های تعاملی، بازی، تمرین و سیستم امتیاز و پاداش."
+    }
+    </script>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">رفتن به محتوای اصلی</a>
+
+    <header class="site-header" id="top">
+        <div class="nav-shell">
+            <a class="brand" href="/" aria-label="صفحه اصلی لونا فیش">
+                <span class="brand-mark" aria-hidden="true">
+                    <img src="{% static 'core/landing/luna-wave.webp' %}" alt="" width="54" height="54">
+                </span>
+                <span class="brand-copy">
+                    <b>LunaFish</b>
+                    <small>دنیای شاد یادگیری زبان</small>
+                </span>
+            </a>
+
+            <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="باز کردن منو">
+                <span></span><span></span><span></span>
+            </button>
+
+            <nav class="main-nav" id="main-nav" aria-label="منوی اصلی">
+                <a href="#features">امکانات</a>
+                <a href="#journey">مسیر یادگیری</a>
+                <a href="#parents">برای والدین</a>
+                <a href="{% url 'core:contact' %}">تماس با ما</a>
+                <a class="nav-cta" href="#download">دریافت اپلیکیشن</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-ocean" aria-hidden="true"></div>
+            <div class="hero-glow hero-glow-one" aria-hidden="true"></div>
+            <div class="hero-glow hero-glow-two" aria-hidden="true"></div>
+
+            <div class="bubble bubble-1" aria-hidden="true"></div>
+            <div class="bubble bubble-2" aria-hidden="true"></div>
+            <div class="bubble bubble-3" aria-hidden="true"></div>
+            <div class="bubble bubble-4" aria-hidden="true"></div>
+            <div class="bubble bubble-5" aria-hidden="true"></div>
+
+            <div class="container hero-grid">
+                <div class="hero-copy reveal">
+                    <div class="eyebrow">
+                        <span class="eyebrow-dot" aria-hidden="true"></span>
+                        آموزش زبان، برای بچه‌هایی که عاشق بازی‌اند
+                    </div>
+                    <h1 id="hero-title">
+                        یادگیری انگلیسی،<br>
+                        <span>مثل یک بازی شیرین</span>
+                    </h1>
+                    <p class="hero-lead">
+                        لونا فیش یک دنیای رنگی و تعاملی برای یادگیری زبان انگلیسی کودکان است؛
+                        جایی که کلاس، تمرین، بازی و جایزه کنار هم قرار می‌گیرند تا یادگیری به یک تجربه دوست‌داشتنی تبدیل شود.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button button-primary" href="#download">
+                            <span>دریافت اپلیکیشن</span>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"/></svg>
+                        </a>
+                        <a class="button button-ghost" href="#features">
+                            ببین لونا چه کارهایی می‌کند
+                        </a>
+                    </div>
+
+                    <div class="hero-points" aria-label="مزیت‌های اصلی">
+                        <span><i aria-hidden="true">✓</i> کلاس آنلاین تعاملی</span>
+                        <span><i aria-hidden="true">✓</i> بازی و تمرین</span>
+                        <span><i aria-hidden="true">✓</i> امتیاز و مدال</span>
+                    </div>
+                </div>
+
+                <div class="hero-visual reveal" aria-label="کاراکتر لونا">
+                    <div class="mascot-halo" aria-hidden="true"></div>
+                    <div class="mascot-card">
+                        <img class="hero-mascot" src="{% static 'core/landing/luna-hero.webp' %}" alt="لونا، کاراکتر دوست‌داشتنی اپلیکیشن لونا فیش" width="960" height="960" fetchpriority="high">
+                    </div>
+                    <div class="float-chip chip-game">
+                        <span class="chip-icon">★</span>
+                        <span><b>یادگیری با بازی</b><small>تمرین بدون خستگی</small></span>
+                    </div>
+                    <div class="float-chip chip-class">
+                        <span class="chip-icon">Aa</span>
+                        <span><b>کلاس تعاملی</b><small>یادگیری زنده و فعال</small></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scroll-cue" aria-hidden="true">
+                <span></span>
+            </div>
+        </section>
+
+        <section class="intro-band" aria-label="معرفی کوتاه لونا فیش">
+            <div class="container stats-grid">
+                <div class="stat-card reveal">
+                    <div class="stat-icon icon-cyan" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5Z"/></svg>
+                    </div>
+                    <div><b>یادگیری فعال</b><p>کودک فقط تماشا نمی‌کند؛ بازی می‌کند، پاسخ می‌دهد و پیشرفت می‌کند.</p></div>
+                </div>
+                <div class="stat-card reveal">
+                    <div class="stat-icon icon-yellow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg>
+                    </div>
+                    <div><b>انگیزه برای ادامه</b><p>امتیاز، مدال و تجربه‌های جذاب کمک می‌کنند اشتیاق یادگیری حفظ شود.</p></div>
+                </div>
+                <div class="stat-card reveal">
+                    <div class="stat-icon icon-pink" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.4-7 11-7 11Z"/></svg>
+                    </div>
+                    <div><b>محیط کودک‌پسند</b><p>طراحی شاد، ساده و قابل فهم تا کودک با حس خوب مسیرش را دنبال کند.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features section" id="features" aria-labelledby="features-title">
+            <div class="container">
+                <div class="section-heading reveal">
+                    <span class="kicker">یک کلاس زبان، داخل یک دنیای بازی</span>
+                    <h2 id="features-title">هر چیزی که برای یک یادگیری <span>جذاب و واقعی</span> لازم است</h2>
+                    <p>لونا فیش آموزش را از یک مسیر خشک و تکراری خارج می‌کند و به کودک فرصت می‌دهد با تمرین، تعامل و بازی جلو برود.</p>
+                </div>
+
+                <div class="feature-layout">
+                    <article class="feature-card feature-card-large reveal">
+                        <div class="card-shine" aria-hidden="true"></div>
+                        <div class="feature-number">01</div>
+                        <div class="feature-content">
+                            <span class="mini-label">کلاس آنلاین</span>
+                            <h3>کلاس‌هایی که کودک در آن فقط شنونده نیست</h3>
+                            <p>کلاس زنده با امکان تعامل، واکنش، تمرین و ارتباط مستقیم با معلم؛ برای تجربه‌ای نزدیک‌تر به یک کلاس واقعی و پویا.</p>
+                            <div class="feature-tags">
+                                <span>ارتباط زنده</span><span>تعامل با معلم</span><span>تمرین در کلاس</span>
+                            </div>
+                        </div>
+                        <img src="{% static 'core/landing/luna-wave.webp' %}" alt="لونا در حال خوش‌آمدگویی" width="960" height="960" loading="lazy">
+                    </article>
+
+                    <div class="feature-stack">
+                        <article class="feature-card compact reveal">
+                            <div class="feature-number">02</div>
+                            <div>
+                                <span class="mini-label">بازی و تمرین</span>
+                                <h3>تمرین‌هایی که حس تکلیف ندارند</h3>
+                                <p>بازی‌های کلمه‌ای و تمرین‌های تعاملی، آموخته‌ها را در ذهن کودک تثبیت می‌کنند.</p>
+                            </div>
+                            <div class="orb-icon" aria-hidden="true">Aa</div>
+                        </article>
+
+                        <article class="feature-card compact reward-card reveal">
+                            <div class="feature-number">03</div>
+                            <div>
+                                <span class="mini-label">پاداش و انگیزه</span>
+                                <h3>هر پیشرفت، یک حس خوب تازه</h3>
+                                <p>امتیاز و مدال، مسیر پیشرفت را برای کودک ملموس و هیجان‌انگیز می‌کند.</p>
+                            </div>
+                            <div class="orb-icon star-orb" aria-hidden="true">★</div>
+                        </article>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="journey section" id="journey" aria-labelledby="journey-title">
+            <div class="journey-wave" aria-hidden="true"></div>
+            <div class="container journey-grid">
+                <div class="journey-visual reveal">
+                    <div class="round-window">
+                        <span class="window-bubble bubble-a" aria-hidden="true"></span>
+                        <span class="window-bubble bubble-b" aria-hidden="true"></span>
+                        <img src="{% static 'core/landing/luna-play.webp' %}" alt="لونا، همراه کودک در مسیر یادگیری" width="960" height="960" loading="lazy">
+                    </div>
+                    <div class="progress-card">
+                        <span>مسیر امروز</span>
+                        <b>تمرین واژگان</b>
+                        <div class="progress-track"><i></i></div>
+                        <small>قدم‌به‌قدم، بدون فشار</small>
+                    </div>
+                </div>
+
+                <div class="journey-copy reveal">
+                    <span class="kicker light">مسیر یادگیری با لونا</span>
+                    <h2 id="journey-title">کودک می‌بیند، می‌شنود، بازی می‌کند و یاد می‌گیرد</h2>
+                    <p class="journey-lead">یادگیری وقتی ماندگارتر می‌شود که کودک درگیر آن باشد. ساختار لونا فیش برای همین تجربه تعاملی طراحی شده است.</p>
+
+                    <ol class="steps">
+                        <li>
+                            <span class="step-index">۱</span>
+                            <div><b>کلاس و آشنایی با مفهوم</b><p>یادگیری با همراهی معلم و فضای آموزشی قابل تعامل.</p></div>
+                        </li>
+                        <li>
+                            <span class="step-index">۲</span>
+                            <div><b>تمرین در قالب بازی</b><p>تکرار واژه‌ها و مفاهیم با فعالیت‌هایی کوتاه و جذاب.</p></div>
+                        </li>
+                        <li>
+                            <span class="step-index">۳</span>
+                            <div><b>پاداش و ادامه مسیر</b><p>نمایش پیشرفت و ایجاد انگیزه برای برگشتن و یادگیری بیشتر.</p></div>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <section class="parents section" id="parents" aria-labelledby="parents-title">
+            <div class="container parents-shell">
+                <div class="parents-copy reveal">
+                    <span class="kicker">برای والدین، با خیال راحت‌تر</span>
+                    <h2 id="parents-title">شادی برای کودک، دید بهتر برای والدین</h2>
+                    <p>در کنار تجربه کودک، لونا فیش برای والدین هم مسیر روشن‌تری فراهم می‌کند تا کلاس‌ها، روند استفاده و وضعیت آموزشی را بهتر دنبال کنند.</p>
+                    <div class="parent-list">
+                        <div><span>✓</span><p><b>پیگیری کلاس‌ها</b><small>دسترسی ساده‌تر به اطلاعات کلاس‌های کودک</small></p></div>
+                        <div><span>✓</span><p><b>مدیریت تجربه کودک</b><small>ساختاری مناسب برای استفاده امن‌تر و هدفمندتر</small></p></div>
+                        <div><span>✓</span><p><b>شفافیت بیشتر</b><small>اطلاعات مالی و آموزشی در یک مسیر منظم‌تر</small></p></div>
+                    </div>
+                </div>
+
+                <div class="parents-visual reveal">
+                    <div class="parent-blob"></div>
+                    <img src="{% static 'core/landing/luna-clap.webp' %}" alt="لونا در حال تشویق کودک" width="960" height="960" loading="lazy">
+                    <div class="tiny-card tiny-card-one"><span>★</span><b>آفرین!</b><small>یک قدم جلوتر</small></div>
+                    <div class="tiny-card tiny-card-two"><span>✓</span><b>تمرین کامل شد</b><small>ادامه بده!</small></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="download-section" id="download" aria-labelledby="download-title">
+            <div class="container download-card reveal">
+                <div class="download-bubbles" aria-hidden="true"></div>
+                <div class="download-copy">
+                    <span class="kicker light">لونا منتظرته!</span>
+                    <h2 id="download-title">آماده‌ای یادگیری زبان را به یک ماجراجویی تبدیل کنی؟</h2>
+                    <p>برای دریافت اطلاعات نصب و ثبت‌نام اپلیکیشن لونا فیش با ما در ارتباط باش.</p>
+                    <div class="download-actions">
+                        <a class="button button-white" href="{% url 'core:contact' %}">
+                            تماس با لونا فیش
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+                        </a>
+                        <a class="text-link" href="{% url 'core:about' %}">بیشتر درباره لونا فیش</a>
+                    </div>
+                </div>
+                <img class="download-mascot" src="{% static 'core/landing/luna-hero.webp' %}" alt="کاراکتر لونا" width="960" height="960" loading="lazy">
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <a class="brand" href="/">
+                    <span class="brand-mark"><img src="{% static 'core/landing/luna-wave.webp' %}" alt="" width="50" height="50"></span>
+                    <span class="brand-copy"><b>LunaFish</b><small>دنیای شاد یادگیری زبان</small></span>
+                </a>
+                <p>یک تجربه آموزشی تعاملی و کودک‌پسند برای یادگیری زبان انگلیسی.</p>
+            </div>
+            <nav class="footer-links" aria-label="لینک‌های پایانی">
+                <a href="{% url 'core:about' %}">درباره ما</a>
+                <a href="{% url 'core:contact' %}">تماس با ما</a>
+                <a href="{% url 'core:terms' %}">قوانین و شرایط</a>
+                <a href="{% url 'core:privacy' %}">حریم خصوصی</a>
+            </nav>
+            <div class="footer-note">
+                <span>یادگیری با لبخند :)</span>
+                <small>© {% now "Y" %} LunaFish</small>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{% static 'core/landing/home.js' %}" defer></script>
+</body>
+</html>

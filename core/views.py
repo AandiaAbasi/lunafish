@@ -90,9 +90,10 @@ class IndexView(ListView):
 
 
 def home_view(request):
-    """Simple Home Page"""
-    context = HomePageService.get_home_page_data()
-    return render(request, 'core/home.html', context)
+    """Public LunaFish application landing page."""
+    # Keep the public root independent from database content so the marketing
+    # landing page stays available even during admin/content maintenance.
+    return render(request, 'core/home.html')
 
 
 def article_list_view(request):
