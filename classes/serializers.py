@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from datetime import datetime
-from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass, TeacherArchivedFile
+from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass, TeacherArchivedFile, TeacherArchiveFolder
 from .utils import get_student_queryset, get_teacher_queryset
 from classroom.models import ClassBooking
 from recommendation.models import EnglishPlacementAssessment
@@ -297,19 +297,39 @@ class ClassMessageSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class TeacherArchiveFolderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeacherArchiveFolder
+        fields = ['id', 'title', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
 class TeacherArchivedFileSerializer(serializers.ModelSerializer):
     file = serializers.FileField(write_only=True)
     file_url = serializers.SerializerMethodField()
+    folder_id = serializers.PrimaryKeyRelatedField(
+        source='folder',
+        queryset=TeacherArchiveFolder.objects.all(),
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
 
     class Meta:
         model = TeacherArchivedFile
         fields = [
-            'id', 'file', 'file_url', 'original_filename', 'file_size',
+            'id', 'file', 'file_url', 'title', 'folder_id', 'original_filename', 'file_size',
             'content_type', 'created_at',
         ]
         read_only_fields = [
             'id', 'file_url', 'original_filename', 'file_size', 'content_type', 'created_at',
         ]
+
+    def validate_folder_id(self, folder):
+        request = self.context.get('request')
+        if folder and (not request or folder.teacher_id != request.user.id or folder.is_deleted):
+            raise serializers.ValidationError('Folder not found.')
+        return folder
 
     def get_file_url(self, obj):
         request = self.context.get('request')
@@ -331,6 +351,7 @@ class ClassAttachmentSerializer(serializers.ModelSerializer):
             'uploaded_by',
             'file',
             'original_filename',
+            'title',
             'file_size',
             'content_type',
             'archive_file',
@@ -341,7 +362,7 @@ class ClassAttachmentSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         read_only_fields = [
-            'id', 'class_session', 'uploaded_by', 'original_filename', 'file_size', 'content_type',
+            'id', 'class_session', 'uploaded_by', 'original_filename', 'title', 'file_size', 'content_type',
             'archive_file', 'is_presented', 'is_deleted', 'deleted_by', 'deleted_at', 'created_at',
         ]
 

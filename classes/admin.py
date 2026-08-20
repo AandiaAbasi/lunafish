@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from .models import (
     ClassAttachment,
     TeacherArchivedFile,
+    TeacherArchiveFolder,
     ClassEnrollment,
     ClassMessage,
     ClassReaction,
@@ -210,11 +211,20 @@ class ClassMessageAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
 
 
 
+@admin.register(TeacherArchiveFolder)
+class TeacherArchiveFolderAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
+    list_display = ['title', 'teacher', 'is_deleted', 'created_at_display']
+    list_filter = ['is_deleted', 'created_at']
+    search_fields = ['title', 'teacher__username', 'teacher__phone']
+    date_fields_to_hide = ['deleted_at']
+    localized_readonly_date_fields = ['created_at_display', 'updated_at_display']
+
+
 @admin.register(TeacherArchivedFile)
 class TeacherArchivedFileAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
-    list_display = ['teacher', 'original_filename', 'file_size', 'is_deleted', 'created_at_display']
-    list_filter = ['is_deleted', 'created_at']
-    search_fields = ['teacher__username', 'teacher__phone', 'original_filename']
+    list_display = ['title', 'teacher', 'folder', 'original_filename', 'file_size', 'is_deleted', 'created_at_display']
+    list_filter = ['is_deleted', 'folder', 'created_at']
+    search_fields = ['title', 'teacher__username', 'teacher__phone', 'original_filename', 'folder__title']
     date_fields_to_hide = ['deleted_at']
     localized_readonly_date_fields = ['created_at_display', 'updated_at_display']
 
@@ -224,6 +234,7 @@ class ClassAttachmentAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
     list_display = [
         'class_session',
         'uploaded_by',
+        'title',
         'original_filename',
         'file_size',
         'is_deleted',
@@ -237,6 +248,7 @@ class ClassAttachmentAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
         'class_session__title',
         'uploaded_by__username',
         'uploaded_by__phone',
+        'title',
         'original_filename',
     ]
     date_fields_to_hide = [

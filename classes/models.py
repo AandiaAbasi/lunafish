@@ -379,6 +379,35 @@ class ClassMessage(BaseModel):
         self.save(update_fields=['is_deleted', 'deleted_by', 'deleted_at', 'updated_at'])
 
 
+class TeacherArchiveFolder(BaseModel):
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='classroom_archive_folders',
+        verbose_name=_('Teacher'),
+    )
+    title = models.CharField(max_length=120, verbose_name=_('Title'))
+    is_deleted = models.BooleanField(default=False, verbose_name=_('Is deleted'))
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Deleted at'))
+
+    class Meta:
+        ordering = ['title', 'created_at']
+        verbose_name = _('Teacher archive folder')
+        verbose_name_plural = _('Teacher archive folders')
+        indexes = [
+            models.Index(fields=['teacher', 'is_deleted', 'title'], name='classes_tea_teacher_08ec59_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.title} ({self.teacher_id})'
+
+    def soft_delete(self):
+        self.archived_files.filter(is_deleted=False).update(folder=None)
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save(update_fields=['is_deleted', 'deleted_at', 'updated_at'])
+
+
 class TeacherArchivedFile(BaseModel):
     teacher = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -386,6 +415,15 @@ class TeacherArchivedFile(BaseModel):
         related_name='classroom_archived_files',
         verbose_name=_('Teacher'),
     )
+    folder = models.ForeignKey(
+        TeacherArchiveFolder,
+        on_delete=models.SET_NULL,
+        related_name='archived_files',
+        null=True,
+        blank=True,
+        verbose_name=_('Folder'),
+    )
+    title = models.CharField(max_length=255, blank=True, verbose_name=_('Title'))
     file = models.FileField(upload_to=upload_to_dynamic, verbose_name=_('File'))
     original_filename = models.CharField(max_length=255, verbose_name=_('Original filename'))
     file_size = models.PositiveIntegerField(default=0, verbose_name=_('File size (bytes)'))
@@ -399,10 +437,15 @@ class TeacherArchivedFile(BaseModel):
         verbose_name_plural = _('Teacher archived files')
         indexes = [
             models.Index(fields=['teacher', 'is_deleted', 'created_at']),
+            models.Index(fields=['teacher', 'folder', 'is_deleted'], name='classes_tea_teacher_3859c9_idx'),
         ]
 
+    @property
+    def display_title(self):
+        return (self.title or '').strip() or self.original_filename
+
     def __str__(self):
-        return f'{self.original_filename} ({self.teacher_id})'
+        return f'{self.display_title} ({self.teacher_id})'
 
     def soft_delete(self):
         self.is_deleted = True
@@ -415,6 +458,7 @@ class ClassAttachment(BaseModel):
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='class_attachments_uploaded', verbose_name=_('Uploaded by'))
     file = models.FileField(upload_to=upload_to_dynamic, verbose_name=_('File'))
     original_filename = models.CharField(max_length=255, verbose_name=_('Original filename'))
+    title = models.CharField(max_length=255, blank=True, verbose_name=_('Title'))
     file_size = models.PositiveIntegerField(default=0, verbose_name=_('File size (bytes)'))
     content_type = models.CharField(max_length=150, blank=True, verbose_name=_('Content type'))
     archive_file = models.ForeignKey(

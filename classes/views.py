@@ -12,10 +12,11 @@ from rest_framework.response import Response
 from zoneinfo import ZoneInfo
 from . import conf
 from .broadcast import publish_to_class, publish_to_user
-from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass, TeacherArchivedFile
+from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass, TeacherArchivedFile, TeacherArchiveFolder
 from .serializers import (
     ClassAttachmentSerializer,
     TeacherArchivedFileSerializer,
+    TeacherArchiveFolderSerializer,
     ClassEnrollmentSerializer,
     ClassMessageSerializer,
     ClassReactionSerializer,
@@ -207,6 +208,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             'uploadedBy': UserBasicSerializer(attachment.uploaded_by).data,
             'fileUrl': request.build_absolute_uri(attachment.file.url),
             'fileName': attachment.original_filename,
+            'title': (attachment.title or '').strip() or attachment.original_filename,
             'fileSize': attachment.file_size,
             'contentType': attachment.content_type,
             'archiveFileId': str(attachment.archive_file_id) if attachment.archive_file_id else None,
@@ -217,15 +219,34 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             'createdAt': attachment.created_at.isoformat() if attachment.created_at else None,
         }
 
+    def _archive_folder_payload(self, folder):
+        return {
+            'id': str(folder.id),
+            'title': folder.title,
+            'createdAt': folder.created_at.isoformat() if folder.created_at else None,
+        }
+
     def _archive_file_payload(self, archive_file, request):
         return {
             'id': str(archive_file.id),
             'fileUrl': request.build_absolute_uri(archive_file.file.url),
             'fileName': archive_file.original_filename,
+            'title': archive_file.display_title,
             'fileSize': archive_file.file_size,
             'contentType': archive_file.content_type,
+            'folderId': str(archive_file.folder_id) if archive_file.folder_id else None,
+            'folder': self._archive_folder_payload(archive_file.folder) if archive_file.folder and not archive_file.folder.is_deleted else None,
             'createdAt': archive_file.created_at.isoformat() if archive_file.created_at else None,
         }
+
+    def _publish_attachment_presentation(self, class_instance, payload):
+        # Publish on the class stream and also directly to every enrolled student.
+        # The direct user publication makes presentation changes resilient if a
+        # class-channel publication is missed while a mobile app is resuming.
+        publish_to_class(str(class_instance.id), 'attachment.presentation_changed', payload)
+        student_ids = class_instance.enrollments.filter(left_at__isnull=True).values_list('student_id', flat=True)
+        for student_id in student_ids:
+            publish_to_user(student_id, 'attachment.presentation_changed', payload)
 
     def _hand_payload(self, hand):
         return {
@@ -609,11 +630,22 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Only teachers can access the file archive'}, status=status.HTTP_403_FORBIDDEN)
 
         if request.method == 'GET':
-            files = TeacherArchivedFile.objects.filter(
+            files = TeacherArchivedFile.objects.select_related('folder').filter(
                 teacher=request.user,
                 is_deleted=False,
-            ).order_by('-created_at')
-            return Response({'results': [self._archive_file_payload(item, request) for item in files]})
+            )
+            folder_id = request.query_params.get('folder_id') or request.query_params.get('folderId')
+            if folder_id:
+                if str(folder_id).lower() in {'none', 'null', 'unfiled'}:
+                    files = files.filter(folder__isnull=True)
+                else:
+                    files = files.filter(folder_id=folder_id, folder__teacher=request.user, folder__is_deleted=False)
+            files = files.order_by('-created_at')
+            folders = TeacherArchiveFolder.objects.filter(teacher=request.user, is_deleted=False).order_by('title', 'created_at')
+            return Response({
+                'results': [self._archive_file_payload(item, request) for item in files],
+                'folders': [self._archive_folder_payload(folder) for folder in folders],
+            })
 
         serializer = TeacherArchivedFileSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -621,8 +653,12 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         if uploaded_file.size > conf.ATTACHMENT_MAX_SIZE_BYTES:
             raise ValidationError({'file': f'File exceeds the maximum size of {conf.ATTACHMENT_MAX_SIZE_BYTES // (1024 * 1024)}MB.'})
 
+        title = (serializer.validated_data.get('title') or '').strip() or uploaded_file.name
+        folder = serializer.validated_data.get('folder')
         archive_file = TeacherArchivedFile.objects.create(
             teacher=request.user,
+            folder=folder,
+            title=title,
             file=uploaded_file,
             original_filename=uploaded_file.name,
             file_size=uploaded_file.size,
@@ -630,19 +666,87 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         )
         return Response(self._archive_file_payload(archive_file, request), status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=['delete'], url_path=r'teacher-archive/(?P<archive_id>[^/.]+)')
-    def delete_teacher_archive_file(self, request, archive_id=None):
+    @action(detail=False, methods=['patch', 'delete'], url_path=r'teacher-archive/files/(?P<archive_id>[^/.]+)')
+    def teacher_archive_file_detail(self, request, archive_id=None):
         if not is_teacher(request.user):
             return Response({'error': 'Only teachers can manage the file archive'}, status=status.HTTP_403_FORBIDDEN)
-        archive_file = TeacherArchivedFile.objects.filter(
+        archive_file = TeacherArchivedFile.objects.select_related('folder').filter(
             pk=archive_id,
             teacher=request.user,
             is_deleted=False,
         ).first()
         if not archive_file:
             return Response({'error': 'Archived file not found'}, status=status.HTTP_404_NOT_FOUND)
-        archive_file.soft_delete()
-        return Response({'ok': True})
+
+        if request.method == 'DELETE':
+            archive_file.soft_delete()
+            return Response({'ok': True})
+
+        update_fields = []
+        if 'title' in request.data:
+            title = str(request.data.get('title') or '').strip()
+            if not title:
+                raise ValidationError({'title': 'Title cannot be empty.'})
+            archive_file.title = title[:255]
+            update_fields.append('title')
+
+        if 'folder_id' in request.data or 'folderId' in request.data:
+            raw_folder_id = request.data.get('folder_id', request.data.get('folderId'))
+            if raw_folder_id in (None, '', 'null', 'none'):
+                archive_file.folder = None
+            else:
+                folder = TeacherArchiveFolder.objects.filter(
+                    pk=raw_folder_id,
+                    teacher=request.user,
+                    is_deleted=False,
+                ).first()
+                if not folder:
+                    raise ValidationError({'folder_id': 'Folder not found.'})
+                archive_file.folder = folder
+            update_fields.append('folder')
+
+        if update_fields:
+            update_fields.append('updated_at')
+            archive_file.save(update_fields=update_fields)
+        return Response(self._archive_file_payload(archive_file, request))
+
+    @action(detail=False, methods=['get', 'post'], url_path='teacher-archive/folders')
+    def teacher_archive_folders(self, request):
+        if not is_teacher(request.user):
+            return Response({'error': 'Only teachers can manage archive folders'}, status=status.HTTP_403_FORBIDDEN)
+
+        if request.method == 'GET':
+            folders = TeacherArchiveFolder.objects.filter(teacher=request.user, is_deleted=False).order_by('title', 'created_at')
+            return Response({'results': [self._archive_folder_payload(folder) for folder in folders]})
+
+        title = str(request.data.get('title') or '').strip()
+        if not title:
+            raise ValidationError({'title': 'This field is required.'})
+        if TeacherArchiveFolder.objects.filter(teacher=request.user, is_deleted=False, title__iexact=title).exists():
+            raise ValidationError({'title': 'A folder with this title already exists.'})
+        folder = TeacherArchiveFolder.objects.create(teacher=request.user, title=title[:120])
+        return Response(self._archive_folder_payload(folder), status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['patch', 'delete'], url_path=r'teacher-archive/folders/(?P<folder_id>[^/.]+)')
+    def teacher_archive_folder_detail(self, request, folder_id=None):
+        if not is_teacher(request.user):
+            return Response({'error': 'Only teachers can manage archive folders'}, status=status.HTTP_403_FORBIDDEN)
+        folder = TeacherArchiveFolder.objects.filter(pk=folder_id, teacher=request.user, is_deleted=False).first()
+        if not folder:
+            return Response({'error': 'Folder not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.method == 'DELETE':
+            folder.soft_delete()
+            return Response({'ok': True})
+
+        title = str(request.data.get('title') or '').strip()
+        if not title:
+            raise ValidationError({'title': 'This field is required.'})
+        if TeacherArchiveFolder.objects.filter(teacher=request.user, is_deleted=False, title__iexact=title).exclude(pk=folder.pk).exists():
+            raise ValidationError({'title': 'A folder with this title already exists.'})
+        folder.title = title[:120]
+        folder.save(update_fields=['title', 'updated_at'])
+        return Response(self._archive_folder_payload(folder))
 
     @action(detail=True, methods=['post'], url_path='attachments/from-archive')
     def attachment_from_archive(self, request, pk=None):
@@ -666,6 +770,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             uploaded_by=request.user,
             file=archive_file.file.name,
             original_filename=archive_file.original_filename,
+            title=archive_file.display_title,
             file_size=archive_file.file_size,
             content_type=archive_file.content_type,
             archive_file=archive_file,
@@ -695,7 +800,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
                 attachment.save(update_fields=['is_presented', 'updated_at'])
 
         attachment_data = self._attachment_payload(attachment, request)
-        publish_to_class(str(class_instance.id), 'attachment.presentation_changed', {
+        self._publish_attachment_presentation(class_instance, {
             'attachment_id': str(attachment.id),
             'attachment': attachment_data,
         })
@@ -707,7 +812,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         if class_instance.teacher_id != request.user.id:
             return Response({'error': 'Only the class teacher can control attachment presentation'}, status=status.HTTP_403_FORBIDDEN)
         class_instance.attachments.filter(is_presented=True).update(is_presented=False)
-        publish_to_class(str(class_instance.id), 'attachment.presentation_changed', {'attachment_id': None})
+        self._publish_attachment_presentation(class_instance, {'attachment_id': None})
         return Response({'ok': True, 'attachment_id': None})
 
     @action(detail=True, methods=['get', 'post'], url_path='attachments')
@@ -737,6 +842,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             uploaded_by=request.user,
             file=uploaded_file,
             original_filename=uploaded_file.name,
+            title=uploaded_file.name,
             file_size=uploaded_file.size,
             content_type=getattr(uploaded_file, 'content_type', '') or '',
         )
@@ -757,7 +863,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         attachment.is_presented = False
         attachment.soft_delete(request.user)
         if was_presented:
-            publish_to_class(str(class_instance.id), 'attachment.presentation_changed', {'attachment_id': None})
+            self._publish_attachment_presentation(class_instance, {'attachment_id': None})
         publish_to_class(str(class_instance.id), 'attachment.deleted', {'attachment_id': str(attachment.id)})
         attachment_deleted.send(sender=ClassAttachment, class_instance=class_instance, attachment=attachment, deleted_by=request.user)
         return Response({'ok': True})
