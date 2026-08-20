@@ -634,7 +634,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
                 teacher=request.user,
                 is_deleted=False,
             )
-            folder_id = request.query_params.get('folder_id') or request.query_params.get('folderId')
+            folder_id = request.query_params.get('folder_id')
             if folder_id and str(folder_id).lower() not in {'none', 'null', 'unfiled'}:
                 files = files.filter(folders__id=folder_id, folders__teacher=request.user, folders__is_deleted=False).distinct()
             files = files.order_by('-created_at')

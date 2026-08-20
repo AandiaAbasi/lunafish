@@ -402,7 +402,7 @@ class TeacherArchiveFolder(BaseModel):
         return f'{self.title} ({self.teacher_id})'
 
     def soft_delete(self):
-        self.archived_files.filter(is_deleted=False).update(folder=None)
+        self.archived_files.clear()
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.save(update_fields=['is_deleted', 'deleted_at', 'updated_at'])

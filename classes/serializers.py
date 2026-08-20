@@ -333,6 +333,14 @@ class TeacherArchivedFileSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError('Folder not found.')
         return folders
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['folders'] = TeacherArchiveFolderSerializer(
+            instance.folders.filter(is_deleted=False),
+            many=True,
+        ).data
+        return data
+
     def get_file_url(self, obj):
         request = self.context.get('request')
         if not obj.file:
