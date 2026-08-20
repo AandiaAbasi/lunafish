@@ -312,6 +312,7 @@ class TeacherArchivedFileSerializer(serializers.ModelSerializer):
         queryset=TeacherArchiveFolder.objects.all(),
         many=True,
         required=False,
+        write_only=True,
     )
 
     class Meta:
@@ -320,17 +321,23 @@ class TeacherArchivedFileSerializer(serializers.ModelSerializer):
             'id', 'file', 'file_url', 'title', 'folder_ids', 'original_filename', 'file_size',
             'content_type', 'created_at',
         ]
-        read_only_fields = ['id', 'file_url', 'original_filename', 'file_size', 'content_type', 'created_at']
+        read_only_fields = [
+            'id', 'file_url', 'original_filename', 'file_size', 'content_type', 'created_at',
+        ]
 
     def validate_folder_ids(self, folders):
         request = self.context.get('request')
-        if request and any(folder.teacher_id != request.user.id or folder.is_deleted for folder in folders):
-            raise serializers.ValidationError('Folder not found.')
+        if request:
+            for folder in folders:
+                if folder.teacher_id != request.user.id or folder.is_deleted:
+                    raise serializers.ValidationError('Folder not found.')
         return folders
 
     def get_file_url(self, obj):
         request = self.context.get('request')
-        return request.build_absolute_uri(obj.file.url) if request and obj.file else (obj.file.url if obj.file else '')
+        if not obj.file:
+            return ''
+        return request.build_absolute_uri(obj.file.url) if request else obj.file.url
 
 
 class ClassAttachmentSerializer(serializers.ModelSerializer):

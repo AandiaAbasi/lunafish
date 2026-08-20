@@ -402,7 +402,7 @@ class TeacherArchiveFolder(BaseModel):
         return f'{self.title} ({self.teacher_id})'
 
     def soft_delete(self):
-        self.archived_files.filter(is_deleted=False).update()
+        self.archived_files.filter(is_deleted=False).update(folder=None)
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.save(update_fields=['is_deleted', 'deleted_at', 'updated_at'])
@@ -435,7 +435,7 @@ class TeacherArchivedFile(BaseModel):
         verbose_name_plural = _('Teacher archived files')
         indexes = [
             models.Index(fields=['teacher', 'is_deleted', 'created_at']),
-            models.Index(fields=['teacher', 'is_deleted'], name='classes_tea_teacher_arch_idx'),
+            models.Index(fields=['teacher', 'is_deleted'], name='classes_tea_teacher_archived_idx'),
         ]
 
     @property

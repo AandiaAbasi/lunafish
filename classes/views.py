@@ -234,7 +234,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             'title': archive_file.display_title,
             'fileSize': archive_file.file_size,
             'contentType': archive_file.content_type,
-            'folderId': str(archive_file.folder_id) if archive_file.folder_id else None,
+            'folderId': str(None) if None else None,
             'folder': self._archive_folder_payload(archive_file.folder) if archive_file.folder and not archive_file.folder.is_deleted else None,
             'createdAt': archive_file.created_at.isoformat() if archive_file.created_at else None,
         }
@@ -630,7 +630,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Only teachers can access the file archive'}, status=status.HTTP_403_FORBIDDEN)
 
         if request.method == 'GET':
-            files = TeacherArchivedFile.objects.select_related('folder').filter(
+            files = TeacherArchivedFile.objects.prefetch_related('folders').filter(
                 teacher=request.user,
                 is_deleted=False,
             )
@@ -654,23 +654,25 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             raise ValidationError({'file': f'File exceeds the maximum size of {conf.ATTACHMENT_MAX_SIZE_BYTES // (1024 * 1024)}MB.'})
 
         title = (serializer.validated_data.get('title') or '').strip() or uploaded_file.name
-        folder = serializer.validated_data.get('folder')
+        folders = serializer.validated_data.get('folders', [])
         archive_file = TeacherArchivedFile.objects.create(
             teacher=request.user,
-            folder=folder,
+            
             title=title,
             file=uploaded_file,
             original_filename=uploaded_file.name,
             file_size=uploaded_file.size,
             content_type=getattr(uploaded_file, 'content_type', '') or '',
         )
+        if folders:
+            archive_file.folders.set(folders)
         return Response(self._archive_file_payload(archive_file, request), status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['patch', 'delete'], url_path=r'teacher-archive/files/(?P<archive_id>[^/.]+)')
     def teacher_archive_file_detail(self, request, archive_id=None):
         if not is_teacher(request.user):
             return Response({'error': 'Only teachers can manage the file archive'}, status=status.HTTP_403_FORBIDDEN)
-        archive_file = TeacherArchivedFile.objects.select_related('folder').filter(
+        archive_file = TeacherArchivedFile.objects.prefetch_related('folders').filter(
             pk=archive_id,
             teacher=request.user,
             is_deleted=False,
