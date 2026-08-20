@@ -379,6 +379,37 @@ class ClassMessage(BaseModel):
         self.save(update_fields=['is_deleted', 'deleted_by', 'deleted_at', 'updated_at'])
 
 
+class TeacherArchivedFile(BaseModel):
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='classroom_archived_files',
+        verbose_name=_('Teacher'),
+    )
+    file = models.FileField(upload_to=upload_to_dynamic, verbose_name=_('File'))
+    original_filename = models.CharField(max_length=255, verbose_name=_('Original filename'))
+    file_size = models.PositiveIntegerField(default=0, verbose_name=_('File size (bytes)'))
+    content_type = models.CharField(max_length=150, blank=True, verbose_name=_('Content type'))
+    is_deleted = models.BooleanField(default=False, verbose_name=_('Is deleted'))
+    deleted_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Deleted at'))
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = _('Teacher archived file')
+        verbose_name_plural = _('Teacher archived files')
+        indexes = [
+            models.Index(fields=['teacher', 'is_deleted', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.original_filename} ({self.teacher_id})'
+
+    def soft_delete(self):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save(update_fields=['is_deleted', 'deleted_at', 'updated_at'])
+
+
 class ClassAttachment(BaseModel):
     class_session = models.ForeignKey(OnlineClass, on_delete=models.CASCADE, related_name='attachments', verbose_name=_('Class session'))
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='class_attachments_uploaded', verbose_name=_('Uploaded by'))
@@ -386,6 +417,15 @@ class ClassAttachment(BaseModel):
     original_filename = models.CharField(max_length=255, verbose_name=_('Original filename'))
     file_size = models.PositiveIntegerField(default=0, verbose_name=_('File size (bytes)'))
     content_type = models.CharField(max_length=150, blank=True, verbose_name=_('Content type'))
+    archive_file = models.ForeignKey(
+        TeacherArchivedFile,
+        on_delete=models.SET_NULL,
+        related_name='class_attachments',
+        null=True,
+        blank=True,
+        verbose_name=_('Archive source'),
+    )
+    is_presented = models.BooleanField(default=False, verbose_name=_('Is presented in class'))
     is_deleted = models.BooleanField(default=False, verbose_name=_('Is deleted'))
     deleted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -416,9 +456,10 @@ class ClassAttachment(BaseModel):
 
     def soft_delete(self, by_user):
         self.is_deleted = True
+        self.is_presented = False
         self.deleted_by = by_user
         self.deleted_at = timezone.now()
-        self.save(update_fields=['is_deleted', 'deleted_by', 'deleted_at', 'updated_at'])
+        self.save(update_fields=['is_deleted', 'is_presented', 'deleted_by', 'deleted_at', 'updated_at'])
 
 
 class ClassReaction(models.Model):

@@ -12,9 +12,10 @@ from rest_framework.response import Response
 from zoneinfo import ZoneInfo
 from . import conf
 from .broadcast import publish_to_class, publish_to_user
-from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass
+from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass, TeacherArchivedFile
 from .serializers import (
     ClassAttachmentSerializer,
+    TeacherArchivedFileSerializer,
     ClassEnrollmentSerializer,
     ClassMessageSerializer,
     ClassReactionSerializer,
@@ -208,10 +209,22 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             'fileName': attachment.original_filename,
             'fileSize': attachment.file_size,
             'contentType': attachment.content_type,
+            'archiveFileId': str(attachment.archive_file_id) if attachment.archive_file_id else None,
+            'isPresented': attachment.is_presented,
             'isDeleted': attachment.is_deleted,
             'deletedBy': UserBasicSerializer(attachment.deleted_by).data if attachment.deleted_by else None,
             'deletedAt': attachment.deleted_at.isoformat() if attachment.deleted_at else None,
             'createdAt': attachment.created_at.isoformat() if attachment.created_at else None,
+        }
+
+    def _archive_file_payload(self, archive_file, request):
+        return {
+            'id': str(archive_file.id),
+            'fileUrl': request.build_absolute_uri(archive_file.file.url),
+            'fileName': archive_file.original_filename,
+            'fileSize': archive_file.file_size,
+            'contentType': archive_file.content_type,
+            'createdAt': archive_file.created_at.isoformat() if archive_file.created_at else None,
         }
 
     def _hand_payload(self, hand):
@@ -590,6 +603,113 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
         message_deleted.send(sender=ClassMessage, class_instance=class_instance, message=message, deleted_by=request.user)
         return Response({'ok': True})
 
+    @action(detail=False, methods=['get', 'post'], url_path='teacher-archive')
+    def teacher_archive(self, request):
+        if not is_teacher(request.user):
+            return Response({'error': 'Only teachers can access the file archive'}, status=status.HTTP_403_FORBIDDEN)
+
+        if request.method == 'GET':
+            files = TeacherArchivedFile.objects.filter(
+                teacher=request.user,
+                is_deleted=False,
+            ).order_by('-created_at')
+            return Response({'results': [self._archive_file_payload(item, request) for item in files]})
+
+        serializer = TeacherArchivedFileSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        uploaded_file = serializer.validated_data['file']
+        if uploaded_file.size > conf.ATTACHMENT_MAX_SIZE_BYTES:
+            raise ValidationError({'file': f'File exceeds the maximum size of {conf.ATTACHMENT_MAX_SIZE_BYTES // (1024 * 1024)}MB.'})
+
+        archive_file = TeacherArchivedFile.objects.create(
+            teacher=request.user,
+            file=uploaded_file,
+            original_filename=uploaded_file.name,
+            file_size=uploaded_file.size,
+            content_type=getattr(uploaded_file, 'content_type', '') or '',
+        )
+        return Response(self._archive_file_payload(archive_file, request), status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['delete'], url_path=r'teacher-archive/(?P<archive_id>[^/.]+)')
+    def delete_teacher_archive_file(self, request, archive_id=None):
+        if not is_teacher(request.user):
+            return Response({'error': 'Only teachers can manage the file archive'}, status=status.HTTP_403_FORBIDDEN)
+        archive_file = TeacherArchivedFile.objects.filter(
+            pk=archive_id,
+            teacher=request.user,
+            is_deleted=False,
+        ).first()
+        if not archive_file:
+            return Response({'error': 'Archived file not found'}, status=status.HTTP_404_NOT_FOUND)
+        archive_file.soft_delete()
+        return Response({'ok': True})
+
+    @action(detail=True, methods=['post'], url_path='attachments/from-archive')
+    def attachment_from_archive(self, request, pk=None):
+        class_instance = self.get_object()
+        if class_instance.teacher_id != request.user.id:
+            return Response({'error': 'Only the class teacher can add attachments'}, status=status.HTTP_403_FORBIDDEN)
+
+        archive_id = request.data.get('archive_id') or request.data.get('archiveId')
+        if not archive_id:
+            raise ValidationError({'archive_id': 'This field is required.'})
+        archive_file = TeacherArchivedFile.objects.filter(
+            pk=archive_id,
+            teacher=request.user,
+            is_deleted=False,
+        ).first()
+        if not archive_file:
+            return Response({'error': 'Archived file not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        attachment = ClassAttachment.objects.create(
+            class_session=class_instance,
+            uploaded_by=request.user,
+            file=archive_file.file.name,
+            original_filename=archive_file.original_filename,
+            file_size=archive_file.file_size,
+            content_type=archive_file.content_type,
+            archive_file=archive_file,
+        )
+        attachment_data = self._attachment_payload(attachment, request)
+        publish_to_class(str(class_instance.id), 'attachment.added', attachment_data)
+        attachment_uploaded.send(sender=ClassAttachment, class_instance=class_instance, attachment=attachment)
+        return Response(attachment_data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path=r'attachments/(?P<attachment_id>[^/.]+)/present')
+    def present_attachment(self, request, pk=None, attachment_id=None):
+        class_instance = self.get_object()
+        if class_instance.teacher_id != request.user.id:
+            return Response({'error': 'Only the class teacher can control attachment presentation'}, status=status.HTTP_403_FORBIDDEN)
+        attachment = ClassAttachment.objects.filter(
+            class_session=class_instance,
+            pk=attachment_id,
+            is_deleted=False,
+        ).first()
+        if not attachment:
+            return Response({'error': 'Attachment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        with transaction.atomic():
+            class_instance.attachments.filter(is_presented=True).exclude(pk=attachment.pk).update(is_presented=False)
+            if not attachment.is_presented:
+                attachment.is_presented = True
+                attachment.save(update_fields=['is_presented', 'updated_at'])
+
+        attachment_data = self._attachment_payload(attachment, request)
+        publish_to_class(str(class_instance.id), 'attachment.presentation_changed', {
+            'attachment_id': str(attachment.id),
+            'attachment': attachment_data,
+        })
+        return Response(attachment_data)
+
+    @action(detail=True, methods=['post'], url_path='attachments/presentation/close')
+    def close_attachment_presentation(self, request, pk=None):
+        class_instance = self.get_object()
+        if class_instance.teacher_id != request.user.id:
+            return Response({'error': 'Only the class teacher can control attachment presentation'}, status=status.HTTP_403_FORBIDDEN)
+        class_instance.attachments.filter(is_presented=True).update(is_presented=False)
+        publish_to_class(str(class_instance.id), 'attachment.presentation_changed', {'attachment_id': None})
+        return Response({'ok': True, 'attachment_id': None})
+
     @action(detail=True, methods=['get', 'post'], url_path='attachments')
     def attachments(self, request, pk=None):
         class_instance = self.get_object()
@@ -598,7 +718,7 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             return error
 
         if request.method == 'GET':
-            attachments = class_instance.attachments.select_related('uploaded_by', 'deleted_by').filter(
+            attachments = class_instance.attachments.select_related('uploaded_by', 'deleted_by', 'archive_file').filter(
                 is_deleted=False,
             ).order_by('created_at')
             return Response({'results': [self._attachment_payload(attachment, request) for attachment in attachments]})
@@ -633,7 +753,11 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Attachment not found'}, status=status.HTTP_404_NOT_FOUND)
         if class_instance.teacher_id != request.user.id:
             return Response({'error': 'Only the class teacher can delete attachments'}, status=status.HTTP_403_FORBIDDEN)
+        was_presented = attachment.is_presented
+        attachment.is_presented = False
         attachment.soft_delete(request.user)
+        if was_presented:
+            publish_to_class(str(class_instance.id), 'attachment.presentation_changed', {'attachment_id': None})
         publish_to_class(str(class_instance.id), 'attachment.deleted', {'attachment_id': str(attachment.id)})
         attachment_deleted.send(sender=ClassAttachment, class_instance=class_instance, attachment=attachment, deleted_by=request.user)
         return Response({'ok': True})

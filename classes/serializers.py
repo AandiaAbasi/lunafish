@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from datetime import datetime
-from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass
+from .models import ClassAttachment, ClassEnrollment, ClassMessage, ClassReaction, HandRaise, OnlineClass, TeacherArchivedFile
 from .utils import get_student_queryset, get_teacher_queryset
 from classroom.models import ClassBooking
 from recommendation.models import EnglishPlacementAssessment
@@ -297,6 +297,27 @@ class ClassMessageSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class TeacherArchivedFileSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(write_only=True)
+    file_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TeacherArchivedFile
+        fields = [
+            'id', 'file', 'file_url', 'original_filename', 'file_size',
+            'content_type', 'created_at',
+        ]
+        read_only_fields = [
+            'id', 'file_url', 'original_filename', 'file_size', 'content_type', 'created_at',
+        ]
+
+    def get_file_url(self, obj):
+        request = self.context.get('request')
+        if not obj.file:
+            return ''
+        return request.build_absolute_uri(obj.file.url) if request else obj.file.url
+
+
 class ClassAttachmentSerializer(serializers.ModelSerializer):
     uploaded_by = UserBasicSerializer(read_only=True)
     deleted_by = UserBasicSerializer(read_only=True)
@@ -312,6 +333,8 @@ class ClassAttachmentSerializer(serializers.ModelSerializer):
             'original_filename',
             'file_size',
             'content_type',
+            'archive_file',
+            'is_presented',
             'is_deleted',
             'deleted_by',
             'deleted_at',
@@ -319,7 +342,7 @@ class ClassAttachmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'id', 'class_session', 'uploaded_by', 'original_filename', 'file_size', 'content_type',
-            'is_deleted', 'deleted_by', 'deleted_at', 'created_at',
+            'archive_file', 'is_presented', 'is_deleted', 'deleted_by', 'deleted_at', 'created_at',
         ]
 
 

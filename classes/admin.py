@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import (
     ClassAttachment,
+    TeacherArchivedFile,
     ClassEnrollment,
     ClassMessage,
     ClassReaction,
@@ -205,6 +206,17 @@ class ClassMessageAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
         'created_at_display',
         'updated_at_display',
     ]
+
+
+
+
+@admin.register(TeacherArchivedFile)
+class TeacherArchivedFileAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
+    list_display = ['teacher', 'original_filename', 'file_size', 'is_deleted', 'created_at_display']
+    list_filter = ['is_deleted', 'created_at']
+    search_fields = ['teacher__username', 'teacher__phone', 'original_filename']
+    date_fields_to_hide = ['deleted_at']
+    localized_readonly_date_fields = ['created_at_display', 'updated_at_display']
 
 
 @admin.register(ClassAttachment)
