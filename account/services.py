@@ -180,6 +180,11 @@ def generate_and_send_otp(phone_or_email: str, purpose='login', user=None, is_te
         otp.delete()
         raise
 
+    # Start the validity window only after the provider has accepted/sent the code.
+    # Otherwise provider/network latency is silently deducted from the user's 2-minute window.
+    otp.expires_at = timezone.now() + timedelta(minutes=OTP_EXPIRE_MINUTES)
+    otp.save(update_fields=['expires_at', 'updated_at'])
+
     logger.info("OTP delivered successfully for purpose=%s channel=%s", purpose, 'email' if is_email else 'sms')
     return True
 
