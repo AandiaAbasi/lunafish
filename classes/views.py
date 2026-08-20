@@ -234,8 +234,8 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             'title': archive_file.display_title,
             'fileSize': archive_file.file_size,
             'contentType': archive_file.content_type,
-            'folderId': str(None) if None else None,
-            'folder': self._archive_folder_payload(archive_file.folder) if archive_file.folder and not archive_file.folder.is_deleted else None,
+            'folderIds': [str(folder.id) for folder in archive_file.folders.all()],
+            'folders': [self._archive_folder_payload(folder) for folder in archive_file.folders.all() if not folder.is_deleted],
             'createdAt': archive_file.created_at.isoformat() if archive_file.created_at else None,
         }
 
@@ -635,11 +635,8 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
                 is_deleted=False,
             )
             folder_id = request.query_params.get('folder_id') or request.query_params.get('folderId')
-            if folder_id:
-                if str(folder_id).lower() in {'none', 'null', 'unfiled'}:
-                    files = files.filter(folder__isnull=True)
-                else:
-                    files = files.filter(folder_id=folder_id, folder__teacher=request.user, folder__is_deleted=False)
+            if folder_id and str(folder_id).lower() not in {'none', 'null', 'unfiled'}:
+                files = files.filter(folders__id=folder_id, folders__teacher=request.user, folders__is_deleted=False).distinct()
             files = files.order_by('-created_at')
             folders = TeacherArchiveFolder.objects.filter(teacher=request.user, is_deleted=False).order_by('title', 'created_at')
             return Response({
@@ -692,20 +689,24 @@ class OnlineClassViewSet(viewsets.ModelViewSet):
             archive_file.title = title[:255]
             update_fields.append('title')
 
-        if 'folder_id' in request.data or 'folderId' in request.data:
-            raw_folder_id = request.data.get('folder_id', request.data.get('folderId'))
-            if raw_folder_id in (None, '', 'null', 'none'):
-                archive_file.folder = None
-            else:
-                folder = TeacherArchiveFolder.objects.filter(
-                    pk=raw_folder_id,
+        if 'folder_ids' in request.data or 'folderIds' in request.data:
+            raw_folder_ids = request.data.get('folder_ids', request.data.get('folderIds')) or []
+
+            if isinstance(raw_folder_ids, str):
+                raw_folder_ids = [raw_folder_ids]
+
+            folders = list(
+                TeacherArchiveFolder.objects.filter(
+                    pk__in=raw_folder_ids,
                     teacher=request.user,
                     is_deleted=False,
-                ).first()
-                if not folder:
-                    raise ValidationError({'folder_id': 'Folder not found.'})
-                archive_file.folder = folder
-            update_fields.append('folder')
+                )
+            )
+
+            if len(folders) != len(raw_folder_ids):
+                raise ValidationError({'folder_ids': 'One or more folders not found.'})
+
+            archive_file.folders.set(folders)
 
         if update_fields:
             update_fields.append('updated_at')
