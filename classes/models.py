@@ -435,7 +435,7 @@ class TeacherArchivedFile(BaseModel):
         verbose_name_plural = _('Teacher archived files')
         indexes = [
             models.Index(fields=['teacher', 'is_deleted', 'created_at']),
-            models.Index(fields=['teacher', 'is_deleted'], name='classes_tea_teacher_archived_idx'),
+            models.Index(fields=['teacher', 'is_deleted'], name='tea_arch_file_idx'),
         ]
 
     @property
