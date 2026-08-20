@@ -307,35 +307,30 @@ class TeacherArchiveFolderSerializer(serializers.ModelSerializer):
 class TeacherArchivedFileSerializer(serializers.ModelSerializer):
     file = serializers.FileField(write_only=True)
     file_url = serializers.SerializerMethodField()
-    folder_id = serializers.PrimaryKeyRelatedField(
-        source='folder',
+    folder_ids = serializers.PrimaryKeyRelatedField(
+        source='folders',
         queryset=TeacherArchiveFolder.objects.all(),
+        many=True,
         required=False,
-        allow_null=True,
-        write_only=True,
     )
 
     class Meta:
         model = TeacherArchivedFile
         fields = [
-            'id', 'file', 'file_url', 'title', 'folder_id', 'original_filename', 'file_size',
+            'id', 'file', 'file_url', 'title', 'folder_ids', 'original_filename', 'file_size',
             'content_type', 'created_at',
         ]
-        read_only_fields = [
-            'id', 'file_url', 'original_filename', 'file_size', 'content_type', 'created_at',
-        ]
+        read_only_fields = ['id', 'file_url', 'original_filename', 'file_size', 'content_type', 'created_at']
 
-    def validate_folder_id(self, folder):
+    def validate_folder_ids(self, folders):
         request = self.context.get('request')
-        if folder and (not request or folder.teacher_id != request.user.id or folder.is_deleted):
+        if request and any(folder.teacher_id != request.user.id or folder.is_deleted for folder in folders):
             raise serializers.ValidationError('Folder not found.')
-        return folder
+        return folders
 
     def get_file_url(self, obj):
         request = self.context.get('request')
-        if not obj.file:
-            return ''
-        return request.build_absolute_uri(obj.file.url) if request else obj.file.url
+        return request.build_absolute_uri(obj.file.url) if request and obj.file else (obj.file.url if obj.file else '')
 
 
 class ClassAttachmentSerializer(serializers.ModelSerializer):
