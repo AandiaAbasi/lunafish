@@ -222,9 +222,14 @@ class TeacherArchiveFolderAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
 
 @admin.register(TeacherArchivedFile)
 class TeacherArchivedFileAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
-    list_display = ['title', 'teacher', 'folder', 'original_filename', 'file_size', 'is_deleted', 'created_at_display']
-    list_filter = ['is_deleted', 'folder', 'created_at']
-    search_fields = ['title', 'teacher__username', 'teacher__phone', 'original_filename', 'folder__title']
+    list_display = ['title', 'teacher', 'display_folders', 'original_filename', 'file_size', 'is_deleted', 'created_at_display']
+    list_filter = ['is_deleted', 'folders', 'created_at']
+    search_fields = ['title', 'teacher__username', 'teacher__phone', 'original_filename', 'folders__title']
+
+    def display_folders(self, obj):
+        return ', '.join(obj.folders.values_list('title', flat=True))
+
+    display_folders.short_description = 'Folders'
     date_fields_to_hide = ['deleted_at']
     localized_readonly_date_fields = ['created_at_display', 'updated_at_display']
 
