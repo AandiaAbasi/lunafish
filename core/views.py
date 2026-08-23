@@ -162,6 +162,57 @@ def course_payment(request, course_id):
 
     return redirect("/")
 
+def course_payment_verify(request, course_id):
+
+    course = get_object_or_404(
+        Course,
+        id=course_id
+    )
+
+    track_id = request.GET.get("trackId")
+
+    if not track_id:
+        messages.error(
+            request,
+            "پرداخت ناموفق بود."
+        )
+        return redirect("/")
+
+
+    data = {
+        "merchant": settings.ZIBAL_MERCHANT,
+        "trackId": track_id,
+    }
+
+
+    response = requests.post(
+        "https://sandbox.zibal.ir/v1/verify",
+        json=data
+    )
+
+
+    result = response.json()
+
+
+    if result.get("result") == 100:
+
+        # اینجا باید Enrollment ساخته شود
+        # فعلا نمونه:
+
+        messages.success(
+            request,
+            "پرداخت با موفقیت انجام شد."
+        )
+
+        return redirect("/")
+
+
+    messages.error(
+        request,
+        "تایید پرداخت انجام نشد."
+    )
+
+    return redirect("/")
 
 def article_list_view(request):
     """Article List"""

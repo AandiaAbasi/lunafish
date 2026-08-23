@@ -18,5 +18,6 @@ urlpatterns = [
     path('privacy/', views.privacy_list_view, name='privacy'),
     path('contact/', views.contact_view, name='contact'),
     path("course/payment/<int:course_id>/",views.course_payment,name="course_payment"),
+    path("course/payment/verify/<int:course_id>/",views.course_payment_verify,name="course_payment_verify"),
     path('set-language/', views.custom_set_language, name='set_language'),
 ]
