@@ -15,6 +15,7 @@ from django.utils.translation import gettext as _
 import requests
 from django.urls import reverse
 from django.conf import settings
+from django.http import StreamingHttpResponse, HttpResponse
 
 def custom_set_language(request):
     """
@@ -114,8 +115,7 @@ def home_view(request):
 
 def course_payment(request, course_id):
 
-    from classroom.models import Course, CourseEnrollment
-    from django.urls import reverse
+    from classroom.models import Course
     from django.conf import settings
     import requests
 
@@ -129,28 +129,12 @@ def course_payment(request, course_id):
     )
 
 
-    # ساخت enrollment قبل از پرداخت
-    enrollment = CourseEnrollment.objects.create(
-        course=course,
-        student=request.user,
-        paid_amount=course.final_price,
-        payment_status="not_paid"
-    )
-
-
-    callback_url = request.build_absolute_uri(
-        reverse(
-            "core:course_payment_verify",
-            args=[enrollment.id]
-        )
-    )
-
-
     payload = {
         "merchant": settings.ZIBAL_MERCHANT_ID,
-        "amount": int(course.final_price),
-        "callbackUrl": callback_url,
-        "description": f"خرید دوره {course.title}"
+        "amount": int(course.final_price * 10),
+        "callbackUrl": "https://your-domain.com/",
+        "description": f"خرید دوره {course.title}",
+        "orderId": str(course.id),
     }
 
 
@@ -166,27 +150,16 @@ def course_payment(request, course_id):
 
     if result.get("result") == 100:
 
-        enrollment.payment_ref = str(
-            result.get("trackId")
-        )
-        enrollment.save()
-
+        track_id = result.get("trackId")
 
         return redirect(
-            f"https://sandbox.zibal.ir/start/{result['trackId']}"
+            f"https://gateway.zibal.ir/start/{track_id}"
         )
 
 
-    enrollment.delete()
-
-    messages.error(
-        request,
-        "خطا در ایجاد پرداخت"
+    return HttpResponse(
+        result
     )
-
-    return redirect("/")
-
-
 
 def course_payment_verify(request, enrollment_id):
 
