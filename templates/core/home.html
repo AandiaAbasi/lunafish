@@ -266,125 +266,48 @@
         </section>
         <section class="courses section" id="courses">
             <div class="container">
-
                 <div class="section-heading reveal">
-
-                    <span class="kicker">
-                        دوره‌های آموزشی
-                    </span>
-
-                    <h2>
-                        دوره مناسب یادگیری زبان را انتخاب کنید
-                    </h2>
-
-                    <p>
-                        با انتخاب دوره، مسیر یادگیری کودک خود را شروع کنید.
-                    </p>
-
+                    <span class="kicker">دوره‌های آموزشی</span>
+                    <h2>دوره مناسب یادگیری زبان را انتخاب کنید</h2>
+                    <p>با انتخاب دوره، مسیر یادگیری کودک خود را شروع کنید.</p>
                 </div>
-
 
                 <div class="courses-grid">
-
-
                     {% for course in recent_courses %}
+                        <article class="course-card reveal">
+                            {% if course.cover_image %}
+                                <img src="{{ course.cover_image.url }}" alt="{{ course.title }}" loading="lazy">
+                            {% endif %}
 
-                    <article class="course-card reveal">
+                            <div class="course-body">
+                                <h3>{{ course.title }}</h3>
 
+                                <p>{{ course.description|truncatechars:120 }}</p>
 
-                        {% if course.cover_image %}
-                        <img 
-                            src="{{ course.cover_image.url }}"
-                            alt="{{ course.title }}"
-                            loading="lazy"
-                        >
-                        {% endif %}
+                                <div class="course-meta">
+                                    <span>{{ course.session_count }} جلسه</span>
+                                    <span>{{ course.subject.teacher.name }}</span>
+                                </div>
 
+                                <div class="course-price">
+                                    {% if course.discounted_price %}
+                                        <del>{{ course.price|floatformat:0 }} تومان</del>
+                                        <strong>{{ course.final_price|floatformat:0 }} تومان</strong>
+                                    {% else %}
+                                        <strong>{{ course.price|floatformat:0 }} تومان</strong>
+                                    {% endif %}
+                                </div>
 
-                        <div class="course-body">
-
-
-                            <h3>
-                                {{ course.title }}
-                            </h3>
-
-
-                            <p>
-                                {{ course.description|truncatechars:120 }}
-                            </p>
-
-
-                            <div class="course-meta">
-
-                                <span>
-                                    {{ course.session_count }} جلسه
-                                </span>
-
-                                <span>
-                                    {{ course.subject.teacher.name }}
-                                </span>
-
+                                <a href="{% url 'core:course_payment' course.id %}" class="button button-primary">
+                                    خرید دوره
+                                </a>
                             </div>
-
-
-
-                            <div class="course-price">
-
-
-                                {% if course.discounted_price %}
-
-                                    <del>
-                                        {{ course.price|floatformat:0 }}
-                                        تومان
-                                    </del>
-
-                                    <strong>
-                                        {{ course.final_price|floatformat:0 }}
-                                        تومان
-                                    </strong>
-
-                                {% else %}
-
-                                    <strong>
-                                        {{ course.price|floatformat:0 }}
-                                        تومان
-                                    </strong>
-
-                                {% endif %}
-
-
-                            </div>
-
-
-
-                            <a 
-                            href="{% url 'core:course_payment' course.id %}"
-                            class="button button-primary"
-                            >
-                                خرید دوره
-                            </a>
-
-
-                        </div>
-
-
-                    </article>
-
-
+                        </article>
                     {% empty %}
-
-                        <p>
-                            در حال حاضر دوره‌ای موجود نیست.
-                        </p>
-
+                        <p>در حال حاضر دوره‌ای موجود نیست.</p>
                     {% endfor %}
-
-
                 </div>
-
-
             </div>
-
         </section>
 
         <section class="download-section" id="download" aria-labelledby="download-title">
