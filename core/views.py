@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
 from django.http import JsonResponse
-
+from classroom.models import Course
 from .models import Article, FAQ, About, Term, Privacy, Contact, Banner
 from .services import HomePageService, get_all_articles, get_active_faqs, get_about_info, get_all_terms, get_all_privacy, get_contacts
 from .forms import ContactMessageForm
@@ -12,7 +12,9 @@ from django.views.i18n import set_language as django_set_language
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.utils.translation import gettext as _
-
+import requests
+from django.urls import reverse
+from django.conf import settings
 
 def custom_set_language(request):
     """
@@ -91,9 +93,74 @@ class IndexView(ListView):
 
 def home_view(request):
     """Public LunaFish application landing page."""
-    # Keep the public root independent from database content so the marketing
-    # landing page stays available even during admin/content maintenance.
-    return render(request, 'core/home.html')
+
+    recent_courses = Course.objects.filter(
+        is_active=True,
+        status='approved',
+        subject__teacher__is_teacher_verified=True
+    ).select_related(
+        'subject__teacher'
+    ).order_by(
+        '-created_at'
+    )[:10]
+
+    return render(
+        request,
+        'core/home.html',
+        {
+            'recent_courses': recent_courses
+        }
+    )
+
+def course_payment(request, course_id):
+
+    course = get_object_or_404(
+        Course,
+        id=course_id,
+        is_active=True,
+        status='approved',
+        subject__teacher__is_teacher_verified=True
+    )
+
+
+    amount = int(course.final_price)
+
+
+    data = {
+        "merchant": settings.ZIBAL_MERCHANT,
+        "amount": amount,
+        "callbackUrl": request.build_absolute_uri(
+            reverse(
+                'core:course_payment_verify',
+                args=[course.id]
+            )
+        ),
+        "description": f"خرید دوره {course.title}",
+    }
+
+
+    response = requests.post(
+        "https://sandbox.zibal.ir/v1/request",
+        json=data
+    )
+
+
+    result = response.json()
+
+
+    if result.get("trackId"):
+
+        return redirect(
+            f"https://sandbox.zibal.ir/start/{result['trackId']}"
+        )
+
+
+    messages.error(
+        request,
+        "خطا در اتصال به درگاه پرداخت"
+    )
+
+    return redirect("/")
 
 
 def article_list_view(request):

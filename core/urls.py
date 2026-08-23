@@ -17,6 +17,6 @@ urlpatterns = [
     path('terms/', views.term_list_view, name='terms'),
     path('privacy/', views.privacy_list_view, name='privacy'),
     path('contact/', views.contact_view, name='contact'),
-
+    path("course/payment/<int:course_id>/",views.course_payment,name="course_payment"),
     path('set-language/', views.custom_set_language, name='set_language'),
 ]
