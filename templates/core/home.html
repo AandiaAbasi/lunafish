@@ -41,6 +41,15 @@
 </head>
 <body>
     <a class="skip-link" href="#main-content">رفتن به محتوای اصلی</a>
+    {% if messages %}
+        <div class="toast-container">
+            {% for message in messages %}
+                <div class="toast toast-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     <header class="site-header" id="top">
         <div class="nav-shell">

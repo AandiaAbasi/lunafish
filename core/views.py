@@ -105,6 +105,14 @@ def home_view(request):
         '-created_at'
     )[:10]
 
+
+    if request.GET.get("success"):
+        messages.success(
+            request,
+            "پرداخت دوره با موفقیت انجام شد."
+        )
+
+
     return render(
         request,
         'core/home.html',
@@ -132,7 +140,7 @@ def course_payment(request, course_id):
     payload = {
         "merchant": settings.ZIBAL_MERCHANT_ID,
         "amount": int(course.final_price * 10),
-        "callbackUrl": "https://your-domain.com/",
+        "callbackUrl": request.build_absolute_uri("/"),
         "description": f"خرید دوره {course.title}",
         "orderId": str(course.id),
     }
