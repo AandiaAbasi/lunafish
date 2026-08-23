@@ -63,7 +63,7 @@
                 <a href="#journey">مسیر یادگیری</a>
                 <a href="#parents">برای والدین</a>
                 <a href="{% url 'core:contact' %}">تماس با ما</a>
-                <a class="nav-cta" href="#download">دریافت اپلیکیشن</a>
+                {% comment %} <a class="nav-cta" href="#download">دریافت اپلیکیشن</a> {% endcomment %}
             </nav>
         </div>
     </header>
@@ -95,10 +95,10 @@
                         جایی که کلاس، تمرین، بازی و جایزه کنار هم قرار می‌گیرند تا یادگیری به یک تجربه دوست‌داشتنی تبدیل شود.
                     </p>
                     <div class="hero-actions">
-                        <a class="button button-primary" href="#download">
+                        {% comment %} <a class="button button-primary" href="#download">
                             <span>دریافت اپلیکیشن</span>
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"/></svg>
-                        </a>
+                        </a> {% endcomment %}
                         <a class="button button-ghost" href="#features">
                             ببین لونا چه کارهایی می‌کند
                         </a>
