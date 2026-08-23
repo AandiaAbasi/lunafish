@@ -114,80 +114,50 @@ def home_view(request):
 
 def course_payment(request, course_id):
 
+    from classroom.models import Course, CourseEnrollment
+    from django.urls import reverse
+    from django.conf import settings
+    import requests
+
+
     course = get_object_or_404(
         Course,
         id=course_id,
         is_active=True,
-        status='approved',
+        status="approved",
         subject__teacher__is_teacher_verified=True
     )
 
 
-    amount = int(course.final_price)
+    # ساخت enrollment قبل از پرداخت
+    enrollment = CourseEnrollment.objects.create(
+        course=course,
+        student=request.user,
+        paid_amount=course.final_price,
+        payment_status="not_paid"
+    )
 
 
-    data = {
+    callback_url = request.build_absolute_uri(
+        reverse(
+            "core:course_payment_verify",
+            args=[enrollment.id]
+        )
+    )
+
+
+    payload = {
         "merchant": settings.ZIBAL_MERCHANT_ID,
-        "amount": amount,
-        "callbackUrl": request.build_absolute_uri(
-            reverse(
-                'core:course_payment_verify',
-                args=[course.id]
-            )
-        ),
-        "description": f"خرید دوره {course.title}",
+        "amount": int(course.final_price),
+        "callbackUrl": callback_url,
+        "description": f"خرید دوره {course.title}"
     }
 
 
     response = requests.post(
-        "https://sandbox.zibal.ir/v1/request",
-        json=data
-    )
-
-
-    result = response.json()
-
-
-    if result.get("trackId"):
-
-        return redirect(
-            f"https://sandbox.zibal.ir/start/{result['trackId']}"
-        )
-
-
-    messages.error(
-        request,
-        "خطا در اتصال به درگاه پرداخت"
-    )
-
-    return redirect("/")
-
-def course_payment_verify(request, course_id):
-
-    course = get_object_or_404(
-        Course,
-        id=course_id
-    )
-
-    track_id = request.GET.get("trackId")
-
-    if not track_id:
-        messages.error(
-            request,
-            "پرداخت ناموفق بود."
-        )
-        return redirect("/")
-
-
-    data = {
-        "merchant": settings.ZIBAL_MERCHANT,
-        "trackId": track_id,
-    }
-
-
-    response = requests.post(
-        "https://sandbox.zibal.ir/v1/verify",
-        json=data
+        settings.ZIBAL_REQUEST_URL,
+        json=payload,
+        timeout=10
     )
 
 
@@ -196,23 +166,104 @@ def course_payment_verify(request, course_id):
 
     if result.get("result") == 100:
 
-        # اینجا باید Enrollment ساخته شود
-        # فعلا نمونه:
+        enrollment.payment_ref = str(
+            result.get("trackId")
+        )
+        enrollment.save()
+
+
+        return redirect(
+            f"https://sandbox.zibal.ir/start/{result['trackId']}"
+        )
+
+
+    enrollment.delete()
+
+    messages.error(
+        request,
+        "خطا در ایجاد پرداخت"
+    )
+
+    return redirect("/")
+
+
+
+def course_payment_verify(request, enrollment_id):
+
+    from classroom.models import CourseEnrollment
+    from django.conf import settings
+    from django.utils import timezone
+    import requests
+
+
+    enrollment = get_object_or_404(
+        CourseEnrollment,
+        id=enrollment_id
+    )
+
+
+    track_id = request.GET.get("trackId")
+
+
+    if not track_id:
+        messages.error(
+            request,
+            "پرداخت ناموفق بود"
+        )
+        return redirect("/")
+
+
+    payload = {
+        "merchant": settings.ZIBAL_MERCHANT_ID,
+        "trackId": track_id
+    }
+
+
+    response = requests.post(
+        settings.ZIBAL_VERIFY_URL,
+        json=payload,
+        timeout=10
+    )
+
+
+    result = response.json()
+
+
+    if result.get("result") == 100:
+
+
+        enrollment.payment_status = "paid"
+        enrollment.payment_ref = track_id
+        enrollment.paid_at = timezone.now()
+        enrollment.save()
+
+
+        # ساخت جلسات
+        enrollment.confirm_payment(
+            track_id
+        )
+
 
         messages.success(
             request,
-            "پرداخت با موفقیت انجام شد."
+            "دوره با موفقیت خریداری شد"
         )
 
         return redirect("/")
 
 
+    enrollment.payment_status = "failed"
+    enrollment.payment_ref = track_id
+    enrollment.save()
+
+
     messages.error(
         request,
-        "تایید پرداخت انجام نشد."
+        "تایید پرداخت انجام نشد"
     )
 
     return redirect("/")
+
 
 def article_list_view(request):
     """Article List"""
