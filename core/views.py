@@ -127,7 +127,7 @@ def course_payment(request, course_id):
 
 
     data = {
-        "merchant": settings.ZIBAL_MERCHANT,
+        "merchant": settings.ZIBAL_MERCHANT_ID,
         "amount": amount,
         "callbackUrl": request.build_absolute_uri(
             reverse(
