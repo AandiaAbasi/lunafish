@@ -370,7 +370,7 @@ OTP_LENGTH = 6
 # ============ Payment Gateway Configuration ============
 # Zibal Payment Gateway
 
-ZIBAL_MERCHANT_ID = "6a89b7613a00f4f825f68708 "  # برای sandbox از 'zibal' استفاده کنید
+ZIBAL_MERCHANT_ID = "6a89b7613a00f4f825f68708"  # برای sandbox از 'zibal' استفاده کنید
 ZIBAL_CALLBACK_URL = "lunafish.app/api/payment/callback/"
 USE_SANDBOX = config('USE_SANDBOX', default=False, cast=bool)
 if USE_SANDBOX:
