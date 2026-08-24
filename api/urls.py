@@ -200,6 +200,7 @@ urlpatterns = [
     path('courses/', views.CourseListView.as_view()),
     path('courses/<int:pk>/', views.CourseDetailView.as_view()),
     path('courses/<int:course_id>/enroll/', views.EnrollCourseView.as_view()),
+    path('courses/payment/start/<str:token>/', views.CoursePaymentStartView.as_view(), name='course_payment_start'),
     path('courses/payment/callback/', views.CoursePaymentCallbackAPIView.as_view(), name='course_payment_callback'),
     path('courses/payment/redirect/', views.CoursePaymentRedirectView.as_view(), name='course_payment_redirect'),
     path('enrollments/<int:enrollment_id>/confirm/', views.ConfirmEnrollmentPaymentView.as_view()),
