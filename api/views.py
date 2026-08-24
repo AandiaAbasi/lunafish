@@ -356,7 +356,7 @@ class CompleteRegistrationAPIView(APIView):
                 try:
                     send_sms_general(
                         phone_number=user.phone,
-                        template_id=555413,
+                        template_id=842366,
                         parameters=[
                             {'name': 'NAME', 'value': user.name or user.username},
                             {'name': 'PASS', 'value': parent_password},
@@ -8362,7 +8362,7 @@ class WithdrawalRequestCreateAPIView(APIView):
                     if admin_contact and admin_contact.value:
                         send_sms_general(
                             phone_number=admin_contact.value,
-                            template_id='629637',
+                            template_id='810822',
                             parameters=[
                                 {'name': 'ID', 'value': str(withdrawal.id)}
                             ]
