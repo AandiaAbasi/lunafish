@@ -3532,7 +3532,7 @@ class InitiatePaymentAPIView(APIView):
             }, status=status.HTTP_200_OK)
 
         try:
-            callback_url = settings.ZIBAL_CALLBACK_URL
+            callback_url = "https://lunafish.app/api/payment/callback/"
             payload = {
                 'merchant': settings.ZIBAL_MERCHANT_ID,
                 'amount': _zibal_toman_to_rial(final_amount),
