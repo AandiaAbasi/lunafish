@@ -2961,18 +2961,29 @@ class DeleteTeacherAvailabilityAPIView(APIView):
 class CreateClassBookingAPIView(APIView):
     """
     Create Class Booking (Purchase Class) API
-    
-    خریدن کلاس - دانش‌آموز یک بازه زمانی را رزرو و خریداری می‌کند
+
+    ورودی‌های قابل قبول:
+    {
+        "availability": 123,
+        "subject": 45
+    }
+
+    و برای سازگاری با نسخه‌های قبلی فرانت:
+    {
+        "availability_id": 123,
+        "subject_id": 45
+    }
     """
     permission_classes = [IsAuthenticated]
-    
+
     @extend_schema(
         tags=['Class Booking'],
         summary='Book/Purchase a Class',
-        description='دانش‌آموز یک بازه زمانی از معلم را خریداری می‌کند',
+        description='دانش‌آموز یک بازه زمانی از معلم را رزرو می‌کند',
         request=None,
         responses={
             201: OpenApiResponse(description="Class booked successfully"),
+            200: OpenApiResponse(description="Existing unpaid booking returned"),
             400: OpenApiResponse(description="Invalid data or unavailable slot"),
             403: OpenApiResponse(description="Only students can book classes"),
             404: OpenApiResponse(description="Slot or subject not found"),
@@ -2980,91 +2991,238 @@ class CreateClassBookingAPIView(APIView):
     )
     def post(self, request):
         from classroom.models import ClassBooking, TeacherAvailability, TeachingSubject
-        from .classroom_serializers import ClassBookingSerializer, CreateClassBookingSerializer
-        from django.db import transaction
-        
-        # فقط دانش‌آموزان می‌توانند کلاس خریداری کنند
+        from .classroom_serializers import ClassBookingSerializer
+        from django.db import transaction, IntegrityError
+
         if request.user.role != 'user':
             return Response(
-                {'error': _('تنها دانش‌آموزان می‌توانند کلاس خریداری کنند')},
+                {
+                    'success': False,
+                    'error': _('تنها دانش‌آموزان می‌توانند کلاس خریداری کنند')
+                },
                 status=status.HTTP_403_FORBIDDEN
             )
-        
-        # تایید داده‌های ورودی
-        serializer = CreateClassBookingSerializer(data=request.data)
-        if not serializer.is_valid():
+
+        # پشتیبانی از هر دو naming convention فرانت
+        availability_raw = request.data.get('availability')
+        if availability_raw in (None, ''):
+            availability_raw = request.data.get('availability_id')
+
+        subject_raw = request.data.get('subject')
+        if subject_raw in (None, ''):
+            subject_raw = request.data.get('subject_id')
+
+        field_errors = {}
+
+        if availability_raw in (None, ''):
+            field_errors['availability'] = ['این فیلد الزامی است.']
+
+        if subject_raw in (None, ''):
+            field_errors['subject'] = ['این فیلد الزامی است.']
+
+        if field_errors:
+            logger.warning(
+                'Invalid class booking payload user_id=%s payload=%s errors=%s',
+                request.user.id,
+                dict(request.data),
+                field_errors,
+            )
             return Response(
                 {
+                    'success': False,
                     'error': _('داده‌های نامعتبر'),
-                    'details': serializer.errors
+                    'details': field_errors,
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        availability_id = serializer.validated_data['availability']
-        subject_id = serializer.validated_data['subject']
-        discount_code = serializer.validated_data.get('discount_code')
-        
-        # ایجاد رزرو کلاس - تمام عملیات باید درون transaction باشد
+
+        try:
+            availability_id = int(availability_raw)
+            subject_id = int(subject_raw)
+
+            if availability_id <= 0 or subject_id <= 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    'success': False,
+                    'error': _('داده‌های نامعتبر'),
+                    'details': {
+                        'availability': ['شناسه زمان باید عدد معتبر باشد.'],
+                        'subject': ['شناسه موضوع باید عدد معتبر باشد.'],
+                    },
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
             with transaction.atomic():
-                # دریافت بازه زمانی با قفل برای جلوگیری از race condition
                 try:
-                    availability = TeacherAvailability.objects.select_for_update().get(id=availability_id)
+                    availability = (
+                        TeacherAvailability.objects
+                        .select_for_update()
+                        .select_related('teacher')
+                        .get(id=availability_id)
+                    )
                 except TeacherAvailability.DoesNotExist:
-                    raise
-                
+                    return Response(
+                        {
+                            'success': False,
+                            'error': _('بازه زمانی یافت نشد')
+                        },
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
                 try:
-                    subject = TeachingSubject.objects.get(id=subject_id)
+                    subject = TeachingSubject.objects.select_related('teacher').get(id=subject_id)
                 except TeachingSubject.DoesNotExist:
-                    raise
-                
-                # بررسی دوباره وضعیت دسترسی
-                if not availability.is_available or availability.is_booked or availability.is_expired or availability.is_past():
-                    from django.core.exceptions import ValidationError as DjangoValidationError
-                    raise DjangoValidationError(_('این زمان‌بندی دیگر در دسترس نیست'))
-                
-                # محاسبه قیمت‌ها
-                original_price = availability.price
-                final_price = availability.discount_price if availability.discount_price else original_price
-                discount_amount = original_price - final_price
-                
-                booking = ClassBooking.objects.create(
-                    availability=availability,
-                    teacher=availability.teacher,
-                    student=request.user,
-                    subject=subject,
-                    status='reserved',
-                    price=original_price,
-                    discount_amount=discount_amount,
-                    final_price=final_price
+                    return Response(
+                        {
+                            'success': False,
+                            'error': _('موضوع آموزشی یافت نشد')
+                        },
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+                # زمان انتخاب‌شده باید متعلق به مدرس همین موضوع باشد.
+                if availability.teacher_id != subject.teacher_id:
+                    return Response(
+                        {
+                            'success': False,
+                            'error': _('این زمان متعلق به مدرس این موضوع نیست'),
+                            'details': {
+                                'availability': ['زمان انتخاب‌شده با مدرس موضوع مطابقت ندارد.']
+                            }
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                if hasattr(subject, 'is_active') and not subject.is_active:
+                    return Response(
+                        {
+                            'success': False,
+                            'error': _('این موضوع آموزشی غیرفعال است')
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # اگر کاربر قبلاً همین زمان را رزرو کرده ولی پرداخت نکرده،
+                # همان booking را برمی‌گردانیم تا Retry پرداخت ممکن باشد.
+                existing_booking = (
+                    ClassBooking.objects
+                    .filter(
+                        availability_id=availability.id,
+                        student=request.user,
+                        status='reserved',
+                    )
+                    .exclude(payment_status='paid')
+                    .first()
                 )
-                
-                # علامت‌گذاری بازه زمانی به عنوان رزرو شده
+
+                if existing_booking:
+                    response_serializer = ClassBookingSerializer(existing_booking)
+                    booking_data = dict(response_serializer.data)
+
+                    return Response(
+                        {
+                            'success': True,
+                            'data': booking_data,
+                            **booking_data,
+                            'message': _('رزرو قبلی برای ادامه پرداخت بازیابی شد'),
+                            'reused': True,
+                        },
+                        status=status.HTTP_200_OK
+                    )
+
+                try:
+                    is_past = bool(availability.is_past())
+                except Exception:
+                    logger.exception(
+                        'Could not evaluate availability.is_past availability_id=%s',
+                        availability.id,
+                    )
+                    is_past = False
+
+                if (
+                    not availability.is_available
+                    or availability.is_booked
+                    or getattr(availability, 'is_expired', False)
+                    or is_past
+                ):
+                    return Response(
+                        {
+                            'success': False,
+                            'error': _('این زمان‌بندی دیگر در دسترس نیست')
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                original_price = availability.price or 0
+
+                # discount_price=0 یعنی کلاس رایگان است.
+                if availability.discount_price is not None:
+                    final_price = availability.discount_price
+                else:
+                    final_price = original_price
+
+                discount_amount = original_price - final_price
+
+                try:
+                    booking = ClassBooking.objects.create(
+                        availability=availability,
+                        teacher=availability.teacher,
+                        student=request.user,
+                        subject=subject,
+                        status='reserved',
+                        price=original_price,
+                        discount_amount=discount_amount,
+                        final_price=final_price,
+                    )
+                except IntegrityError:
+                    logger.warning(
+                        'Concurrent booking conflict availability_id=%s user_id=%s',
+                        availability.id,
+                        request.user.id,
+                    )
+                    return Response(
+                        {
+                            'success': False,
+                            'error': _('این زمان همین الان توسط کاربر دیگری رزرو شد')
+                        },
+                        status=status.HTTP_409_CONFLICT
+                    )
+
                 availability.is_booked = True
                 availability.is_available = False
-                availability.save()
-                
-                # بازگشت داده‌های رزرو
+                availability.save(update_fields=['is_booked', 'is_available'])
+
                 response_serializer = ClassBookingSerializer(booking)
-                return Response({
-                    'data': response_serializer.data,
-                    'message': _('کلاس با موفقیت خریداری شد')
-                }, status=status.HTTP_201_CREATED)
-                
-        except TeacherAvailability.DoesNotExist:
-            return Response(
-                {'error': _('بازه زمانی یافت نشد')},
-                status=status.HTTP_404_NOT_FOUND
+                booking_data = dict(response_serializer.data)
+
+                # هم پاسخ nested و هم flat برای سازگاری با teacherServiceهای مختلف.
+                return Response(
+                    {
+                        'success': True,
+                        'data': booking_data,
+                        **booking_data,
+                        'message': _('کلاس با موفقیت رزرو شد'),
+                        'reused': False,
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+
+        except Exception:
+            logger.exception(
+                'Unexpected error while creating class booking user_id=%s availability=%s subject=%s',
+                request.user.id,
+                availability_id,
+                subject_id,
             )
-        except TeachingSubject.DoesNotExist:
             return Response(
-                {'error': _('درس یافت نشد')},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return Response(
-                {'error': _('خطای داخلی سرور: ') + str(type(e).__name__)},
+                {
+                    'success': False,
+                    'error': _('خطای داخلی سرور در ایجاد رزرو')
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -3359,16 +3517,18 @@ class InitiatePaymentAPIView(APIView):
                         },
                     )
 
+            payment_data = {
+                'booking_id': booking.id,
+                'amount': '0',
+                'currency': 'IRT',
+                'is_free': True,
+                'payment_url': None,
+                'message': _('کلاس رایگان است - پرداخت ثبت شد'),
+            }
             return Response({
                 'success': True,
-                'data': {
-                    'booking_id': booking.id,
-                    'amount': '0',
-                    'currency': 'IRT',
-                    'is_free': True,
-                    'payment_url': None,
-                    'message': _('کلاس رایگان است - پرداخت ثبت شد'),
-                }
+                'data': payment_data,
+                **payment_data,
             }, status=status.HTTP_200_OK)
 
         try:
@@ -3428,16 +3588,18 @@ class InitiatePaymentAPIView(APIView):
             logger.exception('Could not build payment start URL for booking_id=%s', booking.id)
             return Response({'error': _('خطا در ساخت لینک پرداخت')}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        payment_data = {
+            'booking_id': booking.id,
+            'amount': str(final_amount),
+            'currency': 'IRT',
+            'is_free': False,
+            'payment_url': payment_url,
+            'message': _('پرداخت آغاز شد'),
+        }
         return Response({
             'success': True,
-            'data': {
-                'booking_id': booking.id,
-                'amount': str(final_amount),
-                'currency': 'IRT',
-                'is_free': False,
-                'payment_url': payment_url,
-                'message': _('پرداخت آغاز شد'),
-            }
+            'data': payment_data,
+            **payment_data,
         }, status=status.HTTP_200_OK)
 
 
@@ -3651,17 +3813,19 @@ class PaymentStatusAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
+        payment_status_data = {
+            'booking_id': booking.id,
+            'payment_status': booking.payment_status,
+            'final_price': str(booking.final_price),
+            'paid_amount': str(booking.paid_amount),
+            'payment_ref': booking.payment_ref,
+            'paid_at': booking.paid_at.isoformat() if booking.paid_at else None,
+            'is_paid': booking.payment_status == 'paid'
+        }
         return Response({
             'success': True,
-            'data': {
-                'booking_id': booking.id,
-                'payment_status': booking.payment_status,
-                'final_price': str(booking.final_price),
-                'paid_amount': str(booking.paid_amount),
-                'payment_ref': booking.payment_ref,
-                'paid_at': booking.paid_at.isoformat() if booking.paid_at else None,
-                'is_paid': booking.payment_status == 'paid'
-            }
+            'data': payment_status_data,
+            **payment_status_data,
         }, status=status.HTTP_200_OK)
 
 
