@@ -21,8 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -i https://package-mirror.liara.ir/repository/pypi/ --trusted-host mirror.abrha.net pysocks && \
-    pip install --no-cache-dir -i https://package-mirror.liara.ir/repository/pypi/ --trusted-host mirror.abrha.net -r requirements.txt
+RUN pip install --no-cache-dir -i https://package-mirror.liara.ir/repository/pypi/ --trusted-host package-mirror.liara.ir pysocks && \
+    pip install --no-cache-dir -i https://package-mirror.liara.ir/repository/pypi/ --trusted-host package-mirror.liara.ir -r requirements.txt
 
 COPY . .
 
