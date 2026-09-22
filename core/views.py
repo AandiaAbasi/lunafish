@@ -92,6 +92,11 @@ class IndexView(ListView):
         return context
 
 
+def english_home_view(request):
+    """English public landing page for LunaFish."""
+    return render(request, 'core/home_en.html')
+
+
 def home_view(request):
     """Public LunaFish application landing page."""
 
@@ -291,9 +296,8 @@ def term_list_view(request):
 
 
 def privacy_list_view(request):
-    """Privacy Policy"""
-    privacy = get_all_privacy()
-    return render(request, "core/privacy.html", {"privacy_list": privacy})
+    """Public English privacy policy."""
+    return render(request, "core/privacy.html")
 
 
 def contact_view(request):

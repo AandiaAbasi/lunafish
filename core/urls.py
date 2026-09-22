@@ -6,6 +6,7 @@ app_name = 'core'
 urlpatterns = [
     #home page
     path('', views.home_view, name='home'),
+    path('en/', views.english_home_view, name='home_en'),
     path('index/', views.IndexView.as_view(), name='index'),
     
     #articles

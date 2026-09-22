@@ -1,0 +1,242 @@
+{% load static %}
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#063e6d">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <meta name="description" content="LunaFish is an online classroom that helps students and teachers connect, communicate, learn, and teach in one friendly digital space.">
+    <link rel="canonical" href="https://lunafish.app/en/">
+    <link rel="alternate" hreflang="fa" href="https://lunafish.app/">
+    <link rel="alternate" hreflang="en" href="https://lunafish.app/en/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LunaFish">
+    <meta property="og:title" content="LunaFish | An Online Classroom for Students and Teachers">
+    <meta property="og:description" content="A simple online classroom for communication and learning between students and teachers.">
+    <meta property="og:url" content="https://lunafish.app/en/">
+    <meta property="og:image" content="https://lunafish.app{% static 'core/landing/lunafish-social.jpg' %}">
+
+    <title>LunaFish | Online Classroom for Students and Teachers</title>
+    <link rel="preload" as="image" href="{% static 'core/landing/ocean-bg.webp' %}" fetchpriority="high">
+    <link rel="preload" as="image" href="{% static 'core/landing/luna-hero.webp' %}" fetchpriority="high">
+    <link rel="stylesheet" href="{% static 'core/landing/home_en.css' %}">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "LunaFish",
+      "url": "https://lunafish.app/en/",
+      "applicationCategory": "EducationalApplication",
+      "description": "An online classroom for communication and learning between students and teachers."
+    }
+    </script>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <header class="site-header" id="top">
+        <div class="nav-shell">
+            <a class="brand" href="{% url 'core:home_en' %}" aria-label="LunaFish English home">
+                <span class="brand-mark" aria-hidden="true">
+                    <img src="{% static 'core/landing/luna-wave.webp' %}" alt="" width="54" height="54">
+                </span>
+                <span class="brand-copy">
+                    <strong>LunaFish</strong>
+                    <small>Learn. Connect. Grow.</small>
+                </span>
+            </a>
+
+            <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="english-nav" aria-label="Open navigation">
+                <span></span><span></span><span></span>
+            </button>
+
+            <nav class="main-nav" id="english-nav" aria-label="Main navigation">
+                <a href="#classroom">Classroom</a>
+                <a href="#how-it-works">How it works</a>
+                <a href="#for-everyone">For everyone</a>
+                <a href="{% url 'core:privacy' %}">Privacy</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-ocean" aria-hidden="true"></div>
+            <div class="hero-glow glow-one" aria-hidden="true"></div>
+            <div class="hero-glow glow-two" aria-hidden="true"></div>
+            <span class="bubble bubble-one" aria-hidden="true"></span>
+            <span class="bubble bubble-two" aria-hidden="true"></span>
+            <span class="bubble bubble-three" aria-hidden="true"></span>
+
+            <div class="container hero-grid">
+                <div class="hero-copy">
+                    <div class="eyebrow"><span></span> A classroom that goes wherever learning goes</div>
+                    <h1 id="hero-title">The online classroom where <em>students and teachers connect.</em></h1>
+                    <p class="hero-lead">
+                        LunaFish is an online classroom built for communication between students and teachers. It brings teaching, learning, classroom interaction, and progress into one friendly digital space.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button button-primary" href="#classroom">Explore the classroom</a>
+                        <a class="button button-secondary" href="{% url 'core:privacy' %}">Read our Privacy Policy</a>
+                    </div>
+                    <div class="hero-points" aria-label="LunaFish highlights">
+                        <span><i>✓</i> Student–teacher communication</span>
+                        <span><i>✓</i> Online learning experience</span>
+                        <span><i>✓</i> One shared classroom space</span>
+                    </div>
+                </div>
+
+                <div class="hero-visual" aria-label="LunaFish classroom mascot">
+                    <div class="mascot-halo" aria-hidden="true"></div>
+                    <div class="mascot-card">
+                        <img src="{% static 'core/landing/luna-hero.webp' %}" alt="LunaFish mascot" width="960" height="960" fetchpriority="high">
+                    </div>
+                    <div class="floating-card card-live">
+                        <span class="floating-icon">●</span>
+                        <div><strong>Online classroom</strong><small>Learn together from anywhere</small></div>
+                    </div>
+                    <div class="floating-card card-connect">
+                        <span class="floating-icon">Aa</span>
+                        <div><strong>Stay connected</strong><small>Students and teachers in one place</small></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="quick-strip" aria-label="What LunaFish brings together">
+            <div class="container quick-grid">
+                <article>
+                    <span class="mini-icon">01</span>
+                    <div><strong>Connect</strong><p>Bring students and teachers into the same online classroom.</p></div>
+                </article>
+                <article>
+                    <span class="mini-icon">02</span>
+                    <div><strong>Communicate</strong><p>Keep learning conversations focused and easy to follow.</p></div>
+                </article>
+                <article>
+                    <span class="mini-icon">03</span>
+                    <div><strong>Learn</strong><p>Support lessons, practice, and ongoing educational progress.</p></div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section classroom" id="classroom" aria-labelledby="classroom-title">
+            <div class="container">
+                <div class="section-heading">
+                    <span class="kicker">Built around the classroom</span>
+                    <h2 id="classroom-title">A simple digital space for real learning relationships.</h2>
+                    <p>LunaFish helps teachers teach and students participate without making the technology the center of attention.</p>
+                </div>
+
+                <div class="feature-grid">
+                    <article class="feature-card feature-main">
+                        <div class="feature-copy">
+                            <span class="feature-number">01</span>
+                            <h3>Meet in an online classroom</h3>
+                            <p>Students and teachers can come together online for structured learning and direct classroom interaction.</p>
+                            <div class="tag-row"><span>Online sessions</span><span>Class interaction</span><span>Teacher guidance</span></div>
+                        </div>
+                        <img src="{% static 'core/landing/luna-wave.webp' %}" alt="LunaFish mascot waving" loading="lazy">
+                    </article>
+
+                    <article class="feature-card">
+                        <span class="feature-number">02</span>
+                        <div class="feature-orb">↔</div>
+                        <h3>Keep communication close to learning</h3>
+                        <p>A shared environment makes it easier for students and teachers to stay connected around lessons and learning activities.</p>
+                    </article>
+
+                    <article class="feature-card accent-card">
+                        <span class="feature-number">03</span>
+                        <div class="feature-orb">★</div>
+                        <h3>Make participation feel engaging</h3>
+                        <p>A friendly visual experience supports active participation and helps learning feel approachable.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section steps-section" id="how-it-works" aria-labelledby="steps-title">
+            <div class="container steps-grid">
+                <div class="steps-visual">
+                    <div class="round-window">
+                        <img src="{% static 'core/landing/luna-play.webp' %}" alt="LunaFish mascot learning and playing" width="960" height="960" loading="lazy">
+                    </div>
+                    <div class="status-card">
+                        <span>Learning journey</span>
+                        <strong>Class → Practice → Progress</strong>
+                        <div class="status-track"><i></i></div>
+                    </div>
+                </div>
+
+                <div class="steps-copy">
+                    <span class="kicker light">How LunaFish works</span>
+                    <h2 id="steps-title">Learning stays human, even when the classroom is online.</h2>
+                    <p>The platform is designed around the relationship between a teacher and a student—not around complicated tools.</p>
+                    <ol class="steps-list">
+                        <li><span>1</span><div><strong>Join the classroom</strong><p>Students and teachers enter the same learning environment.</p></div></li>
+                        <li><span>2</span><div><strong>Teach and participate</strong><p>Use the classroom for instruction, communication, and learning activities.</p></div></li>
+                        <li><span>3</span><div><strong>Continue the journey</strong><p>Keep learning organized around lessons, practice, and progress.</p></div></li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <section class="section audience" id="for-everyone" aria-labelledby="audience-title">
+            <div class="container">
+                <div class="section-heading compact-heading">
+                    <span class="kicker">One classroom, two essential roles</span>
+                    <h2 id="audience-title">Made for students. Made for teachers.</h2>
+                </div>
+                <div class="audience-grid">
+                    <article>
+                        <span class="role-label">For students</span>
+                        <h3>A clear place to learn and participate.</h3>
+                        <p>Join your learning space, communicate with your teacher, take part in class, and stay connected to your learning journey.</p>
+                    </article>
+                    <article>
+                        <span class="role-label">For teachers</span>
+                        <h3>A focused place to teach and connect.</h3>
+                        <p>Meet students online, guide classroom activity, communicate around learning, and keep the experience centered on education.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="closing-section" aria-labelledby="closing-title">
+            <div class="container closing-card">
+                <div>
+                    <span class="kicker light">LunaFish</span>
+                    <h2 id="closing-title">A friendly online classroom for meaningful connection and learning.</h2>
+                    <p>Students learn. Teachers guide. LunaFish gives them a shared place to meet.</p>
+                </div>
+                <img src="{% static 'core/landing/luna-clap.webp' %}" alt="LunaFish mascot celebrating" width="960" height="960" loading="lazy">
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <a class="brand" href="{% url 'core:home_en' %}">
+                    <span class="brand-mark"><img src="{% static 'core/landing/luna-wave.webp' %}" alt="" width="50" height="50"></span>
+                    <span class="brand-copy"><strong>LunaFish</strong><small>Online classroom</small></span>
+                </a>
+                <p>An online classroom for communication and learning between students and teachers.</p>
+            </div>
+            <nav class="footer-links" aria-label="Footer navigation">
+                <a href="#classroom">Classroom</a>
+                <a href="#how-it-works">How it works</a>
+                <a href="{% url 'core:privacy' %}">Privacy Policy</a>
+                <a href="/">Main website</a>
+            </nav>
+            <p class="copyright">© {% now "Y" %} LunaFish. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="{% static 'core/landing/home_en.js' %}" defer></script>
+</body>
+</html>
