@@ -2110,7 +2110,7 @@ class HomePageAPIView(APIView):
             is_active=True,
             status='approved',
             subject__teacher__is_teacher_verified=True  # اعمال شرط تایید معلم از طریق رابطه subject
-        ).select_related('subject__teacher').order_by('-created_at')[:10]
+        ).select_related('subject__teacher').order_by('-created_at')[:5]
         
         recent_courses_data = CourseSerializer(
             recent_courses, 
