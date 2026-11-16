@@ -63,7 +63,17 @@ class TeacherCreationForm(forms.ModelForm):
 
 
 class RegularUserAdmin(BaseUserAdmin):
-    """Admin for regular users only"""
+    """Admin for regular users only."""
+
+    @admin.display(description=_("Profile Photo"))
+    def profile_photo_display(self, obj):
+        if not obj or not obj.profile_photo_path:
+            return _("No photo")
+        return format_html(
+            '<img src="{}" style="max-width:100px; max-height:100px; object-fit:cover; border-radius:8px;" />',
+            obj.profile_photo_path.url,
+        )
+
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -232,6 +242,7 @@ class RegularUserAdmin(BaseUserAdmin):
             {
                 'fields': (
                     'profile_photo_path',
+                    'profile_photo_display',
                     'bio',
                     'name',
                 ),
@@ -266,7 +277,7 @@ class RegularUserAdmin(BaseUserAdmin):
         'username',
         'email',
         'phone',
-        'profile_photo_path',
+        'profile_photo_display',
         'name',
         'bio',
 
@@ -339,7 +350,7 @@ class TeacherUserAdmin(BaseUserAdmin):
         (_('Main Info'), {'fields': ('name', 'username', 'email', 'phone', 'role')}),
         (_('Teacher Info'), {'fields': ('is_teacher_verified', 'teacher_verification_requested_at_jalali')}),
         (_('Financial Settings'), {'fields': ('commission_rate_override',), 'description': _('Custom commission rate for this teacher. If empty, default rate applies.')}),
-        (_('Personal Info'), {'fields': ('profile_photo_display', 'bio')}),
+        (_('Personal Info'), {'fields': ('profile_photo_path', 'profile_photo_display', 'bio')}),
         (_('Dates'), {'fields': ('last_login_jalali', 'created_at_display', 'updated_at_display'), 'classes': ('collapse',)}),
     )
     
