@@ -63,6 +63,16 @@ class TeacherCreationForm(forms.ModelForm):
 
 
 class RegularUserAdmin(BaseUserAdmin):
+    @admin.display(description=_("Profile Photo"))
+    def profile_photo_display(self, obj):
+        if not obj or not obj.profile_photo_path:
+            return _("No photo")
+        return format_html(
+            '<img src="{}" style="max-width:100px; max-height:100px; object-fit:cover; border-radius:8px;" />',
+            obj.profile_photo_path.url,
+        )
+
+
     """Admin for regular users only"""
 
     def get_queryset(self, request):
@@ -232,6 +242,7 @@ class RegularUserAdmin(BaseUserAdmin):
             {
                 'fields': (
                     'profile_photo_path',
+                    'profile_photo_display',
                     'bio',
                     'name',
                 ),
@@ -266,7 +277,7 @@ class RegularUserAdmin(BaseUserAdmin):
         'username',
         'email',
         'phone',
-        'profile_photo_path',
+        'profile_photo_display',
         'name',
         'bio',
 
@@ -346,7 +357,7 @@ class TeacherUserAdmin(BaseUserAdmin):
     readonly_fields = [
         'username', 'email', 'phone',
         'teacher_verification_requested_at_jalali',
-        'profile_photo_display', 'bio', 'name',
+        'profile_photo_path', 'profile_photo_display', 'bio', 'name',
         'created_at_display', 'updated_at_display', 'last_login_jalali'
     ]
     
