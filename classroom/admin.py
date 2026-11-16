@@ -389,12 +389,12 @@ class CourseAdmin(admin.ModelAdmin):
         'status_badge',
         'is_active_badge',
         'created_at_display',
-        'cover_image_preview',
     ]
     list_filter = ['status', 'is_active', 'subject']
     search_fields = ['title', 'description']
     list_select_related = ["subject", "subject__teacher"]
     readonly_fields = [
+        'cover_image_preview',
         'created_at_display',
         'updated_at_display',
         'subject',
