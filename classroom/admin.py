@@ -9,7 +9,7 @@ from django.contrib import messages
 from .models import (
     TeacherAvailability, TeachingSubject, ClassBooking,
     TeacherWallet, ClassRevenue, WithdrawalRequest, WalletTransaction,
-    StudentTransaction, PlatformSettings, Attendance, SupportMessage, SupportMessageAttachment, CourseEnrollment, Course
+    StudentTransaction, PlatformSettings, Attendance, SupportMessage, SupportMessageAttachment, CourseEnrollment, Course, Package
 )
 import jdatetime
 from datetime import datetime
@@ -328,7 +328,6 @@ class TeachingSubjectAdmin(BilingualModelAdmin):
             'level',
             'is_active',
             'description',
-            'cover_image',
             'cover_image_preview',
             'demo_video',
             'min_age',
@@ -383,12 +382,14 @@ class CourseAdmin(admin.ModelAdmin):
         'title',
         'subject',
         'teacher_name',
+        'cover_image_preview',
         'price',
         'discounted_price',
         'session_count',
         'status_badge',
         'is_active_badge',
         'created_at_display',
+        'cover_image_preview',
     ]
     list_filter = ['status', 'is_active', 'subject']
     search_fields = ['title', 'description']
@@ -399,7 +400,6 @@ class CourseAdmin(admin.ModelAdmin):
         'subject',
         'title',
         'description',
-        'cover_image',
         'price',
         'discounted_price',
         'session_count',
@@ -408,7 +408,7 @@ class CourseAdmin(admin.ModelAdmin):
     
     fieldsets = (
         (_('اطلاعات اصلی'), {
-            'fields': ('subject', 'title', 'description', 'cover_image')
+            'fields': ('subject', 'title', 'description', 'cover_image', 'cover_image_preview')
         }),
         (_('قیمت‌گذاری'), {
             'fields': ('price', 'discounted_price')
@@ -426,6 +426,15 @@ class CourseAdmin(admin.ModelAdmin):
         }),
     )
     
+    @admin.display(description=_("پیش‌نمایش عکس کاور"))
+    def cover_image_preview(self, obj):
+        if obj and obj.cover_image:
+            return format_html(
+                '<img src="{}" style="max-width:180px; max-height:110px; object-fit:contain; border-radius:8px;" />',
+                obj.cover_image.url,
+            )
+        return _("تصویری وجود ندارد")
+
     @admin.display(description=_("معلم"), ordering="subject__teacher")
     def teacher_name(self, obj):
         teacher = getattr(getattr(obj, "subject", None), "teacher", None)
@@ -483,6 +492,51 @@ class CourseAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+# Only package imagery is editable from this management screen.
+# Keep teacher-owned pricing, contents and active state unchanged.
+@admin.register(Package)
+class PackageAdmin(admin.ModelAdmin):
+    list_display = ('title', 'teacher', 'total_sessions', 'is_active', 'cover_image_preview')
+    list_filter = ('is_active',)
+    search_fields = ('title', 'teacher__name', 'teacher__username')
+    list_select_related = ('teacher',)
+    fields = (
+        'teacher', 'title', 'description',
+        'cover_image', 'cover_image_preview',
+        'total_sessions', 'total_price', 'has_installment', 'is_active',
+        'created_at_display', 'updated_at_display',
+    )
+    readonly_fields = (
+        'teacher', 'title', 'description', 'cover_image_preview',
+        'total_sessions', 'total_price', 'has_installment', 'is_active',
+        'created_at_display', 'updated_at_display',
+    )
+
+    @admin.display(description=_("پیش‌نمایش تصویر پکیج"))
+    def cover_image_preview(self, obj):
+        if obj and obj.cover_image:
+            return format_html(
+                '<img src="{}" style="max-width:180px; max-height:110px; object-fit:contain; border-radius:8px;" />',
+                obj.cover_image.url,
+            )
+        return _("تصویری وجود ندارد")
+
+    @admin.display(description=_("تاریخ ایجاد"))
+    def created_at_display(self, obj):
+        return format_date(obj.created_at)
+
+    @admin.display(description=_("تاریخ ویرایش"))
+    def updated_at_display(self, obj):
+        return format_date(obj.updated_at)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(CourseEnrollment)
 class CourseEnrollmentAdmin(admin.ModelAdmin):
