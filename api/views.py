@@ -2127,7 +2127,7 @@ class HomePageAPIView(APIView):
                 'courses__enrollments',
                 filter=Q(courses__enrollments__payment_status='paid')
             )
-        ).filter(total_enrollments__gt=0).select_related('teacher').order_by('-total_enrollments')[:10]
+        ).filter(total_enrollments__gt=0).select_related('teacher').order_by('-total_enrollments')[:5]
         
         # اگر موضوع فروش رفته‌ای نداشتیم، جدیدترین‌ها رو نشون بده
         if not best_selling_subjects.exists():
