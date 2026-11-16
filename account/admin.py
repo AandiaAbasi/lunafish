@@ -63,6 +63,8 @@ class TeacherCreationForm(forms.ModelForm):
 
 
 class RegularUserAdmin(BaseUserAdmin):
+    """Admin for regular users only."""
+
     @admin.display(description=_("Profile Photo"))
     def profile_photo_display(self, obj):
         if not obj or not obj.profile_photo_path:
@@ -72,8 +74,6 @@ class RegularUserAdmin(BaseUserAdmin):
             obj.profile_photo_path.url,
         )
 
-
-    """Admin for regular users only"""
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
