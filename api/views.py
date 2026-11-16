@@ -2135,7 +2135,7 @@ class HomePageAPIView(APIView):
                 is_active=True,
                 status='approved',
                 teacher__is_teacher_verified=True  # اضافه کردن شرط تایید معلم
-            ).select_related('teacher').order_by('-created_at')[:10]
+            ).select_related('teacher').order_by('-created_at')[:5]
         
         best_selling_subjects_data = TeachingSubjectSerializer(
             best_selling_subjects, 
