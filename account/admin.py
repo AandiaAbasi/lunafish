@@ -350,14 +350,14 @@ class TeacherUserAdmin(BaseUserAdmin):
         (_('Main Info'), {'fields': ('name', 'username', 'email', 'phone', 'role')}),
         (_('Teacher Info'), {'fields': ('is_teacher_verified', 'teacher_verification_requested_at_jalali')}),
         (_('Financial Settings'), {'fields': ('commission_rate_override',), 'description': _('Custom commission rate for this teacher. If empty, default rate applies.')}),
-        (_('Personal Info'), {'fields': ('profile_photo_display', 'bio')}),
+        (_('Personal Info'), {'fields': ('profile_photo_path', 'profile_photo_display', 'bio')}),
         (_('Dates'), {'fields': ('last_login_jalali', 'created_at_display', 'updated_at_display'), 'classes': ('collapse',)}),
     )
     
     readonly_fields = [
         'username', 'email', 'phone',
         'teacher_verification_requested_at_jalali',
-        'profile_photo_path', 'profile_photo_display', 'bio', 'name',
+        'profile_photo_display', 'bio', 'name',
         'created_at_display', 'updated_at_display', 'last_login_jalali'
     ]
     
