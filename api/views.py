@@ -2151,7 +2151,7 @@ class HomePageAPIView(APIView):
         ).annotate(
             avg_rating=Avg('received_teacher_ratings__stars', filter=Q(received_teacher_ratings__is_verified=True)),
             total_ratings=Count('received_teacher_ratings', filter=Q(received_teacher_ratings__is_verified=True))
-        ).filter(total_ratings__gt=0).order_by('-avg_rating', '-total_ratings')[:10]
+        ).order_by('-avg_rating', '-total_ratings', '-created_at')[:10]
         
         top_teachers_data = [{
             'id': teacher.id,
