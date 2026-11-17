@@ -1,0 +1,47 @@
+msgid ""
+msgstr ""
+"Language: fa\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Class Attachment"
+msgstr "پیوست کلاس"
+
+msgid "Class Attachments"
+msgstr "پیوست‌های کلاس"
+
+msgid "Teacher archive folder"
+msgstr "پوشه آرشیو مربی"
+
+msgid "Teacher archive folders"
+msgstr "پوشه‌های آرشیو مربیان"
+
+msgid "Teacher archived file"
+msgstr "فایل آرشیوشده مربی"
+
+msgid "Teacher archived files"
+msgstr "فایل‌های آرشیوشده مربیان"
+
+msgid "Folders"
+msgstr "پوشه‌ها"
+
+msgid "Original filename"
+msgstr "نام اصلی فایل"
+
+msgid "File size (bytes)"
+msgstr "حجم فایل (بایت)"
+
+msgid "Content type"
+msgstr "نوع محتوا"
+
+msgid "Archive source"
+msgstr "منبع آرشیو"
+
+msgid "Uploaded by"
+msgstr "بارگذاری‌شده توسط"
+
+msgid "Is presented in class"
+msgstr "در کلاس نمایش داده شده"
+
+msgid "File"
+msgstr "فایل"
