@@ -229,7 +229,7 @@ class TeacherArchivedFileAdmin(LocalizedDateAdminMixin, admin.ModelAdmin):
     def display_folders(self, obj):
         return ', '.join(obj.folders.values_list('title', flat=True))
 
-    display_folders.short_description = 'Folders'
+    display_folders.short_description = _('Folders')
     date_fields_to_hide = ['deleted_at']
     localized_readonly_date_fields = ['created_at_display', 'updated_at_display']
 
