@@ -117,6 +117,23 @@
         border-radius: 8px;
         color: #6c757d;
     }
+    /* Two balanced language columns in both saved and dynamically added exam fields */
+    .exam-bilingual-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; width:100%; align-items:start; }
+    .exam-language-field { min-width:0; width:100%; }
+    .exam-language-field .form-label { display:block; margin-bottom:6px; }
+    .exam-language-field input:not([type="checkbox"]), .exam-language-field textarea, .exam-language-field select { width:100%!important; max-width:100%; min-width:0; display:block; box-sizing:border-box; }
+    .exam-language-field[lang="en"] input, .exam-language-field[lang="en"] textarea { direction:ltr; text-align:left; }
+    .exam-language-field[lang="fa"] input, .exam-language-field[lang="fa"] textarea { direction:rtl; text-align:right; }
+    .option-row { flex-wrap:wrap; }
+    .option-row .option-icon { flex:0 0 105px; max-width:105px; }
+    .option-row .option-fa, .option-row .option-en { flex:1 1 220px; min-width:0; max-width:100%; }
+    .option-row .option-fa { direction:rtl; text-align:right; }
+    .option-row .option-en { direction:ltr; text-align:left; }
+    .option-row .badge, .option-row .remove-option-btn { flex:0 0 auto; }
+    @media(max-width:767px) {
+        .exam-bilingual-grid { grid-template-columns:minmax(0,1fr); gap:12px; }
+        .option-row .option-fa, .option-row .option-en { flex-basis:100%; }
+    }
 </style>
 <div class="container-fluid content-inner pb-0">
     <div class="row">
@@ -162,58 +179,15 @@
                             </h5>
                             
                             <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="form-label">عنوان</label>
-                                    {{ form.title_fa }}
-                                    {% if form.title_fa.errors %}
-                                        <div class="text-danger small mt-1">
-                                            {{ form.title_fa.errors }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                {% if show_translation_fields %}
-                                <div class="col-md-4">
-                                    <label class="form-label">Title (English)</label>
-                                    {{ form.title_en }}
-                                    {% if form.title_en.errors %}
-                                        <div class="text-danger small mt-1">
-                                            {{ form.title_en.errors }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                {% else %}
-                                    {{ form.title_en }}
-                                {% endif %}
-                                
-                                
-                                <div class="col-md-4">
-                                    <label class="form-label">توضیحات</label>
-                                    {{ form.description_fa }}
-                                    {% if form.description_fa.errors %}
-                                        <div class="text-danger small mt-1">
-                                            {{ form.description_fa.errors }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                {% if show_translation_fields %}
-                                <div class="col-md-4">
-                                    <label class="form-label">Description (English)</label>
-                                    {{ form.description_en }}
-                                    {% if form.description_en.errors %}
-                                        <div class="text-danger small mt-1">
-                                            {{ form.description_en.errors }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                {% else %}
-                                    {{ form.description_en }}
-                                {% endif %}
-                                
-                                 
-                                
-                                <div class="col-md-12">
+<div class="col-12"><div class="exam-bilingual-grid">
+<div class="exam-language-field" lang="fa" dir="rtl"><label class="form-label">عنوان (فارسی)</label>{{ form.title_fa }}{{ form.title_fa.errors }}</div>
+<div class="exam-language-field" lang="en" dir="ltr"><label class="form-label">Title (English)</label>{{ form.title_en }}{{ form.title_en.errors }}</div>
+</div></div>
+<div class="col-12"><div class="exam-bilingual-grid">
+<div class="exam-language-field" lang="fa" dir="rtl"><label class="form-label">توضیحات (فارسی)</label>{{ form.description_fa }}{{ form.description_fa.errors }}</div>
+<div class="exam-language-field" lang="en" dir="ltr"><label class="form-label">Description (English)</label>{{ form.description_en }}{{ form.description_en.errors }}</div>
+</div></div>
+<div class="col-md-12">
                                     <div class="form-check form-switch">
                                         {{ form.is_active }}
                                         <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
@@ -269,32 +243,14 @@
                                                value="on">
                                         
                                         <div class="row g-3">
-                                            <div class="col-md-2">
-                                            <label class="form-label">آیکون</label>
-                                            {{ question_form.icon }}
-                                            </div>
-                                            <div class="col-md-3">
-                                            <label class="form-label">سوال</label>
-                                            {{ question_form.question_text_fa }}
-                                            </div>
-                                            
-                                            {% if show_translation_fields %}
-                                            <div class="col-md-3">
-                                                <label class="form-label">Question (English)</label>
-                                                {{ question_form.question_text_en }}
-                                            </div>
-                                            {% else %}
-                                                {{ question_form.question_text_en }}
-                                            {% endif %}
-                                            
-                                            
-                                            <div class="col-md-1">
-                                                <label class="form-label">ترتیب</label>
-                                                {{ question_form.order }}
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Options Container -->
+<div class="col-6 col-md-3"><label class="form-label">آیکون</label>{{ question_form.icon }}</div>
+<div class="col-6 col-md-2"><label class="form-label">ترتیب</label>{{ question_form.order }}</div>
+<div class="col-12"><div class="exam-bilingual-grid">
+<div class="exam-language-field" lang="fa" dir="rtl"><label class="form-label">متن سؤال (فارسی)</label>{{ question_form.question_text_fa }}{{ question_form.question_text_fa.errors }}</div>
+<div class="exam-language-field" lang="en" dir="ltr"><label class="form-label">Question (English)</label>{{ question_form.question_text_en }}{{ question_form.question_text_en.errors }}</div>
+</div></div>
+</div>
+<!-- Options Container -->
                                         <div class="options-container show" data-question-index="{{ forloop.counter0 }}">
                                             <div class="options-list">
                                                 {% for option in question_form.instance.options.all %}
@@ -540,55 +496,16 @@ function createQuestionHTML(index) {
             <input type="hidden" name="questions-${index}-id" id="id_questions-${index}-id" value="">
             
             <div class="row g-3">
-                <div class="col-md-2">
-                <input type="text"
-                name="questions-${index}-icon"
-                class="form-control"
-                placeholder="آیکون"
-                required>
-                </div>
-                <div class="col-md-3">
-                <input type="text"
-                name="questions-${index}-question_text_fa"
-                class="form-control"
-                placeholder="سوال"
-                required>
-                </div>
-                
-                ${showTranslationFields ? `
-                <div class="col-md-3">
-                    <input type="text"
-                           name="questions-${index}-question_text_en"
-                           class="form-control"
-                           placeholder="English question">
-                </div>` : `
-                <input type="hidden" name="questions-${index}-question_text_en" value="">`}
-                
-                
-                <!-- Hidden question type - always multiple choice -->
-                <input type="hidden" 
-                       name="questions-${index}-question_type" 
-                       id="id_questions-${index}-question_type"
-                       value="multiple_choice">
-                
-                <!-- Hidden is_required - always required -->
-                <input type="hidden" 
-                       name="questions-${index}-is_required" 
-                       id="id_questions-${index}-is_required"
-                       value="on">
-                
-                <div class="col-md-1">
-                    <label class="form-label">ترتیب</label>
-                    <input type="number" 
-                           name="questions-${index}-order" 
-                           id="id_questions-${index}-order"
-                           class="form-control order-field" 
-                           value="${index + 1}" 
-                           min="1">
-                </div>
-            </div>
-            
-            <!-- Options Container (for multiple choice) -->
+<div class="col-6 col-md-3"><label class="form-label">آیکون</label><input type="text" name="questions-${index}-icon" class="form-control" placeholder="آیکون"></div>
+<div class="col-6 col-md-2"><label class="form-label">ترتیب</label><input type="number" name="questions-${index}-order" class="form-control order-field" value="${index + 1}" min="1"></div>
+<div class="col-12"><div class="exam-bilingual-grid">
+<div class="exam-language-field" lang="fa" dir="rtl"><label class="form-label">متن سؤال (فارسی)</label><textarea rows="2" name="questions-${index}-question_text_fa" class="form-control" placeholder="سؤال" required></textarea></div>
+<div class="exam-language-field" lang="en" dir="ltr"><label class="form-label">Question (English)</label><textarea rows="2" name="questions-${index}-question_text_en" class="form-control" placeholder="English question"></textarea></div>
+</div></div>
+<input type="hidden" name="questions-${index}-question_type" value="multiple_choice">
+<input type="hidden" name="questions-${index}-is_required" value="on">
+</div>
+<!-- Options Container (for multiple choice) -->
             <div class="options-container show" data-question-index="${index}">
                 <div class="options-list"></div>
                 <button type="button" class="btn btn-sm btn-outline-primary add-option-btn" style="margin-top: 1rem;">
