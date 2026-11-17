@@ -3,6 +3,7 @@ API URLs - All mobile/app API endpoints
 """
 from django.urls import path, re_path
 from . import views
+from .account_deletion import DeleteAccountAPIView
 
 app_name = 'api'
 
@@ -48,6 +49,7 @@ urlpatterns = [
     
     # ========== Settings & Security ==========
     path('change-password/', views.ChangePasswordAPIView.as_view(), name='change_password'),
+    path('account/delete/', DeleteAccountAPIView.as_view(), name='delete_account'),
     path('logout/', views.LogoutAPIView.as_view(), name='logout'),
     
     # ========== Core Content ==========

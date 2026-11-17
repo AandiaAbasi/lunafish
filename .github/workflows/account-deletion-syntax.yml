@@ -1,0 +1,21 @@
+name: Account deletion Python syntax
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api/account_deletion.py'
+      - 'api/test_account_deletion.py'
+      - 'api/urls.py'
+      - '.github/workflows/account-deletion-syntax.yml'
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile account deletion endpoint and tests
+        run: python -m py_compile api/account_deletion.py api/test_account_deletion.py api/urls.py
