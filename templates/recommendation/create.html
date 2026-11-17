@@ -721,9 +721,16 @@ function attachQuestionEvents() {
             
             // Copy values
             const newQuestion = container.lastElementChild;
-            const oldQuestionText = questionItem.querySelector('[name$="-question_text"]').value;
-            
-            newQuestion.querySelector('[name$="-question_text"]').value = oldQuestionText + ' (کپی)';
+            const oldQuestionFa = questionItem.querySelector('[name$="-question_text_fa"]');
+            const oldQuestionEn = questionItem.querySelector('[name$="-question_text_en"]');
+            const newQuestionFa = newQuestion.querySelector('[name$="-question_text_fa"]');
+            const newQuestionEn = newQuestion.querySelector('[name$="-question_text_en"]');
+            if (oldQuestionFa && newQuestionFa) {
+                newQuestionFa.value = oldQuestionFa.value + ' (کپی)';
+            }
+            if (oldQuestionEn && newQuestionEn) {
+                newQuestionEn.value = oldQuestionEn.value + ' (Copy)';
+            }
             
             // Update form count
             totalForms.value = currentTotal + 1;
@@ -799,9 +806,16 @@ document.querySelectorAll('.remove-question').forEach(btn => {
             
             // Copy values
             const newQuestion = container.lastElementChild;
-            const oldQuestionText = questionItem.querySelector('[name$="-question_text"]').value;
-            
-            newQuestion.querySelector('[name$="-question_text"]').value = oldQuestionText + ' (کپی)';
+            const oldQuestionFa = questionItem.querySelector('[name$="-question_text_fa"]');
+            const oldQuestionEn = questionItem.querySelector('[name$="-question_text_en"]');
+            const newQuestionFa = newQuestion.querySelector('[name$="-question_text_fa"]');
+            const newQuestionEn = newQuestion.querySelector('[name$="-question_text_en"]');
+            if (oldQuestionFa && newQuestionFa) {
+                newQuestionFa.value = oldQuestionFa.value + ' (کپی)';
+            }
+            if (oldQuestionEn && newQuestionEn) {
+                newQuestionEn.value = oldQuestionEn.value + ' (Copy)';
+            }
             
             // Update form count
             totalForms.value = currentTotal + 1;

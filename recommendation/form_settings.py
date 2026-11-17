@@ -1,20 +1,10 @@
-import os
+"""Translation field visibility for the placement-test management screens.
 
-from django.conf import settings
-
-
-TRUE_VALUES = {"1", "true", "yes", "on"}
+Both languages are part of the actual exam content, so hiding one language is
+no longer supported, regardless of older deployment environment flags.
+"""
 
 
 def show_translation_fields():
-    """Return whether secondary-language fields should be visible in recommendation forms."""
-    value = getattr(
-        settings,
-        "RECOMMENDATION_SHOW_TRANSLATION_FIELDS",
-        os.getenv("RECOMMENDATION_SHOW_TRANSLATION_FIELDS", "false"),
-    )
-
-    if isinstance(value, bool):
-        return value
-
-    return str(value).strip().lower() in TRUE_VALUES
+    """Always display editable Persian and English fields in the test builder."""
+    return True
