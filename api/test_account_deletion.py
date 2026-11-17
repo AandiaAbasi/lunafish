@@ -63,6 +63,38 @@ class DeleteAccountApiTests(TestCase):
         self.assertEqual(parent.parent_name, 'Deleted parent')
         self.assertNotEqual(parent.parent_password_hash, 'test-parent-secret-hash')
 
+    def test_teacher_account_disables_subjects_and_courses(self):
+        from classroom.models import Course, TeacherAvailability, TeachingSubject
+        self.user.role = 'teacher'
+        self.user.is_teacher_verified = True
+        self.user.save(update_fields=['role', 'is_teacher_verified'])
+
+        subject = TeachingSubject.objects.create(
+            teacher=self.user, title='Delete account course',
+            description='Demo description', level='beginner', is_active=True,
+        )
+        course = Course.objects.create(
+            subject=subject, title='Demo course', description='Demo',
+            price=0, session_count=3, is_active=True,
+        )
+        slot = TeacherAvailability.objects.create(
+            teacher=self.user, subject=subject,
+            date='2035-01-01', start_time='10:00', end_time='11:00', price=0,
+            is_available=True,
+        )
+        response = self.client.post(
+            self.url, {'password': 'Correct-password-123', 'confirmation': 'DELETE'}, format='json',
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        subject.refresh_from_db()
+        course.refresh_from_db()
+        slot.refresh_from_db()
+        self.assertFalse(subject.is_active)
+        self.assertFalse(course.is_active)
+        self.assertFalse(slot.is_available)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_teacher_verified)
+
     def test_admin_accounts_cannot_be_removed_here(self):
         self.user.role = 'admin'
         self.user.save(update_fields=['role'])
