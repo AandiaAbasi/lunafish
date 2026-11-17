@@ -1,0 +1,24 @@
+name: Recommendation Python syntax
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'recommendation/**'
+      - 'templates/recommendation/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'recommendation/**'
+      - 'templates/recommendation/**'
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Check Python syntax in recommendation module
+        run: python -m compileall -q recommendation
