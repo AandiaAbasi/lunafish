@@ -103,8 +103,10 @@ def psychological_tests_list_api(request):
         tests_qs = PsychologicalTest.objects.all()
         if search_query:
             tests_qs = tests_qs.filter(
-                Q(title__icontains=search_query)
-                | Q(description__icontains=search_query)
+                Q(title_fa__icontains=search_query)
+                | Q(title_en__icontains=search_query)
+                | Q(description_fa__icontains=search_query)
+                | Q(description_en__icontains=search_query)
             )
 
         tests_qs = tests_qs.annotate(
