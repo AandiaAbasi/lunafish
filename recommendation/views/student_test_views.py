@@ -19,6 +19,9 @@ import re
 from django.core.paginator import Paginator
 from recommendation.selectors import get_last_test_register
 from recommendation.serializers import PsychologicalTestSerializer
+from recommendation.localization import (
+    test_language, localized_text, localized_label, STATUS_LABELS, QUESTION_TYPE_LABELS,
+)
 import jdatetime
 import logging
 logger = logging.getLogger(__name__)
@@ -94,6 +97,7 @@ def psychological_tests_list_api(request):
             serialize_online_class,
         )
 
+        language = test_language(request)
         search_query = request.GET.get('search', '').strip()
 
         tests_qs = PsychologicalTest.objects.all()
@@ -205,8 +209,8 @@ def psychological_tests_list_api(request):
 
             test_item = {
                 'id': test.id,
-                'title': test.title,
-                'description': test.description,
+                'title': localized_text(test, 'title', language),
+                'description': localized_text(test, 'description', language),
                 'test_type': getattr(test, 'test_type', None),
                 'question_count': test.questions_total,
 
@@ -217,11 +221,7 @@ def psychological_tests_list_api(request):
                 'deadline_passed': False,
 
                 'status': test_status,
-                'status_display': {
-                    'not_started': 'شروع نشده',
-                    'in_progress': 'در حال پاسخ',
-                    'completed': 'تکمیل شده',
-                }.get(test_status, 'شروع نشده'),
+                'status_display': localized_label(test_status, STATUS_LABELS, language),
 
                 'is_completed': is_completed,
                 'is_expired': False,
@@ -411,6 +411,7 @@ def psychological_test_detail_api(request, test_id):
         deadline_passed = False
         
         
+        language = test_language(request)
         # Get questions with options
         questions = test.questions.prefetch_related('options').order_by('order')
         questions_data = []
@@ -421,7 +422,7 @@ def psychological_test_detail_api(request, test_id):
                 for option in question.options.all().order_by('order'):
                     options_data.append({
                         'id': option.id,
-                        'text': option.option_text,
+                        'text': localized_text(option, 'option_text', language),
                         'order': option.order,
                         'icon': option.icon
                     })
@@ -429,13 +430,9 @@ def psychological_test_detail_api(request, test_id):
             questions_data.append({
                 'id': question.id,
                 'icon': question.icon,
-                'text': question.question_text,
+                'text': localized_text(question, 'question_text', language),
                 'question_type': question.question_type,
-                'question_type_display': {
-                    'multiple_choice': 'چند گزینه‌ای',
-                    'text_input': 'ورودی متنی کوتاه',
-                    'textarea': 'متن بلند'
-                }.get(question.question_type, ''),
+                'question_type_display': localized_label(question.question_type, QUESTION_TYPE_LABELS, language),
                 'order': question.order,
                 'is_required': question.is_required,
                 'options': options_data
@@ -457,11 +454,7 @@ def psychological_test_detail_api(request, test_id):
             response_data = {
                 'id': response.id,
                 'status': response.status,
-                'status_display': {
-                    'not_started': 'شروع نشده',
-                    'in_progress': 'در حال پاسخ',
-                    'completed': 'تکمیل شده'
-                }.get(response.status, ''),
+                'status_display': localized_label(response.status, STATUS_LABELS, language),
                 'started_at': response.started_at.isoformat() if response.started_at else None,
                 'started_at_jalali': started_at_jalali,
                 'completed_at': response.completed_at.isoformat() if response.completed_at else None,
@@ -470,8 +463,8 @@ def psychological_test_detail_api(request, test_id):
         
         test_data = {
             'id': test.id,
-            'title': test.title,
-            'description': test.description,
+            'title': localized_text(test, 'title', language),
+            'description': localized_text(test, 'description', language),
             'question_count': len(questions_data),
             'is_active': test.is_active
         }
@@ -726,6 +719,7 @@ def psychological_test_view_answers_api(request, test_id):
                 'message': 'شما هنوز این تست را تکمیل نکرده‌اید'
             }, status=status.HTTP_400_BAD_REQUEST)
         
+        language = test_language(request)
         # Get all questions with answers
         questions = test.questions.prefetch_related('options').order_by('order')
         answers = StudentAnswer.objects.filter(
@@ -746,7 +740,7 @@ def psychological_test_view_answers_api(request, test_id):
                 for option in question.options.all().order_by('order'):
                     options_data.append({
                         'id': option.id,
-                        'text': option.option_text,
+                        'text': localized_text(option, 'option_text', language),
                         'order': option.order,
                         'is_selected': answer and answer.selected_option_id == option.id
                     })
@@ -758,7 +752,7 @@ def psychological_test_view_answers_api(request, test_id):
                     answer_data = {
                         'type': 'option',
                         'selected_option_id': answer.selected_option_id,
-                        'selected_option_text': answer.selected_option.option_text if answer.selected_option else ''
+                        'selected_option_text': localized_text(answer.selected_option, 'option_text', language) if answer.selected_option else ''
                     }
                 else:
                     answer_data = {
@@ -769,13 +763,9 @@ def psychological_test_view_answers_api(request, test_id):
             questions_with_answers.append({
                 'question': {
                     'id': question.id,
-                    'text': question.question_text,
+                    'text': localized_text(question, 'question_text', language),
                     'question_type': question.question_type,
-                    'question_type_display': {
-                        'multiple_choice': 'چند گزینه‌ای',
-                        'text_input': 'ورودی متنی کوتاه',
-                        'textarea': 'متن بلند'
-                    }.get(question.question_type, ''),
+                    'question_type_display': localized_label(question.question_type, QUESTION_TYPE_LABELS, language),
                     'order': question.order,
                     'options': options_data
                 },
@@ -790,8 +780,8 @@ def psychological_test_view_answers_api(request, test_id):
         
         test_data = {
             'id': test.id,
-            'title': test.title,
-            'description': test.description,
+            'title': localized_text(test, 'title', language),
+            'description': localized_text(test, 'description', language),
         }
         
         response_data = {
@@ -891,6 +881,7 @@ def psychological_test_result_api(request, test_id):
                 'message': 'خطا در محاسبه نتیجه تست. لطفاً با مشاور تماس بگیرید',
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        language = test_language(request)
         scales = list(
             TestScale.objects
             .filter(test=test)
@@ -923,9 +914,9 @@ def psychological_test_result_api(request, test_id):
 
             return {
                 'id': matched.id,
-                'level': matched.title,
-                'title': matched.title,
-                'description': matched.description,
+                'level': localized_text(matched, 'title', language),
+                'title': localized_text(matched, 'title', language),
+                'description': localized_text(matched, 'description', language),
                 'min_score': numeric_score(matched.min_score),
                 'max_score': numeric_score(matched.max_score),
                 'order': matched.order,
@@ -941,9 +932,9 @@ def psychological_test_result_api(request, test_id):
             item = {
                 'id': scale.id,
                 'code': scale.code,
-                'name': scale.title,
-                'title': scale.title,
-                'description': scale.description,
+                'name': localized_text(scale, 'title', language),
+                'title': localized_text(scale, 'title', language),
+                'description': localized_text(scale, 'description', language),
                 'scale_type': scale.scale_type,
                 'rank': scale.rank,
                 'raw_score': raw_score,
@@ -1069,8 +1060,8 @@ def psychological_test_result_api(request, test_id):
 
         test_data = {
             'id': test.id,
-            'title': test.title,
-            'description': test.description,
+            'title': localized_text(test, 'title', language),
+            'description': localized_text(test, 'description', language),
             'test_type': test.test_type,
         }
 
