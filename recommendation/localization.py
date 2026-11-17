@@ -17,12 +17,9 @@ def test_language(request):
 
 
 def localized_text(instance, field_name, language):
-    """Use the selected translation; fall back only for older untranslated rows."""
-    preferred = getattr(instance, f"{field_name}_{language}", None)
-    if preferred is not None and str(preferred).strip():
-        return preferred
-    fallback = "fa" if language == "en" else "en"
-    return getattr(instance, f"{field_name}_{fallback}", "") or ""
+    """Return only the requested language; never show Persian in English mode."""
+    value = getattr(instance, f"{field_name}_{language}", None)
+    return str(value) if value is not None else ""
 
 
 STATUS_LABELS = {
