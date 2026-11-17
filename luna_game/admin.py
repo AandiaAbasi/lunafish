@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.utils.decorators import method_decorator
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils.translation import gettext_lazy as _
 
 from .admin_utils import format_jalali_datetime
@@ -46,6 +48,7 @@ class GameLevelAdmin(JalaliDateAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(GameStage)
+@method_decorator(xframe_options_sameorigin, name="change_view")
 class GameStageAdmin(JalaliDateAdminMixin, admin.ModelAdmin):
     list_display = (
         'title',
