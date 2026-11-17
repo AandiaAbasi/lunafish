@@ -335,7 +335,7 @@ def psychological_tests_list_api(request):
 
         return Response({
             'success': True,
-            'message': 'لیست تست‌ها با موفقیت دریافت شد',
+            'message': 'Tests loaded successfully' if language == 'en' else 'لیست تست‌ها با موفقیت دریافت شد',
             'data': {
                 'tests': list(tests_page),
                 'pagination': {
@@ -472,7 +472,7 @@ def psychological_test_detail_api(request, test_id):
         
         return Response({
             'success': True,
-            'message': 'جزئیات تست با موفقیت دریافت شد',
+            'message': 'Test details loaded successfully' if language == 'en' else 'جزئیات تست با موفقیت دریافت شد',
             'data': {
                 'test': test_data,
                 'response': response_data,
@@ -793,7 +793,7 @@ def psychological_test_view_answers_api(request, test_id):
         
         return Response({
             'success': True,
-            'message': 'پاسخ‌های تست با موفقیت دریافت شد',
+            'message': 'Test answers loaded successfully' if language == 'en' else 'پاسخ‌های تست با موفقیت دریافت شد',
             'data': {
                 'test': test_data,
                 'response': response_data,
@@ -1082,7 +1082,7 @@ def psychological_test_result_api(request, test_id):
 
         return Response({
             'success': True,
-            'message': 'نتیجه تست با موفقیت دریافت شد',
+            'message': 'Test results loaded successfully' if language == 'en' else 'نتیجه تست با موفقیت دریافت شد',
             'data': {
                 'test': test_data,
                 'response': response_data,
@@ -1115,5 +1115,9 @@ def last_test_register(request):
     if not test:
         return Response(None, status=status.HTTP_200_OK)
 
+    language = test_language(request)
     serializer = PsychologicalTestSerializer(test)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    data = dict(serializer.data)
+    data['title'] = localized_text(test, 'title', language)
+    data['description'] = localized_text(test, 'description', language)
+    return Response(data, status=status.HTTP_200_OK)
