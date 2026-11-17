@@ -214,7 +214,8 @@ class CourseEnrollment(BaseModel):
         if len(availabilities) < self.course.session_count:
             raise ValueError('ظرفیت کافی برای ثبت تمام جلسات وجود ندارد.')
     
-        price_per_session = self.course.final_price / self.course.session_count
+        from decimal import Decimal
+        price_per_session = Decimal('0') if self.paid_amount == 0 else self.course.final_price / self.course.session_count
     
         bookings = [
             ClassBooking(
