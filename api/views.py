@@ -2879,7 +2879,11 @@ class UpdateTeacherAvailabilityAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        serializer = TeacherAvailabilitySerializer(availability, data=request.data, partial=True)
+        update_data = request.data.copy()
+        if is_international_request(request):
+            update_data['price'] = '0'
+            update_data['discount_price'] = None
+        serializer = TeacherAvailabilitySerializer(availability, data=update_data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(
