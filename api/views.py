@@ -56,7 +56,6 @@ from .parent_serializers import (
     ChildClassHistorySerializer, ChildPaymentHistorySerializer
 )
 from .throttles import OTPRequestThrottle, OTPVerifyThrottle, PasswordLoginThrottle
-from .region_policy import is_international_request
 from classroom.serializers import (
     CourseSerializer
 )
@@ -2323,8 +2322,6 @@ class CreateTeacherAvailabilityAPIView(APIView):
         break_minutes_str = request.data.get('break_duration', '10')
         price_str = request.data.get('price', '')
         discount_price_str = request.data.get('discount_price', '')
-        if is_international_request(request):
-            price_str, discount_price_str = '0', ''
         notes = request.data.get('notes', '').strip()
         
         # اعتبارسنجی پارامترهای الزامی
@@ -2353,7 +2350,7 @@ class CreateTeacherAvailabilityAPIView(APIView):
             price = float(price_str) if price_str else 0
             discount_price = float(discount_price_str) if discount_price_str else None
             
-            if session_minutes <= 0 or break_minutes < 0 or (price <= 0 and not is_international_request(request)):
+            if session_minutes <= 0 or break_minutes < 0 or price <= 0:
                 raise ValueError(_('مقادیر باید مثبت باشند'))
         except (ValueError, TypeError):
             return Response(
@@ -2455,8 +2452,8 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
             break_minutes = int(request.data.get('break_duration', 15))
             
             # Handle price - convert to Decimal
-            price_str = '0' if is_international_request(request) else request.data.get('price')
-            if price_str is None or price_str == '':
+            price_str = request.data.get('price')
+            if not price_str:
                 return Response(
                     {
                         'error': _('قیمت الزامی است'),
@@ -2467,7 +2464,7 @@ class BulkCreateTeacherAvailabilityAPIView(APIView):
             price = Decimal(str(price_str))
             
             # Handle discount_price - can be null, empty string, or a value
-            discount_price_str = None if is_international_request(request) else request.data.get('discount_price')
+            discount_price_str = request.data.get('discount_price')
             if discount_price_str is None or discount_price_str == '':
                 discount_price = None
             else:
@@ -2879,11 +2876,7 @@ class UpdateTeacherAvailabilityAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        update_data = request.data.copy()
-        if is_international_request(request):
-            update_data['price'] = '0'
-            update_data['discount_price'] = None
-        serializer = TeacherAvailabilitySerializer(availability, data=update_data, partial=True)
+        serializer = TeacherAvailabilitySerializer(availability, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(
@@ -3127,14 +3120,6 @@ class CreateClassBookingAPIView(APIView):
                 )
 
                 if existing_booking:
-                    if is_international_request(request):
-                        existing_booking.price = 0
-                        existing_booking.discount_amount = 0
-                        existing_booking.final_price = 0
-                        existing_booking.paid_amount = 0
-                        existing_booking.payment_status = 'paid'
-                        existing_booking.paid_at = timezone.now()
-                        existing_booking.save(update_fields=['price', 'discount_amount', 'final_price', 'paid_amount', 'payment_status', 'paid_at'])
                     response_serializer = ClassBookingSerializer(existing_booking)
                     booking_data = dict(response_serializer.data)
 
@@ -3172,8 +3157,7 @@ class CreateClassBookingAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-                international = is_international_request(request)
-                original_price = 0 if international else (availability.price or 0)
+                original_price = availability.price or 0
 
                 # discount_price=0 یعنی کلاس رایگان است.
                 if availability.discount_price is not None:
@@ -3181,8 +3165,6 @@ class CreateClassBookingAPIView(APIView):
                 else:
                     final_price = original_price
 
-                if international:
-                    final_price = 0
                 discount_amount = original_price - final_price
 
                 try:
@@ -3195,9 +3177,6 @@ class CreateClassBookingAPIView(APIView):
                         price=original_price,
                         discount_amount=discount_amount,
                         final_price=final_price,
-                        payment_status='paid' if international else 'not_paid',
-                        paid_amount=0,
-                        paid_at=timezone.now() if international else None,
                     )
                 except IntegrityError:
                     logger.warning(
@@ -3508,20 +3487,6 @@ class InitiatePaymentAPIView(APIView):
 
         if booking.payment_status in ['paid', 'partial']:
             return Response({'error': _('این رزرو قبلاً پرداخت شده است')}, status=status.HTTP_400_BAD_REQUEST)
-
-        if is_international_request(request):
-            with transaction.atomic():
-                locked_booking = ClassBooking.objects.select_for_update().get(pk=booking.pk)
-                if locked_booking.payment_status != 'paid':
-                    locked_booking.price = 0
-                    locked_booking.discount_amount = 0
-                    locked_booking.final_price = 0
-                    locked_booking.paid_amount = 0
-                    locked_booking.payment_status = 'paid'
-                    locked_booking.paid_at = timezone.now()
-                    locked_booking.save(update_fields=['price', 'discount_amount', 'final_price', 'paid_amount', 'payment_status', 'paid_at'])
-            result = {'booking_id': booking.id, 'amount': '0', 'is_free': True, 'payment_url': None}
-            return Response({'success': True, 'data': result, **result})
 
         try:
             final_amount = Decimal(str(booking.final_price or 0))
@@ -12304,10 +12269,6 @@ class EnrollCourseView(APIView):
             if final_amount < 0:
                 return Response({'error': 'مبلغ دوره نامعتبر است'}, status=status.HTTP_400_BAD_REQUEST)
 
-            international = is_international_request(request)
-            if international:
-                final_amount = Decimal('0')
-
             enrollment, created = CourseEnrollment.objects.get_or_create(
                 course=course,
                 student=request.user,
@@ -12336,10 +12297,7 @@ class EnrollCourseView(APIView):
                         enrollment.paid_amount = Decimal('0')
                         enrollment.paid_at = timezone.now()
                         enrollment.save()
-                        # International enrolments are active without payment; sessions can
-                        # be assigned by the teacher when availability is published.
-                        if not international:
-                            enrollment._create_bookings()
+                        enrollment._create_bookings()
                 except Exception:
                     logger.exception('Could not finalize free course enrollment_id=%s', enrollment.id)
                     return Response({'error': 'خطا در ثبت دوره رایگان'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

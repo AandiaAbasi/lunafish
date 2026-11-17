@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from api.region_policy import is_international_request
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
@@ -89,11 +88,7 @@ class CourseSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        request = self.context.get('request')
-        if request and is_international_request(request):
-            attrs['price'] = 0
-            attrs['discounted_price'] = None
-        session_count = attrs.get('session_count', getattr(self.instance, 'session_count', 0))
+        session_count = attrs.get('session_count', 0)
         if session_count < 1:
             raise serializers.ValidationError("تعداد جلسات باید حداقل ۱ باشد.")
         return attrs

@@ -108,6 +108,6 @@ class APICORSMiddleware:
         if request.path.startswith('/api/'):
             response['Access-Control-Allow-Origin'] = '*'
             response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-            response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Client-Region, X-Client-Timezone'
+            response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
         
         return response
