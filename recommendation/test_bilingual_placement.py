@@ -72,6 +72,16 @@ class BilingualPlacementTestTests(TestCase):
                 self.assertEqual(question["text"], expected_question)
                 self.assertEqual(question["options"][0]["text"], expected_option)
 
+    def test_accept_language_header_alone_selects_translation(self):
+        url = reverse("recommendation:psychological_test_detail", args=[self.test.pk])
+        result = self.client.get(url, HTTP_ACCEPT_LANGUAGE="en-US,en;q=0.9")
+        self.assertEqual(result.status_code, 200, result.data)
+        self.assertEqual(result.data["data"]["test"]["title"], "Placement exam")
+        self.assertEqual(
+            result.data["data"]["questions"][0]["options"][0]["text"],
+            "Paris",
+        )
+
     def test_saved_answer_text_follows_language_without_changing_ids(self):
         response = StudentTestResponse.objects.create(
             test=self.test, user=self.student, status="completed",
