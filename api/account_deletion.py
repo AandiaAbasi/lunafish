@@ -65,7 +65,7 @@ class DeleteAccountAPIView(APIView):
             if user.role == 'teacher':
                 TeacherAvailability.objects.filter(teacher=user).update(is_available=False)
                 TeachingSubject.objects.filter(teacher=user).update(is_active=False)
-                Course.objects.filter(teacher=user).update(is_active=False)
+                Course.objects.filter(subject__teacher=user).update(is_active=False)
 
             # Revoke every parent credential linked to the student.
             ParentProfile.objects.filter(student=user).update(
