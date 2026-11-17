@@ -78,7 +78,7 @@ class DeleteAccountApiTests(TestCase):
             price=0, session_count=3, is_active=True,
         )
         slot = TeacherAvailability.objects.create(
-            teacher=self.user, subject=subject,
+            teacher=self.user,
             date='2035-01-01', start_time='10:00', end_time='11:00', price=0,
             is_available=True,
         )
