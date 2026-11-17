@@ -384,36 +384,14 @@
                                                         </div>
                                                     </div>
                                                 {% endif %}
-                                                <div class="col-md-4">
-                                                    <label class="form-label">عنوان مقیاس</label>
-                                                    {{ scale_form.title_fa }}
-                                                    {% if scale_form.title_fa.errors %}
-                                                        <div class="text-danger small">{{ scale_form.title_fa.errors }}</div>
-                                                    {% endif %}
-                                                </div>
-                                                {% if show_translation_fields %}
-                                                <div class="col-md-4">
-                                                    <label class="form-label">عنوان مقیاس (انگلیسی)</label>
-                                                    {{ scale_form.title_en }}
-                                                    {% if scale_form.title_en.errors %}
-                                                        <div class="text-danger small">{{ scale_form.title_en.errors }}</div>
-                                                    {% endif %}
-                                                </div>
-                                                {% else %}
-                                                    {{ scale_form.title_en }}
-                                                {% endif %}
-                                                <div class="col-md-4">
-                                                    <label class="form-label">توضیحات</label>
-                                                    {{ scale_form.description_fa }}
-                                                </div>
-                                                {% if show_translation_fields %}
-                                                <div class="col-md-4">
-                                                    <label class="form-label">توضیحات (انگلیسی)</label>
-                                                    {{ scale_form.description_en }}
-                                                </div>
-                                                {% else %}
-                                                    {{ scale_form.description_en }}
-                                                {% endif %}
+                                                <div class="col-12"><div class="exam-bilingual-grid">
+<div class="exam-language-field" lang="fa" dir="rtl"><label class="form-label">عنوان مقیاس (فارسی)</label>{{ scale_form.title_fa }}{{ scale_form.title_fa.errors }}</div>
+<div class="exam-language-field" lang="en" dir="ltr"><label class="form-label">Scale title (English)</label>{{ scale_form.title_en }}{{ scale_form.title_en.errors }}</div>
+</div></div>
+<div class="col-12"><div class="exam-bilingual-grid">
+<div class="exam-language-field" lang="fa" dir="rtl"><label class="form-label">توضیحات مقیاس (فارسی)</label>{{ scale_form.description_fa }}{{ scale_form.description_fa.errors }}</div>
+<div class="exam-language-field" lang="en" dir="ltr"><label class="form-label">Scale description (English)</label>{{ scale_form.description_en }}{{ scale_form.description_en.errors }}</div>
+</div></div>
                                                  
                                             </div>
                                         </div>
@@ -1032,48 +1010,14 @@ function createScaleHTML(index) {
                                class="form-control"
                                min="0" max="100" step="0.01" value="70">
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">عنوان مقیاس</label>
-                        <input type="text" 
-                               name="scales-${index}-title_fa" 
-                               id="id_scales-${index}-title_fa"
-                               class="form-control" 
-                               placeholder="مثال: واقع‌گرا، پژوهشگر">
-                    </div>
-                    ${showTranslationFields ? `
-                    <div class="col-md-4">
-                        <label class="form-label">عنوان مقیاس (انگلیسی)</label>
-                        <input type="text"
-                               name="scales-${index}-title_en"
-                               id="id_scales-${index}-title_en"
-                               class="form-control"
-                               placeholder="Example: Realistic, Investigative">
-                    </div>` : `
-                    <input type="hidden"
-                           name="scales-${index}-title_en"
-                           id="id_scales-${index}-title_en"
-                           value="">`}
-                    <div class="col-md-4">
-                        <label class="form-label">توضیحات</label>
-                        <textarea name="scales-${index}-description_fa" 
-                                  id="id_scales-${index}-description_fa"
-                                  class="form-control" 
-                                  rows="1" 
-                                  placeholder="توضیحات مقیاس (اختیاری)"></textarea>
-                    </div>
-                    ${showTranslationFields ? `
-                    <div class="col-md-4">
-                        <label class="form-label">توضیحات (انگلیسی)</label>
-                        <textarea name="scales-${index}-description_en"
-                                  id="id_scales-${index}-description_en"
-                                  class="form-control"
-                                  rows="1"
-                                  placeholder="Scale description (optional)"></textarea>
-                    </div>` : `
-                    <input type="hidden"
-                           name="scales-${index}-description_en"
-                           id="id_scales-${index}-description_en"
-                           value="">`}
+                    <div class="col-12"><div class="exam-bilingual-grid">
+<div class="exam-language-field" lang="fa" dir="rtl"><label class="form-label">عنوان مقیاس (فارسی)</label><input type="text" name="scales-${index}-title_fa" id="id_scales-${index}-title_fa" class="form-control" placeholder="عنوان مقیاس"></div>
+<div class="exam-language-field" lang="en" dir="ltr"><label class="form-label">Scale title (English)</label><input type="text" name="scales-${index}-title_en" id="id_scales-${index}-title_en" class="form-control" placeholder="Scale title"></div>
+</div></div>
+<div class="col-12"><div class="exam-bilingual-grid">
+<div class="exam-language-field" lang="fa" dir="rtl"><label class="form-label">توضیحات مقیاس (فارسی)</label><textarea name="scales-${index}-description_fa" id="id_scales-${index}-description_fa" class="form-control" rows="2"></textarea></div>
+<div class="exam-language-field" lang="en" dir="ltr"><label class="form-label">Scale description (English)</label><textarea name="scales-${index}-description_en" id="id_scales-${index}-description_en" class="form-control" rows="2"></textarea></div>
+</div></div>
                      
                     
                 </div>
