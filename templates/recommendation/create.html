@@ -474,7 +474,7 @@ function createQuestionHTML(index) {
             <input type="hidden" name="questions-${index}-id" id="id_questions-${index}-id" value="">
             
             <div class="row g-3">
-<div class="col-6 col-md-3"><label class="form-label">آیکون</label><input type="text" name="questions-${index}-icon" class="form-control" placeholder="آیکون"></div>
+<div class="col-6 col-md-3"><label class="form-label">آیکون</label><input type="text" name="questions-${index}-icon" class="form-control" placeholder="آیکون" required></div>
 <div class="col-6 col-md-2"><label class="form-label">ترتیب</label><input type="number" name="questions-${index}-order" class="form-control order-field" value="${index + 1}" min="1"></div>
 <div class="col-12"><div class="exam-bilingual-grid">
 <div class="exam-language-field" lang="fa" dir="rtl"><label class="form-label">متن سؤال (فارسی)</label><textarea rows="2" name="questions-${index}-question_text_fa" class="form-control" placeholder="سؤال" required></textarea></div>
