@@ -103,9 +103,6 @@ JALALI_DATE_DEFAULTS = {
     },
 }
 
-# Allow same-origin Django admin dialogs/iframes while blocking cross-origin framing.
-X_FRAME_OPTIONS = 'SAMEORIGIN'
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
